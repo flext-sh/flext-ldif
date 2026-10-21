@@ -12,10 +12,11 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import Annotated, Self
 
-from flext_core import m, t
+from flext_core import m
 
-from flext_ldif._constants.base import FlextLdifConstantsBase
-from flext_ldif._typings.base import FlextLdifTypesBase
+from flext_ldif import t
+from flext_ldif._constants import FlextLdifConstantsBase
+from flext_ldif._typings import FlextLdifTypesBase
 
 
 class FlextLdifModelsSettingsRules:

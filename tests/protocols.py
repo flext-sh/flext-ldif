@@ -13,9 +13,7 @@ from flext_tests import FlextTestsProtocols
 from flext_ldif import FlextLdifModels, FlextLdifProtocols
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
-    from tests import c, m
+    from tests import m
 
 
 class TestsFlextLdifLdapProtocols(FlextLdifProtocols):
@@ -118,20 +116,6 @@ class TestsFlextLdifProtocols(
 
             def write(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
                 """Write ACL content from the test model."""
-                ...
-
-        class MigrationPipelineFactory(Protocol):
-            """Callable contract for the migration pipeline factory fixture."""
-
-            def __call__(
-                self,
-                *,
-                input_dir: Path | None = None,
-                output_dir: Path | None = None,
-                source_server_type: c.Ldif.ServerTypes | str | None = None,
-                target_server_type: c.Ldif.ServerTypes | str | None = None,
-            ) -> FlextLdifProtocols.Ldif.MigrationPipeline:
-                """Provide ``__call__``."""
                 ...
 
 

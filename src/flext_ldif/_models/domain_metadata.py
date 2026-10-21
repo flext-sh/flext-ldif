@@ -19,7 +19,10 @@ from typing import Annotated
 from flext_core import m
 
 from flext_ldif import FlextLdifShared, c, t
-from flext_ldif._models import FlextLdifModelsDomainAttributes
+from flext_ldif._models import (
+    FlextLdifModelsDomainAttributes,
+    FlextLdifModelsDomainEntryStatistics,
+)
 
 
 class FlextLdifModelsDomainMetadata:
@@ -187,7 +190,6 @@ class FlextLdifModelsDomainMetadata:
         server_type: Annotated[
             c.Ldif.ServerTypes,
             m.Field(
-                ...,
                 description="Type of server this metadata represents (ServerTypes enum "
                 "or literal)",
             ),
@@ -283,10 +285,9 @@ class FlextLdifModelsDomainMetadata:
             ),
         ] = None
         processing_stats: Annotated[
-            m.BaseModel | None,
+            FlextLdifModelsDomainEntryStatistics | None,
             m.Field(
-                description="Complete statistics tracking for entry transformations "
-                "(accepts EntryStatistics)",
+                description="Complete statistics tracking for entry transformations",
             ),
         ] = None
         write_options: Annotated[

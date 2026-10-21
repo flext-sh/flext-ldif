@@ -12,10 +12,10 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 from typing import Annotated
 
-from flext_core import m, t
+from flext_core import m
 
-from flext_ldif._constants.base import FlextLdifConstantsBase, FlextLdifConstantsEnums
-from flext_ldif._models._settings_rules import FlextLdifModelsSettingsRules
+from flext_ldif import c, t
+from flext_ldif._models import FlextLdifModelsSettingsRules
 
 
 class FlextLdifModelsSettingsMigrate:
@@ -140,7 +140,7 @@ class FlextLdifModelsSettingsMigrate:
                 description="Maximum line width before folding (RFC 2849 recommends "
                 "76). Only used if fold_long_lines=True.",
             ),
-        ] = FlextLdifConstantsBase.DEFAULT_LINE_WIDTH
+        ] = c.DEFAULT_LINE_WIDTH
         respect_attribute_order: Annotated[
             bool,
             m.Field(

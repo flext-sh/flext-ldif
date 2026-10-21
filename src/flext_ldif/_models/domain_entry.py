@@ -10,7 +10,7 @@ from collections.abc import Mapping, MutableMapping
 from datetime import datetime
 from typing import Annotated, ClassVar, Self, override
 
-from flext_core import m
+from flext_cli import m
 
 from flext_ldif import c, e, p, r, t
 from flext_ldif._models import (

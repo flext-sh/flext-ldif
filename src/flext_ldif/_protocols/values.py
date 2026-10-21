@@ -10,15 +10,139 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_cli import p, t
 
+from flext_ldif._protocols.base import FlextLdifProtocolsBase
+
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
-    from flext_ldif import c
+    from flext_ldif import c, m
 
 
 @runtime_checkable
 class FlextLdifProtocolsValues(Protocol):
     """Protocol-only view of canonical LDIF Pydantic values."""
+
+    @runtime_checkable
+    class ServerDetectionResult(Protocol):
+        """Server detection result contract."""
+
+        @property
+        def detected_server_type(self) -> c.Ldif.ServerTypes:
+            """LDAP server type detected from LDIF content."""
+            ...
+
+        @property
+        def confidence(self) -> t.DecimalFraction:
+            """Detection confidence score between 0 and 1."""
+            ...
+
+        @property
+        def scores(self) -> t.MutableIntMapping:
+            """Per-server-type detection scores."""
+            ...
+
+        @property
+        def patterns_found(self) -> t.MutableSequenceOf[str]:
+            """Server-identifying patterns found in LDIF."""
+            ...
+
+        @property
+        def detection_error(self) -> str | None:
+            """Error message if detection failed."""
+            ...
+
+        @property
+        def fallback_reason(self) -> str | None:
+            """Reason for using fallback server type."""
+            ...
+
+    @runtime_checkable
+    class Entry(Protocol):
+        """LDIF entry protocol."""
+
+        @property
+        def dn_str(self) -> str: ...
+
+        @property
+        def attributes_dict(self) -> t.MutableStrSequenceMapping: ...
+
+        @property
+        def changetype(self) -> c.Ldif.ChangeType | None: ...
+
+        @property
+        def change_operations(
+            self,
+        ) -> t.SequenceOf[FlextLdifProtocolsValues.ChangeOperation]: ...
+
+    @runtime_checkable
+    class ChangeOperation(Protocol):
+        """LDIF change operation protocol."""
+
+        @property
+        def operation(self) -> c.Ldif.ChangeOperation: ...
+
+        @property
+        def attribute(self) -> str: ...
+
+        @property
+        def values(
+            self,
+        ) -> t.SequenceOf[FlextLdifProtocolsValues.ChangeOperationValue]: ...
+
+    @runtime_checkable
+    class ChangeOperationValue(Protocol):
+        """LDIF change operation value protocol."""
+
+        @property
+        def value(self) -> str: ...
+
+        @property
+        def value_origin(self) -> c.Ldif.ValueOrigin: ...
+
+        @property
+        def raw_value(self) -> str | None: ...
+
+    @runtime_checkable
+    class Control(Protocol):
+        """LDIF control protocol."""
+
+        @property
+        def control_type(self) -> str: ...
+
+        @property
+        def criticality(self) -> bool | None: ...
+
+        @property
+        def control_value(self) -> str | None: ...
+
+        @property
+        def control_value_origin(self) -> c.Ldif.ValueOrigin | None: ...
+
+        @property
+        def raw_value(self) -> str | None: ...
+
+    @runtime_checkable
+    class ParseResponse(FlextLdifProtocolsBase.Response, Protocol):
+        """Parsed LDIF batch response."""
+
+        @property
+        def entries(self) -> t.SequenceOf[m.Ldif.Entry]: ...
+
+        @property
+        def detected_server_type(self) -> str | None: ...
+
+    @runtime_checkable
+    class MigrationPipelineResult(Protocol):
+        """Migration pipeline result contract."""
+
+        @property
+        def entries(self) -> t.SequenceOf[m.Ldif.Entry]: ...
+
+        @property
+        def stats(self) -> FlextLdifProtocolsBase.Statistics: ...
+
+        @property
+        def output_files(self) -> t.StrSequence: ...
 
     @runtime_checkable
     class AciAllow(p.Model, Protocol):
@@ -466,10 +590,10 @@ class FlextLdifProtocolsValues(Protocol):
         """Batch-processing configuration contract."""
 
         @property
-        def source_server(self) -> str | None: ...
+        def source_server(self) -> c.Ldif.ServerTypes | None: ...
 
         @property
-        def target_server(self) -> str | None: ...
+        def target_server(self) -> c.Ldif.ServerTypes | None: ...
 
         @property
         def base_dn(self) -> str: ...

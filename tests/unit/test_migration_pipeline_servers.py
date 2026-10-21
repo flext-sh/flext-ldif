@@ -18,7 +18,6 @@ import pytest
 
 from flext_ldif import FlextLdif
 from flext_ldif.servers import FlextLdifServersOidConstants, FlextLdifServersRfc
-from flext_ldif.services import FlextLdifMigrationPipeline
 from tests import c, m, tm
 
 if TYPE_CHECKING:
@@ -53,14 +52,16 @@ class TestsFlextLdifMigrationPipelineServers:
         output_dir.mkdir()
         (input_dir / "test.ldif").write_text(ldif_content, encoding="utf-8")
 
-        pipeline = FlextLdifMigrationPipeline(
+        pipeline = FlextLdif().migration_pipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            output_filename="migrated.ldif",
-            source_server=c.Ldif.ServerTypes(source_server),
-            target_server=c.Ldif.ServerTypes(target_server),
+            options=m.Ldif.MigrateOptions(output_filename="migrated.ldif"),
+            settings=m.Ldif.TransformConfig.servers(
+                source_server=source_server,
+                target_server=target_server,
+            ),
         )
-        migrated: m.Ldif.MigrationPipelineResult = tm.ok(pipeline.execute())
+        migrated = tm.ok(pipeline.execute())
 
         output_file = output_dir / "migrated.ldif"
         _ = tm.ok(output_file.exists())
@@ -223,15 +224,11 @@ class TestsFlextLdifMigrationPipelineServers:
         output_dir = tmp_path / "output"
         output_dir.mkdir()
 
-        pipeline = FlextLdifMigrationPipeline(
-            registry=FlextLdif().registry,
+        pipeline = FlextLdif().migration_pipeline(
             input_dir=missing_input,
             output_dir=output_dir,
-            output_filename="migrated.ldif",
-            source_server=c.Ldif.ServerTypes.OID,
-            target_server=c.Ldif.ServerTypes.RFC,
+            options=m.Ldif.MigrateOptions(output_filename="migrated.ldif"),
         )
         result = pipeline.execute()
 
-        tm.ok(result.failure)
-        tm.ok(str(missing_input) in (result.error or ""))
+        tm.fail(result, has=str(missing_input))

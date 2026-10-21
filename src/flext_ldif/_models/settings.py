@@ -10,16 +10,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif._models._settings_acl import FlextLdifModelsSettingsAcl
-from flext_ldif._models._settings_criteria import FlextLdifModelsSettingsCriteria
-from flext_ldif._models._settings_migrate import FlextLdifModelsSettingsMigrate
-from flext_ldif._models._settings_misc import FlextLdifModelsSettingsMisc
-from flext_ldif._models._settings_normalization import (
+from flext_ldif._models import (
+    FlextLdifModelsSettingsAcl,
+    FlextLdifModelsSettingsCriteria,
+    FlextLdifModelsSettingsMigrate,
+    FlextLdifModelsSettingsMisc,
     FlextLdifModelsSettingsNormalization,
+    FlextLdifModelsSettingsProcessing,
+    FlextLdifModelsSettingsRules,
+    FlextLdifModelsSettingsValidation,
 )
-from flext_ldif._models._settings_processing import FlextLdifModelsSettingsProcessing
-from flext_ldif._models._settings_rules import FlextLdifModelsSettingsRules
-from flext_ldif._models._settings_validation import FlextLdifModelsSettingsValidation
 
 
 class FlextLdifModelsSettings(

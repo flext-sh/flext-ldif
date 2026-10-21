@@ -233,7 +233,7 @@ class FlextLdifModelsResultsStatistics:
                 "output_file": self.output_file or other.output_file,
                 "encoding": self.encoding,
                 "rejection_reasons": FlextLdifModelsCollections.DynamicCounts(
-                    **merged_reasons
+                    root=merged_reasons,
                 ),
                 "events": [*self.events, *other.events],
             }

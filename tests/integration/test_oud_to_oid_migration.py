@@ -21,14 +21,13 @@ import pytest
 
 from flext_ldif import FlextLdif, ldif
 from flext_ldif.servers import FlextLdifServersOid, FlextLdifServersOud
-from flext_ldif.services import FlextLdifMigrationPipeline
-from tests import c, tm, u
+from tests import c, m, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from pathlib import Path
 
-    from tests import m, p
+    from tests import p
 
 MIN_OUD_ENTRIES = 10
 
@@ -133,13 +132,14 @@ class TestsFlextLdifOudToOidMigration:
     ) -> None:
         """Write the OUD source and run the OUD->OID migration pipeline."""
         (input_dir / "source.ldif").write_text(source_content, encoding="utf-8")
-        pipeline = FlextLdifMigrationPipeline(
+        pipeline = FlextLdif().migration_pipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            output_filename="migrated.ldif",
-            source_server=c.Ldif.ServerTypes.OUD,
-            target_server=c.Ldif.ServerTypes.OID,
-            registry=FlextLdif().registry,
+            options=m.Ldif.MigrateOptions(output_filename="migrated.ldif"),
+            settings=m.Ldif.TransformConfig.servers(
+                source_server=c.Ldif.ServerTypes.OUD,
+                target_server=c.Ldif.ServerTypes.OID,
+            ),
         )
         tm.ok(pipeline.execute())
 

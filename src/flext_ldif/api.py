@@ -276,7 +276,6 @@ class FlextLdif(
         settings: p.Ldif.TransformConfig | None = None,
         options: p.Ldif.MigrationOutputOptions | None = None,
         runtime_settings: p.Ldif.Settings | None = None,
-        **fields: t.ModelInput | Path,
     ) -> p.Ldif.MigrationPipeline:
         """Create a configured migration pipeline bound to the facade runtime.
 
@@ -287,18 +286,13 @@ class FlextLdif(
             options: Optional migration options supplying the output filename.
             runtime_settings: Optional runtime settings overriding the facade
                 bounds.
-            **fields: Additional pipeline fields forwarded to the constructor.
 
         Returns:
             The runtime-bound migration pipeline.
 
         """
+        defaults = m.Ldif.MigrationPipelineOptions()
         process_config = settings.process_config if settings is not None else None
-        if process_config is not None:
-            fields["source_server_type"] = process_config.source_server
-            fields["target_server_type"] = process_config.target_server
-        if options is not None:
-            fields["output_filename"] = options.output_filename
         return FlextLdifMigrationPipeline(
             input_dir=input_dir,
             output_dir=output_dir,
@@ -306,7 +300,20 @@ class FlextLdif(
             runtime_settings=(
                 self.settings if runtime_settings is None else runtime_settings
             ),
-            **fields,
+            output_filename=None if options is None else options.output_filename,
+            source_server_type=(
+                defaults.source_server_type
+                if process_config is None or process_config.source_server is None
+                else process_config.source_server
+            ),
+            target_server_type=(
+                defaults.target_server_type
+                if process_config is None or process_config.target_server is None
+                else process_config.target_server
+            ),
+            base_dn=(
+                defaults.base_dn if process_config is None else process_config.base_dn
+            ),
         )
 
     def migrate(

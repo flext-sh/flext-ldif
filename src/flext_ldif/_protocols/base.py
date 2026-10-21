@@ -7,16 +7,41 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import ItemsView, KeysView, ValuesView
-from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
+
+from flext_cli import p, t
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from flext_ldif import c, m, p, t
+    from flext_ldif.protocols import FlextLdifProtocols
 
 
 class FlextLdifProtocolsBase:
     """Organize structural contracts without declaring an instance protocol."""
+
+    @runtime_checkable
+    class LdifSettings(Protocol):
+        """Namespaced LDIF runtime settings branch."""
+
+        @property
+        def ldif_encoding(self) -> str:
+            """Default encoding for LDIF read/write operations."""
+            ...
+
+        @property
+        def ldif_strict_validation(self) -> bool:
+            """Whether strict LDIF validation is enabled."""
+            ...
+
+    @runtime_checkable
+    class Settings(p.Cli.Settings, Protocol):
+        """MRO-composed settings contract with the LDIF namespace."""
+
+        @property
+        def ldif(self) -> FlextLdifProtocolsBase.LdifSettings:
+            """Namespaced LDIF settings branch."""
+            ...
 
     @runtime_checkable
     class ValidationService(Protocol):
@@ -24,11 +49,11 @@ class FlextLdifProtocolsBase:
 
         def validate_attribute_name(self, name: str) -> p.Result[bool]:
             """Return whether the attribute name is valid."""
-            del name
+            ...
 
         def validate_objectclass_name(self, name: str) -> p.Result[bool]:
             """Return whether the objectClass name is valid."""
-            del name
+            ...
 
     @runtime_checkable
     class ServerDetectionService(Protocol):
@@ -39,108 +64,9 @@ class FlextLdifProtocolsBase:
             ldif_path: Path | None = None,
             ldif_content: str | None = None,
             max_lines: int | None = None,
-        ) -> p.Result[FlextLdifProtocolsBase.ServerDetectionResult]:
+        ) -> p.Result[FlextLdifProtocols.Ldif.ServerDetectionResult]:
             """Detect LDAP server type from LDIF file or content."""
-            del ldif_content, ldif_path, max_lines
-
-    @runtime_checkable
-    class ServerDetectionResult(Protocol):
-        """Server detection result contract."""
-
-        @property
-        def detected_server_type(self) -> c.Ldif.ServerTypes:
-            """LDAP server type detected from LDIF content."""
             ...
-
-        @property
-        def confidence(self) -> t.DecimalFraction:
-            """Detection confidence score between 0 and 1."""
-            ...
-
-        @property
-        def scores(self) -> t.MutableMapping[str, int]:
-            """Per-server-type detection scores."""
-            ...
-
-        @property
-        def patterns_found(self) -> t.MutableSequenceOf[str]:
-            """Server-identifying patterns found in LDIF."""
-            ...
-
-        @property
-        def detection_error(self) -> str | None:
-            """Error message if detection failed."""
-            ...
-
-        @property
-        def fallback_reason(self) -> str | None:
-            """Reason for using fallback server type."""
-            ...
-
-    @runtime_checkable
-    class Entry(Protocol):
-        """LDIF entry protocol."""
-
-        @property
-        def dn_str(self) -> str: ...
-
-        @property
-        def attributes_dict(self) -> t.MutableStrSequenceMapping: ...
-
-        @property
-        def changetype(self) -> c.Ldif.ChangeType | None: ...
-
-        @property
-        def change_operations(
-            self,
-        ) -> t.SequenceOf[FlextLdifProtocolsBase.ChangeOperation]: ...
-
-    @runtime_checkable
-    class ChangeOperation(Protocol):
-        """LDIF change operation protocol."""
-
-        @property
-        def operation(self) -> c.Ldif.ChangeOperation: ...
-
-        @property
-        def attribute(self) -> str: ...
-
-        @property
-        def values(
-            self,
-        ) -> t.SequenceOf[FlextLdifProtocolsBase.ChangeOperationValue]: ...
-
-    @runtime_checkable
-    class ChangeOperationValue(Protocol):
-        """LDIF change operation value protocol."""
-
-        @property
-        def value(self) -> str: ...
-
-        @property
-        def value_origin(self) -> c.Ldif.ValueOrigin: ...
-
-        @property
-        def raw_value(self) -> str | None: ...
-
-    @runtime_checkable
-    class Control(Protocol):
-        """LDIF control protocol."""
-
-        @property
-        def control_type(self) -> str: ...
-
-        @property
-        def criticality(self) -> bool | None: ...
-
-        @property
-        def control_value(self) -> str | None: ...
-
-        @property
-        def control_value_origin(self) -> c.Ldif.ValueOrigin | None: ...
-
-        @property
-        def raw_value(self) -> str | None: ...
 
     @runtime_checkable
     class Acl(Protocol):
@@ -227,106 +153,6 @@ class FlextLdifProtocolsBase:
         def statistics(self) -> FlextLdifProtocolsBase.Statistics: ...
 
     @runtime_checkable
-    class ServerServer(Protocol):
-        """Structured server contract used by services and tests."""
-
-        server_type: ClassVar[str]
-        priority: ClassVar[int]
-        Constants: ClassVar[type[FlextLdifProtocolsBase.ServerConstants]]
-
-        @property
-        def schema_server(self) -> FlextLdifProtocolsBase.SchemaServer: ...
-
-        @property
-        def acl_server(self) -> FlextLdifProtocolsBase.AclServer: ...
-
-        @property
-        def entry_server(self) -> FlextLdifProtocolsBase.EntryServer: ...
-
-        def parse_ldif(self, value: str) -> p.Result[m.Ldif.ParseResponse]: ...
-
-        def write(
-            self,
-            entries: t.MutableSequenceOf[m.Ldif.Entry],
-            write_options: m.Ldif.WriteFormatOptions | None = None,
-        ) -> p.Result[str]: ...
-
-    @runtime_checkable
-    class SchemaServer(Protocol):
-        """Public schema parsing and serialization contract."""
-
-        def parse_server(
-            self, value: str
-        ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]: ...
-
-        def parse_input(
-            self, schema_text: str
-        ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]: ...
-
-        def parse_attribute(
-            self, definition: str
-        ) -> p.Result[m.Ldif.SchemaAttribute]: ...
-
-        def parse_objectclass(
-            self, definition: str
-        ) -> p.Result[m.Ldif.SchemaObjectClass]: ...
-
-        def can_handle_attribute(self, attr_definition: str) -> bool: ...
-
-        def can_handle_objectclass(self, oc_definition: str) -> bool: ...
-
-        def write(
-            self,
-            model: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-        ) -> p.Result[str]: ...
-
-        def write_attribute(
-            self, attr_data: m.Ldif.SchemaAttribute
-        ) -> p.Result[str]: ...
-
-        def write_objectclass(
-            self, oc_data: m.Ldif.SchemaObjectClass
-        ) -> p.Result[str]: ...
-
-    @runtime_checkable
-    class AclServer(Protocol):
-        """ACL parsing, serialization, and attribute discovery contract."""
-
-        def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]: ...
-
-        def parse_server(self, value: str) -> p.Result[m.Ldif.Acl]: ...
-
-        def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool: ...
-
-        def write(self, acl_data: m.Ldif.Acl) -> p.Result[str]: ...
-
-    @runtime_checkable
-    class EntryServer(Protocol):
-        """Entry parsing and serialization capability, not a dialect registry."""
-
-        def parse_server(
-            self, value: str
-        ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]: ...
-
-        def parse_input(
-            self, ldif_text: str
-        ) -> t.MutableSequenceOf[m.Ldif.Entry] | None: ...
-
-        def can_handle(
-            self, entry_dn: str, attributes: t.MutableStrSequenceMapping
-        ) -> bool: ...
-
-        def parse_entry(
-            self, entry_dn: str, entry_attrs: t.MutableStrSequenceMapping
-        ) -> p.Result[m.Ldif.Entry]: ...
-
-        def write(
-            self,
-            entry_data: m.Ldif.Entry | t.MutableSequenceOf[m.Ldif.Entry],
-            write_options: m.Ldif.WriteFormatOptions | None = None,
-        ) -> p.Result[str]: ...
-
-    @runtime_checkable
     class RegistryBound(Protocol):
         """Runtime registry dependency shared by LDIF services."""
 
@@ -339,36 +165,36 @@ class FlextLdifProtocolsBase:
 
         def server(
             self, server_type: str
-        ) -> p.Result[FlextLdifProtocolsBase.ServerServer]: ...
+        ) -> p.Result[FlextLdifProtocols.Ldif.ServerServer]: ...
 
         def resolve_base_server(
             self, server_type: str
-        ) -> p.Result[FlextLdifProtocolsBase.ServerServer]: ...
+        ) -> p.Result[FlextLdifProtocols.Ldif.ServerServer]: ...
 
         def schema_server(
             self, server_type: str
-        ) -> p.Result[FlextLdifProtocolsBase.SchemaServer]: ...
+        ) -> p.Result[FlextLdifProtocols.Ldif.SchemaServer]: ...
 
         def resolve_schema_server(
             self, server_type: str
-        ) -> p.Result[FlextLdifProtocolsBase.SchemaServer]: ...
+        ) -> p.Result[FlextLdifProtocols.Ldif.SchemaServer]: ...
 
         def acl(
             self, server_type: str
-        ) -> p.Result[FlextLdifProtocolsBase.AclServer]: ...
+        ) -> p.Result[FlextLdifProtocols.Ldif.AclServer]: ...
 
         def entry(
             self, server_type: str
-        ) -> p.Result[FlextLdifProtocolsBase.EntryServer]: ...
+        ) -> p.Result[FlextLdifProtocols.Ldif.EntryServer]: ...
 
         def resolve_server_bundle(
             self, server_type: str
         ) -> p.Result[
             t.MappingKV[
                 str,
-                FlextLdifProtocolsBase.SchemaServer
-                | FlextLdifProtocolsBase.AclServer
-                | FlextLdifProtocolsBase.EntryServer,
+                FlextLdifProtocols.Ldif.SchemaServer
+                | FlextLdifProtocols.Ldif.AclServer
+                | FlextLdifProtocols.Ldif.EntryServer,
             ]
         ]: ...
 
@@ -380,10 +206,10 @@ class FlextLdifProtocolsBase:
 
         def summarize_registry(
             self,
-        ) -> p.Result[t.Ldif.MutableMetadataInputMapping]: ...
+        ) -> p.Result[t.MutableJsonMapping]: ...
 
         def register_server(
-            self, server: FlextLdifProtocolsBase.ServerServer
+            self, server: FlextLdifProtocols.Ldif.ServerServer
         ) -> p.Result[bool]: ...
 
         def unregister_server(self, server_type: str) -> p.Result[bool]: ...
@@ -400,10 +226,10 @@ class FlextLdifProtocolsBase:
 
         SERVER_TYPE: str
         PRIORITY: int
-        DETECTION_PATTERN: str | t.Ldif.RegexPattern | None
+        DETECTION_PATTERN: str | t.RegexPattern | None
         DETECTION_WEIGHT: int
         DETECTION_ATTRIBUTES: t.IterableOf[str]
-        DETECTION_OID_PATTERN: str | t.Ldif.RegexPattern | None
+        DETECTION_OID_PATTERN: str | t.RegexPattern | None
         DETECTION_ATTRIBUTE_PREFIXES: t.IterableOf[str] | None
         DETECTION_OBJECTCLASS_NAMES: t.IterableOf[str] | None
         DETECTION_DN_MARKERS: t.IterableOf[str] | None
@@ -467,8 +293,6 @@ class FlextLdifProtocolsBase:
 
         def items(self) -> ItemsView[str, int]: ...
 
-        def update_count(self, key: str, value: int) -> None: ...
-
     @runtime_checkable
     class Statistics(Protocol):
         """Aggregate statistics payload for parse/write/migration flows."""
@@ -498,16 +322,6 @@ class FlextLdifProtocolsBase:
 
         @property
         def statistics(self) -> FlextLdifProtocolsBase.Statistics: ...
-
-    @runtime_checkable
-    class ParseResponse(Response, Protocol):
-        """Parsed LDIF batch response."""
-
-        @property
-        def entries(self) -> t.SequenceOf[m.Ldif.Entry]: ...
-
-        @property
-        def detected_server_type(self) -> str | None: ...
 
     @runtime_checkable
     class WriteResponse(Response, Protocol):
@@ -546,24 +360,13 @@ class FlextLdifProtocolsBase:
         def output_filename(self) -> str | None: ...
 
     @runtime_checkable
-    class MigrationPipelineResult(Protocol):
-        """Migration pipeline result contract."""
-
-        @property
-        def entries(self) -> t.SequenceOf[m.Ldif.Entry]: ...
-
-        @property
-        def stats(self) -> FlextLdifProtocolsBase.Statistics: ...
-
-        @property
-        def output_files(self) -> t.StrSequence: ...
-
-    @runtime_checkable
     class FlexibleCategories(Protocol):
         """Flexible entry categorization result."""
 
-        categorized: t.MappingKV[str, t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]]
-        uncategorized: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]
+        categorized: t.MappingKV[
+            str, t.MutableSequenceOf[FlextLdifProtocols.Ldif.Entry]
+        ]
+        uncategorized: t.MutableSequenceOf[FlextLdifProtocols.Ldif.Entry]
 
     @runtime_checkable
     class ProcessEntriesOptions(Protocol):
@@ -578,7 +381,7 @@ class FlextLdifProtocolsBase:
     class ProcessingResult(Protocol):
         """Result of processing a single entry."""
 
-        entry: FlextLdifProtocolsBase.Entry
+        entry: FlextLdifProtocols.Ldif.Entry
         success: bool
         error: str | None
 
@@ -613,11 +416,11 @@ class FlextLdifProtocolsBase:
 
         def get(self, key: str, default: t.JsonValue | None = None) -> t.JsonValue: ...
 
-        def keys(self) -> t.KeysView[str]: ...
+        def keys(self) -> KeysView[str]: ...
 
-        def values(self) -> t.ValuesView[t.JsonValue]: ...
+        def values(self) -> ValuesView[t.JsonValue]: ...
 
-        def items(self) -> t.ItemsView[str, t.JsonValue]: ...
+        def items(self) -> ItemsView[str, t.JsonValue]: ...
 
     @runtime_checkable
     class ConvertedModel(Protocol):
@@ -625,30 +428,6 @@ class FlextLdifProtocolsBase:
 
         model_type: str
         converted_data: t.JsonValue
-
-    @runtime_checkable
-    class CategorizationService(Protocol):
-        """Protocol for LDIF entry categorization services."""
-
-        def categorize_entries(
-            self,
-            entries: t.MutableSequenceOf[m.Ldif.Entry],
-        ) -> p.Result[m.Ldif.FlexibleCategories]: ...
-
-        def filter_by_base_dn(
-            self,
-            categories: m.Ldif.FlexibleCategories,
-        ) -> m.Ldif.FlexibleCategories: ...
-
-        def validate_dns(
-            self,
-            entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
-        ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]: ...
-
-        def filter_schema_by_oids(
-            self,
-            schema_entries: t.MutableSequenceOf[m.Ldif.Entry],
-        ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]: ...
 
     @runtime_checkable
     class WriteFormatOptions(Protocol):
@@ -688,33 +467,33 @@ class FlextLdifProtocolsBase:
     class ServerResolutionService(Protocol):
         """Contract for server registry resolution and model conversion."""
 
-        def acl(self, server_type: str) -> p.Result[FlextLdifProtocolsBase.AclServer]:
+        def acl(self, server_type: str) -> p.Result[FlextLdifProtocols.Ldif.AclServer]:
             """Resolve ACL server by server type via the facade DSL."""
-            del server_type
+            ...
 
         def entry(
             self, server_type: str
-        ) -> p.Result[FlextLdifProtocolsBase.EntryServer]:
+        ) -> p.Result[FlextLdifProtocols.Ldif.EntryServer]:
             """Resolve entry server by server type via the facade DSL."""
-            del server_type
+            ...
 
         def resolve_base_server(
             self, server_type: str
-        ) -> p.Result[FlextLdifProtocolsBase.ServerServer]:
+        ) -> p.Result[FlextLdifProtocols.Ldif.ServerServer]:
             """Resolve base server by server type via the facade DSL."""
-            del server_type
+            ...
 
         def schema_server(
             self, server_type: str
-        ) -> p.Result[FlextLdifProtocolsBase.SchemaServer]:
+        ) -> p.Result[FlextLdifProtocols.Ldif.SchemaServer]:
             """Resolve schema server by server type via the facade DSL."""
-            del server_type
+            ...
 
         def resolve_schema_server(
             self, server_type: str
-        ) -> p.Result[FlextLdifProtocolsBase.SchemaServer]:
+        ) -> p.Result[FlextLdifProtocols.Ldif.SchemaServer]:
             """Resolve schema server by server type via the facade DSL."""
-            del server_type
+            ...
 
         def resolve_server_bundle(
             self,
@@ -722,26 +501,26 @@ class FlextLdifProtocolsBase:
         ) -> p.Result[
             t.MappingKV[
                 str,
-                FlextLdifProtocolsBase.SchemaServer
-                | FlextLdifProtocolsBase.AclServer
-                | FlextLdifProtocolsBase.EntryServer,
+                FlextLdifProtocols.Ldif.SchemaServer
+                | FlextLdifProtocols.Ldif.AclServer
+                | FlextLdifProtocols.Ldif.EntryServer,
             ]
         ]:
             """Resolve schema/acl/entry bundle by server type via the facade DSL."""
-            del server_type
+            ...
 
         def resolve_server_constants(
             self,
             server_type: str,
         ) -> p.Result[type[FlextLdifProtocolsBase.ServerConstants]]:
             """Resolve server constants by server type via the facade DSL."""
-            del server_type
+            ...
 
         def list_registered_servers(self) -> p.Result[t.MutableSequenceOf[str]]:
             """List registered server types via the facade DSL."""
             ...
 
-        def summarize_registry(self) -> p.Result[t.Ldif.MutableMetadataInputMapping]:
+        def summarize_registry(self) -> p.Result[t.MutableJsonMapping]:
             """Return registry summary metadata via the facade DSL."""
             ...
 
@@ -750,23 +529,23 @@ class FlextLdifProtocolsBase:
             server: FlextLdifProtocolsBase.ServerReference | str,
         ) -> t.MappingKV[str, bool]:
             """Return supported conversion categories for a server server."""
-            del server
+            ...
 
         def convert_model(
             self,
             source: str
             | FlextLdifProtocolsBase.ServerReference
-            | FlextLdifProtocolsBase.ServerServer,
+            | FlextLdifProtocols.Ldif.ServerServer,
             target: str
             | FlextLdifProtocolsBase.ServerReference
-            | FlextLdifProtocolsBase.ServerServer,
-            model_instance: FlextLdifProtocolsBase.Entry
+            | FlextLdifProtocols.Ldif.ServerServer,
+            model_instance: FlextLdifProtocols.Ldif.Entry
             | FlextLdifProtocolsBase.SchemaAttribute
             | FlextLdifProtocolsBase.SchemaObjectClass
             | FlextLdifProtocolsBase.Acl,
         ) -> p.Result[FlextLdifProtocolsBase.ConvertedModel]:
             """Convert one LDIF model between server servers."""
-            del model_instance, source, target
+            ...
 
         def resolve_effective_server_type(
             self,
@@ -774,143 +553,7 @@ class FlextLdifProtocolsBase:
             ldif_content: str | None = None,
         ) -> p.Result[str]:
             """Resolve the effective LDAP server type for public processing flows."""
-            del ldif_content, ldif_path
-
-    @runtime_checkable
-    class LdifClient(
-        ValidationService,
-        ServerDetectionService,
-        ServerResolutionService,
-        Protocol,
-    ):
-        """Protocol for LDIF clients that support CRUD operations."""
-
-        @property
-        def settings(self) -> p.Ldif.Settings:
-            """Expose the typed LDIF settings carried by the public facade."""
             ...
-
-        def migrate(
-            self,
-            input_dir: Path | None = None,
-            output_dir: Path | None = None,
-            source_server: str = "rfc",
-            target_server: str = "rfc",
-            options: FlextLdifProtocolsBase.MigrationOutputOptions | None = None,
-        ) -> p.Result[FlextLdifProtocolsBase.MigrationPipelineResult]:
-            """Run the public LDIF migration pipeline."""
-            del input_dir, options, output_dir, source_server, target_server
-
-        def parse_ldif(
-            self,
-            value: str | Path,
-            *,
-            server_type: str | None = None,
-        ) -> p.Result[m.Ldif.ParseResponse]:
-            """Parse LDIF content from text or file path."""
-            del server_type, value
-
-        def parse_ldif_file(
-            self,
-            path: Path,
-            server_type: str | None = None,
-            encoding: str = "utf-8",
-        ) -> p.Result[m.Ldif.ParseResponse]:
-            """Parse LDIF content from a file path."""
-            del encoding, path, server_type
-
-        def parse_string(
-            self,
-            content: str,
-            server_type: str | None = None,
-        ) -> p.Result[m.Ldif.ParseResponse]:
-            """Parse LDIF content from a raw string."""
-            del content, server_type
-
-        def write(
-            self,
-            entries: t.SequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
-            *,
-            server_type: str | None = None,
-            format_options: m.Ldif.WriteFormatOptions | None = None,
-        ) -> p.Result[m.Ldif.WriteResponse]:
-            """Write canonical LDIF entries to text response."""
-            del entries, format_options, server_type
-
-        def write_ldif_file(
-            self,
-            entries: t.SequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
-            path: Path,
-            *,
-            server_type: str | None = None,
-            format_options: m.Ldif.WriteFormatOptions | None = None,
-        ) -> p.Result[m.Ldif.WriteResponse]:
-            """Write canonical LDIF entries to a file."""
-            del entries, format_options, path, server_type
-
-        def write_to_string(
-            self,
-            entries: t.SequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
-            server_type: str | None = None,
-            format_options: m.Ldif.WriteFormatOptions | None = None,
-        ) -> p.Result[str]:
-            """Write LDIF entries to a string."""
-            del entries, format_options, server_type
-
-        def validate_entries(
-            self,
-            entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]
-            | FlextLdifProtocolsBase.ParseResponse,
-            validation_service: FlextLdifProtocolsBase.ValidationService | None = None,
-        ) -> p.Result[FlextLdifProtocolsBase.ValidationResult]:
-            """Validate list of entries."""
-            del entries, validation_service
-
-        def service_check(self) -> p.Result[FlextLdifProtocolsBase.AclResponse]:
-            """Run the public ACL service wiring check."""
-            ...
-
-        def parse_acl_string(
-            self,
-            acl_string: str,
-            server_type: str,
-        ) -> p.Result[FlextLdifProtocolsBase.Acl]:
-            """Parse one ACL string through the public facade DSL."""
-            del acl_string, server_type
-
-        def extract_acls_from_entry(
-            self,
-            entry: FlextLdifProtocolsBase.Entry,
-            server_type: str,
-        ) -> p.Result[FlextLdifProtocolsBase.AclResponse]:
-            """Extract ACLs from an entry through the public facade DSL."""
-            del entry, server_type
-
-        def evaluate_acl_context(
-            self,
-            acls: t.SequenceOf[t.Ldif.AclLike],
-            required_permissions: FlextLdifProtocolsBase.AclPermissions
-            | t.MutableBoolMapping,
-        ) -> p.Result[FlextLdifProtocolsBase.AclEvaluationResult]:
-            """Evaluate ACLs through the public facade DSL."""
-            del acls, required_permissions
-
-        def process_entries(
-            self,
-            entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry],
-            options: FlextLdifProtocolsBase.ProcessEntriesOptions | None = None,
-            **kwargs: t.JsonValue,
-        ) -> p.Result[t.MutableSequenceOf[FlextLdifProtocolsBase.ProcessingResult]]:
-            """Process entries through the public facade DSL."""
-            del entries, kwargs, options
-
-        def calculate_for_entries(
-            self,
-            entries: t.MutableSequenceOf[FlextLdifProtocolsBase.Entry]
-            | FlextLdifProtocolsBase.ParseResponse,
-        ) -> p.Result[FlextLdifProtocolsBase.EntriesStatistics]:
-            """Calculate entry statistics through the public facade DSL."""
-            del entries
 
     @runtime_checkable
     class DNStatistics(Protocol):
@@ -938,7 +581,7 @@ class FlextLdifProtocolsBase:
         """Attribute container contract used by entry utilities."""
 
         @property
-        def attributes(self) -> t.MutableMapping[str, t.MutableSequenceOf[str]]:
+        def attributes(self) -> t.MutableStrSequenceMapping:
             """The underlying attribute mapping."""
             ...
 
@@ -948,7 +591,7 @@ class FlextLdifProtocolsBase:
             default: t.MutableSequenceOf[str] | None = None,
         ) -> t.MutableSequenceOf[str]:
             """Return attribute values with optional default."""
-            del default, key
+            ...
 
         def items(self) -> t.MutableSequenceOf[tuple[str, t.MutableSequenceOf[str]]]:
             """Return attribute items as a list of tuples."""
@@ -1038,11 +681,11 @@ class FlextLdifProtocolsBase:
 
         def resolve_canonical_dn(self, dn: str) -> str | None:
             """Return canonical DN casing when known."""
-            del dn
+            ...
 
         def register_dn(self, dn: str, *, force: bool = False) -> str:
             """Register and return canonical DN casing."""
-            del dn, force
+            ...
 
     @runtime_checkable
     class WriteOptions(Protocol):
@@ -1096,7 +739,7 @@ class FlextLdifProtocolsBase:
 
         def __call__(self, item: T) -> bool:
             """Return whether the item matches the predicate."""
-            del item
+            ...
 
 
 __all__: list[str] = ["FlextLdifProtocolsBase"]

@@ -11,12 +11,9 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import m, t
+from flext_core import m
 
-from flext_ldif._constants.base import (
-    FlextLdifConstantsAclConvertOud,
-    FlextLdifConstantsEnums,
-)
+from flext_ldif import c, t
 
 
 class FlextLdifModelsSettingsAcl:
@@ -42,14 +39,14 @@ class FlextLdifModelsSettingsAcl:
             "aci: "
         )
         version: Annotated[str, m.Field(description="ACI version")] = (
-            FlextLdifConstantsAclConvertOud.ACI_VERSION_NUMBER
+            c.ACI_VERSION_NUMBER
         )
 
     class AciParserConfig(m.Value):
         """Configuration for server-specific ACI parsing."""
 
         server_type: Annotated[
-            FlextLdifConstantsEnums.ServerTypes,
+            c.ServerTypes,
             m.Field(..., description="Server type identifier (oid, oud, rfc, etc.)"),
         ]
         aci_prefix: Annotated[str, m.Field(description="ACI line prefix")] = "aci:"

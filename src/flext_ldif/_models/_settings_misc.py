@@ -11,7 +11,9 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import m, t
+from flext_core import m
+
+from flext_ldif import t
 
 
 class FlextLdifModelsSettingsMisc:

@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 from typing import Annotated, ClassVar, Self, override
 
-from flext_core import m
+from flext_cli import m
 
 from flext_ldif import c, p, r, t
 from flext_ldif._utilities import FlextLdifUtilitiesCollectionLdif

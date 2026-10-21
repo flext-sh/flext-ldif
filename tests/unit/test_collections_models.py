@@ -28,26 +28,28 @@ class TestsFlextLdifCollectionsModels:
     @staticmethod
     def test_dynamic_counts_exposes_count_mapping_contract() -> None:
         """Test dynamic counts exposes count mapping contract."""
-        counts = m.Ldif.DynamicCounts.model_validate({
+        expected = {
             c.Ldif.Category.USERS.value: 3,
-            c.Ldif.Category.GROUPS.value: "2",
-            c.Ldif.Category.SCHEMA.value: True,
-        })
+            c.Ldif.Category.GROUPS.value: 2,
+            c.Ldif.Category.SCHEMA.value: 0,
+        }
+        counts = m.Ldif.DynamicCounts.model_validate(expected)
 
         tm.that(len(counts), eq=3)
-        tm.ok(c.Ldif.Category.USERS.value in counts)
+        tm.that(c.Ldif.Category.USERS.value in counts)
         tm.that(counts[c.Ldif.Category.USERS.value], eq=3)
         tm.that(counts[c.Ldif.Category.GROUPS.value], eq=2)
         tm.that(counts[c.Ldif.Category.SCHEMA.value], eq=0)
         tm.that(counts.get(c.Ldif.Category.ACL.value, 9), eq=9)
-        tm.that(
-            counts.items(),
-            eq=[
-                (c.Ldif.Category.USERS.value, 3),
-                (c.Ldif.Category.GROUPS.value, 2),
-                (c.Ldif.Category.SCHEMA.value, 0),
-            ],
-        )
+        tm.that(counts.items(), eq=expected.items())
+        tm.that(counts.model_dump(), eq=expected)
+
+    @staticmethod
+    @pytest.mark.parametrize("value", [True, "2", 2.5, None])
+    def test_dynamic_counts_rejects_non_integer_values(value: t.JsonValue) -> None:
+        """Invalid counts fail at admission rather than becoming zero on reads."""
+        with pytest.raises(m.ValidationError):
+            m.Ldif.DynamicCounts.model_validate({c.Ldif.Category.USERS.value: value})
 
     @staticmethod
     def test_dynamic_counts_missing_key_raises_key_error() -> None:
@@ -58,14 +60,16 @@ class TestsFlextLdifCollectionsModels:
             _ = counts["missing"]
 
     @staticmethod
-    def test_dynamic_counts_update_count_tracks_new_extra_key() -> None:
-        """Test dynamic counts update count tracks new extra key."""
-        counts = m.Ldif.DynamicCounts()
-
-        counts.update_count(c.Ldif.Category.REJECTED.value, 4)
+    def test_dynamic_counts_exposes_validated_counts_without_setters() -> None:
+        """The constructor owns validated values consumed through mapping views."""
+        counts = m.Ldif.DynamicCounts.model_validate({
+            c.Ldif.Category.REJECTED.value: 4
+        })
 
         tm.that(counts.get(c.Ldif.Category.REJECTED.value), eq=4)
         tm.that(counts[c.Ldif.Category.REJECTED.value], eq=4)
+        tm.that(counts.items(), eq={c.Ldif.Category.REJECTED.value: 4}.items())
+        tm.that(counts.values(), where=lambda values: 4 in values)
 
     @staticmethod
     def test_schema_content_accepts_empty_sequences() -> None:

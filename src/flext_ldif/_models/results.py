@@ -16,8 +16,8 @@ from flext_ldif._models import (
     FlextLdifModelsCollections,
     FlextLdifModelsDomainsEntries,
     FlextLdifModelsResultsStatistics,
+    FlextLdifModelsSettingsMigrate,
 )
-from flext_ldif._models._settings_migrate import FlextLdifModelsSettingsMigrate
 
 
 class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
@@ -39,6 +39,8 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
     class MigrationPipelineOptions(m.ArbitraryTypesModel):
         """Validated configuration consumed by the migration service."""
 
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(use_enum_values=False)
+
         input_dir: Path | None = m.Field(
             default=None,
             exclude=True,
@@ -54,33 +56,18 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
             exclude=True,
             description="Single-file output name override",
         )
-        mode: str | None = m.Field(
-            default=None,
-            exclude=True,
-            description="Migration mode supplied by the caller",
-        )
-        source_server: str | c.Ldif.ServerTypes | None = m.Field(
-            default=None,
-            exclude=True,
-            description="Source dialect input",
-        )
-        target_server: str | c.Ldif.ServerTypes | None = m.Field(
-            default=None,
-            exclude=True,
-            description="Target dialect input",
-        )
-        source_server_type: str | c.Ldif.ServerTypes | None = m.Field(
-            default=None,
+        source_server_type: c.Ldif.ServerTypes = m.Field(
+            default=c.Ldif.ServerTypes.RFC,
             exclude=True,
             description="Canonical source dialect",
         )
-        target_server_type: str | c.Ldif.ServerTypes | None = m.Field(
-            default=None,
+        target_server_type: c.Ldif.ServerTypes = m.Field(
+            default=c.Ldif.ServerTypes.RFC,
             exclude=True,
             description="Canonical target dialect",
         )
-        base_dn: str | None = m.Field(
-            default=None,
+        base_dn: str = m.Field(
+            default="",
             exclude=True,
             description="DN scope for ACL migration",
         )
