@@ -77,9 +77,9 @@ class TestsFlextLdifConfigIntegration:
         """Cloned settings expose the documented public Ldif field defaults."""
         settings: TestsFlextLdifSettings = self.create_settings()
 
-        tm.that(settings.ldif.ldif_encoding, eq=c.Ldif.Encoding.UTF8)
+        tm.that(settings.Ldif.ldif_encoding, eq=c.Ldif.Encoding.UTF8)
         tm.that(
-            settings.ldif.ldif_strict_validation,
+            settings.Ldif.ldif_strict_validation,
             eq=c.Ldif.DEFAULT_STRICT_VALIDATION,
         )
 

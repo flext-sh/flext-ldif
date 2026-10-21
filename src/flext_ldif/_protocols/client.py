@@ -32,8 +32,16 @@ class FlextLdifProtocolsClient(Protocol):
         """Runtime-bound entry transformations and their declared configuration."""
 
         registry: t.Port[p.Registry]
-        transform_config: FlextLdifProtocolsValues.TransformConfig | None
-        entries_input: t.SequenceOf[FlextLdifProtocolsValues.Entry] | None
+
+        @property
+        def transform_config(
+            self,
+        ) -> FlextLdifProtocolsValues.TransformConfig | None: ...
+
+        @property
+        def entries_input(
+            self,
+        ) -> t.SequenceOf[FlextLdifProtocolsValues.Entry] | None: ...
 
         @classmethod
         def for_servers(

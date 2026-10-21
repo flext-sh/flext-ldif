@@ -38,20 +38,29 @@ class FlextLdifServiceBase[TDomainResult](
         *,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
+        registry: p.Registry | None = None,
         **fields: t.JsonValue,
     ) -> Self | p.Ldif.Entry | str:
         """Return a cloned DSL instance preserving runtime registry/settings.
 
-        defaults.
+        Raises:
+            ValueError: If both server and registry dependencies are supplied.
+
         """
         payload: t.MutableMappingKV[
             str,
             t.JsonValue | p.Registry | p.Ldif.Settings | None,
         ] = dict(fields)
-        if server is not None:
+        component: p.Model = self
+        if server is not None and registry is not None:
+            message = "Provide one explicit registry dependency"
+            raise ValueError(message)
+        if registry is not None:
+            payload["registry"] = registry
+        elif server is not None:
             payload["registry"] = server.registry
-        elif isinstance(self, p.Ldif.RegistryBound):
-            payload["registry"] = self.registry
+        elif isinstance(component, p.Ldif.RegistryBound):
+            payload["registry"] = component.registry
         payload["runtime_settings"] = self.settings if settings is None else settings
         instance: Self = type(self).model_validate(payload)
         return instance
@@ -74,7 +83,8 @@ class FlextLdifServiceBase[TDomainResult](
         """Return runtime bootstrap options for LDIF services."""
         return m.RuntimeBootstrapOptions(settings_type=FlextLdifSettings)
 
-    def _get_effective_server_type_value(self) -> str:
+    @staticmethod
+    def _get_effective_server_type_value() -> str:
         """Return the default server type used by parser and writer services."""
         default_server_type: str = c.Ldif.ServerTypes.RFC.value
         return default_server_type

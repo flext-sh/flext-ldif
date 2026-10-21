@@ -11,8 +11,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif import FlextLdif, ldif
-from flext_ldif.services import FlextLdifServer
+from flext_ldif import FlextLdif, ldif, services
+from flext_ldif.servers import FlextLdifServersRfc
 from tests import c, m, tm, u
 
 if TYPE_CHECKING:
@@ -76,6 +76,10 @@ class TestsFlextLdifApiServerRegistry:
             error_msg="OUD constants must resolve from the facade",
         )
         tm.that(constants.CATEGORIZATION_PRIORITY, none=False)
+        tm.that(
+            constants is api.resolve_base_server(c.Tests.OUD).unwrap().server_constants
+        )
+        tm.that(isinstance(constants, type))
 
     @staticmethod
     def test_registry_summary_exposes_statistics_contract(
@@ -128,6 +132,13 @@ class TestsFlextLdifApiServerRegistry:
         tm.ok(callable_api.resolve_base_server(route))
 
     @staticmethod
+    @pytest.mark.parametrize("field_name", ["_runtime", "_operation_stats"])
+    def test_private_runtime_state_is_not_constructor_input(field_name: str) -> None:
+        """The facade preserves the base model's strict private-state ownership."""
+        with pytest.raises(ValueError, match=field_name):
+            FlextLdif.model_validate({field_name: None})
+
+    @staticmethod
     def test_explicit_registry_shares_identity_and_remove_reregister() -> None:
         """Sharing is intentional and removal frees the canonical core key."""
         first = FlextLdif()
@@ -147,6 +158,25 @@ class TestsFlextLdifApiServerRegistry:
         tm.that(first.resolve_base_server(route).unwrap() is replacement)
 
     @staticmethod
+    def test_dialect_bootstrap_and_schema_keep_public_model_contracts() -> None:
+        """Explicit bootstrap preserves DI and schema parsing returns native models."""
+        api = FlextLdif()
+        dialect = api.resolve_base_server(c.Ldif.ServerTypes.RFC.value).unwrap()
+        rebuilt = FlextLdifServersRfc(
+            runtime_settings=api.settings,
+            settings_overrides={},
+        )
+        tm.that(rebuilt.settings is api.settings)
+        attribute = dialect.schema_server.parse_server(
+            "( 1.2.3.4 NAME 'exampleAttr' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
+        ).unwrap()
+        tm.that(isinstance(attribute, m.Ldif.SchemaAttribute))
+        objectclass = dialect.schema_server.parse_server(
+            "( 1.2.3.5 NAME 'exampleClass' SUP top STRUCTURAL MUST cn )"
+        ).unwrap()
+        tm.that(isinstance(objectclass, m.Ldif.SchemaObjectClass))
+
+    @staticmethod
     def test_registered_dialect_is_original_core_payload() -> None:
         """The public facade and core registry return the same dialect object."""
         api = FlextLdif()
@@ -157,19 +187,22 @@ class TestsFlextLdifApiServerRegistry:
         tm.that(stored is dialect)
 
     @staticmethod
-    def test_required_registry_port_is_validated_and_not_serialized() -> None:
+    @pytest.mark.parametrize("field_name", ["registry"])
+    def test_required_registry_port_is_validated_and_not_serialized(
+        field_name: str,
+    ) -> None:
         """Services cannot construct infrastructure or accept a loose payload."""
         with pytest.raises(ValueError, match="registry"):
-            FlextLdifServer.model_validate({})
+            services.FlextLdifServer.model_validate({})
         with pytest.raises(ValueError, match="registry"):
-            m.Ldif.RegistryPortOptions.model_validate({"registry": m.Ldif.Statistics()})
+            m.Ldif.RegistryPortOptions.model_validate({field_name: m.Ldif.Statistics()})
         registry = u.build_registry()
         ports = m.Ldif.RegistryPortOptions(registry=registry)
         tm.that(ports.registry is registry)
-        tm.that("registry" not in ports.model_dump())
-        tm.that("registry" not in ports.model_json_schema().get("properties", {}))
+        tm.that(field_name not in ports.model_dump())
+        tm.that(field_name not in ports.model_json_schema().get("properties", {}))
         with pytest.raises(ValueError, match="registry"):
-            ports.registry = m.Ldif.Statistics()
+            setattr(ports, field_name, m.Ldif.Statistics())
         tm.that(ports.registry is registry)
 
     @staticmethod
@@ -179,7 +212,7 @@ class TestsFlextLdifApiServerRegistry:
         route = c.Ldif.ServerTypes.RFC.value
         payload = m.Ldif.Statistics()
         tm.ok(registry.register_plugin(c.Ldif.SERVERS, route, payload))
-        service = FlextLdifServer(registry=registry)
+        service = services.FlextLdifServer(registry=registry)
         tm.fail(service.resolve_base_server(route))
         tm.fail(service.resolve_server_bundle(route))
         tm.fail(service.summarize_registry())

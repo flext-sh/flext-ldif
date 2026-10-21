@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import ItemsView, KeysView, ValuesView
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 
 from flext_cli import p, t
 
@@ -39,7 +39,7 @@ class FlextLdifProtocolsBase:
         """MRO-composed settings contract with the LDIF namespace."""
 
         @property
-        def ldif(self) -> FlextLdifProtocolsBase.LdifSettings:
+        def Ldif(self) -> FlextLdifProtocolsBase.LdifSettings:
             """Namespaced LDIF settings branch."""
             ...
 
@@ -200,7 +200,7 @@ class FlextLdifProtocolsBase:
 
         def resolve_server_constants(
             self, server_type: str
-        ) -> p.Result[type[FlextLdifProtocolsBase.ServerConstants]]: ...
+        ) -> p.Result[FlextLdifProtocolsBase.ServerConstants]: ...
 
         def list_registered_servers(self) -> p.Result[t.MutableSequenceOf[str]]: ...
 
@@ -224,20 +224,20 @@ class FlextLdifProtocolsBase:
     class ServerConstants(Protocol):
         """Server constants contract extracted from server namespaces."""
 
-        SERVER_TYPE: str
-        PRIORITY: int
-        DETECTION_PATTERN: str | t.RegexPattern | None
-        DETECTION_WEIGHT: int
-        DETECTION_ATTRIBUTES: t.IterableOf[str]
-        DETECTION_OID_PATTERN: str | t.RegexPattern | None
-        DETECTION_ATTRIBUTE_PREFIXES: t.IterableOf[str] | None
-        DETECTION_OBJECTCLASS_NAMES: t.IterableOf[str] | None
-        DETECTION_DN_MARKERS: t.IterableOf[str] | None
-        ACL_ATTRIBUTE_NAME: str | None
-        CATEGORIZATION_PRIORITY: t.StrSequence
-        CATEGORY_OBJECTCLASSES: t.FrozensetMapping
-        HIERARCHY_PRIORITY_OBJECTCLASSES: frozenset[str]
-        CATEGORIZATION_ACL_ATTRIBUTES: frozenset[str]
+        SERVER_TYPE: ClassVar[str]
+        PRIORITY: ClassVar[int]
+        DETECTION_PATTERN: ClassVar[str]
+        DETECTION_WEIGHT: ClassVar[int]
+        DETECTION_ATTRIBUTES: ClassVar[frozenset[str]]
+        DETECTION_OID_PATTERN: ClassVar[str]
+        DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]]
+        DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]]
+        DETECTION_DN_MARKERS: ClassVar[frozenset[str]]
+        ACL_ATTRIBUTE_NAME: ClassVar[str]
+        CATEGORIZATION_PRIORITY: ClassVar[t.StrSequence]
+        CATEGORY_OBJECTCLASSES: ClassVar[t.FrozensetMapping]
+        HIERARCHY_PRIORITY_OBJECTCLASSES: ClassVar[frozenset[str]]
+        CATEGORIZATION_ACL_ATTRIBUTES: ClassVar[frozenset[str]]
 
     @runtime_checkable
     class SchemaAttribute(Protocol):
@@ -513,7 +513,7 @@ class FlextLdifProtocolsBase:
             self,
             server_type: str,
         ) -> p.Result[type[FlextLdifProtocolsBase.ServerConstants]]:
-            """Resolve server constants by server type via the facade DSL."""
+            """Resolve the registered constants class without copying its namespace."""
             ...
 
         def list_registered_servers(self) -> p.Result[t.MutableSequenceOf[str]]:

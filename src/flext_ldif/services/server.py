@@ -12,7 +12,7 @@ from flext_ldif import c, m, p, r, s, t, u
 class FlextLdifServer(s[p.Ldif.Response], m.Ldif.RegistryPortOptions):
     """Share one dialect registry port through the consuming service MRO."""
 
-    def register_server(self, server: p.Ldif.ServerServer) -> p.Result[bool]:
+    def register_server(self, server: p.Ldif.ServerServer | p.Model) -> p.Result[bool]:
         """Register the original dialect object without copying or overwriting.
 
         Returns:
@@ -141,7 +141,7 @@ class FlextLdifServer(s[p.Ldif.Response], m.Ldif.RegistryPortOptions):
             cannot be resolved.
 
         """
-        return self.server(server_type).map(lambda server: server.Constants)
+        return self.server(server_type).map(lambda server: server.server_constants)
 
     def list_registered_servers(self) -> p.Result[t.MutableSequenceOf[str]]:
         """List the authoritative registry without a mirror or class cache.

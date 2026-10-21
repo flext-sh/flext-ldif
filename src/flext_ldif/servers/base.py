@@ -34,13 +34,28 @@ class FlextLdifServersBase(
     )
     server_type: ClassVar[str] = c.Ldif.UNKNOWN_VALUE
     priority: ClassVar[int] = 0
+    Constants: ClassVar[type[p.Ldif.ServerConstants]]
 
     def __init__(
         self,
+        *,
+        runtime_settings: p.Ldif.Settings | None = None,
+        settings_type: p.SettingsType | None = None,
+        settings_overrides: t.JsonMapping | None = None,
+        initial_context: p.Context | None = None,
         **kwargs: t.JsonValue | p.Registry | p.Ldif.Settings,
     ) -> None:
         """Initialize base server and its nested servers."""
-        super().__init__(**kwargs)
+        self.__pydantic_validator__.validate_python(
+            {
+                **kwargs,
+                "runtime_settings": runtime_settings,
+                "settings_type": settings_type,
+                "settings_overrides": settings_overrides,
+                "initial_context": initial_context,
+            },
+            self_instance=self,
+        )
         parent_ref: FlextLdifServersBase = self
         schema_server: FlextLdifServersBaseSchema = self.Schema().model_copy(
             update={"server_type": self.server_type},
@@ -84,6 +99,11 @@ class FlextLdifServersBase(
         priority_number = int(priority_value)
         type.__setattr__(cls, "server_type", server_type_text)
         type.__setattr__(cls, "priority", priority_number)
+
+    @property
+    def server_constants(self) -> type[p.Ldif.ServerConstants]:
+        """The dialect's original constants namespace, exposed read-only."""
+        return self.Constants
 
     @property
     def acl(self) -> FlextLdifServersBaseSchemaAcl:
@@ -132,6 +152,7 @@ class FlextLdifServersBase(
         *,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
+        registry: p.Registry | None = None,
     ) -> Self: ...
 
     @overload
@@ -148,6 +169,7 @@ class FlextLdifServersBase(
         *args: str | t.MutableSequenceOf[m.Ldif.Entry] | None,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
+        registry: p.Registry | None = None,
         **fields: t.JsonValue | t.MutableSequenceOf[m.Ldif.Entry],
     ) -> Self | m.Ldif.Entry | str: ...
 
@@ -156,6 +178,7 @@ class FlextLdifServersBase(
         *args: str | t.MutableSequenceOf[m.Ldif.Entry] | None,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
+        registry: p.Registry | None = None,
         **fields: t.JsonValue | t.MutableSequenceOf[m.Ldif.Entry],
     ) -> Self | m.Ldif.Entry | str:
         """Callable interface - use as processor.
@@ -163,7 +186,19 @@ class FlextLdifServersBase(
         Returns:
             The resulting ``Self | m.Ldif.Entry | str``.
 
+        Raises:
+            ValueError: If both server and registry dependencies are supplied.
+
         """
+        if registry is not None:
+            if server is not None:
+                message = "Provide one explicit registry dependency"
+                raise ValueError(message)
+            return type(self).model_validate({
+                **fields,
+                "registry": registry,
+                "runtime_settings": self.settings if settings is None else settings,
+            })
         configured = FlextLdifServerMethodsMixin.dispatch_builder(
             super().__call__,
             fields,

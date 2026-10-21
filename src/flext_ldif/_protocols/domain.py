@@ -20,12 +20,14 @@ class FlextLdifProtocolsDomain(Protocol):
     """Service-level LDIF contracts and server capabilities."""
 
     @runtime_checkable
-    class ServerServer(Protocol):
+    class ServerServer(p.Model, Protocol):
         """Structured server contract used by services and tests."""
 
         server_type: ClassVar[str]
         priority: ClassVar[int]
-        Constants: ClassVar[type[FlextLdifProtocolsBase.ServerConstants]]
+
+        @property
+        def server_constants(self) -> type[FlextLdifProtocolsBase.ServerConstants]: ...
 
         @property
         def schema_server(self) -> FlextLdifProtocolsDomain.SchemaServer: ...

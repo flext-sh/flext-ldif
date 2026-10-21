@@ -27,8 +27,8 @@ class TestsFlextLdifClientContract:
                     (
                         "from flext_ldif import ldif, settings; "
                         "client = ldif(); "
-                        "assert client.settings.Ldif is settings.Ldif; "
-                        "print(client.settings.Ldif.ldif_encoding, "
+                        "print(client.settings.Ldif is settings.Ldif, "
+                        "client.settings.Ldif.ldif_encoding, "
                         "client.settings.Ldif.ldif_strict_validation)"
                     ),
                 ),
@@ -40,15 +40,15 @@ class TestsFlextLdifClientContract:
                 ),
             ),
         )
-        tm.that(result.stdout, eq=f"{encoding} False\n")
+        tm.that(result.stdout, eq=f"True {encoding} False\n")
 
     @staticmethod
     def test_facade_satisfies_ldif_client() -> None:
         """Test the facade serves as a client carrying the LDIF settings branch."""
         client: p.Ldif.LdifClient = ldif()
-        branch = client.settings.ldif
-        tm.that(branch.ldif_encoding, eq=settings.ldif.ldif_encoding)
+        branch = client.settings.Ldif
+        tm.that(branch.ldif_encoding, eq=settings.Ldif.ldif_encoding)
         tm.that(
             branch.ldif_strict_validation,
-            eq=settings.ldif.ldif_strict_validation,
+            eq=settings.Ldif.ldif_strict_validation,
         )

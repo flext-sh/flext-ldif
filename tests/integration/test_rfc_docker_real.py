@@ -161,21 +161,13 @@ class TestsFlextLdifRfcDockerReal:
         server_dir: str,
         filename: str,
     ) -> None:
-        """Integration fixtures resolve to a definite success-or-failure r[T]."""
+        """Selected integration fixtures parse into public entries."""
         # Arrange
         source = fixtures_dir / server_dir / filename
-        if not source.exists():
-            pytest.skip(f"Fixture not available: {source}")
-
-        # Act
-        result = FlextLdifParser(registry=FlextLdif().registry).parse_ldif_file(source)
-
-        # Assert — outcome is well-formed; success and failure are exclusive
-        tm.fail(result.success != result)
-        if result.success:
-            assert result.unwrap().entries
-        else:
-            assert result.error
+        parsed = tm.ok(
+            FlextLdifParser(registry=FlextLdif().registry).parse_ldif_file(source)
+        )
+        tm.that(parsed.entries, where=bool)
 
     # ------------------------------------------------------------------ #
     # Error paths                                                        #
@@ -244,14 +236,12 @@ class TestsFlextLdifRfcDockerReal:
             result = FlextLdifParser(registry=FlextLdif().registry).parse_ldif_file(
                 ldif_file
             )
-            tm.fail(result.success != result)
+            tm.that(result.success, ne=result.failure)
             if result.success:
-                assert all(
-                    entry.dn is not None and isinstance(entry.dn.value, str)
-                    for entry in result.unwrap().entries
-                )
+                for entry in tm.ok(result).entries:
+                    tm.that(tm.not_none(entry.dn).value, is_=str)
             else:
-                assert result.error
+                tm.that(tm.not_none(result.error), where=bool)
 
     # ------------------------------------------------------------------ #
     # Round-trip and write invariants                                    #

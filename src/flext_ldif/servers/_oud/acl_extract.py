@@ -30,17 +30,19 @@ class FlextLdifServersOudAclExtractMixin:
         """
         if not entry_data.attributes or not acl_attribute_names:
             return entry_data
-        existing_metadata = entry_data.metadata
-        if not existing_metadata:
-            existing_metadata = m.Ldif.ServerMetadata(
-                server_type=c.Ldif.ServerTypes.OUD,
-            )
         new_attributes_dict, commented_acl_values, hidden_attrs = (
             FlextLdifServersOudAclExtractMixin.extract_and_remove_acl_attributes(
                 entry_data.attributes.attributes,
                 acl_attribute_names,
             )
         )
+        if not commented_acl_values:
+            return entry_data
+        existing_metadata = entry_data.metadata
+        if existing_metadata is None:
+            existing_metadata = m.Ldif.ServerMetadata(
+                server_type=c.Ldif.ServerTypes.OUD,
+            )
         updated_metadata = (
             FlextLdifServersOudAclExtractMixin.update_metadata_with_commented_acls(
                 existing_metadata,

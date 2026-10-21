@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableMapping
-from typing import Annotated
+from typing import Annotated, ClassVar
 
 from flext_core import m
 
@@ -27,6 +27,15 @@ from flext_ldif._models import (
 
 class FlextLdifModelsDomainMetadata:
     """Namespace mixin for LDIF metadata domain models."""
+
+    class CommentedAttributeValues(m.RootModel[t.StrSequenceMapping]):
+        """Original text values retained by attribute name for LDIF comments."""
+
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(strict=True, frozen=True)
+        root: Annotated[
+            t.StrSequenceMapping,
+            m.Field(description="Original comment values indexed by attribute name"),
+        ]
 
     class ValidationMetadata(m.FrozenModel):
         """Validation results and error tracking metadata.

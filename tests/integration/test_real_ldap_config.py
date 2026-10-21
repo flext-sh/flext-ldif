@@ -73,7 +73,7 @@ class TestsFlextLdifRealLdapConfig:
         flext_api: p.Ldif.LdifClient,
     ) -> None:
         """The configured LDIF encoding resolves to a real Python codec."""
-        encoding: str = str(flext_api.settings.ldif.ldif_encoding)
+        encoding = flext_api.settings.Ldif.ldif_encoding
 
         # A settings value that is not a resolvable codec is a broken contract.
         assert codecs.lookup(encoding).name
@@ -83,7 +83,7 @@ class TestsFlextLdifRealLdapConfig:
         flext_api: p.Ldif.LdifClient,
     ) -> None:
         """The strict-validation flag is exposed as a plain bool."""
-        tm.that(flext_api.settings.ldif.ldif_strict_validation, is_=bool)
+        tm.that(flext_api.settings.Ldif.ldif_strict_validation, is_=bool)
 
     @staticmethod
     def test_process_options_expose_positive_worker_capacity() -> None:
