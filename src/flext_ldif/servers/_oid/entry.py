@@ -15,9 +15,7 @@ from flext_ldif.servers._oid import (
     FlextLdifServersOidEntryRestoreLinesMixin,
     FlextLdifServersOidEntryRestoreMixin,
 )
-from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
-from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
 
 
 class FlextLdifServersOidEntry(
@@ -37,23 +35,6 @@ class FlextLdifServersOidEntry(
     """
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
-
-    @override
-    def _normalize_attribute_name(self, attr_name: str) -> str:
-        """Normalize OID attribute names to RFC-canonical format.
-
-        Returns:
-            The resulting ``str``.
-
-        """
-        match attr_name.lower():
-            case attr_lower if attr_lower in {
-                FlextLdifServersOidConstants.ORCLACI.lower(),
-                FlextLdifServersOidConstants.ORCLENTRYLEVELACI.lower(),
-            }:
-                return FlextLdifServersRfcConstants.ACL_ATTRIBUTE_NAME
-            case _:
-                return super()._normalize_attribute_name(attr_name)
 
     @override
     def _parse_entry_from_lines(
