@@ -82,11 +82,11 @@ class TestsFlextLdifOidAclAssemble:
                         ),
                     ),
                 ),
-                'aci: (targetattr="*")(targetscope="base")'
-                '(version 3.0; acl "ctbc Entry by admins"; '
-                "allow (read, search, add, delete) "
-                'groupdn="ldap:///cn=admins,dc=ctbc"; '
-                'allow (read, search) userdn="ldap:///anyone";)',
+                'aci: (targetattr="*")    (targetscope="base")'
+                '    (version 3.0; acl "ctbc Entry by admins";'
+                "     allow (read, search, add, delete)    "
+                'groupdn="ldap:///cn=admins,dc=ctbc";'
+                "     allow (read, search)" + " " * 17 + 'userdn="ldap:///anyone";)',
                 id="two-distinct-perm-allows-with-targetscope",
             ),
             pytest.param(
@@ -108,9 +108,10 @@ class TestsFlextLdifOidAclAssemble:
                     ),
                 ),
                 'aci: (targetattr="cn||sn||mail")'
-                '(version 3.0; acl "ctbc Attrs by mgr"; '
-                'allow (read, search) userattr="manager#USERDN" '
-                'or groupdn="ldap:///cn=g,dc=ctbc";)',
+                '    (version 3.0; acl "ctbc Attrs by mgr";'
+                '     allow (read, search)    userattr="manager#USERDN"'
+                + " " * 26
+                + 'or groupdn="ldap:///cn=g,dc=ctbc";)',
                 id="same-perms-collapse-into-one-or-joined-allow",
             ),
             pytest.param(
@@ -133,10 +134,10 @@ class TestsFlextLdifOidAclAssemble:
                         ),
                     ),
                 ),
-                'aci: (targetattr="*")(version 3.0; acl "ctbc Entry by admins"; '
-                'allow (read, search) groupdn="ldap:///cn=ssl,dc=ctbc" '
-                'and authmethod="SSL"; '
-                'allow (read, search) groupdn="ldap:///cn=simple,dc=ctbc" '
+                'aci: (targetattr="*")    (version 3.0; acl "ctbc Entry by admins";'
+                '     allow (read, search)    groupdn="ldap:///cn=ssl,dc=ctbc" '
+                'and authmethod="SSL";'
+                '     allow (read, search)    groupdn="ldap:///cn=simple,dc=ctbc" '
                 'and authmethod="Simple";)',
                 id="same-perms-different-modifiers-render-separate-allows",
             ),
@@ -155,8 +156,9 @@ class TestsFlextLdifOidAclAssemble:
                     ),
                 ),
                 'aci: (targetattr!="userpassword")'
-                '(targetfilter="(objectclass=person)")'
-                '(version 3.0; acl "n"; allow (read, write) userdn="ldap:///self";)',
+                '    (targetfilter="(objectclass=person)")'
+                '    (version 3.0; acl "n";'
+                '     allow (read, write)    userdn="ldap:///self";)',
                 id="negation-targetattr-and-filter",
             ),
             pytest.param(
@@ -172,8 +174,8 @@ class TestsFlextLdifOidAclAssemble:
                         ),
                     ),
                 ),
-                'aci: (targetattr="*")(version 3.0; acl "x"; '
-                'allow (read) userattr="owner#GROUPDN";)',
+                'aci: (targetattr="*")    (version 3.0; acl "x";'
+                '     allow (read)    userattr="owner#GROUPDN";)',
                 id="userattr-bind-omits-ldap-prefix",
             ),
         ],
@@ -311,8 +313,8 @@ class TestsFlextLdifOidAclAssemble:
         tm.that(
             FlextLdifServersOidAclRender.render_aci_string(aci),
             eq=(
-                'aci: (targetattr="*")(version 3.0; acl "users Entry by a"; '
-                'allow (read, search, add) groupdn="ldap:///cn=a,dc=ctbc" '
+                'aci: (targetattr="*")    (version 3.0; acl "users Entry by a";'
+                '     allow (read, search, add)    groupdn="ldap:///cn=a,dc=ctbc" '
                 'and authmethod="SSL" and ip="10.0.0.0";)'
             ),
         )

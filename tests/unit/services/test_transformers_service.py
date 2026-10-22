@@ -119,8 +119,8 @@ class TestsFlextLdifTransformersService:
             attrs["aci"],
             eq=[
                 (
-                    '(targetattr="*")(version 3.0; acl "users Entry by admins"; '
-                    'allow (read, search, add) groupdn="ldap:///cn=admins,dc=ctbc";)'
+                    '(targetattr="*")    (version 3.0; acl "users Entry by admins";'
+                    '     allow (read, search, add)    groupdn="ldap:///cn=admins,dc=ctbc";)'
                 ),
             ],
         )
@@ -144,8 +144,8 @@ class TestsFlextLdifTransformersService:
             tm.not_none(converted.attributes).attributes["aci"],
             eq=[
                 (
-                    '(targetattr="*")(version 3.0; acl "users Entry by x"; '
-                    'allow (read, search) groupdn="ldap:///cn=a,dc=ctbc";)'
+                    '(targetattr="*")    (version 3.0; acl "users Entry by x";'
+                    '     allow (read, search)    groupdn="ldap:///cn=a,dc=ctbc";)'
                 ),
             ],
         )

@@ -51,32 +51,32 @@ class TestsFlextLdifOidAclEndToEnd:
                     'access to entry by group="cn=admins,dc=ctbc" '
                     "(browse,add,delete) by * (none)"
                 ),
-                '(targetattr="*")(version 3.0; acl "users Entry by admins"; '
-                "allow (read, search, add, delete) "
+                '(targetattr="*")    (version 3.0; acl "users Entry by admins";'
+                "     allow (read, search, add, delete)    "
                 'groupdn="ldap:///cn=admins,dc=ctbc";)',
                 id="group-with-deny-fallback",
             ),
             pytest.param(
                 "orclaci",
                 "access to attr=(cn,sn,mail) by * (read,search)",
-                '(targetattr="cn||sn||mail")(targetscope="base")'
-                '(version 3.0; acl "users Attrs by anyone"; '
-                'allow (read, search) userdn="ldap:///anyone";)',
+                '(targetattr="cn||sn||mail")    (targetscope="base")'
+                '    (version 3.0; acl "users Attrs by anyone";'
+                '     allow (read, search)    userdn="ldap:///anyone";)',
                 id="attr-list-anyone-pins-targetscope-base",
             ),
             pytest.param(
                 "orclaci",
                 "access to entry by dnattr=(manager) (browse)",
-                '(targetattr="*")(version 3.0; acl "users Entry by manager"; '
-                'allow (read, search) userattr="manager#USERDN";)',
+                '(targetattr="*")    (version 3.0; acl "users Entry by manager";'
+                '     allow (read, search)    userattr="manager#USERDN";)',
                 id="dnattr-becomes-userattr",
             ),
             pytest.param(
                 "orclentrylevelaci",
                 'access to entry by group="cn=g,dc=ctbc" (browse)',
-                '(targetattr="*")(targetscope="base")'
-                '(version 3.0; acl "users Entry by g"; '
-                'allow (read, search) groupdn="ldap:///cn=g,dc=ctbc";)',
+                '(targetattr="*")    (targetscope="base")'
+                '    (version 3.0; acl "users Entry by g";'
+                '     allow (read, search)    groupdn="ldap:///cn=g,dc=ctbc";)',
                 id="orclentrylevelaci-pins-targetscope-base",
             ),
         ],
@@ -124,8 +124,8 @@ class TestsFlextLdifOidAclEndToEnd:
             converted.attributes.attributes["aci"],
             eq=[
                 (
-                    '(targetattr="*")(version 3.0; acl "users Entry by x"; '
-                    'allow (read, search) groupdn="ldap:///cn=a,dc=ctbc";)'
+                    '(targetattr="*")    (version 3.0; acl "users Entry by x";'
+                    '     allow (read, search)    groupdn="ldap:///cn=a,dc=ctbc";)'
                 ),
             ],
         )

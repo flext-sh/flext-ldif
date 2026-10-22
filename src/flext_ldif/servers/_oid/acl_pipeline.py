@@ -88,8 +88,10 @@ class FlextLdifServersOidAclPipeline:
 
         Fires only for oid→oud entries carrying ``orclaci``/``orclentrylevelaci``;
         their values convert (via :meth:`convert_acl_values`) into ``aci`` values
-        and the OID ACL attributes are removed. A malformed ACL surfaces as
-        ``r.fail``; non-matching entries pass through unchanged.
+        and the OID ACL attributes are removed. An Oracle-internal DN
+        (``c.Ldif.ORACLE_INTERNAL_DN_RES``) loses its OID ACLs without any
+        ``aci``. A malformed ACL surfaces as ``r.fail``; non-matching entries
+        pass through unchanged.
 
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
@@ -104,18 +106,18 @@ class FlextLdifServersOidAclPipeline:
         if attrs_model is None or not attrs_model.attributes:
             return r[m.Ldif.Entry].ok(entry)
         current = dict(attrs_model.attributes)
-        oid_acl_attrs = {
-            c.Ldif.AclConvertType.ORCLACI.value,
-            c.Ldif.AclConvertType.ORCLENTRYLEVELACI.value,
-        }
-        acl_names = [name for name in current if name.lower() in oid_acl_attrs]
+        acl_names = [name for name in current if name.lower() in c.Ldif.AclConvertType]
         if not acl_names:
             return r[m.Ldif.Entry].ok(entry)
         dn_value = entry.dn.value if entry.dn else ""
         oid_lines = [
             f"{name}: {value}" for name in acl_names for value in current[name]
         ]
-        converted = cls.convert_acl_values(dn_value, oid_lines, base_dn=base_dn)
+        converted = (
+            r[t.StrSequence].ok(())
+            if any(rule.match(dn_value) for rule in c.Ldif.ORACLE_INTERNAL_DN_RES)
+            else cls.convert_acl_values(dn_value, oid_lines, base_dn=base_dn)
+        )
         if converted.failure:
             return r[m.Ldif.Entry].from_failure(converted)
         for name in acl_names:

@@ -223,13 +223,21 @@ class FlextLdifMigrationPipeline(
     ) -> p.Result[p.Ldif.MigrationPipelineResult]:
         """Build the outcome model and write the migrated entries to disk.
 
+        With ``sort_entries_hierarchically`` the entries are ordered by
+        ``u.Ldif.hierarchy_key``; ``format_options`` shape the written LDIF.
+
         Returns:
             The resulting ``p.Result[p.Ldif.MigrationPipelineResult]`` with the
             written outcome or the propagated write failure metadata.
 
         """
+        ordered = (
+            sorted(migrated, key=lambda entry: u.Ldif.hierarchy_key(entry.dn_str))
+            if self.sort_entries_hierarchically
+            else migrated
+        )
         outcome = m.Ldif.MigrationPipelineResult.model_validate({
-            "entries": migrated,
+            "entries": ordered,
             "output_files": [str(output_path)],
             "stats": m.Ldif.Statistics(
                 total_entries=len(entries),
@@ -243,6 +251,7 @@ class FlextLdifMigrationPipeline(
             outcome.entries,
             output_path,
             server_type=self.target_server_type,
+            format_options=self.format_options,
         )
         if written.failure:
             return r[p.Ldif.MigrationPipelineResult].from_failure(written)

@@ -14,6 +14,7 @@ from flext_cli import p, t
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from flext_ldif import m
     from flext_ldif.protocols import FlextLdifProtocols
 
 
@@ -354,10 +355,16 @@ class FlextLdifProtocolsBase:
 
     @runtime_checkable
     class MigrationOutputOptions(Protocol):
-        """Output naming capability consumed by migration composition."""
+        """Output naming, ordering and formatting consumed by migration composition."""
 
         @property
         def output_filename(self) -> str | None: ...
+
+        @property
+        def sort_entries_hierarchically(self) -> bool: ...
+
+        @property
+        def format_options(self) -> m.Ldif.WriteFormatOptions | None: ...
 
     @runtime_checkable
     class FlexibleCategories(Protocol):

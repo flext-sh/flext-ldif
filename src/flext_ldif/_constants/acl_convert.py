@@ -70,6 +70,13 @@ class FlextLdifConstantsAclConvert:
     WHITESPACE_RE: ClassVar[t.RegexPattern] = re.compile(r"\s+")
     DN_NORMALIZE_COMMA_RE: ClassVar[t.RegexPattern] = re.compile(r"\s*,\s*")
     DN_NORMALIZE_EQUALS_RE: ClassVar[t.RegexPattern] = re.compile(r"\s*=\s*")
+    ORACLE_INTERNAL_DN_RES: ClassVar[tuple[t.RegexPattern, ...]] = (
+        re.compile(r"^orclownerguid=", re.IGNORECASE),
+        re.compile(r"^cn=orclpwdverifierconfig,", re.IGNORECASE),
+        re.compile(r"^cn=orclaci,", re.IGNORECASE),
+        re.compile(r".*cn=OracleContext,", re.IGNORECASE),
+    )
+    "Oracle-internal DNs whose OID ACLs have no OUD counterpart (not migrated)."
 
     _SUBJ_MODIFIER_PATTERN = (
         r"(?:\s+(?:added_object_constraint|constraintonaddedobject|bindmode|bindipfilter)"

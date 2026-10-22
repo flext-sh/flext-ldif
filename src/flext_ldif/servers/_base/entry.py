@@ -435,11 +435,12 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         header_lines = self._build_header_lines(write_options, len(entries))
 
         def format_output(results: t.StrSequence) -> str:
-            all_lines = [*header_lines, *results]
-            ldif_output = "\n".join(all_lines) if all_lines else ""
-            if header_lines and (not ldif_output.endswith("\n")):
-                ldif_output += "\n"
-            return ldif_output
+            # RFC 2849 SEP: a blank line closes the header and every record.
+            blocks = [
+                *(("\n".join(header_lines) + "\n",) if header_lines else ()),
+                *(record for record in results if record),
+            ]
+            return "".join(f"{block}\n" for block in blocks)
 
         def write_entry(entry: m.Ldif.Entry) -> p.Result[str]:
             return self._write_single_entry(entry, write_options)

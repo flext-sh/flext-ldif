@@ -1,10 +1,11 @@
 """OUD aci rendering — AciRule value object → canonical aci string.
 
-Faithful port of the oracle ``AciRule.to_aci_string`` (non-formatted form):
-``aci: (targetattr=…)(targetfilter=…)?(targetscope=…)?(version 3.0; acl
-"name"; allow (perms) bindrule; …)``. Same-permission subjects collapse into
-one ``allow`` clause with ``or``-joined bind-rules. Pure string assembly —
-total function, no failure channel. Format literals are the ``c.Ldif`` SSOT.
+Renders the aligned OUD form: ``aci: (targetattr=…)`` then the indented
+``(targetfilter=…)``/``(targetscope=…)``/``(version 3.0; acl "name";`` parts
+and one indented ``allow (perms) bindrule;`` clause per permission set.
+Same-permission subjects collapse into one ``allow`` clause with ``or``-joined
+bind-rules. Pure string assembly — total function, no failure channel. Format
+literals and layout widths are the ``c.Ldif`` SSOT.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -54,7 +55,13 @@ class FlextLdifServersOidAclRender:
         """Render an :class:`m.Ldif.AciRule` to its OUD ``aci:`` line.
 
         Allows are grouped by identical permission set (first-seen order); each
-        group becomes one ``allow (perms) bind1 or bind2;`` clause.
+        group becomes one ``allow (perms) bind1 or bind2;`` clause. The value
+        carries the aligned layout: target parts and ``(version`` follow
+        ``c.Ldif.ACI_PART_INDENT``, each clause follows
+        ``c.Ldif.ACI_CLAUSE_INDENT``, bind-rules start in one column after the
+        longest ``allow (perms)``, and each further bind-rule's ``or`` keyword
+        ends in that column. The LDIF writer folds the value at these
+        boundaries.
 
         Returns:
             The resulting ``str``.
@@ -63,16 +70,24 @@ class FlextLdifServersOidAclRender:
         grouped = m.Ldif.AciAllowGroups()
         for allow in aci.allows:
             grouped = grouped.with_allow(allow, cls._render_bind(allow))
-        clauses = tuple(
-            f"{c.Ldif.ACI_ALLOW} ({', '.join(group.permissions)}) "
-            f"{c.Ldif.BIND_OR.join(group.binds)};"
+        heads = tuple(
+            f"{c.Ldif.ACI_ALLOW} ({', '.join(group.permissions)})"
             for group in grouped.groups
         )
-        version_part = f'({c.Ldif.ACI_VERSION}; acl "{aci.acl_name}";'
-        return (
-            f"{c.Ldif.ACI_PREFIX}{''.join(cls._target_parts(aci))}"
-            f"{version_part} {' '.join(clauses)})"
+        head_width = max((len(head) for head in heads), default=0)
+        bind_column = len(c.Ldif.ACI_CLAUSE_INDENT) + head_width + c.Ldif.ACI_BIND_GAP
+        or_joint = " " * (bind_column - len(c.Ldif.BIND_OR)) + c.Ldif.BIND_OR
+        clauses = "".join(
+            f"{c.Ldif.ACI_CLAUSE_INDENT}{head.ljust(head_width + c.Ldif.ACI_BIND_GAP)}"
+            f"{or_joint.join(group.binds)};"
+            for head, group in zip(heads, grouped.groups, strict=True)
         )
+        first, *rest = cls._target_parts(aci)
+        parts = "".join(
+            f"{c.Ldif.ACI_PART_INDENT}{part}"
+            for part in (*rest, f'({c.Ldif.ACI_VERSION}; acl "{aci.acl_name}";')
+        )
+        return f"{c.Ldif.ACI_PREFIX}{first}{parts}{clauses})"
 
 
 __all__: list[str] = ["FlextLdifServersOidAclRender"]

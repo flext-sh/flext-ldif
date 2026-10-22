@@ -295,7 +295,8 @@ class FlextLdifFacade(
             input_dir: Optional directory holding the source LDIF files.
             output_dir: Optional directory receiving the migrated LDIF files.
             settings: Optional transform config supplying server types.
-            options: Optional migration options supplying the output filename.
+            options: Optional migration options supplying the output filename,
+                hierarchical entry ordering and output formatting.
             runtime_settings: Optional runtime settings overriding the facade
                 bounds.
 
@@ -313,6 +314,12 @@ class FlextLdifFacade(
                 self.settings if runtime_settings is None else runtime_settings
             ),
             output_filename=None if options is None else options.output_filename,
+            sort_entries_hierarchically=(
+                defaults.sort_entries_hierarchically
+                if options is None
+                else options.sort_entries_hierarchically
+            ),
+            format_options=None if options is None else options.format_options,
             source_server_type=(
                 defaults.source_server_type
                 if process_config is None or process_config.source_server is None

@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_ldif import c
 from flext_ldif._utilities import (
     FlextLdifDNCharClass,
     FlextLdifDNCleaning,
@@ -112,6 +113,23 @@ class FlextLdifUtilitiesDN(
         dn_lower = dn_str.lower().strip()
         base_dn_lower = base_dn_str.lower().strip()
         return dn_lower == base_dn_lower or dn_lower.endswith(f",{base_dn_lower}")
+
+    @staticmethod
+    def hierarchy_key(dn: str) -> tuple[int, str]:
+        """Order key placing parents before children, then siblings by name.
+
+        The key is the RDN count followed by the case-folded RDNs joined from
+        the root down, with spacing around ``=`` removed.
+
+        Returns:
+            The resulting ``tuple[int, str]``.
+
+        """
+        rdns = [
+            c.Ldif.DN_NORMALIZE_EQUALS_RE.sub("=", rdn)
+            for rdn in FlextLdifUtilitiesDN.split(dn)
+        ]
+        return (len(rdns), ",".join(reversed(rdns)).lower())
 
 
 __all__: list[str] = ["FlextLdifUtilitiesDN"]

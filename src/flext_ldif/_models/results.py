@@ -71,6 +71,18 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
             exclude=True,
             description="DN scope for ACL migration",
         )
+        sort_entries_hierarchically: bool = m.Field(
+            default=False,
+            exclude=True,
+            description="Write entries by DN depth, then by reversed DN text",
+        )
+        format_options: FlextLdifModelsSettingsMigrate.WriteFormatOptions | None = (
+            m.Field(
+                default=None,
+                exclude=True,
+                description="LDIF formatting applied to the written output",
+            )
+        )
 
     class MigrationSummary(m.FrozenModel):
         statistics: Annotated[

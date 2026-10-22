@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from itertools import pairwise
+
 from flext_ldif import c, t
 
 
@@ -211,6 +213,64 @@ class FlextLdifWriterLineFolding:
                 folded.append(chunk)
             fold.advance(chunk_end)
         return folded
+
+    @staticmethod
+    def _aci_layout_fold_points(line: str) -> t.SequenceOf[int]:
+        """Locate the aligned-layout boundaries of a rendered ACI line.
+
+        A boundary is the start of a whitespace run of at least
+        ``c.Ldif.ACI_PART_INDENT`` width, outside quoted values, that precedes
+        a top-level ``(`` part or an ``allow``/``or`` token inside
+        the ``(version …)`` body. Single-space compact ACIs have none.
+
+        Returns:
+            The resulting ``t.SequenceOf[int]``.
+
+        """
+        tokens = (c.Ldif.ACI_ALLOW, c.Ldif.BIND_OR)
+        min_run = len(c.Ldif.ACI_PART_INDENT)
+        points: t.MutableSequenceOf[int] = []
+        depth = 0
+        quoted = False
+        index = 0
+        while index < len(line):
+            char = line[index]
+            if char == '"':
+                quoted = not quoted
+            elif not quoted and char == " ":
+                run_end = index
+                while run_end < len(line) and line[run_end] == " ":
+                    run_end += 1
+                rest = line[run_end:]
+                if run_end - index >= min_run and (
+                    (depth == 0 and rest.startswith("("))
+                    or (depth == 1 and rest.startswith(tokens))
+                ):
+                    points.append(index)
+                index = run_end
+                continue
+            elif not quoted:
+                depth += {"(": 1, ")": -1}.get(char, 0)
+            index += 1
+        return points
+
+    @classmethod
+    def fold_aci_layout(cls, line: str) -> t.MutableSequenceOf[str]:
+        """Fold an ``aci:`` line at its aligned-layout boundaries.
+
+        Each boundary starts a continuation line, so unfolding (RFC 2849 §3)
+        restores the exact value. A compact ACI stays on one line.
+
+        Returns:
+            The resulting ``t.MutableSequenceOf[str]``.
+
+        """
+        bounds = (0, *cls._aci_layout_fold_points(line), len(line))
+        segments = [line[start:end] for start, end in pairwise(bounds)]
+        return [
+            segments[0],
+            *(c.Ldif.LINE_CONTINUATION_SPACE + segment for segment in segments[1:]),
+        ]
 
 
 __all__: list[str] = ["FlextLdifWriterLineFolding"]

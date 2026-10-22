@@ -155,8 +155,8 @@ class TestsFlextLdifProcessingService:
             attrs["aci"],
             eq=[
                 (
-                    '(targetattr="*")(version 3.0; acl "users Entry by x"; '
-                    'allow (read, search) groupdn="ldap:///cn=a,dc=ctbc";)'
+                    '(targetattr="*")    (version 3.0; acl "users Entry by x";'
+                    '     allow (read, search)    groupdn="ldap:///cn=a,dc=ctbc";)'
                 ),
             ],
         )

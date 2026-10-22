@@ -12,14 +12,12 @@ from flext_ldif import m, p, t, u
 from flext_ldif.servers._oid import (
     FlextLdifServersOidEntryNormalizeMixin,
     FlextLdifServersOidEntryParseMixin,
-    FlextLdifServersOidEntryRestoreLinesMixin,
     FlextLdifServersOidEntryRestoreMixin,
 )
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
 class FlextLdifServersOidEntry(
-    FlextLdifServersOidEntryRestoreLinesMixin,
     FlextLdifServersOidEntryParseMixin,
     FlextLdifServersOidEntryRestoreMixin,
     FlextLdifServersOidEntryNormalizeMixin,
@@ -30,8 +28,9 @@ class FlextLdifServersOidEntry(
     OID-specific behavior is composed from focused mixins: boolean value
     conversion (``entry_boolean``), metadata extraction (``entry_metadata``),
     parse hooks (``entry_parse``), round-trip attribute restore
-    (``entry_restore``), original-line restoration (``entry_restore_lines``),
-    and schema value normalization (``entry_normalize``).
+    (``entry_restore``), and schema value normalization (``entry_normalize``).
+    The OID ACL attributes (``orclaci``/``orclentrylevelaci``) keep their names
+    through parse and write; only OID→OUD conversion renames them to ``aci``.
     """
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -56,14 +55,9 @@ class FlextLdifServersOidEntry(
             cleaned_dn, _ = u.Ldif.clean_dn_with_statistics(original_dn)
             if cleaned_dn != original_dn:
                 entry.dn = m.Ldif.DN.model_validate({"value": cleaned_dn})
-        original_dn = str(entry.dn) if entry.dn else ""
-        original_attrs: t.MutableStrSequenceMapping = (
-            entry.attributes.attributes if entry.attributes else {}
-        )
         finalize_result = self._hook_finalize_entry_parse(
             entry,
-            original_dn,
-            original_attrs,
+            str(entry.dn) if entry.dn else "",
         )
         if finalize_result.failure:
             return finalize_result
