@@ -1,7 +1,7 @@
 """Base model parts for flext-ldif.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
-src/flext_ldif/_models/_base_parts
+src/flext_ldif/_models/_base
 SPDX-License-Identifier: MIT
 """
 

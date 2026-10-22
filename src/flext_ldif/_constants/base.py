@@ -15,7 +15,7 @@ import struct
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_ldif._constants._base_parts import FlextLdifConstantsBaseParts
+from flext_ldif._constants._base import FlextLdifConstantsBaseParts
 
 FlextLdifConstantsAclConvertOud = (
     FlextLdifConstantsBaseParts.FlextLdifConstantsAclConvertOud

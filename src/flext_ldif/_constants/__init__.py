@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldif._constants._base_parts import FlextLdifConstantsBaseParts
+    from flext_ldif._constants._base import FlextLdifConstantsBaseParts
     from flext_ldif._constants.acl_convert import FlextLdifConstantsAclConvert
     from flext_ldif._constants.base import (
         FlextLdifConstantsAclConvertOud,
@@ -51,7 +51,7 @@ install_lazy_exports(
         "FlextLdifConstantsAclConvert": ".acl_convert",
         "FlextLdifConstantsAclConvertOud": ".base",
         "FlextLdifConstantsBase": ".base",
-        "FlextLdifConstantsBaseParts": "._base_parts",
+        "FlextLdifConstantsBaseParts": "._base",
         "FlextLdifConstantsEnums": ".base",
         "FlextLdifConstantsServers": ".servers",
         "FlextLdifConstantsServersBase": ".servers_base",
