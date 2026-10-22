@@ -1,0 +1,355 @@
+# provenance: devops-oud-iac@2225708e3ac8 tests/benchmark/gold/acl_synth_gold.ldif sha256=02391ee84ada28158e64d2c94ff2aa30cc2d5cacc50ce40cac3dc5d8f99c36b2
+# =====================================================================================
+# MIGRAÇÃO DE ACLs: OID → OUD (Oracle Unified Directory)
+# =====================================================================================
+#
+# INFORMAÇÕES GERAIS
+# -------------------------------------------------------------------------------------
+# Data/Hora de Geração: NORMALIZED
+# Timestamp: NORMALIZED
+# Ferramenta: convert_oid_to_oud_acl.py v8.0
+# Guia de Referência: acl-conversion-guide.md v3.2+
+#
+# SESSION METADATA
+# -------------------------------------------------------------------------------------
+# Session ID: NORMALIZED
+# Start Time: NORMALIZED
+# Input File: NORMALIZED
+# Base DN Filter: dc=ctbc
+# Event Tracking: Enabled (real-time)
+#
+# ETAPAS DE CONVERSÃO
+# -------------------------------------------------------------------------------------
+# ETAPA 1: PARSING      - Leitura e parsing das regras OID
+# ETAPA 2: TRANSFORMAÇÃO - Conversão subject/permissão para OUD
+# ETAPA 3: EXCLUSÕES    - Regras removidas (default-deny, fora escopo)
+# ETAPA 4: DEDUPLICAÇÃO - Remoção de ACIs duplicadas
+# ETAPA 5: OUTPUT       - Escrita do LDIF final
+#
+# ARQUIVO DE ENTRADA
+# -------------------------------------------------------------------------------------
+# Fonte: acl_synth_input.ldif
+# Caminho Completo: NORMALIZED
+# Base DN Filtro: dc=ctbc
+# Ordenação: Hierárquica + Alfabética
+#
+# FORMATO DE SAÍDA
+# -------------------------------------------------------------------------------------
+# Tipo: LDIF Modify (RFC 2849)
+# Estrutura:
+#   1. dn: <entry DN (normalizado)>
+#   2. changetype: modify
+#   3. replace: aci   (substitui todas ACIs do DN)
+#   4. # OID: ...      (comentário da regra original)
+#   5. aci: ...        (ACI OUD formatado)
+#   6. # DE: ...       (regra OID original)
+#   7. # PARA: ...     (regra OUD convertida)
+#   8. # SEÇÃO: ...    (referência ao guia de conversão)
+#   9. -               (separador entre DNs)
+#
+# COMENTÁRIOS DE CONVERSÃO
+# -------------------------------------------------------------------------------------
+# Cada regra convertida inclui três linhas de comentário:
+#
+# # DE:   Regra OID original completa
+# # PARA: Regra OUD convertida
+# # SEÇÃO: Referência às seções do guia de conversão
+#
+# REFERÊNCIAS DE SEÇÃO (Conversão de Subjects - Section 4.4)
+# -------------------------------------------------------------------------------------
+# Section 4.4.1: group="X"           → groupdn="ldap:///X"
+# Section 4.4.2: dn="X"              → userdn="ldap:///X"
+# Section 4.4.3: self                 → userdn="ldap:///self"
+# Section 4.4.4: * (anyone)           → userdn="ldap:///anyone"
+# Section 4.4.5: dnattr=(owner)       → userattr="owner#USERDN"
+# Section 4.4.6: groupattr=(owner)    → userattr="owner#GROUPDN"
+#
+# REFERÊNCIAS DE SEÇÃO (Mapeamento de Permissões - Section 5)
+# -------------------------------------------------------------------------------------
+# Section 5.1:   Permissões de Entry (browse, add, delete, proxy)
+# Section 5.1.1: browse               → read, search (entry)
+# Section 5.2:   Permissões de Attr   (read, search, write, compare, selfwrite)
+#
+# REFERÊNCIAS DE SEÇÃO (Exclusões)
+# -------------------------------------------------------------------------------------
+# Section 5.3:   Permissões Negativas (noread, nosearch, nowrite, etc.)
+#                 → Puladas! Default-deny do OUD já bloqueia
+# Section 5.4:   Permissão Especial: none
+#                 → by * (none) removido (confie no default-deny)
+# Section 11:    Escopo e Herança (DN fora do base_dn configurado)
+#
+# INSTRUÇÕES DE APLICAÇÃO
+# -------------------------------------------------------------------------------------
+# 1. VALIDAÇÃO PRÉ-APLICAÇÃO:
+#    python scripts/validate_oud_acl.py <arquivo.ldif>
+#
+# 2. APLICAÇÃO NO SERVIDOR:
+#    ldapmodify -h <host> -p <port> \
+#               -D cn=orcladmin -w <password> \
+#               -f <arquivo.ldif>
+#
+# 3. VERIFICAÇÃO PÓS-APLICAÇÃO:
+#    ldapsearch -h <host> -p <port> -b <base_dn> -s base aci
+#
+# =====================================================================================
+# AVISO IMPORTANTE: Leia e valide ANTES de aplicar em PRODUÇÃO!
+# =====================================================================================
+#
+version: 1
+
+# -------------------------------------------------------------------------------------
+dn: cn=admins,dc=ctbc
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=SecurityAdmins,dc=ctbc"   (add, browse, delete)
+#       by self                                (browse)
+#       by *                                   (none)
+aci: (targetattr="*")
+     (version 3.0; acl "admins Entry by SecurityAdmins (+1)";
+      allow (read, search, add, delete)    groupdn="ldap:///cn=SecurityAdmins,dc=ctbc";
+      allow (read, search)                 userdn="ldap:///self";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=SecurityAdmins,dc=ctbc" (add, browse, delete)
+# PARA  : allow (read, search, add, delete)    groupdn="ldap:///cn=SecurityAdmins,dc=ctbc"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+#   DE  : by self="self"                       (browse)
+# PARA  : allow (read, search)                 userdn="ldap:///self"
+# SEÇÃO : 4.4.3 (Subject: self→userdn:self)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=combined-deny,dc=ctbc
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=Admins,dc=ctbc"   (all)
+#       by *                           (none)
+aci: (targetattr="*")
+     (version 3.0; acl "combined-deny Entry by Admins";
+      allow (all)    groupdn="ldap:///cn=Admins,dc=ctbc";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=Admins,dc=ctbc" (all)
+# PARA  : allow (all)    groupdn="ldap:///cn=Admins,dc=ctbc"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=groupattr-case,dc=ctbc
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(member)
+#       by groupattr=(uniquemember)   (read, search)
+#       by *                          (none)
+aci: (targetattr="member")
+     (version 3.0; acl "groupattr-case Attrs by uniquemember";
+      allow (read, search)    userattr="uniquemember#GROUPDN";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by groupattr="uniquemember" (read, search)
+# PARA  : allow (read, search)    userattr="uniquemember#GROUPDN"
+# SEÇÃO : 4.4.6 (Subject: groupattr→userattr#GROUPDN)
+# SEÇÃO : 5.2 (Perm: attr-level)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=negated-wildcard,dc=ctbc
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(orclpasswordhint)
+#       by group="cn=CommonUsers,dc=ctbc"   (compare, read, search)
+#       by *                                (nocompare, noread, nowrite)
+aci: (targetattr="orclpasswordhint")
+     (targetscope="base")
+     (version 3.0; acl "negated-wildcard Attrs by CommonUsers (+1)";
+      allow (read, search, compare)    groupdn="ldap:///cn=CommonUsers,dc=ctbc";
+      allow (search, selfwrite)        userdn="ldap:///anyone";)
+#   DE  : by group="cn=CommonUsers,dc=ctbc" (compare, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=CommonUsers,dc=ctbc"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+#   DE  : by anyone="anyone"                (nocompare, noread, nowrite)
+# PARA  : allow (search, selfwrite)        userdn="ldap:///anyone"
+# SEÇÃO : 4.4.4 (Subject: *→userdn:anyone)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 6.8 (Padrão: só negativas → complemento)
+# SEÇÃO : 8.4 (Cálculo: complemento permissões)
+# SEÇÃO : 11.4 (anyone subject → base scope, prevents inheritance)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=owner-groups,dc=ctbc
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by dnattr=(owner)   (browse)
+#       by *                (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "owner-groups Entry by owner";
+      allow (read, search)    userattr="owner#USERDN";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by dnattr="owner" (browse)
+# PARA  : allow (read, search)    userattr="owner#USERDN"
+# SEÇÃO : 4.4.5 (Subject: dnattr→userattr#USERDN)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(uniquemember)
+#       by dnattr=(owner)   (read, search, write)
+#       by *                (none)
+aci: (targetattr="uniquemember")
+     (targetscope="base")
+     (version 3.0; acl "owner-groups Attrs by owner";
+      allow (read, search, write)    userattr="owner#USERDN";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by dnattr="owner" (read, search, write)
+# PARA  : allow (read, search, write)    userattr="owner#USERDN"
+# SEÇÃO : 4.4.5 (Subject: dnattr→userattr#USERDN)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=public-read,dc=ctbc
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(cn,sn,mail)
+#       by *   (compare, read, search)
+aci: (targetattr="cn||sn||mail")
+     (targetscope="base")
+     (version 3.0; acl "public-read Attrs by anyone";
+      allow (read, search, compare)    userdn="ldap:///anyone";)
+#   DE  : by anyone="anyone" (compare, read, search)
+# PARA  : allow (read, search, compare)    userdn="ldap:///anyone"
+# SEÇÃO : 4.4.4 (Subject: *→userdn:anyone)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.4 (anyone subject → base scope, prevents inheritance)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=superuser-case,dc=ctbc
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by SuperUser   (compare, read, write)
+#       by *           (none)
+aci: (targetattr="*")
+     (version 3.0; acl "superuser-case Attrs by Directory Manager";
+      allow (read, write, compare)    userdn="ldap:///cn=Directory Manager";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by superuser="cn=Directory Manager" (compare, read, write)
+# PARA  : allow (read, write, compare)    userdn="ldap:///cn=Directory Manager"
+# SEÇÃO : 5.2 (Perm: attr-level)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=users-attrs,dc=ctbc
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(userPassword) filter=(objectclass=inetorgperson)
+#       by group="cn=SecurityAdmins,dc=ctbc"   (compare, read, search, write)
+#       by self                                (compare, read, search, selfwrite, write)
+#       by *                                   (none)
+aci: (targetattr="userPassword")
+     (targetfilter="(objectclass=inetorgperson)")
+     (version 3.0; acl "users-attrs Attrs by SecurityAdmins (+1)";
+      allow (read, search, write, compare)               groupdn="ldap:///cn=SecurityAdmins,dc=ctbc";
+      allow (read, search, write, selfwrite, compare)    userdn="ldap:///self";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=SecurityAdmins,dc=ctbc" (compare, read, search, write)
+# PARA  : allow (read, search, write, compare)               groupdn="ldap:///cn=SecurityAdmins,dc=ctbc"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+#   DE  : by self="self"                       (compare, read, search, selfwrite, write)
+# PARA  : allow (read, search, write, selfwrite, compare)    userdn="ldap:///self"
+# SEÇÃO : 4.4.3 (Subject: self→userdn:self)
+# SEÇÃO : 5.2 (Perm: attr-level)
+-
+
+# =====================================================================================
+# ESTATÍSTICAS DA CONVERSÃO
+# =====================================================================================
+# Data/Hora de Conclusão: NORMALIZED
+#
+# ANÁLISE DO ARQUIVO DE ENTRADA
+# -------------------------------------------------------------------------------------
+# Total de Entradas Lidas: 9
+# Entradas dentro do Base DN: 9
+# Entradas Filtradas (fora de escopo): 0
+# Entradas Processadas: 9
+#
+# REGRAS OID ENCONTRADAS
+# -------------------------------------------------------------------------------------
+# orclaci: 7
+# orclentrylevelaci: 2
+# Total de Regras OID Convertidas: 9
+#
+# REGRAS OUD GERADAS
+# -------------------------------------------------------------------------------------
+# ACIs Unificadas (1 OID = 1 OUD): 9
+# ACIs Simples: 0
+# Regras Deny Geradas: 0
+# Total de ACIs: 9
+#
+# CONVERSÕES ESPECIAIS
+# -------------------------------------------------------------------------------------
+# dnattr → userattr#USERDN: 2
+# groupattr → userattr#GROUPDN: 1
+# Wildcards (anyone): 2
+# Regras Puladas: 9
+#
+# AVISOS E REVISÕES NECESSÁRIAS
+# -------------------------------------------------------------------------------------
+# ⚠️  guidattr (sem equivalente direto): 1
+#
+# EVENT LOG SUMMARY
+# -------------------------------------------------------------------------------------
+# Session ID: NORMALIZED
+# Total Events: 19
+#
+# Events by Type:
+#   add@parse: 10
+#   remove@convert: 9
+#
+# SECTION USAGE (por seção do guia)
+# -------------------------------------------------------------------------------------
+#   11 (Scope: base_dn filtering): 0x
+#   16.2 (Manual: guidattr (sem equivalente)): 0x
+#   16.4 (Skip: DN Oracle-específico): 0x
+#   4.4.1 (Subject: group→groupdn): 4x
+#   4.4.2 (Subject: dn→userdn): 0x
+#   4.4.3 (Subject: self→userdn:self): 2x
+#   4.4.4 (Subject: *→userdn:anyone): 2x
+#   4.4.5 (Subject: dnattr→userattr#USERDN): 2x
+#   4.4.6 (Subject: groupattr→userattr#GROUPDN): 1x
+#   5.1 (Perm: entry-level): 0x
+#   5.1.1 (Perm: browse→read,search): 3x
+#   5.2 (Perm: attr-level): 8x
+#   5.3 (Perm: negativas (skip)): 0x
+#   5.4 (Special: none (skip)): 7x
+#   6.3 (Padrão: subjects OR): 0x
+#   6.7 (Padrão: SuperUser→Directory Manager): 0x
+#   6.8 (Padrão: só negativas → complemento): 1x
+#   8.4 (Cálculo: complemento permissões): 1x
+#
+# =====================================================================================
+# FIM DO ARQUIVO
+# =====================================================================================

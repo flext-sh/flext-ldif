@@ -1,0 +1,1937 @@
+# provenance: devops-oud-iac@2225708e3ac8 tests/fixtures/synthetic/output/acls.ldif sha256=f03fa7eb2137b82c4f51d81c372acf535ab0a1ade9344d43a6959126076cc1d7
+# Synthetic test data. Generated; never use these credentials in production.
+# =====================================================================================
+# MIGRAÇÃO DE ACLs: OID → OUD (Oracle Unified Directory)
+# =====================================================================================
+#
+# INFORMAÇÕES GERAIS
+# -------------------------------------------------------------------------------------
+# Data/Hora de Geração: 2026-10-19 23:07:50
+# Timestamp: 20261019_230750
+# Ferramenta: convert_oid_to_oud_acl.py v8.0
+# Guia de Referência: acl-conversion-guide.md v3.2+
+#
+# SESSION METADATA
+# -------------------------------------------------------------------------------------
+# Session ID: conv_20261019_230749_965e1884
+# Start Time: 2026-10-19T23:07:49.958870+00:00
+# Input File: 10_aci_dump.ldif
+# Base DN Filter: dc=example,dc=invalid
+# Event Tracking: Enabled (real-time)
+#
+# ETAPAS DE CONVERSÃO
+# -------------------------------------------------------------------------------------
+# ETAPA 1: PARSING      - Leitura e parsing das regras OID
+# ETAPA 2: TRANSFORMAÇÃO - Conversão subject/permissão para OUD
+# ETAPA 3: EXCLUSÕES    - Regras removidas (default-deny, fora escopo)
+# ETAPA 4: DEDUPLICAÇÃO - Remoção de ACIs duplicadas
+# ETAPA 5: OUTPUT       - Escrita do LDIF final
+#
+# ARQUIVO DE ENTRADA
+# -------------------------------------------------------------------------------------
+# Fonte: 10_aci_dump.ldif
+# Caminho Completo: /home/marlonsc/devops-oud-iac/data/synthetic-staging/input/10_aci_dump.ldif
+# Base DN Filtro: dc=example,dc=invalid
+# Ordenação: Hierárquica + Alfabética
+#
+# FORMATO DE SAÍDA
+# -------------------------------------------------------------------------------------
+# Tipo: LDIF Modify (RFC 2849)
+# Estrutura:
+#   1. dn: <entry DN (normalizado)>
+#   2. changetype: modify
+#   3. replace: aci   (substitui todas ACIs do DN)
+#   4. # OID: ...      (comentário da regra original)
+#   5. aci: ...        (ACI OUD formatado)
+#   6. # DE: ...       (regra OID original)
+#   7. # PARA: ...     (regra OUD convertida)
+#   8. # SEÇÃO: ...    (referência ao guia de conversão)
+#   9. -               (separador entre DNs)
+#
+# COMENTÁRIOS DE CONVERSÃO
+# -------------------------------------------------------------------------------------
+# Cada regra convertida inclui três linhas de comentário:
+#
+# # DE:   Regra OID original completa
+# # PARA: Regra OUD convertida
+# # SEÇÃO: Referência às seções do guia de conversão
+#
+# REFERÊNCIAS DE SEÇÃO (Conversão de Subjects - Section 4.4)
+# -------------------------------------------------------------------------------------
+# Section 4.4.1: group="X"           → groupdn="ldap:///X"
+# Section 4.4.2: dn="X"              → userdn="ldap:///X"
+# Section 4.4.3: self                 → userdn="ldap:///self"
+# Section 4.4.4: * (anyone)           → userdn="ldap:///anyone"
+# Section 4.4.5: dnattr=(owner)       → userattr="owner#USERDN"
+# Section 4.4.6: groupattr=(owner)    → userattr="owner#GROUPDN"
+#
+# REFERÊNCIAS DE SEÇÃO (Mapeamento de Permissões - Section 5)
+# -------------------------------------------------------------------------------------
+# Section 5.1:   Permissões de Entry (browse, add, delete, proxy)
+# Section 5.1.1: browse               → read, search (entry)
+# Section 5.2:   Permissões de Attr   (read, search, write, compare, selfwrite)
+#
+# REFERÊNCIAS DE SEÇÃO (Exclusões)
+# -------------------------------------------------------------------------------------
+# Section 5.3:   Permissões Negativas (noread, nosearch, nowrite, etc.)
+#                 → Puladas! Default-deny do OUD já bloqueia
+# Section 5.4:   Permissão Especial: none
+#                 → by * (none) removido (confie no default-deny)
+# Section 11:    Escopo e Herança (DN fora do base_dn configurado)
+#
+# INSTRUÇÕES DE APLICAÇÃO
+# -------------------------------------------------------------------------------------
+# 1. VALIDAÇÃO PRÉ-APLICAÇÃO:
+#    python scripts/validate_oud_acl.py <arquivo.ldif>
+#
+# 2. APLICAÇÃO NO SERVIDOR:
+#    ldapmodify -h <host> -p <port> \
+#               -D cn=orcladmin -w <password> \
+#               -f <arquivo.ldif>
+#
+# 3. VERIFICAÇÃO PÓS-APLICAÇÃO:
+#    ldapsearch -h <host> -p <port> -b <base_dn> -s base aci
+#
+# =====================================================================================
+# AVISO IMPORTANTE: Leia e valide ANTES de aplicar em PRODUÇÃO!
+# =====================================================================================
+#
+version: 1
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, read, search, selfwrite, write)
+#       by group="cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, noselfwrite, nowrite, read, search)
+#       by group="cn=group-00591,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, noselfwrite, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00004 Attrs by group-00213 (+1)";
+      allow (read, search, write, selfwrite, compare)    groupdn="ldap:///cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
+      allow (read, search, compare)                      groupdn="ldap:///cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+                                                      or groupdn="ldap:///cn=group-00591,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+# SEÇÃO : 6.3 (Padrão: subjects OR)
+#   DE  : by group="cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, read, search, selfwrite, write)
+# PARA  : allow (read, search, write, selfwrite, compare)    groupdn="ldap:///cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+#   DE  : by group="cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, noselfwrite, nowrite, read, search)
+# PARA  : allow (read, search, compare)                      groupdn="ldap:///cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+#   DE  : by group="cn=group-00591,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, noselfwrite, nowrite, read, search)
+# PARA  : allow (read, search, compare)                      groupdn="ldap:///cn=group-00591,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (add, browse, delete, proxy)
+#       by group="cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (noadd, nobrowse, nodelete)
+#       by group="cn=group-00591,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (noadd, nobrowse, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00004 Entry by group-00213 (+1)";
+      allow (read, search, add, delete, proxy)    groupdn="ldap:///cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
+      allow (proxy)                               groupdn="ldap:///cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+                                               or groupdn="ldap:///cn=group-00591,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+# SEÇÃO : 6.3 (Padrão: subjects OR)
+#   DE  : by group="cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (add, browse, delete, proxy)
+# PARA  : allow (read, search, add, delete, proxy)    groupdn="ldap:///cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+#   DE  : by group="cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (noadd, nobrowse, nodelete)
+# PARA  : allow (proxy)                               groupdn="ldap:///cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 6.8 (Padrão: só negativas → complemento)
+# SEÇÃO : 8.4 (Cálculo: complemento permissões)
+#   DE  : by group="cn=group-00591,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (noadd, nobrowse, nodelete)
+# PARA  : allow (proxy)                               groupdn="ldap:///cn=group-00591,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 6.8 (Padrão: só negativas → complemento)
+# SEÇÃO : 8.4 (Cálculo: complemento permissões)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by group="cn=group-00591,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete, noproxy)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00004 Entry by group-01851";
+      allow (read, search)    groupdn="ldap:///cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+                           or groupdn="ldap:///cn=group-00591,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+# SEÇÃO : 6.3 (Padrão: subjects OR)
+#   DE  : by group="cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+#   DE  : by group="cn=group-00591,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete, noproxy)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00591,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, noselfwrite, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00004 Attrs by group-01851";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, noselfwrite, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00005,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00005 Entry by group-01465";
+      allow (read, search)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, read, search, write)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00005 Attrs by group-01465";
+      allow (read, search, write, compare)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, read, search, write)
+# PARA  : allow (read, search, write, compare)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# DEDUP: Regra duplicada mesclada (origem: orclaci: access to attr=(*)
+#       by group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, read, search, write)
+#       by *                                                                                                       (none))
+# DEDUP: Regra duplicada mesclada (origem: orclaci: access to attr=(*)
+#       by group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, read, search, write)
+#       by *                                                                                                       (none))
+# DEDUP: Regra duplicada mesclada (origem: orclaci: access to attr=(*)
+#       by group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, read, search, write)
+#       by *                                                                                                       (none))
+# DEDUP: Regra duplicada mesclada (origem: orclaci: access to attr=(*)
+#       by group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, read, search, write)
+#       by *                                                                                                       (none))
+# DEDUP: Regra duplicada mesclada (origem: orclaci: access to attr=(*)
+#       by group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, read, search, write)
+#       by *                                                                                                       (none))
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (write)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00005 Attrs by group-01465";
+      allow (write)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (write)
+# PARA  : allow (write)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, read, search, write)
+#       by group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, read, search, write)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00005 Attrs by group-01465";
+      allow (read, search, write, compare)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+                                           or groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+# SEÇÃO : 6.3 (Padrão: subjects OR)
+#   DE  : by group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, read, search, write)
+# PARA  : allow (read, search, write, compare)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+#   DE  : by group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, read, search, write)
+# PARA  : allow (read, search, write, compare)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00080,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (add, browse, delete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00080 Entry by group-01465";
+      allow (read, search, add, delete)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (add, browse, delete)
+# PARA  : allow (read, search, add, delete)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00080 Attrs by group-01465";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00014,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00284,cn=node-00014,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete, noproxy)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00014 Entry by group-00284";
+      allow (read, search)    groupdn="ldap:///cn=group-00284,cn=node-00014,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00284,cn=node-00014,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete, noproxy)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00284,cn=node-00014,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00284,cn=node-00014,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00014 Entry by group-00284";
+      allow (read, search)    groupdn="ldap:///cn=group-00284,cn=node-00014,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00284,cn=node-00014,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00284,cn=node-00014,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00284,cn=node-00014,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00014 Attrs by group-00284";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00284,cn=node-00014,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00284,cn=node-00014,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00284,cn=node-00014,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00018 Entry by group-00594";
+      allow (read, search)    groupdn="ldap:///cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (nocompare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00018 Attrs by group-00594";
+      allow (read, search)    groupdn="ldap:///cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (nocompare, nowrite, read, search)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00018 Entry by group-00594";
+      allow (read, search)    groupdn="ldap:///cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (nocompare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00018 Attrs by group-00594";
+      allow (read, search)    groupdn="ldap:///cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (nocompare, nowrite, read, search)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00023 Entry by group-00595";
+      allow (read, search)    groupdn="ldap:///cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (nocompare, noselfwrite, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00023 Attrs by group-00595";
+      allow (read, search)    groupdn="ldap:///cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (nocompare, noselfwrite, nowrite, read, search)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00023 Entry by group-00595";
+      allow (read, search)    groupdn="ldap:///cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00023 Attrs by group-00595";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00036 Entry by group-00596";
+      allow (read, search)    groupdn="ldap:///cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00036 Attrs by group-00596";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00036 Attrs by group-00596";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00036 Entry by group-00596";
+      allow (read, search)    groupdn="ldap:///cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (add, browse, delete, proxy)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00039 Entry by group-00213";
+      allow (read, search, add, delete, proxy)    groupdn="ldap:///cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (add, browse, delete, proxy)
+# PARA  : allow (read, search, add, delete, proxy)    groupdn="ldap:///cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, read, search, selfwrite, write)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00039 Attrs by group-00213";
+      allow (read, search, write, selfwrite, compare)    groupdn="ldap:///cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, read, search, selfwrite, write)
+# PARA  : allow (read, search, write, selfwrite, compare)    groupdn="ldap:///cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00039 Entry by group-00213";
+      allow (read, search)    groupdn="ldap:///cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00039 Attrs by group-00213";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00040 Entry by group-00597";
+      allow (read, search)    groupdn="ldap:///cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00040 Attrs by group-00597";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00040 Entry by group-00597";
+      allow (read, search)    groupdn="ldap:///cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00040 Attrs by group-00597";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, noselfwrite, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00043 Attrs by group-00598";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, noselfwrite, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete, proxy)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00043 Entry by group-00598";
+      allow (read, search, proxy)    groupdn="ldap:///cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete, proxy)
+# PARA  : allow (read, search, proxy)    groupdn="ldap:///cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete, proxy)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00043 Entry by group-00598";
+      allow (read, search, proxy)    groupdn="ldap:///cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete, proxy)
+# PARA  : allow (read, search, proxy)    groupdn="ldap:///cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, noselfwrite, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00043 Attrs by group-00598";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, noselfwrite, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00045 Entry by group-00599";
+      allow (read, search)    groupdn="ldap:///cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00045 Attrs by group-00599";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00045 Entry by group-00599";
+      allow (read, search)    groupdn="ldap:///cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00045 Attrs by group-00599";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00046 Attrs by group-00600";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00046 Entry by group-00600";
+      allow (read, search)    groupdn="ldap:///cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00046 Entry by group-00600";
+      allow (read, search)    groupdn="ldap:///cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00046 Attrs by group-00600";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, noselfwrite, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00054 Attrs by group-00685";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, noselfwrite, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete, noproxy)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00054 Entry by group-00685";
+      allow (read, search)    groupdn="ldap:///cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete, noproxy)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00054 Entry by group-00685";
+      allow (read, search)    groupdn="ldap:///cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00054 Attrs by group-00685";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00058 Entry by group-00601";
+      allow (read, search)    groupdn="ldap:///cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00058 Attrs by group-00601";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00058 Entry by group-00601";
+      allow (read, search)    groupdn="ldap:///cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00058 Attrs by group-00601";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00062 Entry by group-00587";
+      allow (read, search)    groupdn="ldap:///cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00062 Attrs by group-00587";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (add, browse, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00062 Entry by group-00587";
+      allow (read, search, add)    groupdn="ldap:///cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (add, browse, nodelete)
+# PARA  : allow (read, search, add)    groupdn="ldap:///cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00062 Attrs by group-00587";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, noselfwrite, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00063 Attrs by group-00602";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, noselfwrite, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00063 Entry by group-00602";
+      allow (read, search)    groupdn="ldap:///cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, noselfwrite, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00063 Attrs by group-00602";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, noselfwrite, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00063 Entry by group-00602";
+      allow (read, search)    groupdn="ldap:///cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00066 Attrs by group-00603";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00066 Entry by group-00603";
+      allow (read, search)    groupdn="ldap:///cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00066 Attrs by group-00603";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00066 Entry by group-00603";
+      allow (read, search)    groupdn="ldap:///cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00088 Entry by group-00604";
+      allow (read, search)    groupdn="ldap:///cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (nocompare, noselfwrite, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00088 Attrs by group-00604";
+      allow (read, search)    groupdn="ldap:///cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (nocompare, noselfwrite, nowrite, read, search)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00088 Entry by group-00604";
+      allow (read, search)    groupdn="ldap:///cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00088 Attrs by group-00604";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00095 Entry by group-00588";
+      allow (read, search)    groupdn="ldap:///cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (nocompare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00095 Attrs by group-00588";
+      allow (read, search)    groupdn="ldap:///cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (nocompare, nowrite, read, search)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00095 Entry by group-00588";
+      allow (read, search)    groupdn="ldap:///cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00095 Attrs by group-00588";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00103 Entry by group-00605";
+      allow (read, search)    groupdn="ldap:///cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00103 Attrs by group-00605";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00103 Entry by group-00605";
+      allow (read, search)    groupdn="ldap:///cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00103 Attrs by group-00605";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00123 Attrs by group-00606";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00123 Entry by group-00606";
+      allow (read, search)    groupdn="ldap:///cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00123 Entry by group-00606";
+      allow (read, search)    groupdn="ldap:///cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00123 Attrs by group-00606";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00124,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00124 Entry by group-00606";
+      allow (read, search)    groupdn="ldap:///cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00125 Entry by group-00589";
+      allow (read, search)    groupdn="ldap:///cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (nocompare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00125 Attrs by group-00589";
+      allow (read, search)    groupdn="ldap:///cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (nocompare, nowrite, read, search)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00125 Entry by group-00589";
+      allow (read, search)    groupdn="ldap:///cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00125 Attrs by group-00589";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00131 Entry by group-00607";
+      allow (read, search)    groupdn="ldap:///cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00131 Attrs by group-00607";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00131 Entry by group-00590";
+      allow (read, search)    groupdn="ldap:///cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00131 Attrs by group-00590";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00131 Attrs by group-00590";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00131 Entry by group-00590";
+      allow (read, search)    groupdn="ldap:///cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00131 Attrs by group-00607";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00131 Entry by group-00607";
+      allow (read, search)    groupdn="ldap:///cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, noselfwrite, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00150 Attrs by group-00608";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, noselfwrite, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00150 Entry by group-00608";
+      allow (read, search)    groupdn="ldap:///cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, noselfwrite, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00150 Attrs by group-00608";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, noselfwrite, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00150 Entry by group-00608";
+      allow (read, search)    groupdn="ldap:///cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, noselfwrite, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00151 Attrs by group-00609";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, noselfwrite, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00151 Entry by group-00609";
+      allow (read, search)    groupdn="ldap:///cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, noselfwrite, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00151 Attrs by group-00609";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, noselfwrite, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00151 Entry by group-00609";
+      allow (read, search)    groupdn="ldap:///cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00158 Entry by group-00610";
+      allow (read, search)    groupdn="ldap:///cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00158 Attrs by group-00610";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00158 Entry by group-00610";
+      allow (read, search)    groupdn="ldap:///cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00158 Attrs by group-00610";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00159 Attrs by group-00611";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00159 Entry by group-00611";
+      allow (read, search)    groupdn="ldap:///cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00159 Entry by group-00611";
+      allow (read, search)    groupdn="ldap:///cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00159 Attrs by group-00611";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00160 Entry by group-00612";
+      allow (read, search)    groupdn="ldap:///cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00160 Attrs by group-00612";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to entry
+#       by group="cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00160 Entry by group-00612";
+      allow (read, search)    groupdn="ldap:///cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+# -------------------------------------------------------------------------------------
+# OID: orclentrylevelaci: access to attr=(*)
+#       by group="cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (compare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00160 Attrs by group-00612";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (compare, nowrite, read, search)
+# PARA  : allow (read, search, compare)    groupdn="ldap:///cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+# SEÇÃO : 11.3 (orclentrylevelaci → base scope, non-inheritable)
+-
+
+# -------------------------------------------------------------------------------------
+dn: cn=node-02081,cn=node-00709,cn=node-00129,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+# -------------------------------------------------------------------------------------
+changetype: modify
+replace: aci
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to entry
+#       by group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (browse, noadd, nodelete)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-02081 Entry by group-01465";
+      allow (read, search)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (browse, noadd, nodelete)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.1.1 (Perm: browse→read,search)
+# -------------------------------------------------------------------------------------
+# OID: orclaci: access to attr=(*)
+#       by group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"   (nocompare, nowrite, read, search)
+#       by *                                                                                                       (none)
+aci: (targetattr="*")
+     (version 3.0; acl "node-02081 Attrs by group-01465";
+      allow (read, search)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+# EXCL: by * (none) → removed (OUD default-deny) [5.4]
+#   DE  : by group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid" (nocompare, nowrite, read, search)
+# PARA  : allow (read, search)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+# SEÇÃO : 4.4.1 (Subject: group→groupdn)
+# SEÇÃO : 5.2 (Perm: attr-level)
+-
+
+# =====================================================================================
+# ESTATÍSTICAS DA CONVERSÃO
+# =====================================================================================
+# Data/Hora de Conclusão: 2026-10-19 23:07:50
+#
+# ANÁLISE DO ARQUIVO DE ENTRADA
+# -------------------------------------------------------------------------------------
+# Total de Entradas Lidas: 30
+# Entradas dentro do Base DN: 30
+# Entradas Filtradas (fora de escopo): 0
+# Entradas Processadas: 30
+#
+# REGRAS OID ENCONTRADAS
+# -------------------------------------------------------------------------------------
+# orclaci: 66
+# orclentrylevelaci: 55
+# Total de Regras OID Convertidas: 121
+#
+# REGRAS OUD GERADAS
+# -------------------------------------------------------------------------------------
+# ACIs Unificadas (1 OID = 1 OUD): 121
+# ACIs Simples: 0
+# Regras Deny Geradas: 0
+# Total de ACIs: 121
+#
+# CONVERSÕES ESPECIAIS
+# -------------------------------------------------------------------------------------
+# dnattr → userattr#USERDN: 0
+# groupattr → userattr#GROUPDN: 0
+# Regras Puladas: 121
+# Duplicatas Removidas: 5
+#
+# EVENT LOG SUMMARY
+# -------------------------------------------------------------------------------------
+# Session ID: conv_20261019_230749_965e1884
+# Total Events: 243
+#
+# Events by Type:
+#   add@parse: 121
+#   remove@convert: 121
+#   remove@dedupe: 1
+#
+# SECTION USAGE (por seção do guia)
+# -------------------------------------------------------------------------------------
+#   11 (Scope: base_dn filtering): 0x
+#   16.2 (Manual: guidattr (sem equivalente)): 0x
+#   16.4 (Skip: DN Oracle-específico): 0x
+#   4.4.1 (Subject: group→groupdn): 122x
+#   4.4.2 (Subject: dn→userdn): 0x
+#   4.4.3 (Subject: self→userdn:self): 0x
+#   4.4.4 (Subject: *→userdn:anyone): 0x
+#   4.4.5 (Subject: dnattr→userattr#USERDN): 0x
+#   4.4.6 (Subject: groupattr→userattr#GROUPDN): 0x
+#   5.1 (Perm: entry-level): 0x
+#   5.1.1 (Perm: browse→read,search): 61x
+#   5.2 (Perm: attr-level): 61x
+#   5.3 (Perm: negativas (skip)): 0x
+#   5.4 (Special: none (skip)): 116x
+#   6.3 (Padrão: subjects OR): 4x
+#   6.7 (Padrão: SuperUser→Directory Manager): 0x
+#   6.8 (Padrão: só negativas → complemento): 2x
+#   8.4 (Cálculo: complemento permissões): 2x
+#
+# =====================================================================================
+# FIM DO ARQUIVO
+# =====================================================================================
