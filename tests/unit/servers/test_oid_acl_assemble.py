@@ -290,8 +290,7 @@ class TestsFlextLdifOidAclAssemble:
         """Each negation-only granted subject flags its own complement."""
         rule = FlextLdifServersOidAclConvert.parse_oid_acl_line(
             "cn=users,dc=ctbc",
-            'orclaci: access to attr=(cn) by group="cn=a,dc=ctbc" (read) '
-            "by * (noread)",
+            'orclaci: access to attr=(cn) by group="cn=a,dc=ctbc" (read) by * (noread)',
         ).unwrap()
         aci = FlextLdifServersOidAclAssemble.build_aci_rule(rule).unwrap()
 
@@ -501,8 +500,10 @@ class TestsFlextLdifOidAclFixtureAndEntry:
         """convert_entry_acls records per-subject outcomes on entry metadata."""
         entry = _acl_entry({
             "orclaci": [
-                "access to entry by guidattr=(g) (browse) "
-                'by group="cn=a,dc=ctbc" (browse)',
+                (
+                    "access to entry by guidattr=(g) (browse) "
+                    'by group="cn=a,dc=ctbc" (browse)'
+                ),
             ],
         })
 

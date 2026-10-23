@@ -75,7 +75,9 @@ class TestsFlextLdifOidOudAclGold:
                 ))
         return rows
 
-    def _expected_rows(self, outcomes_name: str) -> list[tuple[str, int, int, int, int]]:
+    def _expected_rows(
+        self, outcomes_name: str
+    ) -> list[tuple[str, int, int, int, int]]:
         """Read the gold-derived outcome counts (no other kind is recorded).
 
         Returns:
