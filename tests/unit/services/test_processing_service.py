@@ -6,16 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 import pytest
 
 from flext_ldif import FlextLdif
 from flext_ldif.services import FlextLdifProcessingPipeline
-from tests import c, m, tm, u
-
-if TYPE_CHECKING:
-    from tests import p, t
+from tests import c, m, p, t, tm, u
 
 
 class TestsFlextLdifProcessingService:
@@ -53,7 +50,7 @@ class TestsFlextLdifProcessingService:
         )
 
         result = api.process_entries(entries, options=options)
-        processed: t.MutableSequenceOf[m.Ldif.ProcessingResult] = (
+        processed: t.MutableSequenceOf[p.Ldif.ProcessingResult] = (
             u.Tests.assert_success(result)
         )
         tm.that(len(processed), eq=len(entries))
@@ -74,7 +71,7 @@ class TestsFlextLdifProcessingService:
             batch_size=1,
             max_workers=1,
         )
-        processed: t.MutableSequenceOf[m.Ldif.ProcessingResult] = (
+        processed: t.MutableSequenceOf[p.Ldif.ProcessingResult] = (
             u.Tests.assert_success(result)
         )
         tm.that(len(processed), eq=1)
@@ -147,9 +144,8 @@ class TestsFlextLdifProcessingService:
             transform_config=config,
             entries_input=[entry],
         ).execute()
-        converted: t.MutableSequenceOf[m.Ldif.Entry] = u.Tests.assert_success(result)
-        tm.not_none(converted[0].attributes)
-        attrs = converted[0].attributes.attributes
+        converted: t.SequenceOf[p.Ldif.Entry] = u.Tests.assert_success(result)
+        attrs = tm.not_none(converted[0].attributes).attributes
 
         tm.that(
             attrs["aci"],

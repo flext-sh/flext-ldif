@@ -22,7 +22,7 @@ from tests import c, tm
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tests import p
+from tests import p
 
 
 class TestsFlextLdifLdifFixturesIntegration:
@@ -71,9 +71,6 @@ class TestsFlextLdifLdifFixturesIntegration:
 
         At least the expected number of entries is returned.
 
-        Raises:
-            AssertionError: If fewer entries than the fixture minimum are returned.
-
         """
         result = ldif_client.parse_ldif(self._fixture_path(subdir, filename))
 
@@ -83,7 +80,7 @@ class TestsFlextLdifLdifFixturesIntegration:
             message = (
                 f"Expected >= {min_entries} entries from {filename}, got {len(entries)}"
             )
-            raise AssertionError(message)
+            tm.reject(message)
 
     @pytest.mark.parametrize(("subdir", "filename", "_min_entries"), _FIXTURE_CASES)
     def test_every_parsed_entry_exposes_a_wellformed_dn(
@@ -93,12 +90,7 @@ class TestsFlextLdifLdifFixturesIntegration:
         filename: str,
         _min_entries: int,
     ) -> None:
-        """Every parsed entry publishes a non-empty, attribute=value shaped DN.
-
-        Raises:
-            AssertionError: If a parsed entry has an empty DN.
-
-        """
+        """Every parsed entry publishes a non-empty, attribute=value shaped DN."""
         result = ldif_client.parse_ldif(self._fixture_path(subdir, filename))
 
         tm.ok(result)
@@ -107,7 +99,7 @@ class TestsFlextLdifLdifFixturesIntegration:
             dn_value = dn.value
             if not dn_value:
                 message = f"entry in {filename} has empty DN"
-                raise AssertionError(message)
+                tm.reject(message)
             tm.that(entry.dn_str, eq=dn_value)
             tm.that(dn_value, has="=")
 
@@ -133,12 +125,7 @@ class TestsFlextLdifLdifFixturesIntegration:
         filename: str,
         _min_entries: int,
     ) -> None:
-        """Writing parsed entries and reparsing the output round-trips the count.
-
-        Raises:
-            AssertionError: If writing the fixture returns no content.
-
-        """
+        """Writing parsed entries and reparsing the output round-trips the count."""
         parsed = ldif_client.parse_ldif(self._fixture_path(subdir, filename))
         tm.ok(parsed)
         original = parsed.value.entries
@@ -148,7 +135,7 @@ class TestsFlextLdifLdifFixturesIntegration:
         content = written.value.content
         if not content:
             message = f"write produced empty content for {filename}"
-            raise AssertionError(message)
+            tm.reject(message)
 
         reparsed = ldif_client.parse_string(content)
         tm.ok(reparsed)
@@ -162,12 +149,7 @@ class TestsFlextLdifLdifFixturesIntegration:
         filename: str,
         _min_entries: int,
     ) -> None:
-        """Validating well-formed fixture entries yields a passing validation result.
-
-        Raises:
-            AssertionError: If a well-formed fixture fails native validation.
-
-        """
+        """Validating well-formed fixture entries yields a passing validation result."""
         entries = ldif_client.parse_ldif(
             self._fixture_path(subdir, filename),
         ).value.entries
@@ -178,7 +160,7 @@ class TestsFlextLdifLdifFixturesIntegration:
         report = validation.value
         if not report.valid:
             message = f"fixture {filename} unexpectedly invalid: {report.errors}"
-            raise AssertionError(message)
+            tm.reject(message)
         tm.that(report.total_entries, eq=len(entries))
         tm.that(report.invalid_entries, eq=0)
 

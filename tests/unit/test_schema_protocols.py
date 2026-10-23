@@ -35,7 +35,7 @@ class TestsFlextLdifSchemaProtocols:
             "( 2.5.6.6 NAME 'person' SUP top STRUCTURAL "
             "MUST ( sn $ cn ) MAY description )"
         )
-        parsed: p.Ldif.SchemaObjectClass = server.parse_objectclass(definition).unwrap()
+        parsed = server.parse_objectclass(definition).unwrap()
         tm.ok(isinstance(parsed, p.Ldif.SchemaObjectClass))
         tm.that(parsed.sup, eq="top")
         tm.that(set(parsed.must or ()), eq={"sn", "cn"})

@@ -14,16 +14,12 @@ from __future__ import annotations
 import errno
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING
 from uuid import uuid4
 
 import pytest
 
 from flext_ldif import ldif
-from tests import c, m, tm, u
-
-if TYPE_CHECKING:
-    from tests import p, t
+from tests import c, m, p, t, tm, u
 
 
 class TestsFlextLdifWriterService:

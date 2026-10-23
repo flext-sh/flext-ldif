@@ -12,15 +12,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
 from flext_ldif import ldif
-from tests import c, t, tm
-
-if TYPE_CHECKING:
-    from tests import m, p
+from tests import c, m, p, t, tm
 
 
 class TestsFlextLdifAclMetadataPreservation:

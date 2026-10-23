@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
     from flext_ldif.servers import FlextLdifServersBase
     from flext_ldif.services import FlextLdifConversion
-    from tests import p, t
+from tests import p, t
 
 
 def _assert_cross_server_identity(

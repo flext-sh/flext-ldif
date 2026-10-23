@@ -15,12 +15,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from tests import c, m, tm
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import c, m, p, tm
 
 _QUOTED_SCHEMA_SOURCE = (
     "dn: cn=schema\n"
@@ -104,12 +99,7 @@ class TestsFlextLdifOudSchemaPhaseWrite:
     def test_oud_phase_write_emits_rfc4512_syntax_oids(
         api: p.Ldif.LdifClient,
     ) -> None:
-        """Cross-server schema definitions must lose quoted SYNTAX OIDs.
-
-        Raises:
-            AssertionError: If a quoted SYNTAX OID remains in the output.
-
-        """
+        """Cross-server schema definitions must lose quoted SYNTAX OIDs."""
         parsed = tm.ok(
             api.parse_ldif(_QUOTED_SCHEMA_SOURCE, server_type=c.Ldif.ServerTypes.OID),
         )
@@ -126,7 +116,7 @@ class TestsFlextLdifOudSchemaPhaseWrite:
             msg = (
                 f"OUD rejects quoted SYNTAX OIDs (invalidAttributeSyntax); got {quoted}"
             )
-            raise AssertionError(msg)
+            tm.reject(msg)
         tm.that(logical_lines, has=_OUD_QUOTED_OBJECTCLASS_DEFINITION)
 
     @staticmethod

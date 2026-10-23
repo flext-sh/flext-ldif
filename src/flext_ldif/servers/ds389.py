@@ -96,7 +96,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         ])
         SCHEMA_DN: ClassVar[str] = "cn=subschemasubentry"
         ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset(["x_origin", "x_ds_use"])
-        ACL_SUBJECT_TYPE_USER: ClassVar[str] = "user"
+        ACL_SUBJECT_TYPE_USER: ClassVar[str] = c.ContextScope.USER
         ACL_SUBJECT_TYPE_GROUP: ClassVar[str] = "group"
         ACL_SUBJECT_TYPE_SELF: ClassVar[str] = "self"
         ACL_SUBJECT_TYPE_ANONYMOUS: ClassVar[str] = "anyone"

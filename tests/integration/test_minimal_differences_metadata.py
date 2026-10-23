@@ -14,16 +14,12 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import pytest
 
 from flext_ldif import FlextLdif, ldif
 from flext_ldif.services import FlextLdifParser
-from tests import c, m, tm
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import c, m, p, tm
 
 
 class TestsFlextLdifMinimalDifferencesMetadata:
@@ -115,12 +111,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         effective_server_type: str,
         fixture_name: str,
     ) -> None:
-        """Every entry parsed from a server fixture carries its effective type.
-
-        Raises:
-            AssertionError: If the fixture produces no entries.
-
-        """
+        """Every entry parsed from a server fixture carries its effective type."""
         fixture_path = fixtures_dir / server_type / fixture_name
 
         result = parser.parse_ldif_file(path=fixture_path, server_type=server_type)
@@ -129,7 +120,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         entries = result.value.entries
         if not entries:
             msg = f"No entries parsed from {fixture_path}"
-            raise AssertionError(msg)
+            tm.reject(msg)
         for entry in entries:
             metadata = tm.not_none(entry.metadata)
             tm.that(str(metadata.server_type), eq=effective_server_type)
@@ -177,12 +168,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         raw_value: str,
         converted_value: str,
     ) -> None:
-        """OID 0/1 booleans are recorded with original and converted values.
-
-        Raises:
-            AssertionError: If conversion metadata is not a mapping.
-
-        """
+        """OID 0/1 booleans are recorded with original and converted values."""
         content = (
             "dn: cn=test,dc=example,dc=com\n"
             "objectClass: top\n"
@@ -199,20 +185,20 @@ class TestsFlextLdifMinimalDifferencesMetadata:
             case Mapping():
                 pass
             case _:
-                raise AssertionError
+                tm.reject()
         boolean_conversions = converted[c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS]
         match boolean_conversions:
             case Mapping():
                 pass
             case _:
-                raise AssertionError
+                tm.reject()
         tm.that(boolean_conversions, has=attribute)
         entry_conversion = boolean_conversions[attribute]
         match entry_conversion:
             case Mapping():
                 pass
             case _:
-                raise AssertionError
+                tm.reject()
         tm.that(entry_conversion[c.Ldif.CONVERSION_ORIGINAL_VALUE], eq=[raw_value])
         tm.that(
             entry_conversion[c.Ldif.CONVERSION_CONVERTED_VALUE],

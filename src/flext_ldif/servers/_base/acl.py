@@ -445,7 +445,7 @@ class FlextLdifServersBaseSchemaAcl(
         """
         data_raw = kwargs.get("data")
         data: str | m.Ldif.Acl | None = self._coerce_acl_data(data_raw)
-        operation_raw = kwargs.get("operation")
+        operation_raw = kwargs.get(c.ContextScope.OPERATION)
         operation = (
             self._coerce_operation(operation_raw)
             if isinstance(operation_raw, str)
@@ -581,7 +581,7 @@ class FlextLdifServersBaseSchemaAcl(
 
         Args:
             operation: Explicit operation token, when provided.
-            kwargs: Mapping that may carry an "operation" entry.
+            kwargs: Mapping that may carry an c.ContextScope.OPERATION entry.
 
         Returns:
             The resolved operation token, or None when absent.

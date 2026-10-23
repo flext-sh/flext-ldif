@@ -37,6 +37,11 @@ class FlextLdifProtocolsValues(Protocol):
             ...
 
         @property
+        def is_confident(self) -> bool:
+            """Whether confidence meets the configured detection threshold."""
+            ...
+
+        @property
         def scores(self) -> FlextLdifProtocolsBase.DynamicCounts:
             """Per-server-type detection scores."""
             ...
@@ -140,6 +145,9 @@ class FlextLdifProtocolsValues(Protocol):
     @runtime_checkable
     class MigrationPipelineResult(Protocol):
         """Migration pipeline result contract."""
+
+        @property
+        def entry_count(self) -> int: ...
 
         @property
         def entries(self) -> t.SequenceOf[m.Ldif.Entry]: ...

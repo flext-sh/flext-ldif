@@ -15,14 +15,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
-from tests import tm, u
-
-if TYPE_CHECKING:
-    from tests import m, p, t
+from tests import m, p, t, tm, u
 
 ORACLE_OID_PREFIX = "2.16.840.1.113894"
 
@@ -122,9 +117,6 @@ class TestsFlextLdifOidIntegration:
         Stronger than a mere ``>= 0`` smoke check: the OID schema fixture is
         Oracle's own, so at least one definition must carry the Oracle OID arc.
 
-        Raises:
-            AssertionError: If no Oracle definition is present.
-
         """
         entries = self._entries(api, oid_schema_fixture)
         schema_entry = entries[0]
@@ -136,7 +128,7 @@ class TestsFlextLdifOidIntegration:
 
         if not oracle_definitions:
             msg = f"no Oracle {definition_attr} (OID {ORACLE_OID_PREFIX}.*) parsed"
-            raise AssertionError(msg)
+            tm.reject(msg)
 
     # ------------------------------------------------------------- entry data
 
@@ -145,18 +137,13 @@ class TestsFlextLdifOidIntegration:
         api: p.Ldif.LdifClient,
         oid_integration_fixture: str,
     ) -> None:
-        """The integration fixture parses into a large, real dataset.
-
-        Raises:
-            AssertionError: If the parsed dataset is too small.
-
-        """
+        """The integration fixture parses into a large, real dataset."""
         entries = self._entries(api, oid_integration_fixture)
 
         min_expected_entries = 100
         if len(entries) <= min_expected_entries:
             msg = f"expected > {min_expected_entries} entries, got {len(entries)}"
-            raise AssertionError(msg)
+            tm.reject(msg)
 
     @pytest.mark.parametrize(
         "attribute_name",
@@ -169,12 +156,7 @@ class TestsFlextLdifOidIntegration:
         oid_integration_fixture: str,
         attribute_name: str,
     ) -> None:
-        """Oracle-specific attributes survive parsing on at least one entry.
-
-        Raises:
-            AssertionError: If the requested attribute is absent.
-
-        """
+        """Oracle-specific attributes survive parsing on at least one entry."""
         entries = self._entries(api, oid_integration_fixture)
 
         entries_with_attribute = sum(
@@ -183,7 +165,7 @@ class TestsFlextLdifOidIntegration:
 
         if entries_with_attribute <= 0:
             msg = f"no parsed entry carries the {attribute_name} attribute"
-            raise AssertionError(msg)
+            tm.reject(msg)
 
     # --------------------------------------------------------------- roundtrip
 
@@ -224,19 +206,14 @@ class TestsFlextLdifOidIntegration:
         oid_integration_fixture: str,
         acl_attribute: str,
     ) -> None:
-        """Total Oracle ACL value counts are invariant across a round-trip.
-
-        Raises:
-            AssertionError: If the fixture contains no requested ACL values.
-
-        """
+        """Total Oracle ACL value counts are invariant across a round-trip."""
         original = self._entries(api, oid_integration_fixture)
         original_count = sum(
             self._attribute_value_count(entry, acl_attribute) for entry in original
         )
         if original_count <= 0:
             msg = f"fixture must contain {acl_attribute} values to be meaningful"
-            raise AssertionError(msg)
+            tm.reject(msg)
 
         roundtrip_count = sum(
             self._attribute_value_count(entry, acl_attribute)

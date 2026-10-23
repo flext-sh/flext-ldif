@@ -16,7 +16,7 @@ from tests import c, u
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tests import m, p, t
+from tests import m, p, t
 
 
 def _parse_fixture_entries(

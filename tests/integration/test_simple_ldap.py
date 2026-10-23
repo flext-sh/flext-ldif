@@ -21,7 +21,7 @@ from tests import c, m, tm
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests import p, t
+from tests import p, t
 
 pytestmark = pytest.mark.docker
 

@@ -23,7 +23,7 @@ from tests import c, m, p, tm, u
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tests import t
+from tests import t
 
 _BASIC_RFC_ENTRY_LDIF = "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n"
 

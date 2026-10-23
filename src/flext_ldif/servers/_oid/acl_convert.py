@@ -36,13 +36,13 @@ class FlextLdifServersOidAclConvert:
                 ),
                 m.Ldif.AclSubjectMatcher(
                     pattern=c.Ldif.SUBJ_DN_RE,
-                    subj_type="user",
+                    subj_type=c.ContextScope.USER,
                     value_group=1,
                     perms_group=2,
                 ),
                 m.Ldif.AclSubjectMatcher(
                     pattern=c.Ldif.SUBJ_QUOTED_DN_RE,
-                    subj_type="user",
+                    subj_type=c.ContextScope.USER,
                     value_group=1,
                     perms_group=2,
                 ),

@@ -550,8 +550,7 @@ class TestsFlextLdifOidAclFixtureAndEntry:
         converted = FlextLdifServersOidAclPipeline.convert_entry_acls(
             entry, "oid", "oud"
         ).unwrap()
-        tm.not_none(converted.attributes)
-        attrs = converted.attributes.attributes
+        attrs = tm.not_none(converted.attributes).attributes
 
         tm.ok("orclaci" not in attrs)
         tm.ok("aci" in attrs)
@@ -568,9 +567,7 @@ class TestsFlextLdifOidAclFixtureAndEntry:
         converted = FlextLdifServersOidAclPipeline.convert_entry_acls(
             entry, "oid", "rfc"
         ).unwrap()
-        tm.not_none(converted.attributes)
-
-        tm.ok("orclaci" in converted.attributes.attributes)
+        tm.ok("orclaci" in tm.not_none(converted.attributes).attributes)
 
     @staticmethod
     def test_entry_without_acl_attrs_unchanged() -> None:
@@ -580,10 +577,10 @@ class TestsFlextLdifOidAclFixtureAndEntry:
         converted = FlextLdifServersOidAclPipeline.convert_entry_acls(
             entry, "oid", "oud"
         ).unwrap()
-        tm.not_none(converted.attributes)
+        attrs = tm.not_none(converted.attributes).attributes
 
-        tm.ok("aci" not in converted.attributes.attributes)
-        tm.ok("cn" in converted.attributes.attributes)
+        tm.ok("aci" not in attrs)
+        tm.ok("cn" in attrs)
 
     @staticmethod
     def test_malformed_acl_surfaces_failure() -> None:

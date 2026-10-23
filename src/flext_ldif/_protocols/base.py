@@ -394,7 +394,7 @@ class FlextLdifProtocolsBase:
         def attributes(self) -> t.MutableStrSequenceMapping: ...
 
     @runtime_checkable
-    class EntriesStatistics(Protocol):
+    class EntriesStatistics(p.Model, Protocol):
         """Aggregate entry processing statistics."""
 
         @property

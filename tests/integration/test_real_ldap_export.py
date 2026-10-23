@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
     from pathlib import Path
 
-    from tests import m, p, t
+from tests import m, p, t
 
 
 @pytest.fixture

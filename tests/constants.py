@@ -9,16 +9,13 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from types import MappingProxyType
-from typing import TYPE_CHECKING, ClassVar, Final, Literal
+from typing import ClassVar, Final, Literal
 
 from flext_tests import FlextTestsConstants
 
 from flext_ldif import FlextLdifConstants
-from tests import m
+from tests import m, t
 from tests.constants_ldap import TestsFlextLdifLdapConstants
-
-if TYPE_CHECKING:
-    from tests import t
 
 
 class TestsFlextLdifConstants(
@@ -678,7 +675,7 @@ class TestsFlextLdifConstants(
             (
                 "standard_rfc",
                 "cn=user,dc=example,dc=com",
-                {"objectClass": ["person"], "cn": ["user"]},
+                {"objectClass": ["person"], "cn": [ATTR_VALUE_USER]},
                 True,
             ),
         )
@@ -716,7 +713,7 @@ class TestsFlextLdifConstants(
             m.Tests.EntryTestCase(
                 scenario="standard_rfc",
                 entry_dn="cn=user,dc=example,dc=com",
-                attributes={"objectClass": ["person"], "cn": ["user"]},
+                attributes={"objectClass": ["person"], "cn": [ATTR_VALUE_USER]},
                 expected_can_handle=True,
             ),
         )
@@ -848,7 +845,7 @@ class TestsFlextLdifConstants(
             (
                 "standard_rfc",
                 "cn=user,dc=example,dc=com",
-                {"objectClass": ["person"], "cn": ["user"]},
+                {"objectClass": ["person"], "cn": [ATTR_VALUE_USER]},
                 False,
             ),
         )
@@ -919,7 +916,7 @@ class TestsFlextLdifConstants(
                 entry_dn="cn=user,dc=example,dc=com",
                 attributes={
                     FlextLdifConstants.Ldif.DictKeys.OBJECTCLASS.value: ["person"],
-                    "cn": ["user"],
+                    "cn": [ATTR_VALUE_USER],
                 },
                 expected_can_handle=False,
             ),
@@ -1033,7 +1030,7 @@ class TestsFlextLdifConstants(
             (
                 "standard_rfc",
                 "cn=user,dc=example,dc=com",
-                {"objectClass": ["person"], "cn": ["user"]},
+                {"objectClass": ["person"], "cn": [ATTR_VALUE_USER]},
                 False,
             ),
         )
@@ -1069,7 +1066,7 @@ class TestsFlextLdifConstants(
             m.Tests.EntryTestCase(
                 scenario="standard_rfc",
                 entry_dn="cn=user,dc=example,dc=com",
-                attributes={"objectClass": ["person"], "cn": ["user"]},
+                attributes={"objectClass": ["person"], "cn": [ATTR_VALUE_USER]},
                 expected_can_handle=False,
             ),
         )
@@ -1127,7 +1124,7 @@ class TestsFlextLdifConstants(
             MappingProxyType({
                 "objectClass": [ANALYSIS_OC_PERSON, "top"],
                 "cn": [ANALYSIS_ATTR_CN_VALUE],
-                "sn": ["user"],
+                "sn": [ATTR_VALUE_USER],
             })
         )
         ANALYSIS_INVALID_ATTR_ENTRY_ATTRS: ClassVar[t.MappingKV[str, list[str]]] = (

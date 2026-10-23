@@ -27,7 +27,12 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
         """Override __new__ to support auto-execute and processor instantiation."""
         del acl_service
         instance: Self = super().__new__(cls)
-        auto_execute_kwargs = {"data", "operation", "parent_server", "_parent_server"}
+        auto_execute_kwargs = {
+            "data",
+            c.ContextScope.OPERATION,
+            "parent_server",
+            "_parent_server",
+        }
         _ = {k: v for k, v in kwargs.items() if k not in auto_execute_kwargs}
         parent_server_raw = (
             parent_server if parent_server is not None else kwargs.get("_parent_server")
@@ -43,7 +48,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
             data: str | m.Ldif.Acl | None = (
                 data_raw if isinstance(data_raw, str) else None
             )
-            op_raw = kwargs.get("operation")
+            op_raw = kwargs.get(c.ContextScope.OPERATION)
             op: str | None = None
             if isinstance(op_raw, str) and op_raw == "parse":
                 op = "parse"
@@ -129,11 +134,11 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
             dict(fields)
         )
         processor_fields["data"] = data
-        processor_fields["operation"] = operation
+        processor_fields[c.ContextScope.OPERATION] = operation
         configured = FlextLdifServerMethodsMixin.dispatch_builder(
             super().__call__,
             processor_fields,
-            frozenset({"data", "operation"}),
+            frozenset({"data", c.ContextScope.OPERATION}),
             server,
             settings,
         )
@@ -145,8 +150,8 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
             if isinstance(data_raw, (str, m.Ldif.Acl)) or data_raw is None
             else None
         )
-        operation_raw = processor_fields.get("operation")
-        # Why: "operation" never actually carries an Acl value (only "data"
+        operation_raw = processor_fields.get(c.ContextScope.OPERATION)
+        # Why: c.ContextScope.OPERATION never actually carries an Acl value (only "data"
         # does); narrow the dict-value union before _narrow_operation, which
         # accepts t.JsonValue | None and does not accept m.Ldif.Acl.
         narrowed_operation = self._narrow_operation(

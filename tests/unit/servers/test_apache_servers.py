@@ -9,15 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
 from flext_ldif.servers import FlextLdifServersApache
-from tests import c, m, tm, u
-
-if TYPE_CHECKING:
-    from tests import p, t
+from tests import c, m, p, t, tm, u
 
 
 def _assert_acl_roundtrip(

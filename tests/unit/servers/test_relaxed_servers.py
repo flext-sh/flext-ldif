@@ -9,8 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
 from flext_ldif.servers import (
@@ -18,10 +16,7 @@ from flext_ldif.servers import (
     FlextLdifServersRelaxedEntry,
     FlextLdifServersRelaxedSchema,
 )
-from tests import c, m, t, tm
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import c, m, p, t, tm
 
 
 def _schema_attribute(

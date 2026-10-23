@@ -20,15 +20,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
 from flext_ldif.services import FlextLdifEntries
-from tests import c, m, tm, u
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import c, m, t, tm, u
 
 
 class TestsFlextLdifEntries:
@@ -41,7 +36,7 @@ class TestsFlextLdifEntries:
         attrs: t.MutableMappingKV[str, list[str]] = {
             "objectClass": list(c.Tests.ENTRIES_OBJECTCLASS_PERSON),
             "cn": ["entries-test"],
-            "sn": ["user"],
+            "sn": [c.ContextScope.USER],
             "mail": ["entries-test@example.com"],
         }
         if extra_attrs:
@@ -75,9 +70,9 @@ class TestsFlextLdifEntries:
             {"cn": ["x"], "objectClass": ["top"]},
         )
         entry: m.Ldif.Entry = u.Tests.assert_success(result)
-        tm.not_none(entry.attributes)
-        tm.ok("cn" in entry.attributes.attributes)
-        tm.that(entry.attributes.attributes["cn"], eq=["x"])
+        attributes = tm.not_none(entry.attributes).attributes
+        tm.ok("cn" in attributes)
+        tm.that(attributes["cn"], eq=["x"])
 
     @staticmethod
     def test_create_entry_injects_supplied_objectclasses() -> None:
@@ -88,10 +83,10 @@ class TestsFlextLdifEntries:
             objectclasses=list(c.Tests.ENTRIES_OBJECTCLASS_PERSON),
         )
         entry: m.Ldif.Entry = u.Tests.assert_success(result)
-        tm.not_none(entry.attributes)
-        tm.ok(c.Tests.NAME_OBJECTCLASS in entry.attributes.attributes)
+        attributes = tm.not_none(entry.attributes).attributes
+        tm.ok(c.Tests.NAME_OBJECTCLASS in attributes)
         tm.that(
-            entry.attributes.attributes[c.Tests.NAME_OBJECTCLASS],
+            attributes[c.Tests.NAME_OBJECTCLASS],
             eq=list(c.Tests.ENTRIES_OBJECTCLASS_PERSON),
         )
 
@@ -233,8 +228,7 @@ class TestsFlextLdifEntries:
             list(c.Tests.ENTRIES_ATTR_REMOVE_SET),
         )
         cleaned: m.Ldif.Entry = u.Tests.assert_success(result)
-        tm.not_none(cleaned.attributes)
-        remaining = {k.lower() for k in cleaned.attributes.attributes}
+        remaining = {k.lower() for k in tm.not_none(cleaned.attributes).attributes}
         tm.ok(remaining.isdisjoint(c.Tests.ENTRIES_ATTR_REMOVE_SET))
         tm.ok("cn" in remaining)
         tm.ok("objectclass" in remaining)
@@ -254,10 +248,10 @@ class TestsFlextLdifEntries:
                 list(c.Tests.ENTRIES_ATTR_REMOVE_SET),
             ),
         )
-        tm.not_none(once.attributes)
-        tm.not_none(twice.attributes)
+        once_attributes = tm.not_none(once.attributes).attributes
+        twice_attributes = tm.not_none(twice.attributes).attributes
         tm.that(
-            set(twice.attributes.attributes) == set(once.attributes.attributes),
+            set(twice_attributes) == set(once_attributes),
             eq=True,
         )
 
@@ -299,8 +293,7 @@ class TestsFlextLdifEntries:
         cleaned: t.MutableSequenceOf[m.Ldif.Entry] = u.Tests.assert_success(result)
         tm.ok(len(cleaned) == 1)
         stripped = cleaned[0]
-        tm.not_none(stripped.attributes)
-        remaining = {k.lower() for k in stripped.attributes.attributes}
+        remaining = {k.lower() for k in tm.not_none(stripped.attributes).attributes}
         tm.ok(remaining.isdisjoint(c.Tests.ENTRIES_ATTR_REMOVE_SET))
 
     def test_run_configured_operation_fails_without_attributes_to_remove(self) -> None:

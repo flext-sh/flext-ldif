@@ -25,7 +25,7 @@ from tests import m, tm
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests import p, t
+from tests import p, t
 
 pytestmark = [pytest.mark.integration]
 
@@ -241,8 +241,7 @@ class TestsFlextLdifCrossDirectionConversion:
         parse_result = oid_schema.parse_attribute(attr_def)
         tm.ok(parse_result)
         write_result = oid_schema.write_attribute(parse_result.value)
-        tm.ok(write_result)
-        tm.that(write_result.value, eq=attr_def)
+        tm.ok(write_result, eq=attr_def)
 
     # ------------------------------------------------------------------
     # Parsed-model field normalization (public model contract)

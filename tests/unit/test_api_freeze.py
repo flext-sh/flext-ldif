@@ -13,16 +13,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING
 
 import pytest
 
 import flext_ldif
-from tests import tm
+from tests import t, tm
 from tests.unit.typings import TestsFlextLdifUnitTypings
-
-if TYPE_CHECKING:
-    from tests import t
 
 REQUIRED_PUBLIC_API: t.VariadicTuple[TestsFlextLdifUnitTypings.PublicSymbol] = (
     "FlextLdif",

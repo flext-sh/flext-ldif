@@ -12,15 +12,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
 from flext_ldif import ldif
-from tests import tm
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import p, tm
 
 
 class TestsFlextLdifSystematicFixtureCoverage:
@@ -44,14 +39,11 @@ class TestsFlextLdifSystematicFixtureCoverage:
         Returns:
             The original fixture string without copying or converting it.
 
-        Raises:
-            AssertionError: If the fixture is empty or is not a string.
-
         """
         content = request.getfixturevalue(name)
         if not content:
             message = f"Fixture {name} is empty"
-            raise AssertionError(message)
+            tm.reject(message)
         return tm.instance(content, str)
 
     # ------------------------------------------------------------------
@@ -110,9 +102,6 @@ class TestsFlextLdifSystematicFixtureCoverage:
         Returns:
             The resulting ``int``.
 
-        Raises:
-            AssertionError: If writing the parsed entries returns no content.
-
         """
         parse_result = api.parse_ldif(content)
         tm.ok(parse_result)
@@ -126,7 +115,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
         written = write_result.unwrap().content
         if not written:
             message = "Write produced empty content"
-            raise AssertionError(message)
+            tm.reject(message)
 
         roundtrip_result = api.parse_ldif(written)
         tm.ok(roundtrip_result)
@@ -201,12 +190,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
         server_fixture: str,
         request: pytest.FixtureRequest,
     ) -> None:
-        """Each parsed entry exposes a DN and attributes; roundtrip is stable.
-
-        Raises:
-            AssertionError: If a parsed entry exposes no attributes.
-
-        """
+        """Each parsed entry exposes a DN and attributes; roundtrip is stable."""
         fixture_data = self._fixture_content(request, server_fixture)
 
         parse_result = api.parse_ldif(fixture_data)
@@ -222,7 +206,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
             tm.that(entry.dn_str, truth=True, msg="Parsed entry exposes an empty DN")
             if not entry.attributes_dict:
                 message = f"Entry {entry.dn_str} exposes no attributes"
-                raise AssertionError(message)
+                tm.reject(message)
 
         self._assert_roundtrip_preserves_dns(api, fixture_data)
 
@@ -240,12 +224,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
         server_fixture: str,
         request: pytest.FixtureRequest,
     ) -> None:
-        """Large exports keep unique DNs and roughly their size on rewrite.
-
-        Raises:
-            AssertionError: If the fixture parses too few entries or writes no content.
-
-        """
+        """Large exports keep unique DNs and roughly their size on rewrite."""
         fixture_data = self._fixture_content(request, server_fixture)
 
         parse_result = api.parse_ldif(fixture_data)
@@ -256,7 +235,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
             message = (
                 f"Integration fixture should hold multiple entries, got {len(entries)}"
             )
-            raise AssertionError(message)
+            tm.reject(message)
 
         dn_list = [e.dn_str for e in entries]
         tm.that(len(set(dn_list)), eq=len(dn_list))
@@ -266,7 +245,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
         written = write_result.unwrap().content
         if not written:
             message = "Write produced empty content"
-            raise AssertionError(message)
+            tm.reject(message)
         tm.that(
             len(written) > len(fixture_data) * 0.5,
             truth=True,
@@ -282,12 +261,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
     def test_basic_ldif_operations_are_available_for_any_server(
         api: p.Ldif.LdifClient,
     ) -> None:
-        """A minimal RFC entry parses, writes, and roundtrips with DN intact.
-
-        Raises:
-            AssertionError: If writing the parsed entry returns no content.
-
-        """
+        """A minimal RFC entry parses, writes, and roundtrips with DN intact."""
         content = (
             "dn: cn=Test,dc=example,dc=com\n"
             "objectClass: person\n"
@@ -312,7 +286,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
         written = write_result.unwrap().content
         if not written:
             message = "Write produced empty content"
-            raise AssertionError(message)
+            tm.reject(message)
         tm.that(written.lower(), has="cn=test,dc=example,dc=com")
 
         roundtrip_result = api.parse_ldif(written)

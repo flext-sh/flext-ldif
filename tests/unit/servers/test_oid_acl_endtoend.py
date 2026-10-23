@@ -9,16 +9,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
 from flext_ldif import FlextLdif
 from flext_ldif.services import FlextLdifConversion
-from tests import c, m, tm, u
-
-if TYPE_CHECKING:
-    from tests import p, t
+from tests import c, m, p, t, tm, u
 
 
 class TestsFlextLdifOidAclEndToEnd:
@@ -39,7 +34,7 @@ class TestsFlextLdifOidAclEndToEnd:
         converted = u.Tests.assert_success(result)
         if not isinstance(converted, m.Ldif.Entry) or converted.attributes is None:
             msg = "convert_model did not return an Entry with attributes"
-            raise AssertionError(msg)
+            tm.reject(msg)
         return converted.attributes.attributes
 
     @pytest.mark.parametrize(
@@ -104,12 +99,7 @@ class TestsFlextLdifOidAclEndToEnd:
     def test_base_dn_field_excludes_out_of_scope_bind_dn() -> None:
         # FlextLdifConversion(base_dn=...) activates the out-of-scope filter:
         # a bind DN outside base_dn is dropped from the emitted aci.
-        """Test base dn field excludes out of scope bind dn.
-
-        Raises:
-            AssertionError: If convert_model did not return an Entry with attributes.
-
-        """
+        """Test base dn field excludes out of scope bind dn."""
         entry = u.Tests.orclaci_base_dn_entry(dn="cn=users,dc=ctbc")
         svc = FlextLdifConversion(registry=FlextLdif().registry, base_dn="dc=ctbc")
 
@@ -118,7 +108,7 @@ class TestsFlextLdifOidAclEndToEnd:
         )
         if not isinstance(converted, m.Ldif.Entry) or converted.attributes is None:
             msg = "convert_model did not return an Entry with attributes"
-            raise AssertionError(msg)
+            tm.reject(msg)
 
         tm.that(
             converted.attributes.attributes["aci"],

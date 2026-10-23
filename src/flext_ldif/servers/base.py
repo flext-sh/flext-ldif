@@ -202,7 +202,7 @@ class FlextLdifServersBase(
         configured = FlextLdifServerMethodsMixin.dispatch_builder(
             super().__call__,
             fields,
-            frozenset({"ldif_text", "entries", "operation"}),
+            frozenset({"ldif_text", "entries", c.ContextScope.OPERATION}),
             server,
             settings,
         )
@@ -222,10 +222,10 @@ class FlextLdifServersBase(
                 entries_raw,
             )
             execute_kwargs["entries"] = validated_entries
-        operation_raw = fields.get("operation")
+        operation_raw = fields.get(c.ContextScope.OPERATION)
         if operation_raw is not None:
             validated_operation: str = u.str_adapter().validate_python(operation_raw)
-            execute_kwargs["operation"] = validated_operation
+            execute_kwargs[c.ContextScope.OPERATION] = validated_operation
         self._absorb_positional_args(args, execute_kwargs)
         ldif_text, entries, operation = self._extract_execute_params(execute_kwargs)
         result = self.execute(ldif_text=ldif_text, entries=entries, operation=operation)
@@ -249,8 +249,10 @@ class FlextLdifServersBase(
                     execute_kwargs["entries"] = u.Ldif.as_entries(value)
                 case 1 if "entries" not in execute_kwargs and value is not None:
                     execute_kwargs["entries"] = u.Ldif.as_entries(value)
-                case 2 if "operation" not in execute_kwargs and isinstance(value, str):
-                    execute_kwargs["operation"] = value
+                case 2 if c.ContextScope.OPERATION not in execute_kwargs and isinstance(
+                    value, str
+                ):
+                    execute_kwargs[c.ContextScope.OPERATION] = value
                 case _:
                     continue
 

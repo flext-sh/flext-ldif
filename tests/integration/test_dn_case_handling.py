@@ -13,14 +13,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
-from tests import m, tm
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import m, t, tm
 
 _LATER_VARIANT_CASES: t.VariadicTuple[str] = (
     "cn=admin,dc=example,dc=com",

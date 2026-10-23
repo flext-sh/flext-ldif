@@ -217,7 +217,7 @@ class TestsFlextLdifParserUtilities:
             "( 1.1 NAME 'x' DESC 'hi there' X-ORIGIN 'user' )",
         )
 
-        tm.that(extensions["X-ORIGIN"], eq=["user"])
+        tm.that(extensions["X-ORIGIN"], eq=[c.ContextScope.USER])
         tm.that(extensions["DESC"], eq=["hi there"])
 
     @staticmethod
@@ -300,9 +300,6 @@ class TestsFlextLdifParserUtilities:
         without decoding, so every base64 DN (accented production data)
         failed DN validation and the record was silently dropped.
 
-        Raises:
-            AssertionError: If the base64 metadata flag is not a list.
-
         """
         entry = tm.ok(
             u.Ldif.parse_ldif_record([
@@ -319,7 +316,7 @@ class TestsFlextLdifParserUtilities:
             case list():
                 tm.that(list(flag), eq=[True])
             case _:
-                raise AssertionError
+                tm.reject()
 
     @staticmethod
     def test_parse_ldif_record_preserves_significant_dn_whitespace() -> None:

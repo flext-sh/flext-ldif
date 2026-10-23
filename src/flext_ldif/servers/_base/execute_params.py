@@ -109,9 +109,9 @@ class FlextLdifServersBaseExecuteParamsMixin:
             ValueError: If Expected 'parse' | 'write' | None for operation, got.
 
         """
-        if "operation" not in kwargs:
+        if c.ContextScope.OPERATION not in kwargs:
             return None
-        match kwargs.get("operation"):
+        match kwargs.get(c.ContextScope.OPERATION):
             case None:
                 return None
             case "parse":

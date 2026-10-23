@@ -21,15 +21,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING
 
 import pytest
 
 from flext_ldif import ldif
-from tests import c, m, t, tm, u
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import c, m, p, t, tm, u
 
 
 class TestsFlextLdifZeroDataLossOidOud:
@@ -114,12 +110,7 @@ class TestsFlextLdifZeroDataLossOidOud:
         oud_fixture: str,
         server_type: str,
     ) -> None:
-        """Every parsed entry keeps its original LDIF text in metadata.
-
-        Raises:
-            AssertionError: If an entry loses its original LDIF text.
-
-        """
+        """Every parsed entry keeps its original LDIF text in metadata."""
         fixture = oid_fixture if server_type == c.Tests.OID else oud_fixture
 
         result = api.parse_ldif(fixture, server_type=server_type)
@@ -132,7 +123,7 @@ class TestsFlextLdifZeroDataLossOidOud:
             original = u.to_str(metadata.original_strings["entry_original_ldif"])
             if not original:
                 msg = f"Entry {entry.dn} lost its original LDIF"
-                raise AssertionError(msg)
+                tm.reject(msg)
             tm.that(original.lower(), has="dn:")
 
     @staticmethod
@@ -140,12 +131,7 @@ class TestsFlextLdifZeroDataLossOidOud:
         api: p.Ldif.LdifClient,
         oid_fixture: str,
     ) -> None:
-        """When a DN has minimal differences, the original DN string is kept.
-
-        Raises:
-            AssertionError: If DN difference metadata is not a mapping.
-
-        """
+        """When a DN has minimal differences, the original DN string is kept."""
         result = api.parse_ldif(oid_fixture, server_type=c.Tests.OID)
         tm.ok(result)
 
@@ -156,7 +142,7 @@ class TestsFlextLdifZeroDataLossOidOud:
                 case Mapping():
                     pass
                 case _:
-                    raise AssertionError
+                    tm.reject()
             if bool(dn_diff.get("has_differences", False)):
                 tm.that(metadata.original_strings, has="dn_original")
 
@@ -166,12 +152,7 @@ class TestsFlextLdifZeroDataLossOidOud:
     def test_boolean_conversions_record_original_converted_and_format(
         api: p.Ldif.LdifClient,
     ) -> None:
-        """Tracked boolean conversions expose original, converted and format.
-
-        Raises:
-            AssertionError: If conversion metadata is not a mapping.
-
-        """
+        """Tracked boolean conversions expose original, converted and format."""
         oid_boolean_entry = """
 version: 1
 
@@ -195,13 +176,13 @@ orclIsEnabled: 1
                 case Mapping():
                     pass
                 case _:
-                    raise AssertionError
+                    tm.reject()
             boolean_conversions = converted[c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS]
             match boolean_conversions:
                 case Mapping():
                     pass
                 case _:
-                    raise AssertionError
+                    tm.reject()
             tracked_conversions.append(boolean_conversions)
 
         tm.ok(
@@ -216,7 +197,7 @@ orclIsEnabled: 1
                     case Mapping():
                         pass
                     case _:
-                        raise AssertionError
+                        tm.reject()
                 tm.that(conversion, has="original")
                 tm.that(conversion, has="converted")
                 tm.that(conversion.get(c.Ldif.ORIGINAL_FORMAT), eq="1/0")
@@ -258,12 +239,7 @@ orclIsEnabled: 1
         api: p.Ldif.LdifClient,
         oid_fixture: str,
     ) -> None:
-        """Soft-deleted attributes keep their values in removed_attributes.
-
-        Raises:
-            AssertionError: If a soft-deleted attribute has no preserved values.
-
-        """
+        """Soft-deleted attributes keep their values in removed_attributes."""
         result = api.parse_ldif(oid_fixture, server_type=c.Tests.OID)
         tm.ok(result)
 
@@ -277,7 +253,7 @@ orclIsEnabled: 1
                 value = removed[attr_name]
                 if isinstance(value, (str, list, tuple)) and not value:
                     msg = f"Soft-deleted attribute {attr_name} has no preserved values"
-                    raise AssertionError(msg)
+                    tm.reject(msg)
 
     # -- conversion / round-trip ------------------------------------------
 
@@ -286,12 +262,7 @@ orclIsEnabled: 1
         api: p.Ldif.LdifClient,
         oid_fixture: str,
     ) -> None:
-        """OID -> RFC -> OUD conversion preserves every non-operational attr.
-
-        Raises:
-            AssertionError: If conversion loses a non-operational attribute.
-
-        """
+        """OID -> RFC -> OUD conversion preserves every non-operational attr."""
         oid = api.parse_ldif(oid_fixture, server_type=c.Tests.OID)
         tm.ok(oid)
 
@@ -318,19 +289,14 @@ orclIsEnabled: 1
             }
             if lost:
                 msg = f"Data loss detected for {original.dn}: {sorted(lost)}"
-                raise AssertionError(msg)
+                tm.reject(msg)
 
     @staticmethod
     def test_round_trip_oid_oud_oid_preserves_entry_count_and_original_text(
         api: p.Ldif.LdifClient,
         oid_fixture: str,
     ) -> None:
-        """OID -> OUD -> OID round-trip keeps entry count and original text.
-
-        Raises:
-            AssertionError: If an original entry loses its original text.
-
-        """
+        """OID -> OUD -> OID round-trip keeps entry count and original text."""
         original = api.parse_ldif(oid_fixture, server_type=c.Tests.OID)
         tm.ok(original)
 
@@ -361,7 +327,7 @@ orclIsEnabled: 1
             tm.not_none(final.metadata)
             if not u.to_str(metadata.original_strings["entry_original_ldif"]):
                 msg = f"Original text lost for {orig.dn}"
-                raise AssertionError(msg)
+                tm.reject(msg)
 
     @staticmethod
     def test_restore_original_format_reproduces_original_entry_text(

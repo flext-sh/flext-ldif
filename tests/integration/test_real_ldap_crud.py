@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-    from tests import p, t
+from tests import p, t
 
 
 @pytest.fixture

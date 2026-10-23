@@ -12,15 +12,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
 from flext_ldif.servers import FlextLdifServersOidAclToOud
-from tests import m, tm
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import c, m, t, tm
 
 
 class TestsFlextLdifOidAclConvertOud:
@@ -49,7 +44,7 @@ class TestsFlextLdifOidAclConvertOud:
         ("kind", "value", "bind_type", "bind_value"),
         [
             ("group", "cn=admins , dc=ctbc", "groupdn", "cn=admins,dc=ctbc"),
-            ("user", "uid=joe,dc=ctbc", "userdn", "uid=joe,dc=ctbc"),
+            (c.ContextScope.USER, "uid=joe,dc=ctbc", "userdn", "uid=joe,dc=ctbc"),
             ("self", "self", "userdn", "self"),
             ("anyone", "anyone", "userdn", "anyone"),
             ("superuser", "cn=Directory Manager", "userdn", "cn=Directory Manager"),
@@ -76,7 +71,7 @@ class TestsFlextLdifOidAclConvertOud:
     def test_converted_subject_leaves_permissions_empty(self) -> None:
         """Test converted subject leaves permissions empty."""
         result = FlextLdifServersOidAclToOud.convert_subject_to_oud(
-            self._subject("user", "uid=joe,dc=ctbc")
+            self._subject(c.ContextScope.USER, "uid=joe,dc=ctbc")
         )
 
         tm.that(result.unwrap().permissions, eq=())

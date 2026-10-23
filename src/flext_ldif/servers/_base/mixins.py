@@ -29,7 +29,9 @@ class FlextLdifServerMethodsMixin:
 
         """
         try:
-            operation_raw = u.str_adapter().validate_python(kwargs.get("operation"))
+            operation_raw = u.str_adapter().validate_python(
+                kwargs.get(c.ContextScope.OPERATION)
+            )
         except c.ValidationError as exc:
             return r[str].fail(str(exc), exception=exc)
         return r[str].ok(operation_raw)

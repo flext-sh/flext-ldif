@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_ldif import m, p, t, u
+from flext_ldif import c, m, p, t, u
 from flext_ldif.servers._oud import FlextLdifServersOudConstants
 from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 
@@ -69,7 +69,11 @@ class FlextLdifServersOudAclSubjectMixin(FlextLdifServersRfcAcl):
             if base_dn and subject_value.endswith(base_dn)
             else subject_value
         )
-        bind_operator = {"user": "userdn", "group": "groupdn", "role": "roledn"}.get(
+        bind_operator = {
+            c.Ldif.AclSubjectType.USER: "userdn",
+            "group": "groupdn",
+            "role": "roledn",
+        }.get(
             subject_type,
             "userdn",
         )

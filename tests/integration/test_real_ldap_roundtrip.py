@@ -26,7 +26,7 @@ from tests import m, tm, u
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests import p, t
+from tests import p, t
 
 # Attributes that LDIF/LDAP layers may inject and that are not part of the
 # user-supplied contract under test.

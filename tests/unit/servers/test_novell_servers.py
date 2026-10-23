@@ -306,12 +306,12 @@ class TestsFlextLdifNovellServers:
         """Processing an entry preserves attributes and stamps the server type."""
         entry = m.Ldif.Entry.model_validate({
             "dn": "cn=user,o=Example",
-            "attributes": {"cn": ["user"], "objectClass": ["ndsperson"]},
+            "attributes": {"cn": [c.ContextScope.USER], "objectClass": ["ndsperson"]},
         })
         processed = tm.instance(tm.ok(entry_server.process_entry(entry)), m.Ldif.Entry)
         validated_attributes = tm.not_none(processed.attributes)
         attributes = validated_attributes.attributes
-        tm.ok(attributes["cn"] == ["user"])
+        tm.ok(attributes["cn"] == [c.ContextScope.USER])
         tm.ok(attributes["objectClass"] == ["ndsperson"])
         tm.that(
             attributes[c.Ldif.ServerMetadataKeys.SERVER_TYPE]

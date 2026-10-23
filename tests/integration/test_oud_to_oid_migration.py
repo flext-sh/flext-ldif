@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from pathlib import Path
 
-    from tests import p
+from tests import p
 
 MIN_OUD_ENTRIES = 10
 
@@ -202,19 +202,14 @@ class TestsFlextLdifOudToOidMigration:
         oud: FlextLdifServersOud,
         oud_entries: str,
     ) -> None:
-        """OUD ``parse_ldif`` succeeds and yields the fixture's entries.
-
-        Raises:
-            AssertionError: If the parsed entry count is below the minimum.
-
-        """
+        """OUD ``parse_ldif`` succeeds and yields the fixture's entries."""
         result = oud.parse_ldif(oud_entries)
 
         tm.ok(result)
         entries = result.value.entries
         if len(entries) < MIN_OUD_ENTRIES:
             msg = f"Expected >= {MIN_OUD_ENTRIES} entries, got {len(entries)}"
-            raise AssertionError(msg)
+            tm.reject(msg)
 
     @staticmethod
     def test_oud_parse_ldif_on_empty_input_yields_no_entries(

@@ -50,7 +50,7 @@ class TestsFlextLdifProtocolsValues:
         tm.that(entry.attributes_dict, eq=attributes)
 
     @staticmethod
-    def _assert_protocols(value: m.Value, *, transform: bool, process: bool) -> None:
+    def _assert_protocols(value: p.Model, *, transform: bool, process: bool) -> None:
         tm.that(isinstance(value, p.Ldif.TransformConfig), eq=transform)
         tm.that(isinstance(value, p.Ldif.ProcessConfig), eq=process)
         tm.fail(isinstance(value, p.Ldif.AciAllow))

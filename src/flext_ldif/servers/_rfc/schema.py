@@ -69,7 +69,7 @@ class FlextLdifServersRfcSchema(
             oc_mod: m.Ldif.SchemaObjectClass | None = (
                 oc_mod_raw if isinstance(oc_mod_raw, m.Ldif.SchemaObjectClass) else None
             )
-            op_raw = kwargs.get("operation")
+            op_raw = kwargs.get(c.ContextScope.OPERATION)
             op: str | None = (
                 "parse" if isinstance(op_raw, str) and op_raw == "parse" else None
             )
@@ -102,7 +102,7 @@ class FlextLdifServersRfcSchema(
                 "oc_definition",
                 "attr_model",
                 "oc_model",
-                "operation",
+                c.ContextScope.OPERATION,
             }),
             **kwargs,
         )
@@ -170,7 +170,7 @@ class FlextLdifServersRfcSchema(
         configured = FlextLdifServerMethodsMixin.dispatch_builder(
             super().__call__,
             fields,
-            frozenset({"data", "operation"}),
+            frozenset({"data", c.ContextScope.OPERATION}),
             server,
             settings,
         )

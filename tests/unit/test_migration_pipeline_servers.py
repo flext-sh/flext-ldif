@@ -17,13 +17,13 @@ from typing import TYPE_CHECKING
 import pytest
 
 from flext_ldif import FlextLdif
-from flext_ldif.servers import FlextLdifServersOidConstants, FlextLdifServersRfc
+from flext_ldif.servers import FlextLdifServersOidConstants
 from tests import c, m, tm
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tests import t
+from tests import t
 
 
 class TestsFlextLdifMigrationPipelineServers:
@@ -186,7 +186,7 @@ class TestsFlextLdifMigrationPipelineServers:
             target_server=c.Ldif.ServerTypes.RFC,
         )
 
-        tm.that(content, has=f"dn: {FlextLdifServersRfc.Constants.SCHEMA_DN}")
+        tm.that(content, has=f"dn: {c.Ldif.RFC_SCHEMA_DN}")
         tm.that(
             f"dn: {FlextLdifServersOidConstants.SCHEMA_DN_SERVER}" not in content,
             eq=True,

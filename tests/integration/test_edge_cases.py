@@ -16,15 +16,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
 from flext_ldif import ldif
-from tests import tm
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import p, tm
 
 _ZERO_WIDTH = "zero" + "\u200b" + "width" + "\u200b" + "spaces"
 

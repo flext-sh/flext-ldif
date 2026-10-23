@@ -17,14 +17,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 import pytest
 
-from tests import tm, u
-
-if TYPE_CHECKING:
-    from tests import m, p, t
+from tests import m, p, t, tm, u
 
 
 class TestsFlextLdifOudIntegration:
@@ -85,12 +82,7 @@ class TestsFlextLdifOudIntegration:
         fixture_content: str,
         attribute_name: str,
     ) -> None:
-        """Assert the schema entry exposes Oracle-namespaced definitions.
-
-        Raises:
-            AssertionError: If the requested Oracle definitions are absent.
-
-        """
+        """Assert the schema entry exposes Oracle-namespaced definitions."""
         response: m.Ldif.ParseResponse = u.Tests.assert_success(
             api.parse_ldif(fixture_content),
         )
@@ -100,7 +92,7 @@ class TestsFlextLdifOudIntegration:
 
         if not definitions:
             msg = f"Schema entry must expose {attribute_name}"
-            raise AssertionError(msg)
+            tm.reject(msg)
         if not any(
             cls.ORACLE_ENTERPRISE_OID_PREFIX in definition for definition in definitions
         ):
@@ -108,7 +100,7 @@ class TestsFlextLdifOudIntegration:
                 "Expected at least one Oracle-namespaced "
                 f"{attribute_name.removesuffix('s')}"
             )
-            raise AssertionError(msg)
+            tm.reject(msg)
 
     def test_schema_entry_exposes_oracle_attribute_definitions(
         self,

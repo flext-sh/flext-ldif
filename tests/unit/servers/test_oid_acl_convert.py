@@ -18,15 +18,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
 from flext_ldif.servers import FlextLdifServersOidAclConvert
-from tests import m, tm
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import c, m, t, tm
 
 _DN: str = "dc=ctbc"
 
@@ -178,10 +173,10 @@ class TestsFlextLdifOidAclConvert:
                 ("browse", "add"),
             ),
             ('by group="cn=g,dc=x" (read)', "group", "cn=g,dc=x", ("read",)),
-            ('by dn="cn=u,dc=x" (read)', "user", "cn=u,dc=x", ("read",)),
+            ('by dn="cn=u,dc=x" (read)', c.ContextScope.USER, "cn=u,dc=x", ("read",)),
             (
                 'by "cn=admin,dc=example,dc=com" (proxy,add)',
-                "user",
+                c.ContextScope.USER,
                 "cn=admin,dc=example,dc=com",
                 ("proxy", "add"),
             ),

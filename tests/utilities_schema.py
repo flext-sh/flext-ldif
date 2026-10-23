@@ -92,9 +92,6 @@ def assert_field_eq(
         expected: Expected value; None skips the assertion.
         label: Human-readable field label used in the failure message.
 
-    Raises:
-        AssertionError: If the actual value differs from the expected value.
-
     """
     if expected is None:
         return
@@ -103,11 +100,11 @@ def assert_field_eq(
         expected_items = cast("list[object]", expected)
         if list(actual) != expected_items:
             msg = f"Expected {label} {expected}, got {actual}"
-            raise AssertionError(msg)
+            tm.reject(msg)
         return
     if actual != expected:
         msg = f"Expected {label} '{expected}', got {actual}"
-        raise AssertionError(msg)
+        tm.reject(msg)
 
 
 def assert_must_contain(serialized: str, must_contain: t.StrSequence) -> None:
@@ -117,14 +114,11 @@ def assert_must_contain(serialized: str, must_contain: t.StrSequence) -> None:
         serialized: Serialized output text to inspect.
         must_contain: Fragments required to be present.
 
-    Raises:
-        AssertionError: If a fragment is missing from the serialized output.
-
     """
     for fragment in must_contain:
         if fragment not in serialized:
             msg = f"'{fragment}' not found in output: {serialized[:200]}..."
-            raise AssertionError(msg)
+            tm.reject(msg)
 
 
 class TestsSchemaAclAssertionsMixin:
@@ -277,15 +271,13 @@ class TestsSchemaAclAssertionsMixin:
             The parsed value, or None when failure was expected.
 
         Raises:
-            AssertionError: If the parse method is unsupported, the parse
-                outcome contradicts ``should_succeed``, or the parse fails.
             TypeError: If the parsed value does not match ``expected_type``.
 
         """
         method_name = PARSE_DISPATCH.get(parse_method)
         if method_name is None or not isinstance(server, p.Ldif.SchemaServer):
             msg = f"{parse_method} is not supported by this server"
-            raise AssertionError(msg)
+            tm.reject(msg)
         method: Callable[
             [str],
             p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl],
@@ -294,11 +286,11 @@ class TestsSchemaAclAssertionsMixin:
         if should_succeed is False:
             if result.success:
                 msg_0 = "Expected failure but parse succeeded"
-                raise AssertionError(msg_0)
+                tm.reject(msg_0)
             return None
         if result.failure:
             msg_0 = f"Expected success but parse failed: {result.error}"
-            raise AssertionError(
+            tm.reject(
                 msg_0,
             )
         value = result.value
@@ -331,27 +323,22 @@ class TestsSchemaAclAssertionsMixin:
         Returns:
             The parsed ACL, or None when failure was expected.
 
-        Raises:
-            AssertionError: If the parse outcome contradicts
-                ``should_succeed``, the parse fails, or the value type
-                mismatches ``expected_type``.
-
         """
         result = server.parse_server(content)
         if should_succeed is False:
             if result.success:
-                raise AssertionError(
+                tm.reject(
                     message or "Expected failure but parse succeeded",
                 )
             return None
         if result.failure:
-            raise AssertionError(
+            tm.reject(
                 message or f"Expected success but parse failed: {result.error}",
             )
         value: m.Ldif.Acl = result.unwrap()
         if expected_type is not None and not isinstance(value, expected_type):
             msg = f"Expected {expected_type.__name__}, got {type(value).__name__}"
-            raise AssertionError(msg)
+            tm.reject(msg)
         return value
 
     @staticmethod
@@ -377,8 +364,6 @@ class TestsSchemaAclAssertionsMixin:
             The serialized output text.
 
         Raises:
-            AssertionError: If the write method is unsupported or the write
-                fails.
             TypeError: If the server or data does not match the write
                 method's contract.
 
@@ -400,7 +385,7 @@ class TestsSchemaAclAssertionsMixin:
         entry = dispatch.get(write_method)
         if entry is None:
             msg = f"{write_method} is not supported by this server"
-            raise AssertionError(msg)
+            tm.reject(msg)
         # Why: widen from the dict's per-key literal tuple type so the
         # isinstance guards below stay a real runtime check (write_method
         # is caller-supplied and can mismatch server/data at runtime)
@@ -421,7 +406,7 @@ class TestsSchemaAclAssertionsMixin:
         )
         result = method(data)
         if result.failure:
-            raise AssertionError(message or f"Write failed: {result.error}")
+            tm.reject(message or f"Write failed: {result.error}")
         serialized: str = result.unwrap()
         if must_contain is not None:
             assert_must_contain(serialized, must_contain)
@@ -445,13 +430,10 @@ class TestsSchemaAclAssertionsMixin:
         Returns:
             The serialized output text.
 
-        Raises:
-            AssertionError: If the write fails.
-
         """
         result = server.write(data)
         if result.failure:
-            raise AssertionError(message or f"Write failed: {result.error}")
+            tm.reject(message or f"Write failed: {result.error}")
         serialized: str = result.unwrap()
         if must_contain is not None:
             assert_must_contain(serialized, must_contain)
