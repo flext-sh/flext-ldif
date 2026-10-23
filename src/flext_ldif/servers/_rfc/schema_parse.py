@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from abc import ABC
 from collections.abc import MutableMapping
 from typing import ClassVar
 
@@ -17,6 +18,7 @@ from flext_ldif.servers._rfc import FlextLdifServersRfcSchemaValuesMixin
 class FlextLdifServersRfcSchemaParseMixin(
     FlextLdifServersRfcSchemaValuesMixin,
     FlextLdifServersBaseSchema,
+    ABC,
 ):
     """Parse RFC 4512 objectClass definitions and extract schema from LDIF."""
 

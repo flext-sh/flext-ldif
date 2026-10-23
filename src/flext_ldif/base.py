@@ -40,7 +40,25 @@ class FlextLdifServiceBase[TDomainResult](
         settings: p.Ldif.Settings | None = None,
         registry: p.Registry | None = None,
         **fields: t.JsonValue,
-    ) -> Self | p.Ldif.Entry | str:
+    ) -> Self | TDomainResult | p.Ldif.Entry | str:
+        """Configure a service; domain processors may also return their payload.
+
+        Returns:
+            The configured service, or a payload supplied by a domain processor.
+
+        """
+        return self.configure_runtime(
+            server=server, settings=settings, registry=registry, **fields
+        )
+
+    def configure_runtime(
+        self,
+        *,
+        server: p.Ldif.ServerRegistry | None = None,
+        settings: p.Ldif.Settings | None = None,
+        registry: p.Registry | None = None,
+        **fields: t.JsonValue,
+    ) -> Self:
         """Return a cloned DSL instance preserving runtime registry/settings.
 
         Raises:

@@ -80,7 +80,6 @@ class FlextLdifServersOidAclAssemble:
             *,
             allow: m.Ldif.AciAllow | None = None,
             wildcard_rewritten: bool = False,
-            complement_calculated: bool = False,
             display_value: str = "",
         ) -> p.Result[bool]:
             """Record the typed outcome of one subject.
@@ -95,7 +94,11 @@ class FlextLdifServersOidAclAssemble:
                     kind=kind,
                     allow=allow,
                     wildcard_rewritten=wildcard_rewritten,
-                    complement_calculated=complement_calculated,
+                    complement_calculated=allow is not None
+                    and all(
+                        perm.strip().lower() in c.Ldif.NEGATION_TO_BASE
+                        for perm in subject.permissions
+                    ),
                     display_value=display_value,
                 ),
             )
@@ -182,10 +185,6 @@ class FlextLdifServersOidAclAssemble:
                 c.Ldif.AclSubjectOutcomeKind.GRANTED,
                 allow=allow,
                 wildcard_rewritten=wildcard_rewritten,
-                complement_calculated=all(
-                    perm.strip().lower() in c.Ldif.NEGATION_TO_BASE
-                    for perm in subject.permissions
-                ),
             )
 
         def _build_rule(self) -> m.Ldif.AciRule:

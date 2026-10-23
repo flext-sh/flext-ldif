@@ -14,7 +14,7 @@ from flext_cli import p, t
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from flext_ldif import m
+    from flext_ldif import m, t as ldif_t
     from flext_ldif.protocols import FlextLdifProtocols
 
 
@@ -201,7 +201,7 @@ class FlextLdifProtocolsBase:
 
         def resolve_server_constants(
             self, server_type: str
-        ) -> p.Result[FlextLdifProtocolsBase.ServerConstants]: ...
+        ) -> p.Result[type[FlextLdifProtocolsBase.ServerConstants]]: ...
 
         def list_registered_servers(self) -> p.Result[t.MutableSequenceOf[str]]: ...
 
@@ -376,21 +376,18 @@ class FlextLdifProtocolsBase:
         uncategorized: t.MutableSequenceOf[FlextLdifProtocols.Ldif.Entry]
 
     @runtime_checkable
-    class ProcessEntriesOptions(Protocol):
-        """Options for entry processing pipeline."""
-
-        filter_invalid: bool
-        apply_server_rules: bool
-        validate_attributes: bool
-        collect_statistics: bool
+    class ProcessEntriesOptions(p.Model, Protocol):
+        """Model-backed options validated by the entry processing pipeline."""
 
     @runtime_checkable
     class ProcessingResult(Protocol):
         """Result of processing a single entry."""
 
-        entry: FlextLdifProtocols.Ldif.Entry
-        success: bool
-        error: str | None
+        @property
+        def dn(self) -> str: ...
+
+        @property
+        def attributes(self) -> t.MutableStrSequenceMapping: ...
 
     @runtime_checkable
     class EntriesStatistics(Protocol):
@@ -550,7 +547,7 @@ class FlextLdifProtocolsBase:
             | FlextLdifProtocolsBase.SchemaAttribute
             | FlextLdifProtocolsBase.SchemaObjectClass
             | FlextLdifProtocolsBase.Acl,
-        ) -> p.Result[FlextLdifProtocolsBase.ConvertedModel]:
+        ) -> p.Result[ldif_t.Ldif.ConvertedModel]:
             """Convert one LDIF model between server servers."""
             ...
 

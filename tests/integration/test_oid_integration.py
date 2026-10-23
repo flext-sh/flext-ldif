@@ -87,8 +87,8 @@ class TestsFlextLdifOidIntegration:
             api.write(list(entries)),
             error_msg="writing OID entries failed",
         )
-        tm.not_none(written.content)
-        return cls._entries(api, written.content)
+        content = tm.not_none(written.content)
+        return cls._entries(api, content)
 
     # ----------------------------------------------------------------- schema
 
@@ -100,9 +100,10 @@ class TestsFlextLdifOidIntegration:
         """Parsing the OID schema returns entries, each exposing a DN."""
         entries = self._entries(api, oid_schema_fixture)
 
-        assert entries, "OID schema produced no entries"
-        assert all(entry.dn_str for entry in entries), (
-            "every parsed schema entry must expose a non-empty DN"
+        tm.ok(bool(entries), msg="OID schema produced no entries")
+        tm.ok(
+            all(entry.dn_str for entry in entries),
+            msg="every parsed schema entry must expose a non-empty DN",
         )
 
     @pytest.mark.parametrize(
@@ -120,6 +121,10 @@ class TestsFlextLdifOidIntegration:
 
         Stronger than a mere ``>= 0`` smoke check: the OID schema fixture is
         Oracle's own, so at least one definition must carry the Oracle OID arc.
+
+        Raises:
+            AssertionError: If no Oracle definition is present.
+
         """
         entries = self._entries(api, oid_schema_fixture)
         schema_entry = entries[0]
@@ -129,9 +134,9 @@ class TestsFlextLdifOidIntegration:
             definition for definition in definitions if ORACLE_OID_PREFIX in definition
         ]
 
-        assert oracle_definitions, (
-            f"no Oracle {definition_attr} (OID {ORACLE_OID_PREFIX}.*) parsed"
-        )
+        if not oracle_definitions:
+            msg = f"no Oracle {definition_attr} (OID {ORACLE_OID_PREFIX}.*) parsed"
+            raise AssertionError(msg)
 
     # ------------------------------------------------------------- entry data
 
@@ -140,13 +145,18 @@ class TestsFlextLdifOidIntegration:
         api: p.Ldif.LdifClient,
         oid_integration_fixture: str,
     ) -> None:
-        """The integration fixture parses into a large, real dataset."""
+        """The integration fixture parses into a large, real dataset.
+
+        Raises:
+            AssertionError: If the parsed dataset is too small.
+
+        """
         entries = self._entries(api, oid_integration_fixture)
 
         min_expected_entries = 100
-        assert len(entries) > min_expected_entries, (
-            f"expected > {min_expected_entries} entries, got {len(entries)}"
-        )
+        if len(entries) <= min_expected_entries:
+            msg = f"expected > {min_expected_entries} entries, got {len(entries)}"
+            raise AssertionError(msg)
 
     @pytest.mark.parametrize(
         "attribute_name",
@@ -159,16 +169,21 @@ class TestsFlextLdifOidIntegration:
         oid_integration_fixture: str,
         attribute_name: str,
     ) -> None:
-        """Oracle-specific attributes survive parsing on at least one entry."""
+        """Oracle-specific attributes survive parsing on at least one entry.
+
+        Raises:
+            AssertionError: If the requested attribute is absent.
+
+        """
         entries = self._entries(api, oid_integration_fixture)
 
         entries_with_attribute = sum(
             1 for entry in entries if attribute_name in entry.attributes_dict
         )
 
-        assert entries_with_attribute > 0, (
-            f"no parsed entry carries the {attribute_name} attribute"
-        )
+        if entries_with_attribute <= 0:
+            msg = f"no parsed entry carries the {attribute_name} attribute"
+            raise AssertionError(msg)
 
     # --------------------------------------------------------------- roundtrip
 
@@ -179,7 +194,7 @@ class TestsFlextLdifOidIntegration:
     ) -> None:
         """Parse -> write -> parse keeps the entry count identical."""
         original = self._entries(api, oid_integration_fixture)
-        assert original, "no entries in original parse"
+        tm.ok(bool(original), msg="no entries in original parse")
 
         roundtrip = self._roundtrip(api, original)
 
@@ -209,14 +224,19 @@ class TestsFlextLdifOidIntegration:
         oid_integration_fixture: str,
         acl_attribute: str,
     ) -> None:
-        """Total Oracle ACL value counts are invariant across a round-trip."""
+        """Total Oracle ACL value counts are invariant across a round-trip.
+
+        Raises:
+            AssertionError: If the fixture contains no requested ACL values.
+
+        """
         original = self._entries(api, oid_integration_fixture)
         original_count = sum(
             self._attribute_value_count(entry, acl_attribute) for entry in original
         )
-        assert original_count > 0, (
-            f"fixture must contain {acl_attribute} values to be meaningful"
-        )
+        if original_count <= 0:
+            msg = f"fixture must contain {acl_attribute} values to be meaningful"
+            raise AssertionError(msg)
 
         roundtrip_count = sum(
             self._attribute_value_count(entry, acl_attribute)

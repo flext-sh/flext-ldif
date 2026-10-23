@@ -15,7 +15,7 @@ class FlextLdifEntryServerRules:
 
     @staticmethod
     def check_binary_option_rule(
-        entry: p.Ldif.EntryValidationSubject,
+        entry: p.Ldif.Entry,
         rules: FlextLdifModelsSettings.ServerValidationRules,
     ) -> t.MutableSequenceOf[str]:
         """Check binary attribute option requirement from server rules.
@@ -44,7 +44,7 @@ class FlextLdifEntryServerRules:
 
     @staticmethod
     def check_naming_attr_rule(
-        entry: p.Ldif.EntryValidationSubject,
+        entry: p.Ldif.Entry,
         rules: FlextLdifModelsSettings.ServerValidationRules,
         dn_value: str,
     ) -> t.MutableSequenceOf[str]:
@@ -71,7 +71,7 @@ class FlextLdifEntryServerRules:
 
     @staticmethod
     def check_objectclass_rule(
-        entry: p.Ldif.EntryValidationSubject,
+        entry: p.Ldif.Entry,
         rules: FlextLdifModelsSettings.ServerValidationRules,
         dn_value: str,
     ) -> t.MutableSequenceOf[str]:

@@ -371,7 +371,7 @@ class FlextLdifFacade(
     @override
     def validate_entries(
         self,
-        entries: t.MutableSequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse,
+        entries: t.SequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse,
         validation_service: p.Ldif.ValidationService | None = None,
     ) -> p.Result[p.Ldif.ValidationResult]:
         """Validate a sequence of entries or a parse response.

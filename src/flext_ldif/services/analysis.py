@@ -115,9 +115,9 @@ class FlextLdifAnalysis(s[p.Ldif.Response]):
         is_entry_valid = is_entry_valid and oc_valid
         return (is_entry_valid, errors)
 
+    @staticmethod
     def validate_entries(
-        self,
-        entries: t.MutableSequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse,
+        entries: t.SequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse,
         validation_service: p.Ldif.ValidationService | None = None,
     ) -> p.Result[p.Ldif.ValidationResult]:
         """Validate LDIF entries against RFC 2849/4512 standards.

@@ -25,7 +25,7 @@ FlextLdifConstantsEnums = FlextLdifConstantsBaseParts.FlextLdifConstantsEnums
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from flext_ldif.typings import FlextLdifTypes as t
+    from flext_ldif import t
 
 
 class FlextLdifConstantsBase:

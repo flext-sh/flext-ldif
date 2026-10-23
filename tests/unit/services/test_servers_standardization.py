@@ -129,7 +129,7 @@ class TestsFlextLdifServersStandardization:
     ) -> None:
         """parse_input hands back the same entry list as parse_server's value."""
         result = server_cls.Entry().parse_input(valid_ldif)
-        tm.not_none(result)
+        result = tm.not_none(result)
         tm.that([str(entry.dn) for entry in result], eq=[_EXPECTED_DN])
 
     @staticmethod
@@ -175,8 +175,8 @@ class TestsFlextLdifServersStandardization:
         entry = FlextLdifServersRfc.Entry()
         first = entry.parse_input(valid_ldif)
         second = entry.parse_input(valid_ldif)
-        tm.not_none(first)
-        tm.not_none(second)
+        first = tm.not_none(first)
+        second = tm.not_none(second)
         tm.that([str(e.dn) for e in first], eq=[str(e.dn) for e in second])
 
     @staticmethod

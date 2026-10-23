@@ -234,7 +234,7 @@ class TestsFlextLdifCategorizationRealData:
         expected: bool,
     ) -> None:
         """The public under_base contract rejects substring false positives."""
-        assert u.Ldif.under_base(dn, base_dn) is expected
+        tm.that(u.Ldif.under_base(dn, base_dn) is expected, truth=True)
 
     # -- end-to-end pipeline --------------------------------------------------
 
@@ -263,6 +263,9 @@ class TestsFlextLdifCategorizationRealData:
             categorization,
             entries,
         )
-        assert {"dc=example", "ou=users,dc=example"} <= hierarchy
-        assert {"cn=admin,ou=users,dc=example", "cn=user1,ou=users,dc=example"} <= users
-        assert {"dc=example2", "ou=test,dc=example2"} <= rejected
+        tm.that({"dc=example", "ou=users,dc=example"} <= hierarchy, truth=True)
+        tm.that(
+            {"cn=admin,ou=users,dc=example", "cn=user1,ou=users,dc=example"} <= users,
+            truth=True,
+        )
+        tm.that({"dc=example2", "ou=test,dc=example2"} <= rejected, truth=True)

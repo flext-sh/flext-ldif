@@ -122,14 +122,18 @@ class TestsFlextLdifIntegrationEdgeCases:
 
         tm.ok(result)
         attrs = result.value.entries[0].attributes_dict
-        assert set(attrs) >= {
-            "objectClass",
-            "cn",
-            "sn",
-            "mail",
-            "telephoneNumber",
-            "description",
-        }
+        tm.that(
+            set(attrs)
+            >= {
+                "objectClass",
+                "cn",
+                "sn",
+                "mail",
+                "telephoneNumber",
+                "description",
+            },
+            truth=True,
+        )
 
     @staticmethod
     def test_very_long_single_value_preserved_intact(
@@ -265,8 +269,8 @@ class TestsFlextLdifIntegrationEdgeCases:
         write_result = api.write(result.value.entries)
         tm.ok(write_result)
         written = write_result.value.content
-        tm.not_none(written)
-        assert written.strip() in {"", "version: 1"}
+        written = tm.not_none(written)
+        tm.that(written.strip() in {"", "version: 1"}, truth=True)
 
     @staticmethod
     def test_single_entry_roundtrip_preserves_dn_and_value(
@@ -279,7 +283,7 @@ class TestsFlextLdifIntegrationEdgeCases:
         write_result = api.write(result.value.entries)
         tm.ok(write_result)
         content = write_result.value.content
-        tm.not_none(content)
+        content = tm.not_none(content)
 
         roundtrip = api.parse_ldif(content)
         tm.ok(roundtrip)
@@ -306,7 +310,7 @@ class TestsFlextLdifIntegrationEdgeCases:
         write_result = api.write(result.value.entries)
         tm.ok(write_result)
         content = write_result.value.content
-        tm.not_none(content)
+        content = tm.not_none(content)
 
         roundtrip = api.parse_ldif(content)
         tm.ok(roundtrip)

@@ -48,8 +48,11 @@ class TestsFlextLdifVersion:
         """__version_info__ is an exact three-integer release tuple."""
         tm.that(version_module.__version_info__, is_=tuple)
         tm.that(len(version_module.__version_info__), eq=3)
-        assert all(
-            isinstance(component, int) for component in version_module.__version_info__
+        tm.ok(
+            all(
+                isinstance(component, int)
+                for component in version_module.__version_info__
+            )
         )
 
     @staticmethod

@@ -62,14 +62,18 @@ class TestsFlextLdifCollectionsModels:
     @staticmethod
     def test_dynamic_counts_exposes_validated_counts_without_setters() -> None:
         """The constructor owns validated values consumed through mapping views."""
+        expected_count = 4
         counts = m.Ldif.DynamicCounts.model_validate({
-            c.Ldif.Category.REJECTED.value: 4
+            c.Ldif.Category.REJECTED.value: expected_count
         })
 
-        tm.that(counts.get(c.Ldif.Category.REJECTED.value), eq=4)
-        tm.that(counts[c.Ldif.Category.REJECTED.value], eq=4)
-        tm.that(counts.items(), eq={c.Ldif.Category.REJECTED.value: 4}.items())
-        tm.that(counts.values(), where=lambda values: 4 in values)
+        tm.that(counts.get(c.Ldif.Category.REJECTED.value), eq=expected_count)
+        tm.that(counts[c.Ldif.Category.REJECTED.value], eq=expected_count)
+        tm.that(
+            counts.items(),
+            eq={c.Ldif.Category.REJECTED.value: expected_count}.items(),
+        )
+        tm.that(counts.values(), where=lambda values: expected_count in values)
 
     @staticmethod
     def test_schema_content_accepts_empty_sequences() -> None:

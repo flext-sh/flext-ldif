@@ -377,5 +377,5 @@ class TestsFlextLdifApacheServers:
         entries = result.unwrap()
         tm.that(len(entries), eq=1)
         entry_dn = entries[0].dn
-        tm.not_none(entry_dn)
+        entry_dn = tm.not_none(entry_dn)
         tm.that(entry_dn.value, eq=test_case.entry_dn)

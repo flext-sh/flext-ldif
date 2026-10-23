@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from examples import m, t
+from examples import c, m, p, t
 from flext_ldif import ldif
 
 
@@ -24,19 +24,30 @@ class ExamplesFlextLdifAclProcessing:
     @staticmethod
     def _parse_first_entry_with_acls(
         ldif_content: str,
-    ) -> tuple[m.Ldif.Entry, m.Ldif.AclResponse] | None:
+    ) -> t.Pair[p.Ldif.Entry, p.Ldif.AclResponse] | None:
         """Parse LDIF text and extract ACLs from its first entry.
 
         Returns:
-            The resulting ``tuple[m.Ldif.Entry, m.Ldif.AclResponse] | None``.
+            The parsed entry and ACL response through their public contracts.
 
         """
         api = ldif()
-        entries = api.parse_ldif(ldif_content).unwrap().entries
+        entries = (
+            api
+            .parse_ldif(
+                ldif_content,
+                server_type=c.Ldif.ServerTypes.OUD,
+            )
+            .unwrap()
+            .entries
+        )
         if not entries:
             return None
         entry = entries[0]
-        acl_result = api.extract_acls_from_entry(entry, server_type="openldap")
+        acl_result = api.extract_acls_from_entry(
+            entry,
+            server_type=c.Ldif.ServerTypes.OUD,
+        )
         return entry, acl_result.unwrap()
 
     @staticmethod
@@ -107,14 +118,17 @@ class ExamplesFlextLdifAclProcessing:
             "cn: user\n"
             "sn: test\n"
         )
-        parse_result = api.parse_ldif(ldif_content)
+        parse_result = api.parse_ldif(
+            ldif_content,
+            server_type=c.Ldif.ServerTypes.OUD,
+        )
 
         parse_response = parse_result.unwrap()
         entries = parse_response.entries
         acl_service = ldif()
         for entry in entries:
             acl_result = acl_service.extract_acls_from_entry(
-                entry, server_type="openldap"
+                entry, server_type=c.Ldif.ServerTypes.OUD
             )
             if acl_result.success:
                 acl_response = acl_result.unwrap()

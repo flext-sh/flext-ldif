@@ -148,12 +148,11 @@ class TestsFlextLdifRelaxed:
             }:
                 tm.not_none(parsed.oid)
                 tm.ok(parsed.metadata is not None)
-                tm.not_none(parsed.metadata)
+                metadata = tm.not_none(parsed.metadata)
                 tm.that(
                     (
-                        parsed.metadata.extensions.get("schema_source_server")
-                        == "relaxed"
-                        or parsed.metadata.extensions.get("original_format") is not None
+                        metadata.extensions.get("schema_source_server") == "relaxed"
+                        or metadata.extensions.get("original_format") is not None
                     ),
                     eq=True,
                 )
@@ -183,8 +182,8 @@ class TestsFlextLdifRelaxed:
         """Test parse_attribute stores original definition for recovery."""
         original = "( 1.2.3.4 NAME 'test' SYNTAX 1.2.3 )"
         parsed: m.Ldif.SchemaAttribute = tm.ok(schema_server.parse_attribute(original))
-        tm.not_none(parsed.metadata)
-        tm.that(parsed.metadata.extensions.get("original_format"), eq=original)
+        metadata = tm.not_none(parsed.metadata)
+        tm.that(metadata.extensions.get("original_format"), eq=original)
 
     @staticmethod
     def test_write_attribute_to_rfc(
@@ -299,8 +298,8 @@ class TestsFlextLdifRelaxed:
                 schema_server.parse_objectclass(bad_input)
             )
             parsed = tm.ok(objectclass_result)
-        tm.not_none(parsed.metadata)
-        ext = parsed.metadata.extensions
+        metadata = tm.not_none(parsed.metadata)
+        ext = metadata.extensions
         tm.that(
             ext.get("original_format") is not None
             or ext.get("schema_source_server") is not None,

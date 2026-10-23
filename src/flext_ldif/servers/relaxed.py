@@ -19,15 +19,13 @@ from flext_ldif.servers._base import (
     FlextLdifServersBaseSchema,
 )
 from flext_ldif.servers._relaxed import FlextLdifServersRelaxedConstants
-from flext_ldif.servers._rfc import FlextLdifServersRfcAcl, FlextLdifServersRfcConstants
+from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 
 
 class FlextLdifServersRelaxed(FlextLdifServersRfc):
     """Relaxed mode server servers for non-compliant LDIF."""
 
-    Constants: ClassVar[type[FlextLdifServersRfcConstants]] = (
-        FlextLdifServersRelaxedConstants
-    )
+    Constants: ClassVar[type[p.Ldif.ServerConstants]] = FlextLdifServersRelaxedConstants
     Schema: ClassVar[type[FlextLdifServersBaseSchema]] = FlextLdifServersRelaxedSchema
     Entry: ClassVar[type[FlextLdifServersBaseEntry]] = FlextLdifServersRelaxedEntry
 
@@ -45,18 +43,18 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             return self.can_handle_acl(acl_line)
 
         @override
-        def can_handle_acl(self, _acl_line: str | m.Ldif.Acl | t.JsonValue) -> bool:
+        def can_handle_acl(self, acl_line: str | m.Ldif.Acl | t.JsonValue) -> bool:
             """Accept any ACL line in relaxed mode.
 
             Returns:
                 The resulting ``bool``.
 
             """
-            del _acl_line
+            del acl_line
             return True
 
         @override
-        def can_handle_attribute(self, _attribute: m.Ldif.SchemaAttribute) -> bool:
+        def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
             """Check if this ACL server should be aware of a specific attribute.
 
             definition.
@@ -65,13 +63,11 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 The resulting ``bool``.
 
             """
-            del _attribute
+            del attribute
             return True
 
         @override
-        def can_handle_objectclass(
-            self, _objectclass: m.Ldif.SchemaObjectClass
-        ) -> bool:
+        def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
             """Check if this ACL server should be aware of a specific objectClass.
 
             definition.
@@ -80,7 +76,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 The resulting ``bool``.
 
             """
-            del _objectclass
+            del objectclass
             return True
 
         @override

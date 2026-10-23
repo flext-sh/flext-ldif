@@ -336,12 +336,10 @@ class TestsFlextLdifCrossDirectionConversion:
 
         result = conversion.convert_model("oid", "oud", entry)
         tm.ok(result)
-        assert isinstance(result.value, m.Ldif.Entry)
-
-        converted = result.value
-        tm.not_none(converted.attributes)
-        attribute = converted.attributes.attributes["attributeTypes"][0]
-        objectclass = converted.attributes.attributes["objectClasses"][0]
+        converted = tm.instance(result.value, m.Ldif.Entry)
+        attributes = tm.not_none(converted.attributes)
+        attribute = attributes.attributes["attributeTypes"][0]
+        objectclass = attributes.attributes["objectClasses"][0]
         tm.that(attribute, has="SUBSTR caseIgnoreSubstringsMatch")
         tm.that(attribute, lacks="EQUALITY caseIgnoreSubStringsMatch")
         tm.that(objectclass, has="SUP top")
@@ -372,10 +370,8 @@ class TestsFlextLdifCrossDirectionConversion:
 
         result = conversion.convert_model("oud", "oid", entry)
         tm.ok(result)
-        assert isinstance(result.value, m.Ldif.Entry)
-
-        converted = result.value
-        tm.not_none(converted.attributes)
-        attribute = converted.attributes.attributes["attributeTypes"][0]
+        converted = tm.instance(result.value, m.Ldif.Entry)
+        attributes = tm.not_none(converted.attributes)
+        attribute = attributes.attributes["attributeTypes"][0]
         tm.that(attribute, has="caseIgnoreMatch")
         tm.that(attribute, lacks="accessDirectiveMatch")

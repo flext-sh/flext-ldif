@@ -37,7 +37,7 @@ class FlextLdifProtocolsValues(Protocol):
             ...
 
         @property
-        def scores(self) -> t.MutableIntMapping:
+        def scores(self) -> FlextLdifProtocolsBase.DynamicCounts:
             """Per-server-type detection scores."""
             ...
 
@@ -59,6 +59,12 @@ class FlextLdifProtocolsValues(Protocol):
     @runtime_checkable
     class Entry(Protocol):
         """LDIF entry protocol."""
+
+        @property
+        def dn(self) -> FlextLdifProtocolsBase.DN | None: ...
+
+        @property
+        def attributes(self) -> FlextLdifProtocolsBase.Attributes | None: ...
 
         @property
         def dn_str(self) -> str: ...

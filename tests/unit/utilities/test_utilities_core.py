@@ -27,8 +27,8 @@ class TestsFlextLdifUtilitiesCore:
         surname = "Example regression surname"
         entry = ExamplesFlextLdifUtilities.create_user_entry(7, sn=surname)
 
-        tm.not_none(entry.attributes)
-        tm.that(entry.attributes["sn"], eq=[surname])
+        attributes = tm.not_none(entry.attributes)
+        tm.that(attributes["sn"], eq=[surname])
 
     # ---- DN splitting -------------------------------------------------
 
@@ -198,7 +198,10 @@ class TestsFlextLdifUtilitiesCore:
         once = u.Ldif.clean_dn("  cn = John  ,  ou = Users  ")
         tm.that(u.Ldif.clean_dn(once), eq=once)
 
-    # ---- ObjectClass fixes (in-place, observed via public state) -----
+
+@pytest.mark.unit
+class TestsFlextLdifUtilitiesObjectClass:
+    """Public in-place ObjectClass repair behavior."""
 
     @staticmethod
     @pytest.mark.parametrize("kind", ["AUXILIARY", c.Ldif.SchemaKind.AUXILIARY])

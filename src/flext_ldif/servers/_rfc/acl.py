@@ -20,10 +20,12 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
 
     def __new__(
         cls,
+        acl_service: p.Ldif.AclServer | None = None,
         parent_server: Self | None = None,
         **kwargs: t.Ldif.Scalar | m.Ldif.Acl,
     ) -> Self:
         """Override __new__ to support auto-execute and processor instantiation."""
+        del acl_service
         instance: Self = super().__new__(cls)
         auto_execute_kwargs = {"data", "operation", "parent_server", "_parent_server"}
         _ = {k: v for k, v in kwargs.items() if k not in auto_execute_kwargs}
@@ -75,6 +77,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
         *,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
+        registry: p.Registry | None = None,
         **fields: t.JsonValue,
     ) -> Self: ...
 
@@ -98,6 +101,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
         operation: t.JsonValue | None = None,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
+        registry: p.Registry | None = None,
         **fields: t.JsonValue,
     ) -> Self | m.Ldif.Acl | str:
         """Polymorphic callable interface for parse and write operations.
@@ -110,12 +114,17 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
             operation: Explicit operation name; inferred from data when None.
             server: Optional server registry for the configured builder path.
             settings: Optional settings for the configured builder path.
+            registry: Explicit registry for the configured builder path.
             **fields: Additional processor fields.
 
         Returns:
             A configured processor, the parsed ACL, or the serialized text.
 
         """
+        if registry is not None:
+            return self.configure_runtime(
+                server=server, settings=settings, registry=registry, **fields
+            )
         processor_fields: t.MutableMappingKV[str, t.JsonValue | m.Ldif.Acl | None] = (
             dict(fields)
         )
@@ -160,45 +169,45 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
         return list(c.Ldif.RFC_ACL_ATTRIBUTES)
 
     @override
-    def can_handle_acl(self, _acl_line: str | m.Ldif.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Accept any ACL definition in RFC form.
 
         Args:
-            _acl_line: Raw ACL line text or a parsed ACL.
+            acl_line: Raw ACL line text or a parsed ACL.
 
         Returns:
             True; the RFC server handles every ACL definition.
 
         """
-        del _acl_line
+        del acl_line
         return True
 
     @override
-    def can_handle_attribute(self, _attribute: m.Ldif.SchemaAttribute) -> bool:
+    def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
         """Decline schema attribute handling for the ACL server.
 
         Args:
-            _attribute: Attribute to check.
+            attribute: Attribute to check.
 
         Returns:
             False; schema attributes belong to the schema server.
 
         """
-        del _attribute
+        del attribute
         return False
 
     @override
-    def can_handle_objectclass(self, _objectclass: m.Ldif.SchemaObjectClass) -> bool:
+    def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
         """Decline objectClass handling for the ACL server.
 
         Args:
-            _objectclass: ObjectClass to check.
+            objectclass: ObjectClass to check.
 
         Returns:
             False; objectClasses belong to the schema server.
 
         """
-        del _objectclass
+        del objectclass
         return False
 
     @staticmethod

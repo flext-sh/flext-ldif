@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections import UserDict
 from typing import TYPE_CHECKING
 
 import pytest
@@ -13,7 +14,7 @@ import pytest
 from tests import c, m, tm, u
 
 if TYPE_CHECKING:
-    from tests import p
+    from tests import p, t
 
 
 class TestsFlextLdifAclService:
@@ -34,7 +35,7 @@ class TestsFlextLdifAclService:
     def test_service_check_returns_empty_response(svc: p.Ldif.LdifClient) -> None:
         """Test service check returns empty response."""
         result = svc.service_check()
-        resp: m.Ldif.AclResponse = u.Tests.assert_success(result)
+        resp = u.Tests.assert_success(result)
         tm.that(resp, is_=m.Ldif.AclResponse)
         tm.that(len(resp.acls), eq=c.Tests.ACL_SERVICE_CHECK_EMPTY_ACLS)
 
@@ -73,6 +74,23 @@ class TestsFlextLdifAclService:
         result = svc.evaluate_acl_context([], perms)
         eval_result = u.Tests.assert_success(result)
         tm.fail(eval_result.granted)
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        "required",
+        [c.Tests.ACL_PERMISSIONS_EMPTY, c.Tests.ACL_PERMISSIONS_READ_ONLY],
+    )
+    def test_evaluate_preserves_model_and_mutable_mapping_inputs(
+        svc: p.Ldif.LdifClient,
+        required: t.BoolMapping,
+    ) -> None:
+        """Native permission models and mutable mappings retain their semantics."""
+        permissions = m.Ldif.AclPermissions.model_validate(required)
+        acl = m.Ldif.Acl(name="permission-contract", permissions=permissions)
+        for supplied in (permissions, UserDict(required)):
+            evaluation = tm.ok(svc.evaluate_acl_context([acl], supplied))
+            tm.ok(evaluation.granted)
+            tm.that(tm.not_none(evaluation.matched_acl).name, eq=acl.name)
 
     @staticmethod
     @pytest.mark.parametrize(

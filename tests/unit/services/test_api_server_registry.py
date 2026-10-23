@@ -79,7 +79,7 @@ class TestsFlextLdifApiServerRegistry:
         tm.that(
             constants is api.resolve_base_server(c.Tests.OUD).unwrap().server_constants
         )
-        tm.that(isinstance(constants, type))
+        tm.that(type(constants), eq=type)
 
     @staticmethod
     def test_registry_summary_exposes_statistics_contract(
@@ -264,6 +264,10 @@ class TestsFlextLdifApiServerRegistry:
         migration = api.migration_pipeline(runtime_settings=api.settings)
         tm.fail(migration.execute(), has="input_dir")
 
+
+class TestsFlextLdifRegistryWrites:
+    """Validate registry-selected writers and their explicit runtime ports."""
+
     @staticmethod
     def test_structural_write_boundary_preserves_models_and_pathlike_io(
         tmp_path: Path,
@@ -305,13 +309,14 @@ class TestsFlextLdifApiServerRegistry:
         """OID metadata and explicitly selected ACL handling survive file writes."""
         api = FlextLdif()
         acl = "access to entry by * (browse)"
+        source_attribute = c.Ldif.Oid.ACL_ATTRIBUTE_NAME
         parsed = api.parse_string(
             "dn: cn=synthetic\nobjectClass: person\n"
-            f"cn: synthetic\nsn: Sample\norclaci: {acl}\n\n",
+            f"cn: synthetic\nsn: Sample\n{source_attribute}: {acl}\n\n",
             server_type=c.Ldif.ServerTypes.OID,
         ).unwrap()
         tm.that(len(parsed.entries), eq=1)
-        tm.that(parsed.entries[0].attributes_dict["aci"], eq=[acl])
+        tm.that(parsed.entries[0].attributes_dict[source_attribute], eq=[acl])
         output = tmp_path / "converted.ldif"
         written = api.write_ldif_file(
             parsed,
@@ -320,7 +325,10 @@ class TestsFlextLdifApiServerRegistry:
             format_options=m.Ldif.WriteFormatOptions(
                 entry_category=c.Ldif.Categories.USERS,
                 comment_acl_in_non_acl_phases=comment_acl,
-                acl_attribute_names=frozenset({"aci", "orclaci"}),
+                acl_attribute_names=frozenset({
+                    source_attribute,
+                    c.Ldif.Oud.ACL_ATTRIBUTE_NAME,
+                }),
             ),
         ).unwrap()
         content = tm.not_none(output.read_text())
@@ -329,7 +337,9 @@ class TestsFlextLdifApiServerRegistry:
         tm.that(written.statistics.processed_entries, eq=len(parsed.entries))
         tm.that(content, has=acl)
         tm.that(
-            any(line.startswith("aci:") for line in content.splitlines()),
+            any(
+                line.startswith(f"{source_attribute}:") for line in content.splitlines()
+            ),
             eq=not comment_acl,
         )
         reparsed = tm.ok(api.parse_ldif(output, server_type=c.Ldif.ServerTypes.OUD))

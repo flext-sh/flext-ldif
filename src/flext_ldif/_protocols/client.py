@@ -307,7 +307,7 @@ class FlextLdifProtocolsClient(Protocol):
 
         def validate_entries(
             self,
-            entries: t.MutableSequenceOf[FlextLdifProtocolsValues.Entry]
+            entries: t.SequenceOf[FlextLdifProtocolsValues.Entry]
             | FlextLdifProtocolsValues.ParseResponse,
             validation_service: FlextLdifProtocolsBase.ValidationService | None = None,
         ) -> p.Result[FlextLdifProtocolsBase.ValidationResult]:
@@ -345,7 +345,7 @@ class FlextLdifProtocolsClient(Protocol):
 
         def process_entries(
             self,
-            entries: t.MutableSequenceOf[FlextLdifProtocolsValues.Entry],
+            entries: t.SequenceOf[FlextLdifProtocolsValues.Entry],
             options: FlextLdifProtocolsBase.ProcessEntriesOptions | None = None,
             **kwargs: t.JsonValue,
         ) -> p.Result[t.MutableSequenceOf[FlextLdifProtocolsBase.ProcessingResult]]:
@@ -354,7 +354,7 @@ class FlextLdifProtocolsClient(Protocol):
 
         def calculate_for_entries(
             self,
-            entries: t.MutableSequenceOf[FlextLdifProtocolsValues.Entry]
+            entries: t.SequenceOf[FlextLdifProtocolsValues.Entry]
             | FlextLdifProtocolsValues.ParseResponse,
         ) -> p.Result[FlextLdifProtocolsBase.EntriesStatistics]:
             """Calculate entry statistics through the public facade DSL."""

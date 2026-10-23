@@ -18,13 +18,10 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
     """OID ACL parsing."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
-    OidAclMetadataConfig: ClassVar[type[m.Ldif.OidAclMetadataConfig]] = (
-        m.Ldif.OidAclMetadataConfig
-    )
 
     @staticmethod
     def _build_oid_acl_metadata(
-        settings: m.Ldif.OidAclMetadataConfig,
+        settings: p.Ldif.OidAclMetadataConfig,
     ) -> t.Ldif.MutableMetadataMapping:
         """Build metadata extensions for an OID ACL.
 
@@ -234,7 +231,7 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
         )
         perms_dict = self._parse_oid_permissions(acl_line)
         options = self._extract_oid_acl_options(acl_line)
-        settings = self.OidAclMetadataConfig.model_validate({
+        settings = m.Ldif.OidAclMetadataConfig.model_validate({
             "acl_line": acl_line,
             "oid_subject_type": oid_subject_type,
             "rfc_subject_type": rfc_subject_type,

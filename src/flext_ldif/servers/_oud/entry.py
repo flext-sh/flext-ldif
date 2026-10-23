@@ -247,7 +247,7 @@ class FlextLdifServersOudEntry(
                 entry_data,
                 write_options.acl_attribute_names,
             )
-            FlextLdifServersOudHelpersMixin._add_oud_acl_comments(
+            FlextLdifServersOudHelpersMixin.add_oud_acl_comments(
                 ldif_parts,
                 entry_data,
                 write_options,

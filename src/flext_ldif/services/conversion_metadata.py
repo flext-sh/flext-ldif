@@ -18,16 +18,16 @@ class FlextLdifConversionMetadataMixin(s[p.Ldif.Response]):
     def _analyze_attribute_case(
         original_attribute_case: t.JsonMapping,
         target_server_type: str,
-    ) -> t.MutableMappingKV[str, t.Ldif.MutableMetadataInputMapping]:
+    ) -> t.MutableMappingKV[str, t.Ldif.MetadataAnalysisDetail]:
         """Analyze attribute case for target compatibility.
 
         Returns:
             The resulting ``t.MutableMappingKV[str,
-                t.Ldif.MutableMetadataInputMapping]``.
+                t.Ldif.MetadataAnalysisDetail]``.
 
         """
         if bool(original_attribute_case):
-            payload: t.Ldif.MutableMetadataInputMapping = {
+            payload: t.Ldif.MetadataAnalysisDetail = {
                 "source_case": original_attribute_case,
                 "target_server": target_server_type,
                 "action": "apply_target_conventions",
@@ -39,17 +39,17 @@ class FlextLdifConversionMetadataMixin(s[p.Ldif.Response]):
     def _analyze_boolean_conversions(
         boolean_conversions: t.JsonMapping,
         target_server_type: str,
-    ) -> t.MutableMappingKV[str, t.Ldif.MutableMetadataInputMapping]:
+    ) -> t.MutableMappingKV[str, t.Ldif.MetadataAnalysisDetail]:
         """Analyze boolean conversions for target compatibility.
 
         Returns:
             The resulting ``t.MutableMappingKV[str,
-                t.Ldif.MutableMetadataInputMapping]``.
+                t.Ldif.MetadataAnalysisDetail]``.
 
         """
         if not boolean_conversions:
             return {}
-        result: t.MutableMappingKV[str, t.Ldif.MutableMetadataInputMapping] = {}
+        result: t.MutableMappingKV[str, t.Ldif.MetadataAnalysisDetail] = {}
         for attr_name, conv_info in boolean_conversions.items():
             source_format = ""
             if isinstance(conv_info, Mapping):
@@ -65,12 +65,12 @@ class FlextLdifConversionMetadataMixin(s[p.Ldif.Response]):
     def _analyze_dn_format(
         original_format_details: t.JsonMapping,
         target_server_type: str,
-    ) -> t.MutableMappingKV[str, t.Ldif.MutableMetadataInputMapping]:
+    ) -> t.MutableMappingKV[str, t.Ldif.MetadataAnalysisDetail]:
         """Analyze DN spacing for target compatibility.
 
         Returns:
             The resulting ``t.MutableMappingKV[str,
-                t.Ldif.MutableMetadataInputMapping]``.
+                t.Ldif.MetadataAnalysisDetail]``.
 
         """
         spacing = original_format_details.get("spacing")
@@ -78,7 +78,7 @@ class FlextLdifConversionMetadataMixin(s[p.Ldif.Response]):
             spacing = original_format_details.get("dn_spacing")
         if spacing is None:
             return {}
-        payload: t.Ldif.MutableMetadataInputMapping = {
+        payload: t.Ldif.MetadataAnalysisDetail = {
             "source_dn": spacing,
             "target_server": target_server_type,
             "action": "normalize_for_target",
@@ -89,17 +89,17 @@ class FlextLdifConversionMetadataMixin(s[p.Ldif.Response]):
     def _analyze_metadata_for_conversion(
         source_metadata: m.Ldif.ServerMetadata | t.MutableJsonMapping | None,
         target_server_type: str,
-    ) -> t.MutableMappingKV[str, t.Ldif.MutableMetadataInputMapping]:
+    ) -> t.MutableMappingKV[str, t.Ldif.MetadataAnalysisDetail]:
         """Analyze source metadata for intelligent conversion to target server.
 
         Returns:
             The resulting ``t.MutableMappingKV[str,
-                t.Ldif.MutableMetadataInputMapping]``.
+                t.Ldif.MetadataAnalysisDetail]``.
 
         """
         conversion_analysis: t.MutableMappingKV[
             str,
-            t.Ldif.MutableMetadataInputMapping,
+            t.Ldif.MetadataAnalysisDetail,
         ] = {}
         if not source_metadata:
             return conversion_analysis

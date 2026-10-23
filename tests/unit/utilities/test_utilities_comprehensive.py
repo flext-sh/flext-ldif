@@ -83,12 +83,12 @@ class TestsFlextLdifUtilitiesComprehensive:
     )
     def test_needs_base64_encoding(value: str, *, expected: bool) -> None:
         """needs_base64_encoding flags unsafe values, clears safe ASCII."""
-        assert u.Ldif.needs_base64_encoding(value) is expected
+        tm.ok(u.Ldif.needs_base64_encoding(value) is expected)
 
     @staticmethod
     def test_needs_base64_encoding_ignores_trailing_space_when_disabled() -> None:
         """Disabling the trailing-space check clears an otherwise-flagged value."""
-        assert (
+        tm.ok(
             u.Ldif.needs_base64_encoding("safe ", check_trailing_space=False) is False
         )
 
@@ -134,8 +134,8 @@ class TestsFlextLdifUtilitiesComprehensive:
         result = u.Ldif.norm("")
 
         tm.ok(result.failure)
-        tm.not_none(result.error)
-        tm.that(result.error.lower(), has="empty")
+        error = tm.not_none(result.error)
+        tm.that(error.lower(), has="empty")
 
     # --- DN parsing (r[T]) ---------------------------------------------
 
@@ -171,9 +171,9 @@ class TestsFlextLdifUtilitiesComprehensive:
         fold_width = 76
         folded = u.Ldif.fold_line("a" * 100, fold_width)
 
-        assert len(folded) > 1
-        assert len(folded[0]) <= fold_width
-        assert all(cont.startswith(" ") for cont in folded[1:])
+        tm.ok(len(folded) > 1)
+        tm.ok(len(folded[0]) <= fold_width)
+        tm.ok(all(cont.startswith(" ") for cont in folded[1:]))
 
     @staticmethod
     def test_unfold_lines_rejoins_continuation_lines() -> None:

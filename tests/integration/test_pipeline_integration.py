@@ -66,14 +66,14 @@ class TestsFlextLdifPipelineIntegration:
     @staticmethod
     def _dn_value(entry: _Entry) -> str:
         """Return the public DN string, asserting the contract populated it."""
-        tm.not_none(entry.dn)
-        return entry.dn.value
+        dn = tm.not_none(entry.dn)
+        return dn.value
 
     @staticmethod
     def _attributes(entry: _Entry) -> _Attributes:
         """Return the public attribute mapping, asserting it was populated."""
-        tm.not_none(entry.attributes)
-        attributes: _Attributes = entry.attributes.attributes
+        validated_attributes = tm.not_none(entry.attributes)
+        attributes: _Attributes = validated_attributes.attributes
         return attributes
 
     @staticmethod
@@ -166,8 +166,8 @@ class TestsFlextLdifPipelineIntegration:
         result = ldif().parse_ldif(missing)
 
         tm.fail(result.success)
-        tm.not_none(result.error)
-        tm.that(result.error.lower(), has="not found")
+        error = tm.not_none(result.error)
+        tm.that(error.lower(), has="not found")
 
     @staticmethod
     def test_parse_map_combinator_projects_entry_count() -> None:

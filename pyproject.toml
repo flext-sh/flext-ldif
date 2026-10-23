@@ -127,12 +127,14 @@ codegen = [
 package_name = "flext_ldif"
 
 [tool.hatch.build.targets.wheel]
+exclude = ["/src/flext_ldif/config"]
 only-include = ["src/flext_ldif"]
 
 [tool.hatch.build.targets.wheel.sources]
 "src/flext_ldif" = "flext_ldif"
 
 [tool.hatch.build.targets.wheel.force-include]
+"src/flext_ldif/config" = "flext_ldif/config"
 "pyproject.toml" = "flext_ldif/pyproject.toml"
 
 [tool.hatch.build.targets.sdist]

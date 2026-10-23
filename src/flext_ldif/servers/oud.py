@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_ldif import m
+from flext_ldif import m, p
 from flext_ldif.servers import FlextLdifServersRfc
 from flext_ldif.servers._base import (
     FlextLdifServersBaseEntry,
@@ -21,15 +21,12 @@ from flext_ldif.servers._oud import (
     FlextLdifServersOudEntry,
     FlextLdifServersOudSchema,
 )
-from flext_ldif.servers._rfc import FlextLdifServersRfcConstants
 
 
 class FlextLdifServersOud(FlextLdifServersRfc, m.Ldif.RegistryPortOptions):
     """Oracle Unified Directory (OUD) Server Implementation."""
 
-    Constants: ClassVar[type[FlextLdifServersRfcConstants]] = (
-        FlextLdifServersOudConstants
-    )
+    Constants: ClassVar[type[p.Ldif.ServerConstants]] = FlextLdifServersOudConstants
     Acl: ClassVar[type[FlextLdifServersBaseSchemaAcl]] = FlextLdifServersOudAcl
     Schema: ClassVar[type[FlextLdifServersBaseSchema]] = FlextLdifServersOudSchema
     Entry: ClassVar[type[FlextLdifServersBaseEntry]] = FlextLdifServersOudEntry

@@ -95,8 +95,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         tm.ok(result)
         entries = result.value.entries
         tm.that(len(entries), eq=1)
-        metadata = entries[0].metadata
-        tm.not_none(metadata)
+        metadata = tm.not_none(entries[0].metadata)
         tm.that(str(metadata.server_type), eq=effective_server_type)
 
     # -- fixture-driven capture -------------------------------------------
@@ -116,17 +115,24 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         effective_server_type: str,
         fixture_name: str,
     ) -> None:
-        """Every entry parsed from a server fixture carries its effective type."""
+        """Every entry parsed from a server fixture carries its effective type.
+
+        Raises:
+            AssertionError: If the fixture produces no entries.
+
+        """
         fixture_path = fixtures_dir / server_type / fixture_name
 
         result = parser.parse_ldif_file(path=fixture_path, server_type=server_type)
 
         tm.ok(result)
         entries = result.value.entries
-        assert entries, f"No entries parsed from {fixture_path}"
+        if not entries:
+            msg = f"No entries parsed from {fixture_path}"
+            raise AssertionError(msg)
         for entry in entries:
-            tm.not_none(entry.metadata)
-            tm.that(str(entry.metadata.server_type), eq=effective_server_type)
+            metadata = tm.not_none(entry.metadata)
+            tm.that(str(metadata.server_type), eq=effective_server_type)
 
     # -- original DN capture ----------------------------------------------
 
@@ -140,10 +146,9 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         result = parser.parse_string(content=content, server_type=c.Tests.OID)
 
         tm.ok(result)
-        metadata = result.value.entries[0].metadata
-        tm.not_none(metadata)
-        assert (
-            metadata.extensions["original_dn_complete"] == "cn=test,dc=example,dc=com"
+        metadata = tm.not_none(result.value.entries[0].metadata)
+        tm.that(
+            metadata.extensions["original_dn_complete"], eq="cn=test,dc=example,dc=com"
         )
 
     @staticmethod
@@ -172,7 +177,12 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         raw_value: str,
         converted_value: str,
     ) -> None:
-        """OID 0/1 booleans are recorded with original and converted values."""
+        """OID 0/1 booleans are recorded with original and converted values.
+
+        Raises:
+            AssertionError: If conversion metadata is not a mapping.
+
+        """
         content = (
             "dn: cn=test,dc=example,dc=com\n"
             "objectClass: top\n"
@@ -183,15 +193,26 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         result = parser.parse_string(content=content, server_type=c.Tests.OID)
 
         tm.ok(result)
-        metadata = result.value.entries[0].metadata
-        tm.not_none(metadata)
+        metadata = tm.not_none(result.value.entries[0].metadata)
         converted = metadata.extensions[c.Ldif.CONVERTED_ATTRIBUTES]
-        assert isinstance(converted, Mapping)
+        match converted:
+            case Mapping():
+                pass
+            case _:
+                raise AssertionError
         boolean_conversions = converted[c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS]
-        assert isinstance(boolean_conversions, Mapping)
+        match boolean_conversions:
+            case Mapping():
+                pass
+            case _:
+                raise AssertionError
         tm.that(boolean_conversions, has=attribute)
         entry_conversion = boolean_conversions[attribute]
-        assert isinstance(entry_conversion, Mapping)
+        match entry_conversion:
+            case Mapping():
+                pass
+            case _:
+                raise AssertionError
         tm.that(entry_conversion[c.Ldif.CONVERSION_ORIGINAL_VALUE], eq=[raw_value])
         tm.that(
             entry_conversion[c.Ldif.CONVERSION_CONVERTED_VALUE],
@@ -219,8 +240,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         write_result = writer.write(entries=[entry])
 
         tm.ok(write_result)
-        written = write_result.value.content
-        tm.not_none(written)
+        written = tm.not_none(write_result.value.content)
         tm.that(written, has="dn: cn=test,dc=example,dc=com")
         tm.that(written, has="orcldasisenabled: TRUE")
 
@@ -253,8 +273,8 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         tm.ok(result)
         entry = result.value.entries[0]
         tm.not_none(entry.metadata)
-        tm.not_none(entry.attributes)
-        tm.that(entry.attributes.get(attribute), eq=[value])
+        attributes = tm.not_none(entry.attributes)
+        tm.that(attributes.get(attribute), eq=[value])
 
     # -- invariants and error paths ---------------------------------------
 
@@ -273,12 +293,10 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         first = parser.parse_string(content=content, server_type=c.Tests.OID)
         second = parser.parse_string(content=content, server_type=c.Tests.OID)
 
-        assert first.success
-        assert second.success
-        first_meta = first.value.entries[0].metadata
-        second_meta = second.value.entries[0].metadata
-        tm.not_none(first_meta)
-        tm.not_none(second_meta)
+        tm.ok(first.success)
+        tm.ok(second.success)
+        first_meta = tm.not_none(first.value.entries[0].metadata)
+        second_meta = tm.not_none(second.value.entries[0].metadata)
         tm.that(str(first_meta.server_type), eq=str(second_meta.server_type))
         tm.that(first_meta.extensions, eq=second_meta.extensions)
 

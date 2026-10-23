@@ -32,7 +32,7 @@ class FlextLdifProcessing(s[p.Ldif.Response]):
 
     def process_entries(
         self,
-        entries: t.MutableSequenceOf[p.Ldif.Entry],
+        entries: t.SequenceOf[p.Ldif.Entry],
         options: p.Ldif.ProcessEntriesOptions | None = None,
         **kwargs: t.JsonValue,
     ) -> p.Result[t.MutableSequenceOf[p.Ldif.ProcessingResult]]:

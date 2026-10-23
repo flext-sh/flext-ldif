@@ -16,7 +16,7 @@ class FlextLdifStatistics(s[p.Ldif.Response]):
 
     @staticmethod
     def calculate_for_entries(
-        entries: t.MutableSequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse,
+        entries: t.SequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse,
     ) -> p.Result[p.Ldif.EntriesStatistics]:
         """Calculate general-purpose statistics for a list of Entry models.
 

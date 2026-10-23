@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping
+
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.services import FlextLdifServer
 
@@ -35,14 +37,15 @@ class FlextLdifAcl(FlextLdifServer):
             The resulting ``p.Result[p.Ldif.AclEvaluationResult]``.
 
         """
-        if isinstance(required_permissions, m.Ldif.AclPermissions):
-            required = required_permissions
-        else:
+        required: p.Ldif.AclPermissions
+        if isinstance(required_permissions, MutableMapping):
             mapping: t.MutableBoolMapping = required_permissions
             perms_dict: t.MutableBoolMapping = dict(mapping.items())
             required = m.Ldif.AclPermissions.model_validate(
                 m.Ldif.AclPermissions.filter_rfc_compliant_permissions(perms_dict),
             )
+        else:
+            required = required_permissions
         permission_keys = (
             c.Ldif.RfcAclPermission.READ.value,
             c.Ldif.RfcAclPermission.WRITE.value,

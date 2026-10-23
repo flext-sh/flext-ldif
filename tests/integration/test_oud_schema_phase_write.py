@@ -94,8 +94,7 @@ def _write_oud_phase(api: p.Ldif.LdifClient, parsed: m.Ldif.ParseResponse) -> st
             format_options=_PHASE_MODIFY_FORMAT_OPTIONS,
         ),
     )
-    tm.not_none(written.content)
-    return written.content
+    return tm.not_none(written.content)
 
 
 class TestsFlextLdifOudSchemaPhaseWrite:
@@ -105,7 +104,12 @@ class TestsFlextLdifOudSchemaPhaseWrite:
     def test_oud_phase_write_emits_rfc4512_syntax_oids(
         api: p.Ldif.LdifClient,
     ) -> None:
-        """Cross-server schema definitions must lose quoted SYNTAX OIDs."""
+        """Cross-server schema definitions must lose quoted SYNTAX OIDs.
+
+        Raises:
+            AssertionError: If a quoted SYNTAX OID remains in the output.
+
+        """
         parsed = tm.ok(
             api.parse_ldif(_QUOTED_SCHEMA_SOURCE, server_type=c.Ldif.ServerTypes.OID),
         )
@@ -116,12 +120,14 @@ class TestsFlextLdifOudSchemaPhaseWrite:
             for line in logical_lines
             if line.startswith(("attributetypes:", "objectclasses:"))
         ]
-        assert schema_lines, "phase write must emit schema definitions"
+        tm.ok(bool(schema_lines), msg="phase write must emit schema definitions")
         quoted = [line for line in schema_lines if "SYNTAX '" in line]
-        assert quoted == [], (
-            f"OUD rejects quoted SYNTAX OIDs (invalidAttributeSyntax); got {quoted}"
-        )
-        assert _OUD_QUOTED_OBJECTCLASS_DEFINITION in logical_lines
+        if quoted:
+            msg = (
+                f"OUD rejects quoted SYNTAX OIDs (invalidAttributeSyntax); got {quoted}"
+            )
+            raise AssertionError(msg)
+        tm.that(logical_lines, has=_OUD_QUOTED_OBJECTCLASS_DEFINITION)
 
     @staticmethod
     def test_oud_phase_write_roundtrip_keeps_definitions_stable(
@@ -150,7 +156,7 @@ class TestsFlextLdifOudSchemaPhaseWrite:
             if line.startswith(("attributetypes:", "objectclasses:"))
         ]
         tm.that(second_values, eq=first_values)
-        assert not [line for line in second_values if "SYNTAX '" in line]
+        tm.that([line for line in second_values if "SYNTAX '" in line], empty=True)
 
     @staticmethod
     def test_oud_phase_write_preserves_oud_canonical_definitions(
@@ -165,9 +171,11 @@ class TestsFlextLdifOudSchemaPhaseWrite:
         )
 
         logical_lines = _active_logical_lines(_write_oud_phase(api, parsed))
-        assert any(
-            line.startswith("attributetypes: ( 99.99.99.2 NAME 'matricula'")
-            and "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15" in line
-            for line in logical_lines
+        tm.ok(
+            any(
+                line.startswith("attributetypes: ( 99.99.99.2 NAME 'matricula'")
+                and "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15" in line
+                for line in logical_lines
+            )
         )
-        assert not [line for line in logical_lines if "SYNTAX '" in line]
+        tm.that([line for line in logical_lines if "SYNTAX '" in line], empty=True)

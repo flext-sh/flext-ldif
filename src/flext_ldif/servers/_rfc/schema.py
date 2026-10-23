@@ -113,6 +113,7 @@ class FlextLdifServersRfcSchema(
         *,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
+        registry: p.Registry | None = None,
         **fields: t.JsonValue,
     ) -> Self: ...
 
@@ -148,6 +149,7 @@ class FlextLdifServersRfcSchema(
         operation: t.JsonValue | None = None,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
+        registry: p.Registry | None = None,
         **fields: t.JsonValue,
     ) -> Self | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str:
         """Callable interface - automatic polymorphic processor.
@@ -161,6 +163,10 @@ class FlextLdifServersRfcSchema(
             ValueError: If ``result.failure``.
 
         """
+        if registry is not None:
+            return self.configure_runtime(
+                server=server, settings=settings, registry=registry, **fields
+            )
         configured = FlextLdifServerMethodsMixin.dispatch_builder(
             super().__call__,
             fields,

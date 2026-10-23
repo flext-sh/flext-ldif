@@ -222,8 +222,8 @@ class FlextLdifServersOidEntryParseMixin(
                     }
                     for attr_name, conversion_data in boolean_conversions.items()
                 }
-                boolean_conversions_json: t.JsonMapping = (
-                    u.Cli.JSON_MAPPING_ADAPTER.validate_python({
+                boolean_conversions_json: t.JsonDict = (
+                    u.json_dict_adapter().validate_python({
                         attr_name: u.normalize_to_json_value(conversion_data)
                         for attr_name, conversion_data in (
                             boolean_conversions_dict.items()

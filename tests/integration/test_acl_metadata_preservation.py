@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from flext_ldif import ldif
-from tests import c, t, tm, u
+from tests import c, t, tm
 
 if TYPE_CHECKING:
     from tests import m, p
@@ -39,20 +39,14 @@ class TestsFlextLdifAclMetadataPreservation:
 
     @staticmethod
     def _extensions(entry: m.Ldif.Entry) -> t.JsonMapping:
-        """Read the entry's public metadata extensions as a plain mapping.
+        """Read validated public metadata extensions without copying them.
 
         Returns:
             The resulting ``t.JsonMapping``.
 
         """
-        metadata = entry.metadata
-        tm.not_none(metadata)
-        extensions = metadata.extensions
-        tm.not_none(extensions)
-        extensions_dump: t.JsonMapping = u.json_mapping_adapter().validate_python(
-            dict(extensions),
-        )
-        return extensions_dump
+        metadata = tm.not_none(entry.metadata)
+        return metadata.extensions
 
     @staticmethod
     def _parse_single(
@@ -144,14 +138,15 @@ class TestsFlextLdifAclMetadataPreservation:
         )
         extensions = self._extensions(self._parse_single(api, ldif_text, c.Tests.OID))
         tm.that(extensions.get(c.Ldif.ACL_BINDMODE), eq="Simple")
-        tm.ok(extensions.get(c.Ldif.ACL_DENY_GROUP_OVERRIDE))
-        tm.ok(extensions.get(c.Ldif.ACL_APPEND_TO_ALL))
+        tm.that(extensions.get(c.Ldif.ACL_DENY_GROUP_OVERRIDE), eq=True, is_=bool)
+        tm.that(extensions.get(c.Ldif.ACL_APPEND_TO_ALL), eq=True, is_=bool)
         tm.that(
             extensions.get(c.Ldif.ACL_BIND_IP_FILTER),
             eq="orclipaddress=192.168.1.*",
         )
-        assert (
-            extensions.get(c.Ldif.ACL_CONSTRAIN_TO_ADDED_OBJECT) == "objectclass=person"
+        tm.that(
+            extensions.get(c.Ldif.ACL_CONSTRAIN_TO_ADDED_OBJECT),
+            eq="objectclass=person",
         )
 
     # -- OUD ACI feature preservation ------------------------------------
@@ -284,13 +279,12 @@ class TestsFlextLdifAclMetadataPreservation:
 
         write_result = api.write([entry], server_type=c.Tests.OID)
         tm.ok(write_result)
-        written = write_result.unwrap().content
-        tm.not_none(written)
+        written = tm.not_none(write_result.unwrap().content)
 
         reparsed = self._parse_single(api, written, c.Tests.OID)
         extensions = self._extensions(reparsed)
         tm.that(extensions.get(c.Ldif.ACL_BINDMODE), eq="Simple")
-        tm.ok(extensions.get(c.Ldif.ACL_DENY_GROUP_OVERRIDE))
+        tm.that(extensions.get(c.Ldif.ACL_DENY_GROUP_OVERRIDE), eq=True, is_=bool)
 
     def test_oud_aci_survives_round_trip(self, api: p.Ldif.LdifClient) -> None:
         """OUD ACI metadata is identical after a write/re-parse round-trip."""
@@ -306,8 +300,7 @@ class TestsFlextLdifAclMetadataPreservation:
 
         write_result = api.write([entry], server_type=c.Tests.OUD)
         tm.ok(write_result)
-        written = write_result.unwrap().content
-        tm.not_none(written)
+        written = tm.not_none(write_result.unwrap().content)
 
         reparsed = self._parse_single(api, written, c.Tests.OUD)
         extensions = self._extensions(reparsed)

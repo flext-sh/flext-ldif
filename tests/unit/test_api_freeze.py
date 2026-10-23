@@ -144,7 +144,7 @@ class TestsFlextLdifApiFreeze:
         """Repeated access returns the identical object (stable identity)."""
         first = getattr(flext_ldif, symbol)
         second = getattr(flext_ldif, symbol)
-        assert first is second
+        tm.ok(first is second)
 
     @staticmethod
     @pytest.mark.parametrize("symbol", PUBLIC_API)
@@ -169,7 +169,7 @@ class TestsFlextLdifApiFreeze:
         owner: TestsFlextLdifUnitTypings.PublicSymbol,
     ) -> None:
         """Short facade aliases are the same object as their named owner."""
-        assert getattr(flext_ldif, alias) is getattr(flext_ldif, owner)
+        tm.ok(getattr(flext_ldif, alias) is getattr(flext_ldif, owner))
 
     @staticmethod
     def test_ldif_singleton_is_a_flext_ldif_instance() -> None:

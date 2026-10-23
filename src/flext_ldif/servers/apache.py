@@ -142,8 +142,8 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         @override
         def can_handle(
             self,
-            _entry_dn: str,
-            _attributes: t.MutableStrSequenceMapping,
+            entry_dn: str,
+            attributes: t.MutableStrSequenceMapping,
         ) -> bool:
             """Check if this server can handle the entry.
 
@@ -151,7 +151,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 The resulting ``bool``.
 
             """
-            del _entry_dn, _attributes
+            del entry_dn, attributes
             return True
 
         def _parse_entry(
