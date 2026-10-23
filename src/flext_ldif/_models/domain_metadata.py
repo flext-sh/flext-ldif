@@ -20,6 +20,7 @@ from flext_core import m
 
 from flext_ldif import FlextLdifShared, c, t
 from flext_ldif._models import (
+    FlextLdifModelsAclConvert,
     FlextLdifModelsDomainAttributes,
     FlextLdifModelsDomainEntryStatistics,
 )
@@ -324,6 +325,12 @@ class FlextLdifModelsDomainMetadata:
             (FlextLdifModelsDomainMetadata.SchemaFormatDetails | None),
             m.Field(
                 description="Schema formatting details for round-trip preservation",
+            ),
+        ] = None
+        acl_conversion: Annotated[
+            FlextLdifModelsAclConvert.AclEntryConversion | None,
+            m.Field(
+                description="Typed OID→OUD ACL conversion outcome of this entry",
             ),
         ] = None
         soft_delete_markers: Annotated[

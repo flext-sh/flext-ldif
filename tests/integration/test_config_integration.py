@@ -88,10 +88,10 @@ class TestsFlextLdifConfigIntegration:
         first: TestsFlextLdifSettings = self.create_settings()
         second: TestsFlextLdifSettings = self.create_settings()
 
-        tm.that(first.ldif.ldif_encoding, eq=second.ldif.ldif_encoding)
+        tm.that(first.Ldif.ldif_encoding, eq=second.Ldif.ldif_encoding)
         tm.that(
-            first.ldif.ldif_strict_validation,
-            eq=second.ldif.ldif_strict_validation,
+            first.Ldif.ldif_strict_validation,
+            eq=second.Ldif.ldif_strict_validation,
         )
 
     @pytest.mark.parametrize("server_type", c.Tests.CONFIG_SERVER_TYPES)

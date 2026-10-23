@@ -52,6 +52,18 @@ class FlextLdifConstantsAclConvert:
         GUIDATTR = "guidattr"
         UNKNOWN = "unknown"
 
+    @unique
+    class AclSubjectOutcomeKind(StrEnum):
+        """What OID→OUD conversion did with one by-clause subject."""
+
+        GRANTED = "granted"
+        EXCLUDED_DEAD_CODE = "excluded_dead_code"
+        EXCLUDED_DENY_NONE = "excluded_deny_none"
+        EXCLUDED_CONTAINER = "excluded_container"
+        UNSUPPORTED = "unsupported"
+        OUT_OF_SCOPE = "out_of_scope"
+        UNGRANTED = "ungranted"
+
     ACL_ACCESS_TO: ClassVar[str] = "access to"
     ACL_WILDCARD: ClassVar[str] = "*"
 
