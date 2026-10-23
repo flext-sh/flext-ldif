@@ -44,8 +44,7 @@ class TestsFlextLdifNovellServers:
 
         """
         server = novell_server.schema_server
-        assert isinstance(server, FlextLdifServersNovell.Schema)
-        return server
+        return tm.instance(server, FlextLdifServersNovell.Schema)
 
     @staticmethod
     @pytest.fixture
@@ -59,8 +58,7 @@ class TestsFlextLdifNovellServers:
 
         """
         server = novell_server.acl_server
-        assert isinstance(server, FlextLdifServersNovell.Acl)
-        return server
+        return tm.instance(server, FlextLdifServersNovell.Acl)
 
     @staticmethod
     @pytest.fixture
@@ -74,8 +72,7 @@ class TestsFlextLdifNovellServers:
 
         """
         server = novell_server.entry_server
-        assert isinstance(server, FlextLdifServersNovell.Entry)
-        return server
+        return tm.instance(server, FlextLdifServersNovell.Entry)
 
     # ── Schema: attribute detection ─────────────────────────────────────
 
@@ -311,8 +308,7 @@ class TestsFlextLdifNovellServers:
             "dn": "cn=user,o=Example",
             "attributes": {"cn": ["user"], "objectClass": ["ndsperson"]},
         })
-        processed: m.Ldif.Entry = tm.ok(entry_server.process_entry(entry))
-        assert isinstance(processed, m.Ldif.Entry)
+        processed = tm.instance(tm.ok(entry_server.process_entry(entry)), m.Ldif.Entry)
         validated_attributes = tm.not_none(processed.attributes)
         attributes = validated_attributes.attributes
         tm.ok(attributes["cn"] == ["user"])
@@ -332,7 +328,6 @@ class TestsFlextLdifNovellServers:
             "dn": "cn=user,o=Example",
             "attributes": {},
         })
-        processed: m.Ldif.Entry = tm.ok(entry_server.process_entry(entry))
-        assert isinstance(processed, m.Ldif.Entry)
+        processed = tm.instance(tm.ok(entry_server.process_entry(entry)), m.Ldif.Entry)
         attributes = tm.not_none(processed.attributes)
         tm.ok(dict(attributes.attributes) == {})

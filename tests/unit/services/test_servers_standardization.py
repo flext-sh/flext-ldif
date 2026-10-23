@@ -99,14 +99,14 @@ class TestsFlextLdifServersStandardization:
         constants = server_cls.Constants
         tm.that(constants.ALIASES, has=constants.CANONICAL_NAME)
         tm.that(constants.ALIASES, has=canonical)
-        assert all(constants.ALIASES)
+        tm.that(all(constants.ALIASES), truth=True)
 
     @staticmethod
     def test_rfc_is_the_lowest_precedence_fallback() -> None:
         """RFC's higher PRIORITY number ranks it last behind specific servers."""
         rfc_priority = FlextLdifServersRfc.Constants.PRIORITY
-        assert rfc_priority > FlextLdifServersOid.Constants.PRIORITY
-        assert rfc_priority > FlextLdifServersOud.Constants.PRIORITY
+        tm.that(rfc_priority > FlextLdifServersOid.Constants.PRIORITY, truth=True)
+        tm.that(rfc_priority > FlextLdifServersOud.Constants.PRIORITY, truth=True)
 
     # -- Parsing contract --------------------------------------------------
 
@@ -221,4 +221,7 @@ class TestsFlextLdifServersStandardization:
         expected: bool,
     ) -> None:
         """can_handle accepts entries with a DN and object-class/changetype only."""
-        assert FlextLdifServersRfc.Entry().can_handle(entry_dn, attributes) is expected
+        tm.that(
+            FlextLdifServersRfc.Entry().can_handle(entry_dn, attributes) is expected,
+            truth=True,
+        )

@@ -14,8 +14,9 @@ from flext_cli import p, t
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from flext_ldif import m, t as ldif_t
+    from flext_ldif.models import FlextLdifModels
     from flext_ldif.protocols import FlextLdifProtocols
+    from flext_ldif.typings import FlextLdifTypes
 
 
 class FlextLdifProtocolsBase:
@@ -226,6 +227,8 @@ class FlextLdifProtocolsBase:
         """Server constants contract extracted from server namespaces."""
 
         SERVER_TYPE: ClassVar[str]
+        CANONICAL_NAME: ClassVar[str]
+        ALIASES: ClassVar[frozenset[str]]
         PRIORITY: ClassVar[int]
         DETECTION_PATTERN: ClassVar[str]
         DETECTION_WEIGHT: ClassVar[int]
@@ -234,6 +237,7 @@ class FlextLdifProtocolsBase:
         DETECTION_ATTRIBUTE_PREFIXES: ClassVar[frozenset[str]]
         DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]]
         DETECTION_DN_MARKERS: ClassVar[frozenset[str]]
+        SCHEMA_FILTERABLE_FIELDS: ClassVar[frozenset[str]]
         ACL_ATTRIBUTE_NAME: ClassVar[str]
         CATEGORIZATION_PRIORITY: ClassVar[t.StrSequence]
         CATEGORY_OBJECTCLASSES: ClassVar[t.FrozensetMapping]
@@ -364,7 +368,7 @@ class FlextLdifProtocolsBase:
         def sort_entries_hierarchically(self) -> bool: ...
 
         @property
-        def format_options(self) -> m.Ldif.WriteFormatOptions | None: ...
+        def format_options(self) -> FlextLdifModels.Ldif.WriteFormatOptions | None: ...
 
     @runtime_checkable
     class FlexibleCategories(Protocol):
@@ -547,7 +551,7 @@ class FlextLdifProtocolsBase:
             | FlextLdifProtocolsBase.SchemaAttribute
             | FlextLdifProtocolsBase.SchemaObjectClass
             | FlextLdifProtocolsBase.Acl,
-        ) -> p.Result[ldif_t.Ldif.ConvertedModel]:
+        ) -> p.Result[FlextLdifTypes.Ldif.ConvertedModel]:
             """Convert one LDIF model between server servers."""
             ...
 

@@ -76,7 +76,7 @@ class TestsFlextLdifRealLdapConfig:
         encoding = flext_api.settings.Ldif.ldif_encoding
 
         # A settings value that is not a resolvable codec is a broken contract.
-        assert codecs.lookup(encoding).name
+        tm.that(codecs.lookup(encoding).name, where=bool)
 
     @staticmethod
     def test_settings_strict_validation_is_boolean(
@@ -89,7 +89,7 @@ class TestsFlextLdifRealLdapConfig:
     def test_process_options_expose_positive_worker_capacity() -> None:
         """Processing options always advertise at least one worker (SSOT)."""
         options = m.Ldif.ProcessEntriesOptions(processor_name="transform")
-        assert options.max_workers >= 1
+        tm.that(options.max_workers >= 1)
 
     # -- railway composition ----------------------------------------------
 
@@ -134,9 +134,9 @@ class TestsFlextLdifRealLdapConfig:
         entries = parsed.value.entries
         tm.that(len(entries), eq=1)
         tm.that(entries[0].dn_str, eq=sample_entry.dn_str)
-        assert (
-            entries[0].attributes_dict["objectClass"]
-            == sample_entry.attributes_dict["objectClass"]
+        tm.that(
+            entries[0].attributes_dict["objectClass"],
+            eq=sample_entry.attributes_dict["objectClass"],
         )
 
     @staticmethod
@@ -166,8 +166,8 @@ class TestsFlextLdifRealLdapConfig:
         result = flext_api.parse_ldif(missing)
 
         tm.fail(result)
-        tm.not_none(result.error)
-        tm.that(result.error.lower(), has="not found")
+        error = tm.not_none(result.error)
+        tm.that(error.lower(), has="not found")
 
     @staticmethod
     @pytest.mark.parametrize(

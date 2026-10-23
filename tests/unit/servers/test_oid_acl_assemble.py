@@ -3,8 +3,8 @@
 Every assertion exercises observable public contract: rendered ``aci:`` strings,
 ``r[T]`` success/failure outcomes, and public Pydantic model fields
 (``allows``, ``outcomes`` with their ``complement_calculated`` flags,
-``targetscope``, ``subjects``, ``metadata.acl_conversion``). No private attribute or method is
-touched.
+``targetscope``, ``subjects``, ``metadata.acl_conversion``). No private attribute
+or method is touched.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

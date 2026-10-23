@@ -60,12 +60,12 @@ class TestsFlextLdifSimpleLdap:
             attributes=["*"],
         )
         ldap_entry = ldap_connection.entries[0]
-        tm.not_none(ldap_entry.entry_dn)
+        entry_dn = tm.not_none(ldap_entry.entry_dn)
         attrs: t.MutableAttributeMapping = {
             attr: [str(value) for value in ldap_entry[attr].values]
             for attr in ldap_entry.entry_attributes
         }
-        entry_result = m.Ldif.Entry.create(dn=ldap_entry.entry_dn, attributes=attrs)
+        entry_result = m.Ldif.Entry.create(dn=entry_dn, attributes=attrs)
         tm.ok(entry_result)
         entry: m.Ldif.Entry = entry_result.unwrap()
         return entry
@@ -84,9 +84,9 @@ class TestsFlextLdifSimpleLdap:
             search_scope=c.Ldap3SearchScope.BASE.value,
         )
 
-        assert ldap_connection.bound
-        assert found
-        assert len(ldap_connection.entries) >= 1
+        tm.that(ldap_connection.bound)
+        tm.that(found)
+        tm.that(len(ldap_connection.entries) >= 1)
 
     def test_entry_create_exposes_attributes_through_public_api(
         self,
@@ -149,8 +149,7 @@ class TestsFlextLdifSimpleLdap:
         try:
             write_result = api.write([entry])
             tm.ok(write_result)
-            content = write_result.unwrap().content
-            tm.not_none(content)
+            content = tm.not_none(write_result.unwrap().content)
 
             parse_result = api.parse_string(content)
 

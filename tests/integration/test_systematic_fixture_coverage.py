@@ -37,6 +37,23 @@ class TestsFlextLdifSystematicFixtureCoverage:
         """
         return ldif()
 
+    @staticmethod
+    def _fixture_content(request: pytest.FixtureRequest, name: str) -> str:
+        """Require native nonempty fixture text at its input boundary.
+
+        Returns:
+            The original fixture string without copying or converting it.
+
+        Raises:
+            AssertionError: If the fixture is empty or is not a string.
+
+        """
+        content = request.getfixturevalue(name)
+        if not content:
+            message = f"Fixture {name} is empty"
+            raise AssertionError(message)
+        return tm.instance(content, str)
+
     # ------------------------------------------------------------------
     # Test-data shaping helper (bounds oversized schema fixtures — this is
     # input preparation, NOT inspection of the unit under test).
@@ -93,26 +110,32 @@ class TestsFlextLdifSystematicFixtureCoverage:
         Returns:
             The resulting ``int``.
 
+        Raises:
+            AssertionError: If writing the parsed entries returns no content.
+
         """
         parse_result = api.parse_ldif(content)
         tm.ok(parse_result)
         entries = parse_result.unwrap().entries
-        assert entries, "Expected at least one parsed entry"
+        tm.that(entries, truth=True, msg="Expected at least one parsed entry")
+        original_count = len(entries)
+        original_dns = {entry.dn_str for entry in entries}
 
         write_result = api.write(entries)
         tm.ok(write_result)
         written = write_result.unwrap().content
-        assert written, "Write produced empty content"
+        if not written:
+            message = "Write produced empty content"
+            raise AssertionError(message)
 
         roundtrip_result = api.parse_ldif(written)
         tm.ok(roundtrip_result)
         roundtrip_entries = roundtrip_result.unwrap().entries
 
-        tm.that(len(roundtrip_entries), eq=len(entries))
-        original_dns = {e.dn_str for e in entries}
+        tm.that(len(roundtrip_entries), eq=original_count)
         roundtrip_dns = {e.dn_str for e in roundtrip_entries}
         tm.that(original_dns, eq=roundtrip_dns)
-        return len(entries)
+        return original_count
 
     # ------------------------------------------------------------------
     # Schema fixtures.
@@ -129,10 +152,9 @@ class TestsFlextLdifSystematicFixtureCoverage:
         request: pytest.FixtureRequest,
     ) -> None:
         """Schema fixtures parse to entries preserved across the roundtrip."""
-        fixture_data: str = request.getfixturevalue(server_fixture)
-        assert fixture_data, f"Fixture {server_fixture} is empty"
+        fixture_data = self._fixture_content(request, server_fixture)
         sample = self._bounded_schema_sample(fixture_data)
-        assert sample.strip(), "Bounded schema sample is empty"
+        tm.that(sample.strip(), truth=True, msg="Bounded schema sample is empty")
 
         self._assert_roundtrip_preserves_dns(api, sample)
 
@@ -151,8 +173,9 @@ class TestsFlextLdifSystematicFixtureCoverage:
         request: pytest.FixtureRequest,
     ) -> None:
         """ACL fixtures parse successfully and re-serialize non-empty output."""
-        fixture_data: str = request.getfixturevalue(server_fixture)
-        assert fixture_data, f"Fixture {server_fixture} is empty"
+        fixture_data = TestsFlextLdifSystematicFixtureCoverage._fixture_content(
+            request, server_fixture
+        )
 
         parse_result = api.parse_ldif(fixture_data)
         tm.ok(parse_result)
@@ -162,7 +185,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
         tm.ok(write_result)
         written = write_result.unwrap().content
         if entries:
-            assert written, "Write produced empty ACL content"
+            tm.that(written, truth=True, msg="Write produced empty ACL content")
 
     # ------------------------------------------------------------------
     # Entry fixtures.
@@ -178,18 +201,28 @@ class TestsFlextLdifSystematicFixtureCoverage:
         server_fixture: str,
         request: pytest.FixtureRequest,
     ) -> None:
-        """Each parsed entry exposes a DN and attributes; roundtrip is stable."""
-        fixture_data: str = request.getfixturevalue(server_fixture)
-        assert fixture_data, f"Fixture {server_fixture} is empty"
+        """Each parsed entry exposes a DN and attributes; roundtrip is stable.
+
+        Raises:
+            AssertionError: If a parsed entry exposes no attributes.
+
+        """
+        fixture_data = self._fixture_content(request, server_fixture)
 
         parse_result = api.parse_ldif(fixture_data)
         tm.ok(parse_result)
         entries = parse_result.unwrap().entries
-        assert entries, "Entry fixture should parse to at least one entry"
+        tm.that(
+            entries,
+            truth=True,
+            msg="Entry fixture should parse to at least one entry",
+        )
 
         for entry in entries:
-            assert entry.dn_str, "Parsed entry exposes an empty DN"
-            assert entry.attributes_dict, f"Entry {entry.dn_str} exposes no attributes"
+            tm.that(entry.dn_str, truth=True, msg="Parsed entry exposes an empty DN")
+            if not entry.attributes_dict:
+                message = f"Entry {entry.dn_str} exposes no attributes"
+                raise AssertionError(message)
 
         self._assert_roundtrip_preserves_dns(api, fixture_data)
 
@@ -207,17 +240,23 @@ class TestsFlextLdifSystematicFixtureCoverage:
         server_fixture: str,
         request: pytest.FixtureRequest,
     ) -> None:
-        """Large exports keep unique DNs and roughly their size on rewrite."""
-        fixture_data: str = request.getfixturevalue(server_fixture)
-        assert fixture_data, f"Fixture {server_fixture} is empty"
+        """Large exports keep unique DNs and roughly their size on rewrite.
+
+        Raises:
+            AssertionError: If the fixture parses too few entries or writes no content.
+
+        """
+        fixture_data = self._fixture_content(request, server_fixture)
 
         parse_result = api.parse_ldif(fixture_data)
         tm.ok(parse_result)
         entries = parse_result.unwrap().entries
         min_fixture_entries = 5
-        assert len(entries) >= min_fixture_entries, (
-            f"Integration fixture should hold multiple entries, got {len(entries)}"
-        )
+        if len(entries) < min_fixture_entries:
+            message = (
+                f"Integration fixture should hold multiple entries, got {len(entries)}"
+            )
+            raise AssertionError(message)
 
         dn_list = [e.dn_str for e in entries]
         tm.that(len(set(dn_list)), eq=len(dn_list))
@@ -225,9 +264,13 @@ class TestsFlextLdifSystematicFixtureCoverage:
         write_result = api.write(entries)
         tm.ok(write_result)
         written = write_result.unwrap().content
-        assert written, "Write produced empty content"
-        assert len(written) > len(fixture_data) * 0.5, (
-            "Rewritten content is far smaller than the source (possible data loss)"
+        if not written:
+            message = "Write produced empty content"
+            raise AssertionError(message)
+        tm.that(
+            len(written) > len(fixture_data) * 0.5,
+            truth=True,
+            msg="Rewritten content is far smaller than the source (possible data loss)",
         )
 
         self._assert_roundtrip_preserves_dns(api, fixture_data)
@@ -239,7 +282,12 @@ class TestsFlextLdifSystematicFixtureCoverage:
     def test_basic_ldif_operations_are_available_for_any_server(
         api: p.Ldif.LdifClient,
     ) -> None:
-        """A minimal RFC entry parses, writes, and roundtrips with DN intact."""
+        """A minimal RFC entry parses, writes, and roundtrips with DN intact.
+
+        Raises:
+            AssertionError: If writing the parsed entry returns no content.
+
+        """
         content = (
             "dn: cn=Test,dc=example,dc=com\n"
             "objectClass: person\n"
@@ -255,12 +303,16 @@ class TestsFlextLdifSystematicFixtureCoverage:
 
         entry = entries[0]
         tm.that(entry.dn_str.lower(), has="cn=test,dc=example,dc=com")
-        assert entry.attributes_dict, "Baseline entry lost its attributes"
+        tm.that(
+            entry.attributes_dict, truth=True, msg="Baseline entry lost its attributes"
+        )
 
         write_result = api.write(entries)
         tm.ok(write_result)
         written = write_result.unwrap().content
-        assert written, "Write produced empty content"
+        if not written:
+            message = "Write produced empty content"
+            raise AssertionError(message)
         tm.that(written.lower(), has="cn=test,dc=example,dc=com")
 
         roundtrip_result = api.parse_ldif(written)
@@ -280,4 +332,8 @@ class TestsFlextLdifSystematicFixtureCoverage:
             # If tolerated, it must not fabricate entries out of garbage.
             tm.that(result.unwrap().entries, eq=[])
         else:
-            assert result.error, "Failure result must carry an error message"
+            tm.that(
+                result.error,
+                truth=True,
+                msg="Failure result must carry an error message",
+            )

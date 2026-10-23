@@ -71,10 +71,10 @@ class TestsFlextLdifRfcDockerRealIntegration:
 
         tm.ok(result)
         response = result.value
-        assert response.entries, "expected at least one parsed entry"
+        tm.that(response.entries, where=bool, msg="expected at least one parsed entry")
         tm.that(response.statistics.total_entries, eq=len(response.entries))
         tm.that(response.detected_server_type, is_=str)
-        assert response.detected_server_type
+        tm.that(response.detected_server_type, where=bool)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -97,7 +97,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         result = parser.parse_ldif_file(schema_file)
 
         tm.ok(result)
-        assert isinstance(result.value, m.Ldif.ParseResponse)
+        tm.instance(result.value, m.Ldif.ParseResponse)
 
     # --- write: contract of the write response -------------------------------
 
@@ -124,11 +124,12 @@ class TestsFlextLdifRfcDockerRealIntegration:
         tm.ok(write_result)
         write_response = write_result.value
         tm.that(write_response.output_path, eq=str(output_file))
-        assert output_file.exists()
-        assert write_response.content
+        tm.that(output_file.exists())
+        content = tm.not_none(write_response.content)
+        tm.that(content, where=bool)
         tm.that(
             output_file.read_text(encoding="utf-8").rstrip("\n"),
-            eq=write_response.content.rstrip("\n"),
+            eq=content.rstrip("\n"),
         )
 
     @staticmethod
@@ -154,8 +155,8 @@ class TestsFlextLdifRfcDockerRealIntegration:
         )
 
         tm.ok(result)
-        assert output_file.exists()
-        assert output_file.stat().st_size > 0
+        tm.that(output_file.exists())
+        tm.that(output_file.stat().st_size > 0)
 
     # --- round-trip invariants ----------------------------------------------
 
@@ -229,11 +230,8 @@ class TestsFlextLdifRfcDockerRealIntegration:
                 server_type=c.Tests.RFC,
             )
             if not result.success:
-                tm.not_none(result.error)
-                assert (
-                    "Permission denied" in result.error
-                    or "LDIF write failed" in result.error
-                )
+                error = tm.not_none(result.error)
+                tm.that("Permission denied" in error or "LDIF write failed" in error)
         finally:
             readonly_dir.chmod(0o755)
 
@@ -250,5 +248,5 @@ class TestsFlextLdifRfcDockerRealIntegration:
 
         tm.ok(result)
         response = result.value
-        assert not response.entries
+        tm.that(not response.entries)
         tm.that(response.statistics.total_entries, eq=0)

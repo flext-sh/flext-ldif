@@ -87,10 +87,10 @@ class TestsFlextLdifRfcDockerReal:
         # Assert — public r[T] contract + public model state
         tm.ok(result)
         entries = result.unwrap().entries
-        assert entries, "fixture yielded no entries"
+        tm.that(entries, where=bool, msg="fixture yielded no entries")
         for entry in entries:
-            tm.not_none(entry.dn)
-            assert entry.dn.value, "entry exposes empty DN via public API"
+            dn = tm.not_none(entry.dn)
+            tm.that(dn.value, where=bool, msg="entry exposes empty DN via public API")
 
     @staticmethod
     def test_parse_oid_schema_exposes_schema_definitions(
@@ -107,7 +107,7 @@ class TestsFlextLdifRfcDockerReal:
 
         # Assert
         tm.ok(result)
-        assert any(_has_schema_attrs(entry) for entry in result.unwrap().entries)
+        tm.that(any(_has_schema_attrs(entry) for entry in result.unwrap().entries))
 
     @staticmethod
     def test_parse_oud_acl_exposes_aci_attribute(fixtures_dir: Path) -> None:
@@ -127,7 +127,11 @@ class TestsFlextLdifRfcDockerReal:
             for entry in result.unwrap().entries
             if entry.attributes is not None and "aci" in entry.attributes.attributes
         ]
-        assert acl_entries, "no ACL entries surfaced through public attributes"
+        tm.that(
+            acl_entries,
+            where=bool,
+            msg="no ACL entries surfaced through public attributes",
+        )
 
     @staticmethod
     def test_parse_large_oid_schema_succeeds(fixtures_dir: Path) -> None:
@@ -137,8 +141,9 @@ class TestsFlextLdifRfcDockerReal:
         if not source.exists():
             pytest.skip(f"Fixture not available: {source}")
         min_schema_fixture_bytes = 300_000
-        assert source.stat().st_size > min_schema_fixture_bytes, (
-            "expected large schema fixture"
+        tm.that(
+            source.stat().st_size > min_schema_fixture_bytes,
+            msg="expected large schema fixture",
         )
 
         # Act
@@ -146,7 +151,7 @@ class TestsFlextLdifRfcDockerReal:
 
         # Assert
         tm.ok(result)
-        assert result.unwrap().entries
+        tm.that(result.unwrap().entries, where=bool)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -281,7 +286,7 @@ class TestsFlextLdifRfcDockerReal:
 
         # Assert — round-trip invariant on the public DN contract
         tm.that(write_result.unwrap().output_path, eq=str(output_file))
-        assert output_file.exists()
+        tm.that(output_file.exists())
         tm.ok(reparse_result)
         reparsed_dns = {
             entry.dn.value

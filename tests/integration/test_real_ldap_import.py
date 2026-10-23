@@ -58,8 +58,7 @@ class TestsFlextLdifRealLdapImport:
             The resulting ``str``.
 
         """
-        tm.not_none(entry.dn)
-        return entry.dn.value
+        return tm.not_none(entry.dn).value
 
     @staticmethod
     def _object_classes(entry: p.Ldif.Entry) -> list[str]:
@@ -79,8 +78,8 @@ class TestsFlextLdifRealLdapImport:
             The resulting ``t.MutableMappingKV[str, list[str]]``.
 
         """
-        tm.not_none(entry.attributes)
-        return {name: list(values) for name, values in entry.attributes.items()}
+        attributes = tm.not_none(entry.attributes)
+        return {name: list(values) for name, values in attributes.items()}
 
     @classmethod
     def _non_objectclass_attrs(
@@ -109,6 +108,9 @@ class TestsFlextLdifRealLdapImport:
         Returns:
             The resulting ``p.Ldap3Entry``.
 
+        Raises:
+            AssertionError: If the imported entry is not searchable.
+
         """
         found = ldap_connection.search(
             dn,
@@ -116,7 +118,9 @@ class TestsFlextLdifRealLdapImport:
             search_scope=c.Ldap3SearchScope.BASE.value,
             attributes=["*"],
         )
-        assert found, f"expected imported entry to be searchable at {dn}"
+        if not found:
+            msg = f"expected imported entry to be searchable at {dn}"
+            raise AssertionError(msg)
         ldap_entry: p.Ldap3Entry = ldap_connection.entries[0]
         return ldap_entry
 
@@ -154,7 +158,7 @@ class TestsFlextLdifRealLdapImport:
         entry = response.entries[0]
         tm.that(self._dn(entry), eq=f"cn={username},{clean_test_ou}")
         tm.that(self._object_classes(entry), eq=["person", "inetOrgPerson"])
-        assert u.Ldif.has_attribute(entry, attribute)
+        tm.that(u.Ldif.has_attribute(entry, attribute))
         values = u.Ldif.resolve_attribute_values(entry, attribute)
         tm.that(values, eq=[expected if expected is not None else username])
 
@@ -210,7 +214,7 @@ class TestsFlextLdifRealLdapImport:
 
         entry = flext_api.parse_ldif(ldif_content).unwrap().entries[0]
         # Parse contract: the base64 payload is decoded and exposed as a value.
-        assert u.Ldif.has_attribute(entry, "jpegPhoto")
+        tm.that(u.Ldif.has_attribute(entry, "jpegPhoto"))
         tm.that(
             u.Ldif.resolve_attribute_values(entry, "jpegPhoto"),
             eq=[binary_data.decode("ascii")],

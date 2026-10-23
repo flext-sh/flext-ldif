@@ -35,12 +35,7 @@ _KNOWN_COERCE_CASES = {
 
 
 class TestsFlextLdifMigrationPipeline:
-    """Behavioral suite for the migration and processing pipeline services.
-
-    Covers public initialization contract, fallible-operation ``r[T]`` outcomes,
-    and public result model state for both ``FlextLdifMigrationPipeline`` and its
-    delegate ``FlextLdifProcessingPipeline``.
-    """
+    """Public pipeline configuration and complete migration protocol tests."""
 
     # ── Initialization contract (public fields) ──────────────────────────
 
@@ -181,6 +176,10 @@ class TestsFlextLdifMigrationPipeline:
                 "registry": server.registry,
                 field: None,
             })
+
+
+class TestsFlextLdifMigrationPipelineExecution:
+    """Execution, entry migration, and file migration outcomes."""
 
     # ── execute() fallible outcomes ──────────────────────────────────────
 

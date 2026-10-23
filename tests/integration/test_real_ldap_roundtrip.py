@@ -65,7 +65,7 @@ class TestsFlextLdifRealLdapRoundtrip:
             The resulting ``t.MutableAttributeMapping``.
 
         """
-        assert ldap_connection.search(dn, "(objectClass=*)", attributes=["*"])
+        tm.that(ldap_connection.search(dn, "(objectClass=*)", attributes=["*"]))
         entry = ldap_connection.entries[0]
         attrs: t.MutableAttributeMapping = {}
         for name in entry.entry_attributes:
@@ -91,8 +91,8 @@ class TestsFlextLdifRealLdapRoundtrip:
         """
         write_result = flext_api.write([source_entry])
         tm.ok(write_result)
-        ldif_text = write_result.unwrap().content
-        assert ldif_text
+        ldif_text = tm.not_none(write_result.unwrap().content)
+        tm.that(ldif_text, where=bool)
 
         parse_result = flext_api.parse_ldif(ldif_text)
         tm.ok(parse_result)

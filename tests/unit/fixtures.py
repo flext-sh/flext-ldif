@@ -371,7 +371,12 @@ def migration_pipeline(
     migration_dirs: t.Pair[Path, Path],
     server: p.Ldif.ServerRegistry,
 ) -> p.Ldif.MigrationPipeline:
-    """Provide the real registry-bound pipeline with model-owned defaults."""
+    """Provide the real registry-bound pipeline with model-owned defaults.
+
+    Returns:
+        The migration pipeline bound to the supplied registry and directories.
+
+    """
     input_dir, output_dir = migration_dirs
     return services.FlextLdifMigrationPipeline(
         registry=server.registry,
