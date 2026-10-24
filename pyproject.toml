@@ -454,6 +454,7 @@ filterwarnings = [
   "module::flext_core._constants.enforcement.FlextMroViolation",
   "once::pytest.PytestAssertRewriteWarning",
 ]
+flext_fixture_trees_root = "tests/fixtures"
 flext_make_ci_value = "Y"
 flext_make_ci_variable = "CI"
 flext_slow_timeout_seconds = "30"
@@ -476,7 +477,6 @@ markers = [
   "requires_engine: native check engine required by this test",
 ]
 minversion = "8.0"
-pytester_example_dir = "tests/fixtures"
 python_classes = ["Test*"]
 python_files = ["*_test.py", "*_tests.py", "test_*.py"]
 testpaths = ["tests"]
@@ -598,109 +598,6 @@ msg = "Use cli.render_table from flext_cli."
 [tool.ruff.lint.flake8-tidy-imports.banned-api.typer]
 msg = "Use cli.create_app_with_common_params / cli.register_command from flext_cli."
 
-[tool.ruff.lint.flake8-type-checking]
-runtime-evaluated-base-classes = [
-  "flext_cli.FlextCliConfig",
-  "flext_cli.FlextCliSettings",
-  "flext_cli.m.ArbitraryTypesModel",
-  "flext_cli.m.BaseModel",
-  "flext_cli.m.DomainEvent",
-  "flext_cli.m.DynamicModel",
-  "flext_cli.m.Entity",
-  "flext_cli.m.FrozenDynamicModel",
-  "flext_cli.m.FrozenModel",
-  "flext_cli.m.RootModel",
-  "flext_cli.m.StrictModel",
-  "flext_cli.m.Value",
-  "flext_core.FlextService",
-  "flext_core.FlextSettings",
-  "flext_core.m.ArbitraryTypesModel",
-  "flext_core.m.BaseModel",
-  "flext_core.m.DynamicModel",
-  "flext_core.m.FrozenModel",
-  "flext_core.m.RootModel",
-  "flext_core.m.StrictModel",
-  "flext_core.m.Value",
-  "flext_ldif.FlextLdifModels.BaseModel",
-  "flext_ldif.FlextLdifModels.Value",
-  "flext_ldif.FlextLdifSettings",
-  "flext_ldif._models.FlextLdifModelsBases.AclElement",
-  "flext_ldif._models.FlextLdifModelsBases.SchemaElement",
-  "flext_ldif._models.FlextLdifModelsDomainEntryChangeOperationValue",
-  "flext_ldif._models.FlextLdifModelsDomainEntryControl",
-  "flext_ldif._models.FlextLdifModelsDomainEntryStatistics",
-  "flext_ldif._models.FlextLdifNamespace",
-  "flext_ldif._models.results.Response",
-  "flext_ldif.m.Ldif.MigrationPipelineOptions",
-  "flext_ldif.m.Ldif.ProcessingPipelineOptions",
-  "flext_ldif.m.Ldif.RegistryPortOptions",
-  "flext_ldif.s",
-  "flext_ldif.servers.FlextLdifServersBase",
-  "flext_ldif.servers.FlextLdifServersOpenldap1Entry",
-  "flext_ldif.servers.FlextLdifServersRelaxedEntryParseMixin",
-  "flext_ldif.servers.FlextLdifServersRelaxedEntryWriteMixin",
-  "flext_ldif.servers.FlextLdifServersRfc",
-  "flext_ldif.servers._base.FlextLdifServersBaseEntry",
-  "flext_ldif.servers._base.FlextLdifServersBaseSchema",
-  "flext_ldif.servers._base.FlextLdifServersBaseSchemaAcl",
-  "flext_ldif.servers._base.FlextLdifServersDialectSchema",
-  "flext_ldif.servers._oid.FlextLdifServersOidAcl",
-  "flext_ldif.servers._oid.FlextLdifServersOidAclFormatMixin",
-  "flext_ldif.servers._oid.FlextLdifServersOidAclParseMixin",
-  "flext_ldif.servers._oid.FlextLdifServersOidAclSubjectMixin",
-  "flext_ldif.servers._oid.FlextLdifServersOidAclWriteMixin",
-  "flext_ldif.servers._oid.FlextLdifServersOidEntry",
-  "flext_ldif.servers._oid.FlextLdifServersOidEntryBooleanMixin",
-  "flext_ldif.servers._oid.FlextLdifServersOidEntryMetadataMixin",
-  "flext_ldif.servers._oid.FlextLdifServersOidEntryNormalizeMixin",
-  "flext_ldif.servers._oid.FlextLdifServersOidEntryParseMixin",
-  "flext_ldif.servers._oid.FlextLdifServersOidEntryRestoreMixin",
-  "flext_ldif.servers._oid.FlextLdifServersOidSchema",
-  "flext_ldif.servers._oid.FlextLdifServersOidSchemaNormalizeMixin",
-  "flext_ldif.servers._oud.FlextLdifServersOudAclSubjectMixin",
-  "flext_ldif.servers._oud.FlextLdifServersOudAclWriteMixin",
-  "flext_ldif.servers._oud.FlextLdifServersOudEntryParseMixin",
-  "flext_ldif.servers._rfc.FlextLdifServersRfcAcl",
-  "flext_ldif.servers._rfc.FlextLdifServersRfcEntry",
-  "flext_ldif.servers._rfc.FlextLdifServersRfcSchema",
-  "flext_ldif.servers._rfc.FlextLdifServersRfcSchemaParseMixin",
-  "flext_ldif.servers._rfc.FlextLdifServersRfcSchemaValuesMixin",
-  "flext_ldif.servers._rfc.FlextLdifServersRfcSchemaWriteMixin",
-  "flext_ldif.servers._rfc.acl.FlextLdifServersRfcAcl",
-  "flext_ldif.servers._rfc.schema.FlextLdifServersRfcSchema",
-  "flext_ldif.services.FlextLdifAcl",
-  "flext_ldif.services.FlextLdifAnalysis",
-  "flext_ldif.services.FlextLdifCategorization",
-  "flext_ldif.services.FlextLdifCategorizationFiltering",
-  "flext_ldif.services.FlextLdifCategorizationRules",
-  "flext_ldif.services.FlextLdifConversion",
-  "flext_ldif.services.FlextLdifConversionAclMixin",
-  "flext_ldif.services.FlextLdifConversionAclPreserveMixin",
-  "flext_ldif.services.FlextLdifConversionEntryMixin",
-  "flext_ldif.services.FlextLdifConversionMetadataMixin",
-  "flext_ldif.services.FlextLdifConversionSchemaEntryMixin",
-  "flext_ldif.services.FlextLdifConversionSchemaMixin",
-  "flext_ldif.services.FlextLdifConversionSupportMixin",
-  "flext_ldif.services.FlextLdifDetector",
-  "flext_ldif.services.FlextLdifDetectorScoring",
-  "flext_ldif.services.FlextLdifEntries",
-  "flext_ldif.services.FlextLdifParser",
-  "flext_ldif.services.FlextLdifProcessing",
-  "flext_ldif.services.FlextLdifServer",
-  "flext_ldif.services.FlextLdifStatistics",
-  "flext_ldif.services.FlextLdifTransformer",
-  "flext_ldif.services.FlextLdifValidation",
-  "flext_ldif.services.FlextLdifWriter",
-  "flext_ldif.services.facade.FlextLdifFacade",
-  "flext_tests.FlextTestsModels.Tests",
-  "flext_tests.FlextTestsServiceBase",
-  "flext_tests.FlextTestsSettings",
-  "pydantic.BaseModel",
-  "tests.models._CanHandleCase",
-  "tests.models._Frozen",
-  "tests.models._SchemaCase",
-]
-
 [tool.ruff.lint.isort]
 combine-as-imports = true
 force-single-line = false
@@ -732,6 +629,14 @@ section_whitelines = 1
 whitelines = 1
 
 [tool.uv]
+constraint-dependencies = [
+  "pillow>=13.0.0",
+  "certifi>=2026.10.19",
+  "setuptools>=84.1.0",
+  "virtualenv>=21.14.13",
+  "filelock>=4.2.1",
+  "uv>=0.13.4",
+]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 link-mode = "copy"
 override-dependencies = [

@@ -28,3 +28,5 @@ class FlextLdifUtilitiesLazyMeta(type):
         if name == "Ldif":
             return cast("type", cls.build_ldif_tree())
         raise AttributeError(name)
+
+__all__: list[str] = ["FlextLdifUtilitiesLazyMeta"]
