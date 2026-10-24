@@ -240,7 +240,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
 
     class AclResponse(Response):
         acls: Annotated[
-            t.MutableSequenceOf[p.Ldif.Acl],
+            t.MutableSequenceOf[t.Port[p.Ldif.Acl]],
             m.Field(description="Extracted ACL models"),
         ]
 
@@ -250,7 +250,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
             m.Field(description="Whether the ACL granted access"),
         ] = False
         matched_acl: Annotated[
-            p.Ldif.Acl | None,
+            t.Port[p.Ldif.Acl] | None,
             m.Field(description="ACL rule that matched the evaluation"),
         ] = None
         message: Annotated[
