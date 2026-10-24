@@ -109,7 +109,7 @@ class FlextLdifServersOidAclToOud:
                 continue
             if perm == "none":
                 deny_all = True
-            elif perm.startswith("no"):
+            elif perm.startswith(c.ParserBooleanToken.NO):
                 base = c.Ldif.NEGATION_TO_BASE.get(perm)
                 if base is None:
                     return r[tuple[set[str], set[str], bool, bool]].fail(

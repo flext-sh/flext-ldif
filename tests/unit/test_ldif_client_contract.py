@@ -9,7 +9,7 @@ from __future__ import annotations
 import sys
 
 from flext_ldif import ldif, settings
-from tests import m, p, tm, u
+from tests import c, m, p, tm, u
 
 
 class TestsFlextLdifClientContract:
@@ -35,7 +35,7 @@ class TestsFlextLdifClientContract:
                 options=m.Cli.ProcessOptions(
                     env={
                         "FLEXT_LDIF_LDIF__LDIF_ENCODING": encoding,
-                        "FLEXT_LDIF_LDIF__LDIF_STRICT_VALIDATION": "false",
+                        "FLEXT_LDIF_LDIF__LDIF_STRICT_VALIDATION": c.ParserBooleanToken.FALSE,
                     },
                 ),
             ),

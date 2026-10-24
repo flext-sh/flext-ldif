@@ -90,8 +90,14 @@ class TestsFlextLdifConstantsDataDriven:
     @staticmethod
     def test_boolean_rfc_to_oid_maps_true_and_false_to_bits() -> None:
         """Test boolean rfc to oid maps true and false to bits."""
-        tm.that(c.Tests.BOOLEAN_RFC_TO_OID[c.Tests.BOOLEAN_TRUE], eq="1")
-        tm.that(c.Tests.BOOLEAN_RFC_TO_OID[c.Tests.BOOLEAN_FALSE], eq="0")
+        tm.that(
+            c.Tests.BOOLEAN_RFC_TO_OID[c.Tests.BOOLEAN_TRUE],
+            eq=c.ParserBooleanToken.ONE,
+        )
+        tm.that(
+            c.Tests.BOOLEAN_RFC_TO_OID[c.Tests.BOOLEAN_FALSE],
+            eq=c.ParserBooleanToken.ZERO,
+        )
 
     @staticmethod
     @pytest.mark.parametrize("rfc_value", ["TRUE", "FALSE"])

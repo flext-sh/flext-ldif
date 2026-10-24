@@ -27,7 +27,7 @@ class TestsFlextLdifProcessingService:
         )
 
     @pytest.mark.parametrize(
-        ("processor_name", "parallel", "batch_size", "max_workers"),
+        ("processor_name", c.ProcessingMode.PARALLEL, "batch_size", "max_workers"),
         list(c.Tests.PROCESSING_OPTIONS_CASES.values()),
         ids=list(c.Tests.PROCESSING_OPTIONS_CASES.keys()),
     )

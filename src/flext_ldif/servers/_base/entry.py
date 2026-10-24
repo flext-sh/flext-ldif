@@ -261,7 +261,7 @@ class FlextLdifServersBaseEntry(
         for attr_name, attr_values in entry_attrs.items():
             canonical_attr_name = self._normalize_attribute_name(attr_name)
             string_values = [
-                value.decode("utf-8", errors="replace")
+                value.decode("utf-8", errors=c.MergeStrategy.REPLACE)
                 if isinstance(value, bytes)
                 else value
                 for value in attr_values

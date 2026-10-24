@@ -14,7 +14,7 @@ from typing import ClassVar, Final, Literal
 from flext_tests import FlextTestsConstants
 
 from flext_ldif import FlextLdifConstants
-from tests import m, t
+from tests import c, m, t
 from tests.constants_ldap import TestsFlextLdifLdapConstants
 
 
@@ -193,8 +193,8 @@ class TestsFlextLdifConstants(
         )
 
         BOOLEAN_RFC_TO_OID: ClassVar[t.MappingKV[str, str]] = MappingProxyType({
-            "TRUE": "1",
-            "FALSE": "0",
+            "TRUE": c.ParserBooleanToken.ONE,
+            "FALSE": c.ParserBooleanToken.ZERO,
         })
         BOOLEAN_OID_TO_RFC: ClassVar[t.MappingKV[str, str]] = MappingProxyType({
             v: k for k, v in BOOLEAN_RFC_TO_OID.items()
@@ -852,7 +852,7 @@ class TestsFlextLdifConstants(
 
         _DS389_ATTR_PROBE_CASES: Final[t.SequenceOf[tuple[str, str, str]]] = (
             ("nsslapd_attribute", "nsslapd-port", "389"),
-            ("nsds_attribute", "nsds5ReplicaId", "1"),
+            ("nsds_attribute", "nsds5ReplicaId", c.ParserBooleanToken.ONE),
             ("nsuniqueid_attribute", "nsuniqueid", "12345"),
         )
 

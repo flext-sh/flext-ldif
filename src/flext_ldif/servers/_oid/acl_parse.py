@@ -116,7 +116,7 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
             for raw_perm in raw_perms:
                 if not raw_perm:
                     continue
-                is_negative = raw_perm.lower().startswith("no")
+                is_negative = raw_perm.lower().startswith(c.ParserBooleanToken.NO)
                 perm_name = raw_perm
                 if perm_name.lower() in const.ACL_PERMISSION_MAPPING:
                     mapped_names = const.ACL_PERMISSION_MAPPING[perm_name.lower()]

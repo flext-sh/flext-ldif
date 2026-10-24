@@ -155,7 +155,7 @@ class FlextLdifConstantsBaseParts:
 
             ADD = "add"
             DELETE = "delete"
-            REPLACE = "replace"
+            REPLACE = c.MergeStrategy.REPLACE
             INCREMENT = "increment"
 
         @unique

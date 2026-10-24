@@ -71,7 +71,7 @@ class TestsFlextLdifStatisticsService:
         stats: p.Ldif.EntriesStatistics = u.Tests.assert_success(result)
         tm.that(stats, is_=m.Ldif.EntriesStatistics)
 
-    @pytest.mark.parametrize("count", [0, 1, 2, 5])
+    @pytest.mark.parametrize(c.Aggregation.COUNT, [0, 1, 2, 5])
     def test_total_entries_equals_input_count(
         self,
         api: p.Ldif.LdifClient,

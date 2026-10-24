@@ -22,7 +22,7 @@ class FlextLdifParserRecord:
     _MODIFY_OPS: ClassVar[t.MutableMappingKV[str, c.Ldif.ChangeOperation]] = {
         "add": c.Ldif.ChangeOperation.ADD,
         "delete": c.Ldif.ChangeOperation.DELETE,
-        "replace": c.Ldif.ChangeOperation.REPLACE,
+        c.MergeStrategy.REPLACE: c.Ldif.ChangeOperation.REPLACE,
         "increment": c.Ldif.ChangeOperation.INCREMENT,
     }
 
@@ -137,7 +137,11 @@ class FlextLdifParserRecord:
             state.newrdn = FlextLdifParserValues.decode_value(value)[0]
             return True
         if key_lower == "deleteoldrdn":
-            state.deleteoldrdn = value.lower() in {"1", "true", "yes"}
+            state.deleteoldrdn = value.lower() in {
+                c.ParserBooleanToken.ONE,
+                c.ParserBooleanToken.TRUE,
+                c.ParserBooleanToken.YES,
+            }
             return True
         if key_lower == "newsuperior":
             state.newsuperior = FlextLdifParserValues.decode_value(value)[0]

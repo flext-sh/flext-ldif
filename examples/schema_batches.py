@@ -142,11 +142,13 @@ class ExamplesFlextLdifSchemaBatches:
                 schema_batches,
             )
         )
-        batch_results["summary"] = {
+        batch_results[c.MetricType.SUMMARY] = {
             "total_batches": len(schema_batches),
             "total_schema_entries": total_schema_entries,
             "batches_processed": len([
-                b for b in batch_results if not b.endswith("_error") and b != "summary"
+                b
+                for b in batch_results
+                if not b.endswith("_error") and b != c.MetricType.SUMMARY
             ]),
         }
         return r[t.JsonMapping].ok(

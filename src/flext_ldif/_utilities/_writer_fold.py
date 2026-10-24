@@ -82,7 +82,7 @@ class FlextLdifWriterLineFolding:
         return (
             line_bytes[pos : pos + 1].decode(
                 c.Ldif.DEFAULT_ENCODING,
-                errors="replace",
+                errors=c.MergeStrategy.REPLACE,
             ),
             pos + 1,
         )

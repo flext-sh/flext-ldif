@@ -92,7 +92,11 @@ class FlextLdifServersEntryWriteBodyEmitter:
                 ),
             )
         if entry.deleteoldrdn is not None:
-            delete_old = "1" if entry.deleteoldrdn else "0"
+            delete_old = (
+                c.ParserBooleanToken.ONE
+                if entry.deleteoldrdn
+                else c.ParserBooleanToken.ZERO
+            )
             output_lines.append(f"deleteoldrdn: {delete_old}")
         if entry.newsuperior:
             output_lines.extend(

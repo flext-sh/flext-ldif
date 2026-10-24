@@ -160,7 +160,10 @@ class TestsFlextLdifMinimalDifferencesMetadata:
     @staticmethod
     @pytest.mark.parametrize(
         ("attribute", "raw_value", "converted_value"),
-        [("orcldasisenabled", "1", "TRUE"), ("pwdlockout", "0", "FALSE")],
+        [
+            ("orcldasisenabled", c.ParserBooleanToken.ONE, "TRUE"),
+            ("pwdlockout", c.ParserBooleanToken.ZERO, "FALSE"),
+        ],
     )
     def test_oid_boolean_conversion_recorded_in_metadata(
         parser: FlextLdifParser,

@@ -40,7 +40,9 @@ class FlextLdifEntryBooleanConversion:
 
         """
         if isinstance(raw_item, bytes):
-            return raw_item.decode(c.Ldif.DEFAULT_ENCODING, errors="replace")
+            return raw_item.decode(
+                c.Ldif.DEFAULT_ENCODING, errors=c.MergeStrategy.REPLACE
+            )
         return raw_item
 
     @staticmethod
@@ -56,9 +58,15 @@ class FlextLdifEntryBooleanConversion:
         """
         match format_pair:
             case ("0/1", "TRUE/FALSE"):
-                return "TRUE" if normalized_value == "1" else "FALSE"
+                return (
+                    "TRUE" if normalized_value == c.ParserBooleanToken.ONE else "FALSE"
+                )
             case ("TRUE/FALSE", "0/1"):
-                return "1" if normalized_value.upper() == "TRUE" else "0"
+                return (
+                    c.ParserBooleanToken.ONE
+                    if normalized_value.upper() == "TRUE"
+                    else c.ParserBooleanToken.ZERO
+                )
             case _:
                 return normalized_value
 

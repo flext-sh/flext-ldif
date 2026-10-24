@@ -318,13 +318,13 @@ def parse(
     self,
     source: str | Path | t.SequenceOf[str | Path],
     *,
-    mode: Literal["single", "batch", "paginate"] = "single",
+    mode: Literal["single", c.ProcessingMode.BATCH, "paginate"] = "single",
     server_type: str = "rfc",
     page_size: int = 1000,
 ) -> p.Result[Sequence[Entry] | Callable]:
     """Parse LDIF with pattern matching mode dispatch."""
     match mode:
-        case "batch":
+        case c.ProcessingMode.BATCH:
             return self._client.parse_batch(source, server_type)
         case "paginate":
             return self._client.parse_paginated(source, server_type, page_size)
