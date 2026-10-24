@@ -263,6 +263,69 @@ class TestsFlextLdifApiServerRegistry:
         tm.that(parsed.entries[0].dn, eq=entry.dn)
 
     @staticmethod
+    @pytest.mark.parametrize("comment_acl", [False, True])
+    def test_write_response_preserves_oid_entries_and_phase_options(
+        tmp_path: Path,
+        *,
+        comment_acl: bool,
+    ) -> None:
+        """OID metadata and explicitly selected ACL handling survive file writes."""
+        api = FlextLdif()
+        acl = "orclaci: access to entry by * (browse)"
+        parsed = api.parse_string(
+            "dn: cn=synthetic\nobjectClass: person\n"
+            f"cn: synthetic\nsn: Sample\n{acl}\n\n",
+            server_type=c.Ldif.ServerTypes.OID,
+        ).unwrap()
+        tm.that(len(parsed.entries), eq=1)
+        output = tmp_path / "converted.ldif"
+        written = api.write_ldif_file(
+            parsed,
+            output,
+            server_type=c.Ldif.ServerTypes.OUD,
+            format_options=m.Ldif.WriteFormatOptions(
+                entry_category=c.Ldif.Categories.USERS,
+                comment_acl_in_non_acl_phases=comment_acl,
+                acl_attribute_names=frozenset({"orclaci"}),
+            ),
+        ).unwrap()
+        content = output.read_text()
+        tm.that(written.output_path, eq=str(output))
+        tm.that(written.content, eq=content)
+        tm.that(written.statistics.processed_entries, eq=len(parsed.entries))
+        tm.that(acl in content)
+        tm.that(
+            any(line.startswith("orclaci:") for line in content.splitlines()),
+            eq=not comment_acl,
+        )
+        reparsed = api.parse_ldif(
+            output, server_type=c.Ldif.ServerTypes.OUD
+        ).unwrap()
+        tm.that(len(reparsed.entries), eq=len(parsed.entries))
+        tm.that(reparsed.entries[0].dn_str, eq=parsed.entries[0].dn_str)
+        tm.that(reparsed.entries[0].attributes_dict["sn"], eq=["Sample"])
+
+    @staticmethod
+    def test_failed_write_preserves_failure_and_creates_no_file(
+        tmp_path: Path,
+    ) -> None:
+        """An invalid dialect fails both public writers before persisting output."""
+        api = FlextLdif()
+        parsed = api.parse_string(
+            "dn: cn=synthetic\nobjectClass: person\ncn: synthetic\nsn: Sample\n\n",
+            server_type=c.Ldif.ServerTypes.RFC,
+        ).unwrap()
+        tm.that(len(parsed.entries), eq=1)
+        output = tmp_path / "invalid.ldif"
+        tm.fail(api.write(parsed, server_type=c.Tests.SERVER_INVALID_SERVER_TYPE))
+        tm.fail(
+            api.write_ldif_file(
+                parsed, output, server_type=c.Tests.SERVER_INVALID_SERVER_TYPE
+            )
+        )
+        tm.that(output.exists(), eq=False)
+
+    @staticmethod
     def test_oud_schema_write_uses_explicit_registry_not_other_apis() -> None:
         """Cross-dialect schema writes cannot consult a hidden process registry."""
         api = FlextLdif()

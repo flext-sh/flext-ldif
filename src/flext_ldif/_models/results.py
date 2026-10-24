@@ -110,8 +110,8 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
             ),
             description="Schema content after migration transformation",
         )
-        entries: t.MutableSequenceOf[p.Ldif.Entry] = m.Field(
-            default_factory=list[p.Ldif.Entry],
+        entries: t.MutableSequenceOf[FlextLdifModelsDomainsEntries.Entry] = m.Field(
+            default_factory=list[FlextLdifModelsDomainsEntries.Entry],
             description="Migrated LDIF entries",
         )
         stats: FlextLdifModelsResults.Statistics = m.Field(
@@ -231,7 +231,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
 
     class ParseResponse(Response):
         entries: Annotated[
-            t.MutableSequenceOf[p.Ldif.Entry],
+            t.MutableSequenceOf[FlextLdifModelsDomainsEntries.Entry],
             m.Field(description="Parsed LDIF entries"),
         ]
         detected_server_type: Annotated[

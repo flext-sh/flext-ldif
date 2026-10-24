@@ -118,16 +118,9 @@ class FlextLdifWriter(FlextLdifServer):
         # Convert protocol format options to model format options
         model_format_options: m.Ldif.WriteFormatOptions | None = None
         if format_options is not None:
-            model_format_options = m.Ldif.WriteFormatOptions(
-                line_width=format_options.line_width,
-                sort_attributes=format_options.sort_attributes,
-                base64_encode_binary=format_options.base64_encode_binary,
-                include_dn_comments=format_options.include_dn_comments,
-                restore_original_format=format_options.restore_original_format,
-                respect_attribute_order=format_options.respect_attribute_order,
-                write_hidden_attributes_as_comments=format_options.write_hidden_attributes_as_comments,
-                write_metadata_as_comments=format_options.write_metadata_as_comments,
-                include_version_header=format_options.include_version_header,
+            model_format_options = m.Ldif.WriteFormatOptions.model_validate(
+                format_options,
+                from_attributes=True,
             )
         try:
             _ = m.Ldif.WriteRequest.model_validate({

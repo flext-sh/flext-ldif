@@ -510,6 +510,16 @@ class FlextLdifProtocolsBase:
         def detected_server_type(self) -> str | None: ...
 
     @runtime_checkable
+    class WriteResponse(Response, Protocol):
+        """Serialized LDIF content and optional persisted output location."""
+
+        @property
+        def content(self) -> str | None: ...
+
+        @property
+        def output_path(self) -> str | None: ...
+
+    @runtime_checkable
     class ValidationResult(Protocol):
         """Validation summary contract."""
 
