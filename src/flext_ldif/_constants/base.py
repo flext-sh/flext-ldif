@@ -15,7 +15,9 @@ import struct
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_ldif._constants._base_parts import FlextLdifConstantsBaseParts
+from flext_cli import c
+
+from flext_ldif._constants._base import FlextLdifConstantsBaseParts
 
 FlextLdifConstantsAclConvertOud = (
     FlextLdifConstantsBaseParts.FlextLdifConstantsAclConvertOud
@@ -25,7 +27,7 @@ FlextLdifConstantsEnums = FlextLdifConstantsBaseParts.FlextLdifConstantsEnums
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from flext_ldif.typings import FlextLdifTypes as t
+    from flext_ldif import t
 
 
 class FlextLdifConstantsBase:
@@ -502,9 +504,9 @@ class FlextLdifConstantsBase:
         "subordinateDn",
     ))
 
-    OID_TRUE: ClassVar[str] = "1"
+    OID_TRUE: ClassVar[str] = c.ParserBooleanToken.ONE
 
-    OID_FALSE: ClassVar[str] = "0"
+    OID_FALSE: ClassVar[str] = c.ParserBooleanToken.ZERO
 
     OID_BOOLEAN_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset({
         "orclisenabled",
@@ -533,15 +535,15 @@ class FlextLdifConstantsBase:
     OID_TO_RFC_BOOL: ClassVar[t.StrMapping] = MappingProxyType({
         OID_TRUE: TRUE_RFC,
         OID_FALSE: FALSE_RFC,
-        "true": TRUE_RFC,
-        "false": FALSE_RFC,
+        c.ParserBooleanToken.TRUE: TRUE_RFC,
+        c.ParserBooleanToken.FALSE: FALSE_RFC,
     })
 
     RFC_TO_OID_BOOL: ClassVar[t.StrMapping] = MappingProxyType({
         TRUE_RFC: OID_TRUE,
         FALSE_RFC: OID_FALSE,
-        "true": OID_TRUE,
-        "false": OID_FALSE,
+        c.ParserBooleanToken.TRUE: OID_TRUE,
+        c.ParserBooleanToken.FALSE: OID_FALSE,
     })
 
     ATTRIBUTE_TRANSFORMATION_OID_TO_RFC: ClassVar[t.StrMapping] = MappingProxyType({

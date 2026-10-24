@@ -12,10 +12,11 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import Annotated, Self
 
-from flext_core import m, t, u
+from flext_core import m
 
-from flext_ldif._constants.base import FlextLdifConstantsBase
-from flext_ldif._typings.base import FlextLdifTypesBase
+from flext_ldif import t
+from flext_ldif._constants import FlextLdifConstantsBase
+from flext_ldif._typings import FlextLdifTypesBase
 
 
 class FlextLdifModelsSettingsRules:
@@ -61,7 +62,7 @@ class FlextLdifModelsSettingsRules:
             m.Field(description="Attribute names containing ACL information"),
         ] = FlextLdifConstantsBase.EMPTY_STR_FROZENSET
 
-        @u.computed_field
+        @m.computed_field
         @property
         def category_markers(self) -> t.FrozensetMapping:
             """The category markers already normalized for matching."""
@@ -92,7 +93,7 @@ class FlextLdifModelsSettingsRules:
         Replaces t.JsonDict with type-safe Pydantic model.
         """
 
-        @u.model_validator(mode="before")
+        @m.model_validator(mode="before")
         @classmethod
         def normalize_mapping_input(
             cls: type[Self],
@@ -149,7 +150,7 @@ class FlextLdifModelsSettingsRules:
             m.Field(description="OID patterns for allowed ldapSyntaxes definitions"),
         ] = FlextLdifConstantsBase.EMPTY_STR_FROZENSET
 
-        @u.computed_field
+        @m.computed_field
         @property
         def schema_oid_filters(self) -> t.FrozensetMapping:
             """The whitelist OID filters keyed by canonical schema attribute names."""
@@ -160,7 +161,7 @@ class FlextLdifModelsSettingsRules:
                 )
             })
 
-        @u.computed_field
+        @m.computed_field
         @property
         def has_oid_filters(self) -> bool:
             """Whether any schema OID whitelist is configured."""

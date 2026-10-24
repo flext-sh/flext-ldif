@@ -17,14 +17,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 import pytest
 
-from tests import tm, u
-
-if TYPE_CHECKING:
-    from tests import m, p, t
+from tests import m, p, t, tm, u
 
 
 class TestsFlextLdifOudIntegration:
@@ -47,14 +44,13 @@ class TestsFlextLdifOudIntegration:
     def _attrs(entry: m.Ldif.Entry) -> m.Ldif.Attributes:
         """Return an entry's attributes, asserting the public field is present."""
         attributes = entry.attributes
-        assert attributes is not None
-        return attributes
+        return tm.not_none(attributes)
 
     @staticmethod
     def _dn_value(entry: m.Ldif.Entry) -> str:
         """Return an entry's DN string via the public DN model."""
         dn = entry.dn
-        assert dn is not None
+        dn = tm.not_none(dn)
         return dn.value
 
     @classmethod
@@ -94,10 +90,17 @@ class TestsFlextLdifOudIntegration:
 
         definitions = cls._attrs(schema_entry).get(attribute_name) or []
 
-        assert definitions, f"Schema entry must expose {attribute_name}"
-        assert any(
+        if not definitions:
+            msg = f"Schema entry must expose {attribute_name}"
+            tm.reject(msg)
+        if not any(
             cls.ORACLE_ENTERPRISE_OID_PREFIX in definition for definition in definitions
-        ), f"Expected at least one Oracle-namespaced {attribute_name.removesuffix('s')}"
+        ):
+            msg = (
+                "Expected at least one Oracle-namespaced "
+                f"{attribute_name.removesuffix('s')}"
+            )
+            tm.reject(msg)
 
     def test_schema_entry_exposes_oracle_attribute_definitions(
         self,
@@ -136,10 +139,11 @@ class TestsFlextLdifOudIntegration:
             error_msg="OUD ACL parsing must succeed",
         )
 
-        assert response.entries, "ACL fixture must produce entries"
-        assert all(
-            self._attrs(entry).has_attribute("aci") for entry in response.entries
-        ), "Every ACL fixture entry must carry an aci attribute"
+        tm.ok(bool(response.entries), msg="ACL fixture must produce entries")
+        tm.ok(
+            all(self._attrs(entry).has_attribute("aci") for entry in response.entries),
+            msg="Every ACL fixture entry must carry an aci attribute",
+        )
 
     def test_aci_values_survive_write_then_reparse(
         self,
@@ -160,7 +164,7 @@ class TestsFlextLdifOudIntegration:
             error_msg="Writing ACL entries must succeed",
         )
         written_content = written.content
-        assert written_content is not None
+        written_content = tm.not_none(written_content)
         reparsed: m.Ldif.ParseResponse = u.Tests.assert_success(
             api.parse_ldif(written_content),
         )
@@ -185,7 +189,7 @@ class TestsFlextLdifOudIntegration:
             error_msg="OUD entries parsing must succeed",
         )
 
-        assert len(response.entries) >= self.MIN_ENTRY_FIXTURE_COUNT
+        tm.ok(len(response.entries) >= self.MIN_ENTRY_FIXTURE_COUNT)
 
     def test_oracle_object_classes_preserved_through_parsing(
         self,
@@ -207,8 +211,9 @@ class TestsFlextLdifOudIntegration:
             )
         )
 
-        assert entries_with_oracle_oc > 0, (
-            "Expected entries carrying Oracle objectClasses"
+        tm.ok(
+            entries_with_oracle_oc > 0,
+            msg="Expected entries carrying Oracle objectClasses",
         )
 
     # --- Round-trip integrity --------------------------------------------
@@ -223,14 +228,16 @@ class TestsFlextLdifOudIntegration:
             api.parse_ldif(oud_integration_fixture),
             error_msg="Initial parse must succeed",
         )
-        assert first.entries, "Fixture must produce entries"
+        tm.ok(bool(first.entries), msg="Fixture must produce entries")
 
         written: m.Ldif.WriteResponse = u.Tests.assert_success(
             api.write(first.entries),
             error_msg="Write must succeed",
         )
-        written_content = written.content
-        assert written_content, "Write must produce non-empty LDIF"
+        written_content = tm.not_none(
+            written.content, msg="Write must produce non-empty LDIF"
+        )
+        tm.ok(bool(written_content), msg="Write must produce non-empty LDIF")
 
         second: m.Ldif.ParseResponse = u.Tests.assert_success(
             api.parse_ldif(written_content),
@@ -285,7 +292,7 @@ class TestsFlextLdifOudIntegration:
             api.write(parsed.entries),
         )
         written_content = written.content
-        assert written_content is not None
+        written_content = tm.not_none(written_content)
         reparsed: m.Ldif.ParseResponse = u.Tests.assert_success(
             api.parse_ldif(written_content),
         )
@@ -320,4 +327,4 @@ class TestsFlextLdifOudIntegration:
         tm.that(self._dn_value(entry), eq="cn=OracleContext,dc=example,dc=com")
         tm.that(attributes.get("orclVersion"), eq=["90600"])
         tm.that(attributes.get("objectClass"), eq=["top", "orclContext"])
-        assert entry.metadata is not None
+        tm.not_none(entry.metadata)

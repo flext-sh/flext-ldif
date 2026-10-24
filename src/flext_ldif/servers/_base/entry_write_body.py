@@ -30,6 +30,9 @@ class FlextLdifServersEntryWriteBodyEmitter:
     ) -> p.Result[str]:
         """Emit the LDIF modify body (change operations or attribute ops).
 
+        An entry without any modifiable attribute yields no record (empty text),
+        since a modify record without a modification changes nothing.
+
         Returns:
             The resulting ``p.Result[str]``.
 
@@ -40,7 +43,10 @@ class FlextLdifServersEntryWriteBodyEmitter:
                 self._emit_change_operation(output_lines, change_operation)
             output_lines.append("")
             return r[str].ok("\n".join(output_lines))
+        record_head_length = len(output_lines)
         self._emit_modify_attribute_operations(output_lines)
+        if len(output_lines) == record_head_length:
+            return r[str].ok("")
         output_lines.append("")
         return r[str].ok("\n".join(output_lines))
 
@@ -86,7 +92,11 @@ class FlextLdifServersEntryWriteBodyEmitter:
                 ),
             )
         if entry.deleteoldrdn is not None:
-            delete_old = "1" if entry.deleteoldrdn else "0"
+            delete_old = (
+                c.ParserBooleanToken.ONE
+                if entry.deleteoldrdn
+                else c.ParserBooleanToken.ZERO
+            )
             output_lines.append(f"deleteoldrdn: {delete_old}")
         if entry.newsuperior:
             output_lines.extend(

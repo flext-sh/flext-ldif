@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Annotated, Self
 
-from flext_core import m, u
+from flext_cli import m
 
 from flext_ldif import t
 from flext_ldif._models import FlextLdifModelsDomainDN
@@ -127,7 +127,7 @@ class FlextLdifModelsDomainEntryStatistics(m.FrozenDynamicModel):
         ),
     ] = 1.0
 
-    @u.computed_field
+    @m.computed_field
     @property
     def dn_was_transformed(self) -> bool:
         """Whether DN underwent transformation."""
@@ -135,25 +135,25 @@ class FlextLdifModelsDomainEntryStatistics(m.FrozenDynamicModel):
             return False
         return self.dn_statistics.was_transformed
 
-    @u.computed_field
+    @m.computed_field
     @property
     def had_errors(self) -> bool:
         """Whether any errors occurred."""
         return bool(self.errors)
 
-    @u.computed_field
+    @m.computed_field
     @property
     def had_warnings(self) -> bool:
         """Whether any warnings occurred."""
         return bool(self.warnings)
 
-    @u.computed_field
+    @m.computed_field
     @property
     def objectclasses_changed(self) -> bool:
         """Whether objectClass values changed."""
         return set(self.objectclasses_original) != set(self.objectclasses_final)
 
-    @u.computed_field
+    @m.computed_field
     @property
     def total_attribute_changes(self) -> int:
         """Total count of attribute modifications."""
@@ -174,7 +174,7 @@ class FlextLdifModelsDomainEntryStatistics(m.FrozenDynamicModel):
         validated: Self = cls.model_validate({"was_parsed": True})
         return validated
 
-    @u.field_validator("filters_applied", mode="after")
+    @m.field_validator("filters_applied", mode="after")
     @classmethod
     def deduplicate_filters(
         cls,
@@ -194,7 +194,7 @@ class FlextLdifModelsDomainEntryStatistics(m.FrozenDynamicModel):
                 result.append(item)
         return result
 
-    @u.field_validator("servers_applied", mode="after")
+    @m.field_validator("servers_applied", mode="after")
     @classmethod
     def deduplicate_servers(
         cls,

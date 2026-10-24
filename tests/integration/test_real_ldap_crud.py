@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-    from tests import p, t
+from tests import p, t
 
 
 @pytest.fixture
@@ -42,7 +42,6 @@ def flext_api() -> p.Ldif.LdifClient:
     return ldif()
 
 
-@pytest.mark.docker
 @pytest.mark.integration
 class TestsFlextLdifRealLdapCrud:
     """Behavioral CRUD and batch contracts over a live LDAP directory."""
@@ -85,7 +84,7 @@ class TestsFlextLdifRealLdapCrud:
             entry.attributes_dict["objectClass"],
             eq=["inetOrgPerson", "person", "top"],
         )
-        assert not entry.has_validation_errors
+        tm.that(not entry.has_validation_errors)
 
     def test_complete_crud_cycle_roundtrips_through_ldap(
         self,
@@ -112,7 +111,7 @@ class TestsFlextLdifRealLdapCrud:
         # Create: entry becomes readable in the directory.
         self._add_entry(ldap_connection, entry)
         ldap_connection.search(entry.dn_str, "(objectClass=*)", attributes=["*"])
-        assert ldap_connection.entries
+        tm.that(ldap_connection.entries, where=bool)
         tm.that(ldap_connection.entries[0]["mail"].value, eq="crud@example.com")
 
         # Update: replaced attribute is reflected on re-read.
@@ -121,8 +120,8 @@ class TestsFlextLdifRealLdapCrud:
             {"mail": [("MODIFY_REPLACE", ["updated_crud@example.com"])]},
         )
         ldap_connection.search(entry.dn_str, "(objectClass=*)", attributes=["*"])
-        assert (
-            str(ldap_connection.entries[0]["mail"].value) == "updated_crud@example.com"
+        tm.that(
+            str(ldap_connection.entries[0]["mail"].value), eq="updated_crud@example.com"
         )
 
         # Delete: entry is no longer resolvable.
@@ -132,7 +131,7 @@ class TestsFlextLdifRealLdapCrud:
             "(objectClass=*)",
             search_scope=c.Ldap3SearchScope.BASE.value,
         )
-        assert not found or not ldap_connection.entries
+        tm.that(not found or not ldap_connection.entries)
 
     def test_batch_creation_validates_every_entry(
         self,
@@ -191,7 +190,7 @@ class TestsFlextLdifRealLdapCrud:
             attributes=["*"],
         )
         source_count = len(ldap_connection.entries)
-        assert source_count > 0, "No entries found in LDAP"
+        tm.that(source_count > 0, msg="No entries found in LDAP")
 
         entries: list[m.Ldif.Entry] = []
         for ldap_entry in ldap_connection.entries:
@@ -206,19 +205,19 @@ class TestsFlextLdifRealLdapCrud:
                 ]
                 for name in ldap_entry.entry_attributes
             }
-            assert ldap_entry.entry_dn is not None
-            result = m.Ldif.Entry.create(dn=ldap_entry.entry_dn, attributes=attrs)
+            entry_dn = tm.not_none(ldap_entry.entry_dn)
+            result = m.Ldif.Entry.create(dn=entry_dn, attributes=attrs)
             tm.ok(result)
             entries.append(result.value)
 
         export_file = tmp_path / "batch_export.ldif"
         write_result = flext_api.write_ldif_file(entries, export_file)
         tm.ok(write_result)
-        assert export_file.exists()
+        tm.that(export_file.exists())
 
         parse_result = flext_api.parse_ldif(export_file)
         tm.ok(parse_result)
         parsed_entries = parse_result.value.entries
         tm.that(len(parsed_entries), eq=source_count)
         parsed_dns = {entry.dn_str for entry in parsed_entries}
-        assert expected_dns <= parsed_dns
+        tm.that(expected_dns <= parsed_dns)

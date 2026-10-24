@@ -47,7 +47,6 @@ if TYPE_CHECKING:
         FlextLdifServersOidEntryMetadataMixin,
         FlextLdifServersOidEntryNormalizeMixin,
         FlextLdifServersOidEntryParseMixin,
-        FlextLdifServersOidEntryRestoreLinesMixin,
         FlextLdifServersOidEntryRestoreMixin,
         FlextLdifServersOidSchemaNormalizeMixin,
     )
@@ -151,7 +150,6 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersOidEntryMetadataMixin",
     "FlextLdifServersOidEntryNormalizeMixin",
     "FlextLdifServersOidEntryParseMixin",
-    "FlextLdifServersOidEntryRestoreLinesMixin",
     "FlextLdifServersOidEntryRestoreMixin",
     "FlextLdifServersOidSchema",
     "FlextLdifServersOidSchemaNormalizeMixin",
@@ -239,7 +237,6 @@ install_lazy_exports(
         "FlextLdifServersOidEntryMetadataMixin": "._oid.entry_metadata",
         "FlextLdifServersOidEntryNormalizeMixin": "._oid.entry_normalize",
         "FlextLdifServersOidEntryParseMixin": "._oid.entry_parse",
-        "FlextLdifServersOidEntryRestoreLinesMixin": "._oid.entry_restore_lines",
         "FlextLdifServersOidEntryRestoreMixin": "._oid.entry_restore",
         "FlextLdifServersOidSchema": ".oid",
         "FlextLdifServersOidSchemaNormalizeMixin": "._oid.schema_normalize",

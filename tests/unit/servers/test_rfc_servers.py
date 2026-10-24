@@ -1,7 +1,7 @@
 """Tests for the RFC server hook contract.
 
-The server bases declare each overridable hook as a contract that raises
-``NotImplementedError``; the RFC servers provide the default behavior every
+The server bases require concrete capability implementations at construction;
+the RFC servers provide the default behavior every
 vendor server inherits.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import pytest
 
+from flext_ldif import FlextLdif
 from flext_ldif.servers import FlextLdifServersBase, FlextLdifServersRfc
 from tests import c, m, tm
 
@@ -49,22 +50,22 @@ class TestsFlextLdifRfcServers:
     @staticmethod
     def test_rfc_acl_resolves_rfc_acl_attributes() -> None:
         """The RFC ACL server reports the configured RFC ACL attributes."""
-        acl = FlextLdifServersRfc.Acl()
+        acl = FlextLdif().acl(c.Ldif.ServerTypes.RFC).unwrap()
         tm.that(acl.resolve_acl_attributes(), eq=list(c.Ldif.RFC_ACL_ATTRIBUTES))
         for attribute_name in c.Ldif.RFC_ACL_ATTRIBUTES:
-            tm.that(acl.matches_acl_attribute(attribute_name.upper()), eq=True)
+            tm.ok(acl.matches_acl_attribute(attribute_name.upper()))
 
     @classmethod
     def test_rfc_acl_ignores_schema_definitions(cls) -> None:
         """The RFC ACL server is not aware of schema definitions."""
         acl = FlextLdifServersRfc.Acl()
-        tm.that(acl.can_handle_attribute(cls._parsed_attribute()), eq=False)
-        tm.that(acl.can_handle_objectclass(cls._parsed_objectclass()), eq=False)
+        tm.fail(acl.can_handle_attribute(cls._parsed_attribute()))
+        tm.fail(acl.can_handle_objectclass(cls._parsed_objectclass()))
 
     @staticmethod
     def test_rfc_acl_round_trips_raw_acl() -> None:
         """The RFC ACL server parses and writes the raw ACL unchanged."""
-        acl = FlextLdifServersRfc.Acl()
+        acl = FlextLdif().acl(c.Ldif.ServerTypes.RFC).unwrap()
         raw_acl = "access to * by * read"
         parsed = acl.parse_server(raw_acl).unwrap()
         tm.that(parsed.raw_acl, eq=raw_acl)
@@ -74,16 +75,16 @@ class TestsFlextLdifRfcServers:
     def test_rfc_entry_ignores_schema_definitions(cls) -> None:
         """The RFC entry server is not aware of schema definitions."""
         entry = FlextLdifServersRfc.Entry()
-        tm.that(entry.can_handle_attribute(cls._parsed_attribute()), eq=False)
-        tm.that(entry.can_handle_objectclass(cls._parsed_objectclass()), eq=False)
+        tm.fail(entry.can_handle_attribute(cls._parsed_attribute()))
+        tm.fail(entry.can_handle_objectclass(cls._parsed_objectclass()))
 
     @classmethod
     def test_rfc_entry_parses_and_writes_record(cls) -> None:
         """The RFC entry server parses one record and writes it back."""
-        entry = FlextLdifServersRfc.Entry()
+        entry = FlextLdif().entry(c.Ldif.ServerTypes.RFC).unwrap()
         entries = entry.parse_server(cls.LDIF_RECORD).unwrap()
         tm.that(len(entries), eq=1)
-        tm.that(entries[0].dn is not None, eq=True)
+        tm.ok(entries[0].dn is not None)
         written = entry.write(entries[0]).unwrap()
         tm.that(written, has="cn=alice,dc=example,dc=com")
         tm.that(written, has="alice")
@@ -91,7 +92,7 @@ class TestsFlextLdifRfcServers:
     @classmethod
     def test_rfc_schema_parses_and_writes_definitions(cls) -> None:
         """The RFC schema server round-trips attribute and objectClass definitions."""
-        schema = FlextLdifServersRfc.Schema()
+        schema = FlextLdif().schema_server(c.Ldif.ServerTypes.RFC).unwrap()
         attribute = cls._parsed_attribute()
         tm.that(attribute.oid, eq="2.5.4.3")
         tm.that(schema.write_attribute(attribute).unwrap(), has="NAME 'cn'")
@@ -115,20 +116,18 @@ class TestsFlextLdifRfcServers:
 
     @staticmethod
     def test_base_acl_hook_raises_when_not_redefined() -> None:
-        """A server that does not redefine the ACL parse hook fails loudly."""
-        with pytest.raises(NotImplementedError, match="_parse_acl"):
-            FlextLdifServersBase.Acl().parse_server("access to * by * read")
+        """An incomplete ACL capability cannot be constructed."""
+        with pytest.raises(TypeError, match=r"abstract.*_parse_acl"):
+            FlextLdifServersBase.Acl()
 
-    @classmethod
-    def test_base_entry_hook_raises_when_not_redefined(cls) -> None:
-        """A server that does not redefine the entry parse hook fails loudly."""
-        with pytest.raises(NotImplementedError, match="_parse_content"):
-            FlextLdifServersBase.Entry().parse_server(cls.LDIF_RECORD)
+    @staticmethod
+    def test_base_entry_hook_raises_when_not_redefined() -> None:
+        """An incomplete entry capability cannot be constructed."""
+        with pytest.raises(TypeError, match=r"abstract.*_parse_content"):
+            FlextLdifServersBase.Entry()
 
-    @classmethod
-    def test_base_schema_hook_raises_when_not_redefined(cls) -> None:
-        """A server that does not redefine the schema predicate fails loudly."""
-        with pytest.raises(NotImplementedError, match="can_handle_attribute"):
-            FlextLdifServersBase.Schema().can_handle_attribute(
-                cls.ATTRIBUTE_DEFINITION,
-            )
+    @staticmethod
+    def test_base_schema_hook_raises_when_not_redefined() -> None:
+        """An incomplete schema capability cannot be constructed."""
+        with pytest.raises(TypeError, match=r"abstract.*can_handle_attribute"):
+            FlextLdifServersBase.Schema()

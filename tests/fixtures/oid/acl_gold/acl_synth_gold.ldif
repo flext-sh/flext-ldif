@@ -1,0 +1,78 @@
+# provenance: devops-oud-iac@2225708e3ac8 tests/benchmark/gold/acl_synth_gold.ldif sha256=02391ee84ada28158e64d2c94ff2aa30cc2d5cacc50ce40cac3dc5d8f99c36b2 stripped=all-comment-lines(consumer-report-text)
+version: 1
+
+dn: cn=admins,dc=ctbc
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "admins Entry by SecurityAdmins (+1)";
+      allow (read, search, add, delete)    groupdn="ldap:///cn=SecurityAdmins,dc=ctbc";
+      allow (read, search)                 userdn="ldap:///self";)
+-
+
+dn: cn=combined-deny,dc=ctbc
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "combined-deny Entry by Admins";
+      allow (all)    groupdn="ldap:///cn=Admins,dc=ctbc";)
+-
+
+dn: cn=groupattr-case,dc=ctbc
+changetype: modify
+replace: aci
+aci: (targetattr="member")
+     (version 3.0; acl "groupattr-case Attrs by uniquemember";
+      allow (read, search)    userattr="uniquemember#GROUPDN";)
+-
+
+dn: cn=negated-wildcard,dc=ctbc
+changetype: modify
+replace: aci
+aci: (targetattr="orclpasswordhint")
+     (targetscope="base")
+     (version 3.0; acl "negated-wildcard Attrs by CommonUsers (+1)";
+      allow (read, search, compare)    groupdn="ldap:///cn=CommonUsers,dc=ctbc";
+      allow (search, selfwrite)        userdn="ldap:///anyone";)
+-
+
+dn: cn=owner-groups,dc=ctbc
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "owner-groups Entry by owner";
+      allow (read, search)    userattr="owner#USERDN";)
+aci: (targetattr="uniquemember")
+     (targetscope="base")
+     (version 3.0; acl "owner-groups Attrs by owner";
+      allow (read, search, write)    userattr="owner#USERDN";)
+-
+
+dn: cn=public-read,dc=ctbc
+changetype: modify
+replace: aci
+aci: (targetattr="cn||sn||mail")
+     (targetscope="base")
+     (version 3.0; acl "public-read Attrs by anyone";
+      allow (read, search, compare)    userdn="ldap:///anyone";)
+-
+
+dn: cn=superuser-case,dc=ctbc
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "superuser-case Attrs by Directory Manager";
+      allow (read, write, compare)    userdn="ldap:///cn=Directory Manager";)
+-
+
+dn: cn=users-attrs,dc=ctbc
+changetype: modify
+replace: aci
+aci: (targetattr="userPassword")
+     (targetfilter="(objectclass=inetorgperson)")
+     (version 3.0; acl "users-attrs Attrs by SecurityAdmins (+1)";
+      allow (read, search, write, compare)               groupdn="ldap:///cn=SecurityAdmins,dc=ctbc";
+      allow (read, search, write, selfwrite, compare)    userdn="ldap:///self";)
+-
+

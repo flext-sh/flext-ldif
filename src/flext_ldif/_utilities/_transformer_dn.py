@@ -54,14 +54,14 @@ class FlextLdifUtilitiesEntryDnNormalization:
         entry_dn = item.dn
         dn_str = entry_dn.value
 
-        def validate_dn(_: str) -> p.Result[str]:
+        def validate_dn(dn_value: str) -> p.Result[str]:
             if not validate:
-                return r[str].ok(dn_str)
+                return r[str].ok(dn_value)
             return (
                 FlextLdifUtilitiesEntryDnNormalization
-                .validate_dn_components(dn_str)
+                .validate_dn_components(dn_value)
                 .map_error(lambda error: error or "DN validation failed")
-                .map(lambda __: dn_str)
+                .map(lambda __: dn_value)
             )
 
         def update_entry(normalized_dn: str) -> FlextLdifModels.Ldif.Entry:

@@ -61,7 +61,7 @@ class FlextLdifDetector(FlextLdifDetectorScoring):
         detected_type_raw, confidence = self._determine_server_type(scores_dict)
         patterns_found = self._extract_patterns(content_sample)
         detected_type = u.Ldif.normalize_server_type(detected_type_raw)
-        scores_model = m.Ldif.DynamicCounts(**scores_dict)
+        scores_model = m.Ldif.DynamicCounts(root=scores_dict)
         detection_result = m.Ldif.ServerDetectionResult.model_validate({
             "detected_server_type": detected_type,
             "confidence": confidence,

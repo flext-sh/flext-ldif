@@ -19,15 +19,13 @@ from flext_ldif.servers._base import (
     FlextLdifServersBaseSchema,
 )
 from flext_ldif.servers._relaxed import FlextLdifServersRelaxedConstants
-from flext_ldif.servers._rfc import FlextLdifServersRfcAcl, FlextLdifServersRfcConstants
+from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 
 
 class FlextLdifServersRelaxed(FlextLdifServersRfc):
     """Relaxed mode server servers for non-compliant LDIF."""
 
-    Constants: ClassVar[type[FlextLdifServersRfcConstants]] = (
-        FlextLdifServersRelaxedConstants
-    )
+    Constants: ClassVar[type[p.Ldif.ServerConstants]] = FlextLdifServersRelaxedConstants
     Schema: ClassVar[type[FlextLdifServersBaseSchema]] = FlextLdifServersRelaxedSchema
     Entry: ClassVar[type[FlextLdifServersBaseEntry]] = FlextLdifServersRelaxedEntry
 
@@ -52,7 +50,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 The resulting ``bool``.
 
             """
-            _ = acl_line
+            del acl_line
             return True
 
         @override
@@ -65,7 +63,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 The resulting ``bool``.
 
             """
-            _ = attribute
+            del attribute
             return True
 
         @override
@@ -78,7 +76,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
                 The resulting ``bool``.
 
             """
-            _ = objectclass
+            del objectclass
             return True
 
         @override

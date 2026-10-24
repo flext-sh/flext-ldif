@@ -1,3 +1,4 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """LDIF type facade.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
@@ -14,7 +15,7 @@ from flext_ldif._typings import FlextLdifTypesBase, FlextLdifTypesDomain
 class FlextLdifTypes(FlextCliTypes):
     """LDIF domain types extending flext-core FlextTypes."""
 
-    class Ldif(FlextLdifTypesDomain, FlextLdifTypesBase):
+    class Ldif(FlextLdifTypesBase, FlextLdifTypesDomain):
         """LDIF-specific type namespace."""
 
 

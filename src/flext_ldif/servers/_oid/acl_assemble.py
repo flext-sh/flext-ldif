@@ -23,8 +23,9 @@ class FlextLdifServersOidAclAssemble:
         ``by * (none)`` deny-fallback removes that clause + dead-codes every
         later subject; with ``base_dn``, an ``anyone`` rule at a high-level
         container is dropped and out-of-scope bind DNs are excluded (regex DNs →
-        wildcards) — all recorded as notes. A deny-only rule yields a valid
-        AciRule with empty ``allows`` + notes (caller skips emitting).
+        wildcards) — every subject records one typed
+        :class:`m.Ldif.AclSubjectOutcome`. A deny-only rule yields a valid
+        AciRule with empty ``allows`` + outcomes (caller skips emitting).
         """
 
         def __init__(self, rule: m.Ldif.OidAclRule, base_dn: str) -> None:
@@ -48,7 +49,7 @@ class FlextLdifServersOidAclAssemble:
                 c.Ldif.DIRECTORY_MANAGER_DN,
             }
             self._allows: list[m.Ldif.AciAllow] = []
-            self._notes: list[str] = []
+            self._outcomes: list[m.Ldif.AclSubjectOutcome] = []
             self._has_anyone = False
             self._found_deny_all = False
 
@@ -62,71 +63,101 @@ class FlextLdifServersOidAclAssemble:
                 The resulting ``p.Result[m.Ldif.AciRule]``.
 
             """
+            kind = c.Ldif.AclSubjectOutcomeKind
             for subject in self._rule.subjects:
                 if self._found_deny_all:
-                    self._note_dead_subject(subject)
+                    self._record(subject, kind.EXCLUDED_DEAD_CODE)
                     continue
                 step_result = self._process_subject(subject)
                 if step_result.failure:
                     return r[m.Ldif.AciRule].from_failure(step_result)
             return r[m.Ldif.AciRule].ok(self._build_rule())
 
-        def _note_dead_subject(self, subject: m.Ldif.OidAclSubject) -> None:
-            """Record one subject dead-coded after the ``by * (none)`` fallback."""
-            self._notes.append(
-                "dead code after 'by * (none)': "
-                f"{subject.subject_type} {subject.value!r}",
+        def _record(
+            self,
+            subject: m.Ldif.OidAclSubject,
+            kind: c.Ldif.AclSubjectOutcomeKind,
+            *,
+            allow: m.Ldif.AciAllow | None = None,
+            wildcard_rewritten: bool = False,
+            display_value: str = "",
+        ) -> p.Result[bool]:
+            """Record the typed outcome of one subject.
+
+            Returns:
+                The resulting ``p.Result[bool]``.
+
+            """
+            self._outcomes.append(
+                m.Ldif.AclSubjectOutcome(
+                    subject=subject,
+                    kind=kind,
+                    allow=allow,
+                    wildcard_rewritten=wildcard_rewritten,
+                    complement_calculated=allow is not None
+                    and all(
+                        perm.strip().lower() in c.Ldif.NEGATION_TO_BASE
+                        for perm in subject.permissions
+                    ),
+                    display_value=display_value,
+                ),
             )
+            return r[bool].ok(value=True)
 
         def _process_subject(self, subject: m.Ldif.OidAclSubject) -> p.Result[bool]:
-            """Convert one subject clause, appending allows and notes.
+            """Convert one subject clause, appending its allow and outcome.
 
             Returns:
                 The resulting ``p.Result[None]``.
 
             """
+            kind = c.Ldif.AclSubjectOutcomeKind
             is_anyone = subject.subject_type == c.Ldif.OidSubjectKind.ANYONE
             if is_anyone and FlextLdifServersOidAclAssemble.deny_none(
                 subject.permissions,
             ):
                 self._found_deny_all = True
-                self._notes.append("'by * (none)' removed (OUD default-deny)")
-                return r[bool].ok(value=True)
+                return self._record(subject, kind.EXCLUDED_DENY_NONE)
             if is_anyone and self._dn_normalized in self._containers:
-                self._notes.append(
-                    "anyone skipped at high-level container (OUD inherits to subtree)",
-                )
-                return r[bool].ok(value=True)
+                return self._record(subject, kind.EXCLUDED_CONTAINER)
             bind = FlextLdifServersOidAclToOud.convert_subject_to_oud(subject)
             if bind.failure:
-                self._notes.append(bind.error or "subject has no OUD equivalent")
-                return r[bool].ok(value=True)
+                return self._record(subject, kind.UNSUPPORTED)
             bind_type = bind.value.subject_type
-            bind_value = bind.value.subject_value
-            if bind_type in self._dn_binds and bind_value not in self._literal_binds:
-                bind_value = FlextLdifServersOidAclToOud.regex_to_wildcard(bind_value)
+            converted = bind.value.subject_value
+            bind_value = converted
+            if bind_type in self._dn_binds and converted not in self._literal_binds:
+                bind_value = FlextLdifServersOidAclToOud.regex_to_wildcard(converted)
                 if not FlextLdifServersOidAclToOud.in_scope(bind_value, self._base_dn):
-                    self._notes.append(
-                        f"{subject.subject_type} {bind_value!r} removed "
-                        f"(DN out of scope {self._base_dn})",
+                    return self._record(
+                        subject,
+                        kind.OUT_OF_SCOPE,
+                        display_value=bind_value,
                     )
-                    return r[bool].ok(value=True)
+            dn_kinds = {c.Ldif.OidSubjectKind.GROUP, c.Ldif.OidSubjectKind.USER}
             return self._append_allow(
                 subject,
-                bind_type,
-                bind_value,
-                is_anyone=is_anyone,
+                m.Ldif.AciAllow(
+                    subject_type=bind_type,
+                    subject_value=bind_value,
+                    authmethod=subject.bindmode,
+                    ip=subject.bindipfilter,
+                ),
+                wildcard_rewritten=bind_value != converted,
+                display_value=(
+                    converted if subject.subject_type in dn_kinds else subject.value
+                ),
             )
 
         def _append_allow(
             self,
             subject: m.Ldif.OidAclSubject,
-            bind_type: str,
-            bind_value: str,
+            bind: m.Ldif.AciAllow,
             *,
-            is_anyone: bool,
+            wildcard_rewritten: bool,
+            display_value: str,
         ) -> p.Result[bool]:
-            """Convert permissions and append one allow clause with its notes.
+            """Convert permissions and append one allow clause with its outcome.
 
             Returns:
                 The resulting ``p.Result[None]``.
@@ -139,32 +170,22 @@ class FlextLdifServersOidAclAssemble:
             if perms.failure:
                 return r[bool].from_failure(perms)
             if not perms.value:
-                self._notes.append(
-                    f"{subject.subject_type} {subject.value!r} removed "
-                    f"(no OUD allow permissions / default-deny)",
+                return self._record(
+                    subject,
+                    c.Ldif.AclSubjectOutcomeKind.UNGRANTED,
+                    display_value=display_value,
                 )
-                return r[bool].ok(value=True)
-            self._allows.append(
-                m.Ldif.AciAllow(
-                    subject_type=bind_type,
-                    subject_value=bind_value,
-                    permissions=perms.value,
-                    authmethod=subject.bindmode,
-                    ip=subject.bindipfilter,
-                ),
+            allow = bind.model_copy(update={"permissions": perms.value})
+            self._allows.append(allow)
+            self._has_anyone = self._has_anyone or (
+                subject.subject_type == c.Ldif.OidSubjectKind.ANYONE
             )
-            if subject.added_object_constraint:
-                self._notes.append(
-                    f"added_object_constraint=({subject.added_object_constraint}) "
-                    "on this subject needs manual OUD targetfilter review",
-                )
-            if is_anyone and (sensitive := c.Ldif.SENSITIVE_PERMS & set(perms.value)):
-                self._notes.append(
-                    f"anyone granted sensitive perms {sorted(sensitive)} — "
-                    "verify this is intended",
-                )
-            self._has_anyone = self._has_anyone or is_anyone
-            return r[bool].ok(value=True)
+            return self._record(
+                subject,
+                c.Ldif.AclSubjectOutcomeKind.GRANTED,
+                allow=allow,
+                wildcard_rewritten=wildcard_rewritten,
+            )
 
         def _build_rule(self) -> m.Ldif.AciRule:
             """Derive the acl name and assemble the final OUD AciRule.
@@ -192,7 +213,8 @@ class FlextLdifServersOidAclAssemble:
                 ),
                 acl_name=acl_name,
                 allows=tuple(self._allows),
-                notes=tuple(self._notes),
+                target_type=self._rule.target_type,
+                outcomes=tuple(self._outcomes),
             )
 
     @staticmethod

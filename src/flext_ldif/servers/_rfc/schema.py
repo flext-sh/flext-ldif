@@ -69,7 +69,7 @@ class FlextLdifServersRfcSchema(
             oc_mod: m.Ldif.SchemaObjectClass | None = (
                 oc_mod_raw if isinstance(oc_mod_raw, m.Ldif.SchemaObjectClass) else None
             )
-            op_raw = kwargs.get("operation")
+            op_raw = kwargs.get(c.ContextScope.OPERATION)
             op: str | None = (
                 "parse" if isinstance(op_raw, str) and op_raw == "parse" else None
             )
@@ -102,7 +102,7 @@ class FlextLdifServersRfcSchema(
                 "oc_definition",
                 "attr_model",
                 "oc_model",
-                "operation",
+                c.ContextScope.OPERATION,
             }),
             **kwargs,
         )
@@ -113,6 +113,7 @@ class FlextLdifServersRfcSchema(
         *,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
+        registry: p.Registry | None = None,
         **fields: t.JsonValue,
     ) -> Self: ...
 
@@ -148,6 +149,7 @@ class FlextLdifServersRfcSchema(
         operation: t.JsonValue | None = None,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
+        registry: p.Registry | None = None,
         **fields: t.JsonValue,
     ) -> Self | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str:
         """Callable interface - automatic polymorphic processor.
@@ -161,10 +163,14 @@ class FlextLdifServersRfcSchema(
             ValueError: If ``result.failure``.
 
         """
+        if registry is not None:
+            return self.configure_runtime(
+                server=server, settings=settings, registry=registry, **fields
+            )
         configured = FlextLdifServerMethodsMixin.dispatch_builder(
             super().__call__,
             fields,
-            frozenset({"data", "operation"}),
+            frozenset({"data", c.ContextScope.OPERATION}),
             server,
             settings,
         )
@@ -198,6 +204,7 @@ class FlextLdifServersRfcSchema(
             The resulting ``bool``.
 
         """
+        del attr_definition
         return True
 
     @override
@@ -211,6 +218,7 @@ class FlextLdifServersRfcSchema(
             The resulting ``bool``.
 
         """
+        del oc_definition
         return True
 
     def create_metadata(
@@ -242,6 +250,7 @@ class FlextLdifServersRfcSchema(
             The resulting ``bool``.
 
         """
+        del _attribute
         return False
 
     @staticmethod
@@ -254,6 +263,7 @@ class FlextLdifServersRfcSchema(
             The resulting ``bool``.
 
         """
+        del _objectclass
         return False
 
     @override

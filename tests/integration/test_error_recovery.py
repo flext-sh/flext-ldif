@@ -12,15 +12,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
 from flext_ldif import ldif
-from tests import tm
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import p, tm
 
 
 class TestsFlextLdifErrorRecovery:
@@ -51,10 +46,10 @@ class TestsFlextLdifErrorRecovery:
         response = result.unwrap()
         tm.that(len(response.entries), eq=1)
         entry = response.entries[0]
-        assert entry.dn is not None
-        tm.that(entry.dn.value, eq="cn=Test,dc=example,dc=com")
-        assert entry.attributes is not None
-        tm.that(set(entry.attributes.attributes), eq={"objectClass", "cn", "sn"})
+        dn = tm.not_none(entry.dn)
+        tm.that(dn.value, eq="cn=Test,dc=example,dc=com")
+        attributes = tm.not_none(entry.attributes)
+        tm.that(set(attributes.attributes), eq={"objectClass", "cn", "sn"})
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -92,8 +87,8 @@ class TestsFlextLdifErrorRecovery:
         tm.ok(result)
         entries = result.unwrap().entries
         tm.that(len(entries), eq=1)
-        assert entries[0].dn is not None
-        tm.that(entries[0].dn.value, eq=expected_dn)
+        dn = tm.not_none(entries[0].dn)
+        tm.that(dn.value, eq=expected_dn)
 
     # ------------------------------------------------------------------
     # Attribute value semantics.
@@ -113,9 +108,9 @@ class TestsFlextLdifErrorRecovery:
 
         tm.ok(result)
         entry = result.unwrap().entries[0]
-        assert entry.attributes is not None
+        attributes = tm.not_none(entry.attributes)
         tm.that(
-            entry.attributes.attributes["mail"],
+            attributes.attributes["mail"],
             eq=["a@example.com", "b@example.com", "c@example.com"],
         )
 
@@ -130,8 +125,8 @@ class TestsFlextLdifErrorRecovery:
 
         tm.ok(result)
         entry = result.unwrap().entries[0]
-        assert entry.attributes is not None
-        tm.that(entry.attributes.attributes["description"], eq=[""])
+        attributes = tm.not_none(entry.attributes)
+        tm.that(attributes.attributes["description"], eq=[""])
 
     @staticmethod
     def test_folded_continuation_lines_concatenate_into_single_value(
@@ -147,8 +142,8 @@ class TestsFlextLdifErrorRecovery:
 
         tm.ok(result)
         entry = result.unwrap().entries[0]
-        assert entry.attributes is not None
-        tm.that(entry.attributes.attributes["description"], eq=["abcd"])
+        attributes = tm.not_none(entry.attributes)
+        tm.that(attributes.attributes["description"], eq=["abcd"])
 
     @staticmethod
     def test_very_long_value_is_not_truncated(api: p.Ldif.LdifClient) -> None:
@@ -163,8 +158,8 @@ class TestsFlextLdifErrorRecovery:
 
         tm.ok(result)
         entry = result.unwrap().entries[0]
-        assert entry.attributes is not None
-        tm.that(entry.attributes.attributes["description"], eq=[long_value])
+        attributes = tm.not_none(entry.attributes)
+        tm.that(attributes.attributes["description"], eq=[long_value])
 
     @staticmethod
     def test_base64_binary_attribute_is_parsed_as_named_attribute(
@@ -180,8 +175,8 @@ class TestsFlextLdifErrorRecovery:
 
         tm.ok(result)
         entry = result.unwrap().entries[0]
-        assert entry.attributes is not None
-        tm.that(entry.attributes.attributes, has="jpegPhoto")
+        attributes = tm.not_none(entry.attributes)
+        tm.that(attributes.attributes, has="jpegPhoto")
 
     @staticmethod
     def test_unicode_attribute_value_is_preserved(api: p.Ldif.LdifClient) -> None:
@@ -195,8 +190,8 @@ class TestsFlextLdifErrorRecovery:
 
         tm.ok(result)
         entry = result.unwrap().entries[0]
-        assert entry.attributes is not None
-        assert entry.attributes.attributes["description"] == ["café, naïve, résumé"]
+        attributes = tm.not_none(entry.attributes)
+        tm.that(attributes.attributes["description"], eq=["café, naïve, résumé"])
 
     # ------------------------------------------------------------------
     # Graceful degradation: malformed input never raises; it produces a
@@ -236,8 +231,8 @@ class TestsFlextLdifErrorRecovery:
 
         tm.ok(result)
         entry = result.unwrap().entries[0]
-        assert entry.attributes is not None
-        assert set(entry.attributes.attributes) == {"cn", "sn"}
+        attributes = tm.not_none(entry.attributes)
+        tm.that(set(attributes.attributes), eq={"cn", "sn"})
 
     @staticmethod
     def test_dn_only_entry_parses_with_empty_attributes(
@@ -252,8 +247,8 @@ class TestsFlextLdifErrorRecovery:
         entries = result.unwrap().entries
         tm.that(len(entries), eq=1)
         entry = entries[0]
-        assert entry.dn is not None
-        tm.that(entry.dn.value, eq="cn=Minimal,dc=example,dc=com")
+        dn = tm.not_none(entry.dn)
+        tm.that(dn.value, eq="cn=Minimal,dc=example,dc=com")
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -345,17 +340,16 @@ class TestsFlextLdifErrorRecovery:
 
         written = api.write(original)
         tm.ok(written)
-        serialized = written.unwrap().content
-        assert serialized is not None
+        serialized = tm.not_none(written.unwrap().content)
 
         second = api.parse_ldif(serialized)
         tm.ok(second)
         reparsed = second.unwrap().entries
 
         tm.that(len(reparsed), eq=len(original))
-        assert original[0].dn is not None
-        assert reparsed[0].dn is not None
-        tm.that(reparsed[0].dn.value, eq=original[0].dn.value)
-        assert original[0].attributes is not None
-        assert reparsed[0].attributes is not None
-        tm.that(reparsed[0].attributes.attributes, eq=original[0].attributes.attributes)
+        original_dn = tm.not_none(original[0].dn)
+        reparsed_dn = tm.not_none(reparsed[0].dn)
+        tm.that(reparsed_dn.value, eq=original_dn.value)
+        original_attributes = tm.not_none(original[0].attributes)
+        reparsed_attributes = tm.not_none(reparsed[0].attributes)
+        tm.that(reparsed_attributes.attributes, eq=original_attributes.attributes)

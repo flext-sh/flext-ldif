@@ -31,6 +31,7 @@ class FlextLdifShared:
             The resulting ``bool``.
 
         """
+        del _attr_name, _obj
         _missing_attr = None
         return False
 

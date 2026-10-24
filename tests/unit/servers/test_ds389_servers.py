@@ -25,8 +25,7 @@ class TestsFlextLdifDs389Servers:
     def _schema_server() -> FlextLdifServersDs389.Schema:
         """Return the real DS389 schema server via the public facade."""
         server = FlextLdifServersDs389().schema_server
-        assert isinstance(server, FlextLdifServersDs389.Schema)
-        return server
+        return tm.instance(server, FlextLdifServersDs389.Schema)
 
     # ------------------------------------------------------------------
     # Attribute detection + parsing
@@ -54,7 +53,7 @@ class TestsFlextLdifDs389Servers:
         )
         first = server.can_handle_attribute(definition)
         second = server.can_handle_attribute(definition)
-        tm.that(first, eq=True)
+        tm.ok(first)
         tm.that(second, eq=first)
 
     def test_parse_attribute_exposes_public_properties(self) -> None:
@@ -158,8 +157,7 @@ class TestsFlextLdifDs389Servers:
                 "( 2.16.840.1.113730.3.2.3 NAME 'nsds5base' ABSTRACT )",
             ),
         )
-        assert isinstance(parsed, m.Ldif.SchemaObjectClass)
-        oc_data = parsed
+        oc_data = tm.instance(parsed, m.Ldif.SchemaObjectClass)
         tm.that(oc_data.kind, eq="ABSTRACT")
 
     def test_parse_objectclass_without_oid_fails_with_message(self) -> None:
@@ -190,8 +188,7 @@ class TestsFlextLdifDs389Servers:
         )
         server = self._schema_server()
         parsed_result = tm.ok(server.parse_input(oc_def))
-        assert isinstance(parsed_result, m.Ldif.SchemaObjectClass)
-        parsed = parsed_result
+        parsed = tm.instance(parsed_result, m.Ldif.SchemaObjectClass)
         rendered: str = tm.ok(server.write(parsed))
         tm.that(rendered, has=["2.16.840.1.113730.3.2.1", "nscontainer"])
 
@@ -209,8 +206,9 @@ class TestsFlextLdifDs389Servers:
         test_case: m.Tests.EntryTestCase,
     ) -> None:
         """Entry.can_handle reflects DS389 ownership per case table."""
-        entry_server = FlextLdifServersDs389().entry_server
-        assert isinstance(entry_server, FlextLdifServersDs389.Entry)
+        entry_server = tm.instance(
+            FlextLdifServersDs389().entry_server, FlextLdifServersDs389.Entry
+        )
         tm.that(
             entry_server.can_handle(test_case.entry_dn, test_case.attributes),
             eq=test_case.expected_can_handle,
@@ -221,7 +219,7 @@ class TestsFlextLdifDs389Servers:
         """An empty DN with no DS389 markers is not claimed by the server."""
         entry_server = FlextLdifServersDs389().entry_server
         empty_attrs: t.MutableStrSequenceMapping = {}
-        tm.that(entry_server.can_handle("", empty_attrs), eq=False)
+        tm.fail(entry_server.can_handle("", empty_attrs))
 
     # ------------------------------------------------------------------
     # ACL detection
@@ -243,6 +241,7 @@ class TestsFlextLdifDs389Servers:
         expected: bool,
     ) -> None:
         """Acl.can_handle claims aci/version lines and rejects other input."""
-        acl_server = FlextLdifServersDs389().acl_server
-        assert isinstance(acl_server, FlextLdifServersDs389.Acl)
+        acl_server = tm.instance(
+            FlextLdifServersDs389().acl_server, FlextLdifServersDs389.Acl
+        )
         tm.that(acl_server.can_handle(acl_line), eq=expected)

@@ -25,7 +25,7 @@ from tests import m, tm
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests import p, t
+from tests import p, t
 
 pytestmark = [pytest.mark.integration]
 
@@ -241,8 +241,7 @@ class TestsFlextLdifCrossDirectionConversion:
         parse_result = oid_schema.parse_attribute(attr_def)
         tm.ok(parse_result)
         write_result = oid_schema.write_attribute(parse_result.value)
-        tm.ok(write_result)
-        tm.that(write_result.value, eq=attr_def)
+        tm.ok(write_result, eq=attr_def)
 
     # ------------------------------------------------------------------
     # Parsed-model field normalization (public model contract)
@@ -336,12 +335,10 @@ class TestsFlextLdifCrossDirectionConversion:
 
         result = conversion.convert_model("oid", "oud", entry)
         tm.ok(result)
-        assert isinstance(result.value, m.Ldif.Entry)
-
-        converted = result.value
-        assert converted.attributes is not None
-        attribute = converted.attributes.attributes["attributeTypes"][0]
-        objectclass = converted.attributes.attributes["objectClasses"][0]
+        converted = tm.instance(result.value, m.Ldif.Entry)
+        attributes = tm.not_none(converted.attributes)
+        attribute = attributes.attributes["attributeTypes"][0]
+        objectclass = attributes.attributes["objectClasses"][0]
         tm.that(attribute, has="SUBSTR caseIgnoreSubstringsMatch")
         tm.that(attribute, lacks="EQUALITY caseIgnoreSubStringsMatch")
         tm.that(objectclass, has="SUP top")
@@ -372,10 +369,8 @@ class TestsFlextLdifCrossDirectionConversion:
 
         result = conversion.convert_model("oud", "oid", entry)
         tm.ok(result)
-        assert isinstance(result.value, m.Ldif.Entry)
-
-        converted = result.value
-        assert converted.attributes is not None
-        attribute = converted.attributes.attributes["attributeTypes"][0]
+        converted = tm.instance(result.value, m.Ldif.Entry)
+        attributes = tm.not_none(converted.attributes)
+        attribute = attributes.attributes["attributeTypes"][0]
         tm.that(attribute, has="caseIgnoreMatch")
         tm.that(attribute, lacks="accessDirectiveMatch")

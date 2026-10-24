@@ -8,11 +8,13 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from flext_core import m
+from flext_cli import m
 
 from flext_ldif import t
-from flext_ldif._models._settings_processing import FlextLdifModelsSettingsProcessing
-from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
+from flext_ldif._models import (
+    FlextLdifModelsDomainsEntries,
+    FlextLdifModelsSettingsProcessing,
+)
 
 
 class FlextLdifModelsProcessing:

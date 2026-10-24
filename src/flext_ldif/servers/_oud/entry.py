@@ -235,10 +235,23 @@ class FlextLdifServersOudEntry(
                 write_options,
             ),
         )
-        entry_data = FlextLdifServersOudHelpersMixin.apply_phase_aware_acl_handling(
-            normalized_entry,
-            write_options,
-        )
+        entry_data = normalized_entry
+        if (
+            write_options is not None
+            and write_options.comment_acl_in_non_acl_phases
+            and write_options.entry_category is not None
+            and write_options.entry_category != c.Ldif.Categories.ACL
+            and write_options.acl_attribute_names
+        ):
+            entry_data = FlextLdifServersOudHelpersMixin.comment_acl_attributes(
+                entry_data,
+                write_options.acl_attribute_names,
+            )
+            FlextLdifServersOudHelpersMixin.add_oud_acl_comments(
+                ldif_parts,
+                entry_data,
+                write_options,
+            )
         if FlextLdifServersOudConstants.ACL_NORMALIZE_DNS_IN_VALUES:
             entry_data = FlextLdifServersOudHelpersMixin.normalize_acl_dns(entry_data)
         return (

@@ -4,7 +4,7 @@ The OID/parse side of the OID→OUD ACL conversion: attribute-kind / target /
 subject enums and every compiled ``re.Pattern`` used to parse an OID
 orclaci/orclentrylevelaci line. The OUD-output taxonomy (permission maps,
 bind-rule keywords, scope rules) lives in the sibling
-``_constants/_base_parts.py``. Consumers import the ``*_RE`` authorities —
+``_constants/_base.py``. Consumers import the ``*_RE`` authorities —
 ``import re`` outside this module is forbidden (AGENTS.md §3.1).
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
@@ -52,6 +52,18 @@ class FlextLdifConstantsAclConvert:
         GUIDATTR = "guidattr"
         UNKNOWN = "unknown"
 
+    @unique
+    class AclSubjectOutcomeKind(StrEnum):
+        """What OID→OUD conversion did with one by-clause subject."""
+
+        GRANTED = "granted"
+        EXCLUDED_DEAD_CODE = "excluded_dead_code"
+        EXCLUDED_DENY_NONE = "excluded_deny_none"
+        EXCLUDED_CONTAINER = "excluded_container"
+        UNSUPPORTED = "unsupported"
+        OUT_OF_SCOPE = "out_of_scope"
+        UNGRANTED = "ungranted"
+
     ACL_ACCESS_TO: ClassVar[str] = "access to"
     ACL_WILDCARD: ClassVar[str] = "*"
 
@@ -70,6 +82,13 @@ class FlextLdifConstantsAclConvert:
     WHITESPACE_RE: ClassVar[t.RegexPattern] = re.compile(r"\s+")
     DN_NORMALIZE_COMMA_RE: ClassVar[t.RegexPattern] = re.compile(r"\s*,\s*")
     DN_NORMALIZE_EQUALS_RE: ClassVar[t.RegexPattern] = re.compile(r"\s*=\s*")
+    ORACLE_INTERNAL_DN_RES: ClassVar[tuple[t.RegexPattern, ...]] = (
+        re.compile(r"^orclownerguid=", re.IGNORECASE),
+        re.compile(r"^cn=orclpwdverifierconfig,", re.IGNORECASE),
+        re.compile(r"^cn=orclaci,", re.IGNORECASE),
+        re.compile(r".*cn=OracleContext,", re.IGNORECASE),
+    )
+    "Oracle-internal DNs whose OID ACLs have no OUD counterpart (not migrated)."
 
     _SUBJ_MODIFIER_PATTERN = (
         r"(?:\s+(?:added_object_constraint|constraintonaddedobject|bindmode|bindipfilter)"

@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
     from pathlib import Path
 
-    from tests import m, p, t
+from tests import m, p, t
 
 
 @pytest.fixture
@@ -82,8 +82,7 @@ class TestsFlextLdifRealLdapExport:
             The resulting ``t.MappingKV[str, t.MappingKV[str, t.StrSequence]]``.
 
         """
-        assert content is not None
-        parsed = flext_api.parse_string(content)
+        parsed = flext_api.parse_string(tm.not_none(content))
         tm.ok(parsed)
         return {
             entry.dn_str: entry.attributes_dict for entry in parsed.unwrap().entries
@@ -246,7 +245,7 @@ class TestsFlextLdifRealLdapExport:
         write_result = flext_api.write_ldif_file(entries, output_file)
 
         tm.ok(write_result)
-        assert output_file.exists()
+        tm.that(output_file.exists())
         indexed = self._parse_back(flext_api, output_file.read_text())
         tm.that(indexed, has=person_dn)
         tm.that(indexed[person_dn]["cn"], has=username)

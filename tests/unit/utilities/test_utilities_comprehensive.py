@@ -83,12 +83,12 @@ class TestsFlextLdifUtilitiesComprehensive:
     )
     def test_needs_base64_encoding(value: str, *, expected: bool) -> None:
         """needs_base64_encoding flags unsafe values, clears safe ASCII."""
-        assert u.Ldif.needs_base64_encoding(value) is expected
+        tm.ok(u.Ldif.needs_base64_encoding(value) is expected)
 
     @staticmethod
     def test_needs_base64_encoding_ignores_trailing_space_when_disabled() -> None:
         """Disabling the trailing-space check clears an otherwise-flagged value."""
-        assert (
+        tm.ok(
             u.Ldif.needs_base64_encoding("safe ", check_trailing_space=False) is False
         )
 
@@ -125,7 +125,7 @@ class TestsFlextLdifUtilitiesComprehensive:
         """Norm yields a success result carrying the normalized DN string."""
         result = u.Ldif.norm("CN=Admin,DC=Example")
 
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(result.value, eq="cn=Admin,dc=Example")
 
     @staticmethod
@@ -133,9 +133,9 @@ class TestsFlextLdifUtilitiesComprehensive:
         """An empty DN yields a failure result with an explanatory message."""
         result = u.Ldif.norm("")
 
-        tm.that(result.failure, eq=True)
-        assert result.error is not None
-        tm.that(result.error.lower(), has="empty")
+        tm.ok(result.failure)
+        error = tm.not_none(result.error)
+        tm.that(error.lower(), has="empty")
 
     # --- DN parsing (r[T]) ---------------------------------------------
 
@@ -144,7 +144,7 @@ class TestsFlextLdifUtilitiesComprehensive:
         """parse_dn yields the (attr, value) pairs in DN order on success."""
         result = u.Ldif.parse_dn("cn=admin,dc=example,dc=com")
 
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(result.value, eq=[("cn", "admin"), ("dc", "example"), ("dc", "com")])
 
     @staticmethod
@@ -152,15 +152,15 @@ class TestsFlextLdifUtilitiesComprehensive:
         """A DN missing the '=' separator fails rather than silently parsing."""
         result = u.Ldif.parse_dn("no-equals")
 
-        tm.that(result.failure, eq=True)
-        assert result.error is not None
+        tm.ok(result.failure)
+        tm.not_none(result.error)
 
     @staticmethod
     def test_parse_rdn_returns_single_component() -> None:
         """parse_rdn yields the single (attr, value) pair for a lone RDN."""
         result = u.Ldif.parse_rdn("cn=admin")
 
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(result.value, eq=[("cn", "admin")])
 
     # --- line folding / unfolding --------------------------------------
@@ -171,9 +171,9 @@ class TestsFlextLdifUtilitiesComprehensive:
         fold_width = 76
         folded = u.Ldif.fold_line("a" * 100, fold_width)
 
-        assert len(folded) > 1
-        assert len(folded[0]) <= fold_width
-        assert all(cont.startswith(" ") for cont in folded[1:])
+        tm.ok(len(folded) > 1)
+        tm.ok(len(folded[0]) <= fold_width)
+        tm.ok(all(cont.startswith(" ") for cont in folded[1:]))
 
     @staticmethod
     def test_unfold_lines_rejoins_continuation_lines() -> None:

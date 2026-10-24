@@ -11,12 +11,9 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import m, t
+from flext_core import m
 
-from flext_ldif._constants.base import (
-    FlextLdifConstantsAclConvertOud,
-    FlextLdifConstantsEnums,
-)
+from flext_ldif import c, t
 
 
 class FlextLdifModelsSettingsAcl:
@@ -25,32 +22,32 @@ class FlextLdifModelsSettingsAcl:
     class AciLineFormatConfig(m.Value):
         """Configuration for formatting a complete ACI line from components."""
 
-        name: Annotated[str, m.Field(..., description="ACL name")]
+        name: Annotated[str, m.Field(description="ACL name")]
         target_clause: Annotated[
             str,
-            m.Field(..., description="Target clause (e.g., '(targetattr=\"cn\")')"),
+            m.Field(description="Target clause (e.g., '(targetattr=\"cn\")')"),
         ]
         permissions_clause: Annotated[
             str,
-            m.Field(..., description="Permissions clause (e.g., 'allow (read,write)')"),
+            m.Field(description="Permissions clause (e.g., 'allow (read,write)')"),
         ]
         bind_rule: Annotated[
             str,
-            m.Field(..., description="Bind rule (e.g., 'userdn=\"ldap:///self\"')"),
+            m.Field(description="Bind rule (e.g., 'userdn=\"ldap:///self\"')"),
         ]
         aci_prefix: Annotated[str, m.Field(description="ACI attribute prefix")] = (
             "aci: "
         )
         version: Annotated[str, m.Field(description="ACI version")] = (
-            FlextLdifConstantsAclConvertOud.ACI_VERSION_NUMBER
+            c.Ldif.ACI_VERSION_NUMBER
         )
 
     class AciParserConfig(m.Value):
         """Configuration for server-specific ACI parsing."""
 
         server_type: Annotated[
-            FlextLdifConstantsEnums.ServerTypes,
-            m.Field(..., description="Server type identifier (oid, oud, rfc, etc.)"),
+            c.Ldif.ServerTypes,
+            m.Field(description="Server type identifier (oid, oud, rfc, etc.)"),
         ]
         aci_prefix: Annotated[str, m.Field(description="ACI line prefix")] = "aci:"
         version_acl_pattern: Annotated[

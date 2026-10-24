@@ -4,7 +4,7 @@ Enumerations and the OUD-output ACL taxonomy the ``_constants`` family base
 and its sibling parts consume without importing another family module.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
-src/flext_ldif/_constants/_base_parts
+src/flext_ldif/_constants/_base
 SPDX-License-Identifier: MIT
 """
 
@@ -151,7 +151,7 @@ class FlextLdifConstantsBaseParts:
 
         @unique
         class ChangeOperation(StrEnum):
-            """RFC 2849 modify operation names."""
+            """RFC 2849 modify names, independent of collection merge strategies."""
 
             ADD = "add"
             DELETE = "delete"
@@ -278,8 +278,14 @@ class FlextLdifConstantsBaseParts:
         ACI_VERSION: ClassVar[str] = "version 3.0"
         ACI_VERSION_NUMBER: ClassVar[str] = "3.0"
         ACI_ALLOW: ClassVar[str] = "allow"
-        BIND_OR: ClassVar[str] = " or "
-        "Separator joining same-permission bind-rules inside one ``allow`` clause."
+        BIND_OR: ClassVar[str] = "or "
+        "Keyword opening each further same-permission bind-rule of an ``allow``."
+        ACI_PART_INDENT: ClassVar[str] = "    "
+        "Unfolded indent before each ACI target part after the first and ``(version``."
+        ACI_CLAUSE_INDENT: ClassVar[str] = "     "
+        "Unfolded indent before each ``allow`` clause of a rendered ACI."
+        ACI_BIND_GAP: ClassVar[int] = 4
+        "Spaces between the longest ``allow (perms)`` and its first bind-rule."
         UNKNOWN_CONTAINER: ClassVar[str] = "Unknown"
         "acl-name container fallback when the DN has no ``cn=`` RDN."
         ACL_NAME_ENTRY: ClassVar[str] = "Entry"

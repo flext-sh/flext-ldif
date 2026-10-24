@@ -40,7 +40,7 @@ class FlextLdifEntryValidation:
 
     @staticmethod
     def validate_attributes_required(
-        entry: p.Ldif.EntryValidationSubject,
+        entry: p.Ldif.Entry,
     ) -> t.MutableSequenceOf[str]:
         """Validate that entry has at least one attribute per RFC 2849 section 2.
 
@@ -70,7 +70,7 @@ class FlextLdifEntryValidation:
 
     @staticmethod
     def validate_changetype(
-        entry: p.Ldif.EntryValidationSubject,
+        entry: p.Ldif.Entry,
     ) -> t.MutableSequenceOf[str]:
         """Validate changetype field per RFC 2849 section 5.7.
 
@@ -90,7 +90,7 @@ class FlextLdifEntryValidation:
 
     @staticmethod
     def _attribute_required(
-        entry: p.Ldif.EntryValidationSubject,
+        entry: p.Ldif.Entry,
         attribute_name: str,
         violation_message: str,
     ) -> t.MutableSequenceOf[str]:
@@ -122,7 +122,7 @@ class FlextLdifEntryValidation:
 
     @staticmethod
     def validate_naming_attribute(
-        entry: p.Ldif.EntryValidationSubject,
+        entry: p.Ldif.Entry,
         dn_value: str,
     ) -> t.MutableSequenceOf[str]:
         """Validate naming attribute presence per RFC 4512 section 2.3.
@@ -152,7 +152,7 @@ class FlextLdifEntryValidation:
 
     @staticmethod
     def validate_objectclass(
-        entry: p.Ldif.EntryValidationSubject,
+        entry: p.Ldif.Entry,
         dn_value: str,
     ) -> t.MutableSequenceOf[str]:
         """Validate objectClass presence per RFC 4512 section 2.4.1.

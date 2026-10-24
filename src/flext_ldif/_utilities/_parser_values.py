@@ -31,7 +31,7 @@ class FlextLdifParserValues:
             try:
                 decoded_value = base64.b64decode(encoded_value).decode(
                     c.Ldif.DEFAULT_ENCODING,
-                    errors="replace",
+                    errors=c.MergeStrategy.REPLACE,
                 )
             except ValueError:
                 decoded_value = encoded_value
@@ -64,8 +64,11 @@ class FlextLdifParserValues:
         raw_value: str | None = None
         value_token: str | None = None
         if len(tokens) >= minimum_control_tokens:
-            if tokens[1].lower() in {"true", "false"}:
-                criticality = tokens[1].lower() == "true"
+            if tokens[1].lower() in {
+                c.ParserBooleanToken.TRUE,
+                c.ParserBooleanToken.FALSE,
+            }:
+                criticality = tokens[1].lower() == c.ParserBooleanToken.TRUE
                 if len(tokens) == control_tokens_with_value:
                     value_token = tokens[2]
             else:

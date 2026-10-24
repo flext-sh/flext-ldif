@@ -9,10 +9,9 @@ from __future__ import annotations
 from collections.abc import ItemsView, KeysView, MutableMapping, ValuesView
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
-# mro-6int (claude-ulw): import m/t/u from upstream flext_cli, not the own
-# package facade, to break the flext_ldif package-init circular import.
-from flext_cli import m, t, u
+from flext_cli import m
 
+from flext_ldif import t
 from flext_ldif._models import FlextLdifModelsDomainsEntries
 
 if TYPE_CHECKING:
@@ -20,63 +19,35 @@ if TYPE_CHECKING:
 
 
 class FlextLdifModelsCollections:
-    class DynamicCounts(m.DynamicModel):
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-            extra="allow",
-            validate_assignment=True,
-        )
+    class DynamicCounts(m.RootModel[t.IntMapping]):
+        """Strict integer counts exposed through native mapping views."""
 
-        def __hash__(self) -> int:
-            return hash(id(self))
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+            strict=True,
+            frozen=True,
+        )
+        root: t.IntMapping = m.Field(default_factory=dict)
 
         def __getitem__(self, key: str) -> int:
-            extra = self._extra()
-            if key in extra:
-                return self._to_count(extra[key])
-            msg = f"Key {key!r} not found"
-            raise KeyError(msg)
+            return self.root[key]
 
         def __len__(self) -> int:
-            return len(self._extra())
+            return len(self.root)
 
         def __contains__(self, key: str) -> bool:
-            return key in self._extra()
-
-        @staticmethod
-        def _to_count(value: t.JsonPayload | None) -> int:
-            if isinstance(value, bool):
-                return 0
-            count_value: int = u.to_int(value, default=0)
-            return count_value
+            return key in self.root
 
         def get(self, key: str, default: int | None = None) -> int | None:
-            extra = self._extra()
-            if key in extra:
-                return self._to_count(extra[key])
-            fallback_count: int | None = default
-            return fallback_count
+            return self.root.get(key, default)
 
         def keys(self) -> KeysView[str]:
-            extra = self._extra()
-            return extra.keys()
+            return self.root.keys()
 
         def values(self) -> ValuesView[int]:
-            extra = self._extra()
-            return ValuesView(extra)
+            return self.root.values()
 
         def items(self) -> ItemsView[str, int]:
-            extra = self._extra()
-            return ItemsView(extra)
-
-        def update_count(self, key: str, value: int) -> None:
-            setattr(self, key, value)
-
-        def _extra(self) -> t.MutableJsonMapping:
-            extra = self.__pydantic_extra__
-            if extra is None:
-                return {}
-            data: t.MutableJsonMapping = u.json_dict_adapter().validate_python(extra)
-            return data
+            return self.root.items()
 
     class SchemaContent(m.FrozenModel):
         attributes: Annotated[

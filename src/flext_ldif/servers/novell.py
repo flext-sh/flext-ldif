@@ -457,6 +457,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         @override
         def model_post_init(self, __context: t.JsonMapping | None, /) -> None:
             """Initialize eDirectory entry server."""
+            del __context
 
         def process_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
             """Normalize an eDirectory entry and expose server metadata.

@@ -1,0 +1,562 @@
+# provenance: devops-oud-iac@2225708e3ac8 tests/fixtures/synthetic/output/acls.ldif sha256=f03fa7eb2137b82c4f51d81c372acf535ab0a1ade9344d43a6959126076cc1d7 stripped=all-comment-lines(consumer-report-text)
+version: 1
+
+dn: cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00004 Attrs by group-00213 (+1)";
+      allow (read, search, write, selfwrite, compare)    groupdn="ldap:///cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
+      allow (read, search, compare)                      groupdn="ldap:///cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+                                                      or groupdn="ldap:///cn=group-00591,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00004 Entry by group-00213 (+1)";
+      allow (read, search, add, delete, proxy)    groupdn="ldap:///cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
+      allow (proxy)                               groupdn="ldap:///cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+                                               or groupdn="ldap:///cn=group-00591,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00004 Entry by group-01851";
+      allow (read, search)    groupdn="ldap:///cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+                           or groupdn="ldap:///cn=group-00591,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00004 Attrs by group-01851";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00005,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00005 Entry by group-01465";
+      allow (read, search)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00005 Attrs by group-01465";
+      allow (read, search, write, compare)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00005 Attrs by group-01465";
+      allow (write)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00005 Attrs by group-01465";
+      allow (read, search, write, compare)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+                                           or groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00080,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00080 Entry by group-01465";
+      allow (read, search, add, delete)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00080 Attrs by group-01465";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00014,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00014 Entry by group-00284";
+      allow (read, search)    groupdn="ldap:///cn=group-00284,cn=node-00014,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00014 Entry by group-00284";
+      allow (read, search)    groupdn="ldap:///cn=group-00284,cn=node-00014,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00014 Attrs by group-00284";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00284,cn=node-00014,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00018 Entry by group-00594";
+      allow (read, search)    groupdn="ldap:///cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00018 Attrs by group-00594";
+      allow (read, search)    groupdn="ldap:///cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00018 Entry by group-00594";
+      allow (read, search)    groupdn="ldap:///cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00018 Attrs by group-00594";
+      allow (read, search)    groupdn="ldap:///cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00023 Entry by group-00595";
+      allow (read, search)    groupdn="ldap:///cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00023 Attrs by group-00595";
+      allow (read, search)    groupdn="ldap:///cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00023 Entry by group-00595";
+      allow (read, search)    groupdn="ldap:///cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00023 Attrs by group-00595";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00036 Entry by group-00596";
+      allow (read, search)    groupdn="ldap:///cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00036 Attrs by group-00596";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00036 Attrs by group-00596";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00036 Entry by group-00596";
+      allow (read, search)    groupdn="ldap:///cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00039 Entry by group-00213";
+      allow (read, search, add, delete, proxy)    groupdn="ldap:///cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00039 Attrs by group-00213";
+      allow (read, search, write, selfwrite, compare)    groupdn="ldap:///cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00039 Entry by group-00213";
+      allow (read, search)    groupdn="ldap:///cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00039 Attrs by group-00213";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00040 Entry by group-00597";
+      allow (read, search)    groupdn="ldap:///cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00040 Attrs by group-00597";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00040 Entry by group-00597";
+      allow (read, search)    groupdn="ldap:///cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00040 Attrs by group-00597";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00043 Attrs by group-00598";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00043 Entry by group-00598";
+      allow (read, search, proxy)    groupdn="ldap:///cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00043 Entry by group-00598";
+      allow (read, search, proxy)    groupdn="ldap:///cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00043 Attrs by group-00598";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00045 Entry by group-00599";
+      allow (read, search)    groupdn="ldap:///cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00045 Attrs by group-00599";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00045 Entry by group-00599";
+      allow (read, search)    groupdn="ldap:///cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00045 Attrs by group-00599";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00046 Attrs by group-00600";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00046 Entry by group-00600";
+      allow (read, search)    groupdn="ldap:///cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00046 Entry by group-00600";
+      allow (read, search)    groupdn="ldap:///cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00046 Attrs by group-00600";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00054 Attrs by group-00685";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00054 Entry by group-00685";
+      allow (read, search)    groupdn="ldap:///cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00054 Entry by group-00685";
+      allow (read, search)    groupdn="ldap:///cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00054 Attrs by group-00685";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00058 Entry by group-00601";
+      allow (read, search)    groupdn="ldap:///cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00058 Attrs by group-00601";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00058 Entry by group-00601";
+      allow (read, search)    groupdn="ldap:///cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00058 Attrs by group-00601";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00062 Entry by group-00587";
+      allow (read, search)    groupdn="ldap:///cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00062 Attrs by group-00587";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00062 Entry by group-00587";
+      allow (read, search, add)    groupdn="ldap:///cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00062 Attrs by group-00587";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00063 Attrs by group-00602";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00063 Entry by group-00602";
+      allow (read, search)    groupdn="ldap:///cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00063 Attrs by group-00602";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00063 Entry by group-00602";
+      allow (read, search)    groupdn="ldap:///cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00066 Attrs by group-00603";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00066 Entry by group-00603";
+      allow (read, search)    groupdn="ldap:///cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00066 Attrs by group-00603";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00066 Entry by group-00603";
+      allow (read, search)    groupdn="ldap:///cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00088 Entry by group-00604";
+      allow (read, search)    groupdn="ldap:///cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00088 Attrs by group-00604";
+      allow (read, search)    groupdn="ldap:///cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00088 Entry by group-00604";
+      allow (read, search)    groupdn="ldap:///cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00088 Attrs by group-00604";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00095 Entry by group-00588";
+      allow (read, search)    groupdn="ldap:///cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00095 Attrs by group-00588";
+      allow (read, search)    groupdn="ldap:///cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00095 Entry by group-00588";
+      allow (read, search)    groupdn="ldap:///cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00095 Attrs by group-00588";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00103 Entry by group-00605";
+      allow (read, search)    groupdn="ldap:///cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00103 Attrs by group-00605";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00103 Entry by group-00605";
+      allow (read, search)    groupdn="ldap:///cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00103 Attrs by group-00605";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00123 Attrs by group-00606";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00123 Entry by group-00606";
+      allow (read, search)    groupdn="ldap:///cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00123 Entry by group-00606";
+      allow (read, search)    groupdn="ldap:///cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00123 Attrs by group-00606";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00124,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00124 Entry by group-00606";
+      allow (read, search)    groupdn="ldap:///cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00125 Entry by group-00589";
+      allow (read, search)    groupdn="ldap:///cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00125 Attrs by group-00589";
+      allow (read, search)    groupdn="ldap:///cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00125 Entry by group-00589";
+      allow (read, search)    groupdn="ldap:///cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00125 Attrs by group-00589";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00131 Entry by group-00607";
+      allow (read, search)    groupdn="ldap:///cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00131 Attrs by group-00607";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00131 Entry by group-00590";
+      allow (read, search)    groupdn="ldap:///cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00131 Attrs by group-00590";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00131 Attrs by group-00590";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00131 Entry by group-00590";
+      allow (read, search)    groupdn="ldap:///cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00131 Attrs by group-00607";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00131 Entry by group-00607";
+      allow (read, search)    groupdn="ldap:///cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00150 Attrs by group-00608";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00150 Entry by group-00608";
+      allow (read, search)    groupdn="ldap:///cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00150 Attrs by group-00608";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00150 Entry by group-00608";
+      allow (read, search)    groupdn="ldap:///cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00151 Attrs by group-00609";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00151 Entry by group-00609";
+      allow (read, search)    groupdn="ldap:///cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00151 Attrs by group-00609";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00151 Entry by group-00609";
+      allow (read, search)    groupdn="ldap:///cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00158 Entry by group-00610";
+      allow (read, search)    groupdn="ldap:///cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00158 Attrs by group-00610";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00158 Entry by group-00610";
+      allow (read, search)    groupdn="ldap:///cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00158 Attrs by group-00610";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00159 Attrs by group-00611";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00159 Entry by group-00611";
+      allow (read, search)    groupdn="ldap:///cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00159 Entry by group-00611";
+      allow (read, search)    groupdn="ldap:///cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00159 Attrs by group-00611";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-00160 Entry by group-00612";
+      allow (read, search)    groupdn="ldap:///cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-00160 Attrs by group-00612";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00160 Entry by group-00612";
+      allow (read, search)    groupdn="ldap:///cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (targetscope="base")
+     (version 3.0; acl "node-00160 Attrs by group-00612";
+      allow (read, search, compare)    groupdn="ldap:///cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+
+dn: cn=node-02081,cn=node-00709,cn=node-00129,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+changetype: modify
+replace: aci
+aci: (targetattr="*")
+     (version 3.0; acl "node-02081 Entry by group-01465";
+      allow (read, search)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+aci: (targetattr="*")
+     (version 3.0; acl "node-02081 Attrs by group-01465";
+      allow (read, search)    groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+-
+

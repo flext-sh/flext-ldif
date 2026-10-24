@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Annotated, ClassVar, Self, override
 
@@ -13,7 +14,11 @@ from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.servers._base import FlextLdifServerMethodsMixin
 
 
-class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethodsMixin):
+class FlextLdifServersBaseSchemaAcl(
+    s[t.Ldif.AclPayload],
+    FlextLdifServerMethodsMixin,
+    ABC,
+):
     """Base class for ACL servers - satisfies Acl (structural typing)."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -56,6 +61,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         if _parent_server is not None:
             object.__setattr__(self, "parent_server", _parent_server)
 
+    @abstractmethod
     def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
         """Return the ACL attribute names owned by this server flavor.
 
@@ -96,6 +102,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             return False
         return self.can_handle_acl(normalized)
 
+    @abstractmethod
     def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check whether this server can handle the ACL definition.
 
@@ -106,6 +113,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del acl_line
         msg = "ACL servers must implement can_handle_acl"
         raise NotImplementedError(msg)
 
@@ -127,6 +135,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             return None
         return raw_acl.strip()
 
+    @abstractmethod
     def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
         """Check whether this ACL server is aware of an attribute definition.
 
@@ -137,9 +146,11 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del attribute
         msg = "ACL servers must implement can_handle_attribute"
         raise NotImplementedError(msg)
 
+    @abstractmethod
     def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
         """Check whether this ACL server is aware of an objectClass definition.
 
@@ -150,6 +161,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del objectclass
         msg = "ACL servers must implement can_handle_objectclass"
         raise NotImplementedError(msg)
 
@@ -433,7 +445,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         """
         data_raw = kwargs.get("data")
         data: str | m.Ldif.Acl | None = self._coerce_acl_data(data_raw)
-        operation_raw = kwargs.get("operation")
+        operation_raw = kwargs.get(c.ContextScope.OPERATION)
         operation = (
             self._coerce_operation(operation_raw)
             if isinstance(operation_raw, str)
@@ -441,6 +453,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         )
         return (data, operation)
 
+    @abstractmethod
     def _get_feature_fallback(self, _feature_id: str) -> str | None:
         """Return the RFC fallback value for an unsupported vendor feature.
 
@@ -451,6 +464,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del _feature_id
         msg = "ACL servers must implement _get_feature_fallback"
         raise NotImplementedError(msg)
 
@@ -479,6 +493,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
         """
         return r[m.Ldif.Acl].ok(acl)
 
+    @abstractmethod
     def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
         """Parse a server-specific ACL definition (internal, required).
 
@@ -489,6 +504,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del acl_line
         msg = "ACL servers must implement _parse_acl"
         raise NotImplementedError(msg)
 
@@ -565,7 +581,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
 
         Args:
             operation: Explicit operation token, when provided.
-            kwargs: Mapping that may carry an "operation" entry.
+            kwargs: Mapping that may carry an c.ContextScope.OPERATION entry.
 
         Returns:
             The resolved operation token, or None when absent.
@@ -575,6 +591,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             return operation
         return self.parse_operation_kwarg(kwargs).unwrap()
 
+    @abstractmethod
     def _supports_feature(self, _feature_id: str) -> bool:
         """Check whether this server supports a specific vendor feature.
 
@@ -585,9 +602,11 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del _feature_id
         msg = "ACL servers must implement _supports_feature"
         raise NotImplementedError(msg)
 
+    @abstractmethod
     def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
         """Write ACL data to the RFC-compliant string format (internal).
 
@@ -598,6 +617,7 @@ class FlextLdifServersBaseSchemaAcl(s[t.Ldif.AclPayload], FlextLdifServerMethods
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del acl_data
         msg = "ACL servers must implement _write_acl"
         raise NotImplementedError(msg)
 

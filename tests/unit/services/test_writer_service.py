@@ -12,18 +12,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import errno
-from typing import TYPE_CHECKING
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from uuid import uuid4
 
 import pytest
 
 from flext_ldif import ldif
-from tests import c, m, tm, u
-
-if TYPE_CHECKING:
-    from pathlib import Path
-
-    from tests import p, t
+from tests import c, m, p, t, tm, u
 
 
 class TestsFlextLdifWriterService:
@@ -54,14 +50,14 @@ class TestsFlextLdifWriterService:
         """Test write to string serializes every entry dn for each server."""
         result = writer.write_to_string(self._entries(), server_type=server_type)
 
-        content = u.Tests.assert_success(
+        content = tm.ok(
             result,
-            error_msg=f"writing must succeed for {scenario}",
+            msg=f"writing must succeed for {scenario}",
         )
 
-        tm.that(c.Tests.WRITER_OUTPUT_REGEX.search(content) is not None, eq=True)
+        tm.not_none(c.Tests.WRITER_OUTPUT_REGEX.search(content))
         for dn in self._dns():
-            tm.that(f"dn: {dn}" in content, eq=True)
+            tm.that(content, has=f"dn: {dn}")
 
     def test_write_to_string_is_idempotent_for_identical_input(
         self,
@@ -70,10 +66,10 @@ class TestsFlextLdifWriterService:
         """Test write to string is idempotent for identical input."""
         entries = self._entries()
 
-        first = u.Tests.assert_success(
+        first = tm.ok(
             writer.write_to_string(entries, server_type=c.Tests.RFC),
         )
-        second = u.Tests.assert_success(
+        second = tm.ok(
             writer.write_to_string(entries, server_type=c.Tests.RFC),
         )
 
@@ -84,7 +80,7 @@ class TestsFlextLdifWriterService:
         writer: p.Ldif.LdifClient,
     ) -> None:
         """Test write to string returns empty content for no entries."""
-        content = u.Tests.assert_success(
+        content = tm.ok(
             writer.write_to_string([], server_type=c.Tests.RFC),
         )
 
@@ -102,15 +98,14 @@ class TestsFlextLdifWriterService:
             "dc=example,dc=com"
         )
 
-        content = u.Tests.assert_success(
+        content = tm.ok(
             writer.write_to_string(
                 [u.Tests.create_real_entry(dn=long_dn)],
                 server_type=c.Tests.RFC,
             ),
         )
 
-        tm.that(content.startswith("dn: cn=writer-fold-target"), eq=True)
-        tm.that("\n " in content, eq=True)
+        tm.that(content, starts="dn: cn=writer-fold-target", has="\n ")
 
     # ── write: WriteResponse contract ────────────────────────────────────
 
@@ -121,12 +116,11 @@ class TestsFlextLdifWriterService:
         """Test write returns content and statistics for entry sequence."""
         entries = self._entries()
 
-        payload = u.Tests.assert_success(writer.write(entries, server_type=c.Tests.RFC))
+        payload = tm.ok(writer.write(entries, server_type=c.Tests.RFC))
 
-        tm.that(payload.content is not None, eq=True)
-        assert payload.content is not None
+        content = tm.not_none(payload.content)
         for dn in self._dns():
-            tm.that(f"dn: {dn}" in payload.content, eq=True)
+            tm.that(content, has=f"dn: {dn}")
         tm.that(payload.statistics.total_entries, eq=len(entries))
         tm.that(payload.statistics.processed_entries, eq=len(entries))
         tm.that(payload.output_path, eq=None)
@@ -145,7 +139,7 @@ class TestsFlextLdifWriterService:
             ),
         )
 
-        payload = u.Tests.assert_success(
+        payload = tm.ok(
             writer.write(parse_response.entries, server_type=c.Tests.RFC),
         )
 
@@ -163,19 +157,50 @@ class TestsFlextLdifWriterService:
         entries = self._entries()
         output_file = tmp_path / c.Tests.WRITER_OUTPUT_FILENAME
 
-        payload = u.Tests.assert_success(
+        payload = tm.ok(
             writer.write_ldif_file(entries, output_file, server_type=c.Tests.RFC),
         )
 
-        tm.that(output_file.exists(), eq=True)
+        tm.that(output_file.exists())
         tm.that(payload.output_path, eq=str(output_file))
         tm.that(payload.statistics.total_entries, eq=len(entries))
         # Every entry the caller handed in must be serialized to disk.
         persisted = output_file.read_text(encoding="utf-8")
         for dn in self._dns():
-            tm.that(f"dn: {dn}" in persisted, eq=True)
+            tm.that(persisted, has=f"dn: {dn}")
 
     # ── error paths: r[T] failure contract ───────────────────────────────
+
+    def test_write_ldif_file_accepts_relative_destinations(
+        self, writer: p.Ldif.LdifClient
+    ) -> None:
+        """Relative public destinations persist text and retain caller metadata."""
+        with TemporaryDirectory(dir=Path.cwd()) as directory:
+            destination = (
+                Path(directory) / c.Tests.WRITER_OUTPUT_FILENAME
+            ).relative_to(Path.cwd())
+            written = tm.ok(writer.write_ldif_file(self._entries(), destination))
+            tm.that(
+                destination.read_text(encoding=c.DEFAULT_ENCODING), eq=written.content
+            )
+            tm.that(written.output_path, eq=str(destination))
+
+    def test_relative_destinations_do_not_resolve_symbolic_links(
+        self, writer: p.Ldif.LdifClient
+    ) -> None:
+        """Absolute admission retains the atomic writer's symlink refusal."""
+        with TemporaryDirectory(dir=Path.cwd()) as directory:
+            original = Path(directory) / "original.ldif"
+            original.write_text("unchanged", encoding=c.DEFAULT_ENCODING)
+            destination = Path(directory) / "destination.ldif"
+            destination.symlink_to(original)
+            tm.fail(
+                writer.write_ldif_file(
+                    self._entries(), destination.relative_to(Path.cwd())
+                )
+            )
+            tm.that(original.read_text(encoding=c.DEFAULT_ENCODING), eq="unchanged")
+            tm.that(destination.is_symlink())
 
     def test_write_to_string_fails_for_unknown_server(
         self,
@@ -212,7 +237,7 @@ class TestsFlextLdifWriterService:
         )
 
         tm.fail(result, has="Invalid server type")
-        tm.that(output_file.exists(), eq=False)
+        tm.fail(output_file.exists())
 
     def test_write_ldif_file_fails_when_parent_is_not_a_directory(
         self,
@@ -256,7 +281,7 @@ class TestsFlextLdifWriterService:
         ) as failure:
             result.unwrap()
         tm.that(failure.value.errno, eq=errno.EINVAL)
-        tm.that(directory_target.is_dir(), eq=True)
+        tm.that(directory_target.is_dir())
 
     @pytest.mark.parametrize("server_type", [c.Tests.RFC, "oud"])
     def test_rejection_comments_are_opt_in_and_cannot_inject_entries(
@@ -276,42 +301,34 @@ class TestsFlextLdifWriterService:
         )
         disabled = m.Ldif.WriteFormatOptions(write_rejection_reasons=False)
         enabled = m.Ldif.WriteFormatOptions(write_rejection_reasons=True)
-        original = u.Tests.assert_success(
+        original = tm.ok(
             writer.write([entry], server_type=server_type, format_options=disabled),
         )
-        without_comments = u.Tests.assert_success(
+        without_comments = tm.ok(
             writer.write([rejected], server_type=server_type, format_options=disabled),
         )
-        with_comments = u.Tests.assert_success(
+        with_comments = tm.ok(
             writer.write([rejected], server_type=server_type, format_options=enabled),
         )
-        original_text = original.content
-        disabled_text = without_comments.content
-        enabled_text = with_comments.content
-        assert original_text is not None
-        assert disabled_text is not None
-        assert enabled_text is not None
+        original_text = tm.not_none(original.content)
+        disabled_text = tm.not_none(without_comments.content)
+        enabled_text = tm.not_none(with_comments.content)
         tm.that(disabled_text, eq=original_text)
-        accepted_output = u.Tests.assert_success(
+        accepted_output = tm.ok(
             writer.write([entry], server_type=server_type, format_options=enabled),
         )
         tm.that(accepted_output.content, eq=original_text)
-        assert "# Rejection category: base_dn_filter" in enabled_text
+        tm.that(enabled_text, has="# Rejection category: base_dn_filter")
         for line in reason.splitlines():
-            assert f"# Rejection reason: {line}" in enabled_text
+            tm.that(enabled_text, has=f"# Rejection reason: {line}")
 
-        def active_lines(text: str) -> list[str]:
+        def active_lines(text: str) -> t.ListOf[str]:
             return [line for line in text.splitlines() if not line.startswith("#")]
 
         tm.that(active_lines(enabled_text), eq=active_lines(original_text))
-        assert entry.metadata is not None
-        assert entry.metadata.processing_stats is None
-        assert rejected.metadata is not None
-        assert rejected.metadata.processing_stats is not None
-        assert (
-            rejected.metadata.processing_stats.model_dump()["rejection_reason"]
-            == reason
-        )
+        tm.that(tm.not_none(entry.metadata).processing_stats, none=True)
+        stats = tm.not_none(tm.not_none(rejected.metadata).processing_stats)
+        tm.that(stats.rejection_reason, eq=reason)
 
     def test_rejection_statistics_survive_later_category_updates(self) -> None:
         """Updating category metadata must not discard the earlier rejection."""
@@ -321,12 +338,10 @@ class TestsFlextLdifWriterService:
             mark_rejected=("base_dn_filter", "Outside requested base"),
         )
         updated = u.Ldif.update_entry_statistics(rejected, category="rejected")
-        assert updated.metadata is not None
-        assert updated.metadata.processing_stats is not None
-        stats = updated.metadata.processing_stats.model_dump()
-        assert stats["was_rejected"] is True
-        tm.that(stats["rejection_reason"], eq="Outside requested base")
-        tm.that(stats["category_assigned"], eq="rejected")
+        stats = tm.not_none(tm.not_none(updated.metadata).processing_stats)
+        tm.that(stats.was_rejected)
+        tm.that(stats.rejection_reason, eq="Outside requested base")
+        tm.that(stats.category_assigned, eq="rejected")
 
     @staticmethod
     def test_base_dn_rejection_is_preserved_in_export(
@@ -342,15 +357,13 @@ class TestsFlextLdifWriterService:
         filtered = categorizer.filter_by_base_dn(categories)
         rejected = filtered.get(c.Ldif.Categories.REJECTED, [])
         tm.that(len(rejected), eq=1)
-        response = u.Tests.assert_success(
+        response = tm.ok(
             writer.write(
-                list(rejected),
+                rejected,
                 server_type="oud",
                 format_options=m.Ldif.WriteFormatOptions(write_rejection_reasons=True),
             ),
         )
-        assert response.content is not None
-        assert (
-            f"# Rejection reason: DN not under base DN: {base_dn}" in response.content
-        )
-        assert "dn: cn=outside,dc=other,dc=invalid" in response.content
+        content = tm.not_none(response.content)
+        tm.that(content, has=f"# Rejection reason: DN not under base DN: {base_dn}")
+        tm.that(content, has="dn: cn=outside,dc=other,dc=invalid")

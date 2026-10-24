@@ -1,0 +1,478 @@
+# provenance: devops-oud-iac@2225708e3ac8 tests/fixtures/synthetic/input/10_aci_dump.ldif sha256=817c68223a3da587461175df5dcb964fbf7b525240437e491e6b6d444355ef9b
+# Synthetic test data. Generated; never use these credentials in production.
+dn: cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+orclaci: access to attr=(*) by 
+ group="cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,write,selfwrite,compare) by 
+ group="cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,noselfwrite,compare) by 
+ group="cn=group-00591,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,noselfwrite,compare) by * 
+ (none)
+orclaci: access to entry by 
+ group="cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,add,delete,proxy) by 
+ group="cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (nobrowse,noadd,nodelete) by 
+ group="cn=group-00591,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (nobrowse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by 
+ group="cn=group-00591,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete,noproxy) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,noselfwrite,compare) by * 
+ (none)
+
+dn: cn=node-00005,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+orclaci: access to entry by 
+ group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,write,compare) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,write,compare) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,write,compare) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (write) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,write,compare) by 
+ group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,write,compare) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,write,compare) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,write,compare) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,write,compare) by * (none)
+
+dn: cn=node-00014,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to entry by 
+ group="cn=group-00284,cn=node-00014,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete,noproxy) by * (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00284,cn=node-00014,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00284,cn=node-00014,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+
+dn: cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to entry by 
+ group="cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,nocompare) by * (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,nocompare) by * (none)
+
+dn: cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to entry by 
+ group="cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,noselfwrite,nocompare) by 
+ * (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+
+dn: cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to entry by 
+ group="cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+
+dn: cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to entry by 
+ group="cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,add,delete,proxy) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,write,selfwrite,compare) by * 
+ (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+
+dn: cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to entry by 
+ group="cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+
+dn: cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to attr=(*) by 
+ group="cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,noselfwrite,compare) by * 
+ (none)
+orclaci: access to entry by 
+ group="cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete,proxy) by * (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete,proxy) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,noselfwrite,compare) by * 
+ (none)
+
+dn: cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to entry by 
+ group="cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+
+dn: cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to attr=(*) by 
+ group="cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+orclaci: access to entry by 
+ group="cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+
+dn: cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to attr=(*) by 
+ group="cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,noselfwrite,compare) by * 
+ (none)
+orclaci: access to entry by 
+ group="cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete,noproxy) by * (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+
+dn: cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to entry by 
+ group="cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+
+dn: cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to entry by 
+ group="cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,add,nodelete) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+
+dn: cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to attr=(*) by 
+ group="cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,noselfwrite,compare) by * 
+ (none)
+orclaci: access to entry by 
+ group="cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,noselfwrite,compare) by * 
+ (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+
+dn: cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to attr=(*) by 
+ group="cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+orclaci: access to entry by 
+ group="cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+
+dn: cn=node-00080,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to entry by 
+ group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,add,delete) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (search,read,nowrite,compare) by * (none)
+
+dn: cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to entry by 
+ group="cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,noselfwrite,nocompare) by 
+ * (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+
+dn: cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to entry by 
+ group="cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,nocompare) by * (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+
+dn: cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to entry by 
+ group="cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+
+dn: cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to attr=(*) by 
+ group="cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+orclaci: access to entry by 
+ group="cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+
+dn: cn=node-00124,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclentrylevelaci: access to entry by 
+ group="cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+
+dn: cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to entry by 
+ group="cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,nocompare) by * (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+
+dn: cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to entry by 
+ group="cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+orclaci: access to entry by 
+ group="cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+
+dn: cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to attr=(*) by 
+ group="cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,noselfwrite,compare) by * 
+ (none)
+orclaci: access to entry by 
+ group="cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,noselfwrite,compare) by * 
+ (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+
+dn: cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to attr=(*) by 
+ group="cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,noselfwrite,compare) by * 
+ (none)
+orclaci: access to entry by 
+ group="cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,noselfwrite,compare) by * 
+ (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+
+dn: cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to entry by 
+ group="cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+
+dn: cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to attr=(*) by 
+ group="cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+orclaci: access to entry by 
+ group="cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+
+dn: cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=i
+ nvalid
+orclaci: access to entry by 
+ group="cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+orclentrylevelaci: access to entry by 
+ group="cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclentrylevelaci: access to attr=(*) by 
+ group="cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (read,search,nowrite,compare) by * (none)
+
+dn: cn=node-02081,cn=node-00709,cn=node-00129,cn=node-00003,dc=group-00002,d
+ c=node-00001,dc=example,dc=invalid
+orclaci: access to entry by 
+ group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (browse,noadd,nodelete) by * (none)
+orclaci: access to attr=(*) by 
+ group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00
+ 001,dc=example,dc=invalid" (search,read,nowrite,nocompare) by * (none)

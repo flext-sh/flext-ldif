@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldif._models._base_parts import FlextLdifModelsBasesParts
+    from flext_ldif._models._base import FlextLdifModelsBasesParts
     from flext_ldif._models._settings_acl import FlextLdifModelsSettingsAcl
     from flext_ldif._models._settings_criteria import FlextLdifModelsSettingsCriteria
     from flext_ldif._models._settings_migrate import FlextLdifModelsSettingsMigrate
@@ -99,7 +99,7 @@ install_lazy_exports(
     MappingProxyType({
         "FlextLdifModelsAclConvert": ".acl_convert",
         "FlextLdifModelsBases": ".base",
-        "FlextLdifModelsBasesParts": "._base_parts",
+        "FlextLdifModelsBasesParts": "._base",
         "FlextLdifModelsCollections": ".collections",
         "FlextLdifModelsComposite": ".composite",
         "FlextLdifModelsDomainAcl": ".domain_acl",

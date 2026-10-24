@@ -58,7 +58,7 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfcAcl):
                 result = sc.OidAclSubjectType.ANONYMOUS
             case sc.OidAclSubjectType.GROUP_DN | "group":
                 result = f'group="{clean_value}"'
-            case sc.OidAclSubjectType.USER_DN | "user":
+            case sc.OidAclSubjectType.USER_DN | c.ContextScope.USER:
                 result = f'"{clean_value}"'
             case sc.OidAclSubjectType.DN_ATTR:
                 result = f"dnattr=({clean_value})"

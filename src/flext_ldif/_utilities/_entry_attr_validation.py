@@ -45,7 +45,7 @@ class FlextLdifEntryAttributeValidation:
 
     @staticmethod
     def _iter_attribute_parts(
-        entry: p.Ldif.EntryValidationSubject,
+        entry: p.Ldif.Entry,
     ) -> t.MutableSequenceOf[t.MutableSequenceOf[str]]:
         """Split each attribute description into base name and options.
 
@@ -62,7 +62,7 @@ class FlextLdifEntryAttributeValidation:
 
     @staticmethod
     def validate_attribute_descriptions(
-        entry: p.Ldif.EntryValidationSubject,
+        entry: p.Ldif.Entry,
     ) -> t.MutableSequenceOf[str]:
         """Validate attribute descriptions per RFC 4512 section 2.5.
 
@@ -87,7 +87,7 @@ class FlextLdifEntryAttributeValidation:
 
     @staticmethod
     def validate_attribute_syntax(
-        entry: p.Ldif.EntryValidationSubject,
+        entry: p.Ldif.Entry,
     ) -> t.MutableSequenceOf[str]:
         """Validate attribute name/option syntax per RFC 4512 section 2.5.1-2.5.2.
 
@@ -111,7 +111,7 @@ class FlextLdifEntryAttributeValidation:
 
     @staticmethod
     def validate_binary_options(
-        entry: p.Ldif.EntryValidationSubject,
+        entry: p.Ldif.Entry,
     ) -> t.MutableSequenceOf[str]:
         """Validate binary attribute options per RFC 2849 section 5.2.
 

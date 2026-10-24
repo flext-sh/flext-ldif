@@ -136,7 +136,11 @@ def access_all_namespace_classes() -> None:
     entry = m.Ldif.Entry(
         dn=m.Ldif.DN(value="cn=test,dc=example,dc=com"),
         attributes=m.Ldif.Attributes(
-            attributes={"objectClass": ["person"], "cn": ["test"], "sn": ["user"]},
+            attributes={
+                "objectClass": ["person"],
+                "cn": ["test"],
+                "sn": [c.ContextScope.USER],
+            },
             attribute_metadata={},
         ),
     )

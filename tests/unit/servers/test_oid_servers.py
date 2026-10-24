@@ -157,7 +157,7 @@ class TestsFlextLdifOidServers:
         attr = schema.parse_attribute(attr_def).unwrap()
         tm.that(attr.name, eq="orclDASUIType")
         tm.that(attr.oid, eq="2.16.840.1.113894.1.1.327")
-        tm.that(attr.single_value, eq=True)
+        tm.ok(attr.single_value)
 
     @staticmethod
     def test_parse_attribute_without_oid_fails_with_error_message(
@@ -165,8 +165,8 @@ class TestsFlextLdifOidServers:
     ) -> None:
         """A definition lacking an OID yields a failed result, not a success."""
         result = schema.parse_attribute("garbage not valid")
-        tm.that(result.success, eq=False)
-        assert result.error is not None
+        tm.fail(result.success)
+        tm.not_none(result.error)
         tm.that(result.error, has="OID")
 
     @staticmethod

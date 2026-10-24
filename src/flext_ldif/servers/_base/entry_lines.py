@@ -128,9 +128,9 @@ class FlextLdifServersEntryLineEmitter:
         attr_name: str,
         line: str,
     ) -> None:
-        """Append one attribute line, folding it unless it is an ACL attribute."""
+        """Append one attribute line; ACL lines fold only at their ACI layout."""
         if attr_name.lower() in self._acl_attribute_names:
-            output_lines.append(line)
+            output_lines.extend(u.Ldif.fold_aci_layout(line))
             return
         output_lines.extend(u.Ldif.fold_line(line, width=self._effective_line_width))
 

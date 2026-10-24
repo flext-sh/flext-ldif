@@ -110,7 +110,7 @@ from flext_ldif import FlextLdifModels, ldif
 entry_data = {
     "dn": "cn=user,ou=people,dc=example,dc=com",
     "attributes": {
-        "cn": ["user"],
+        "cn": [c.ContextScope.USER],
         "objectClass": ["person", "organizationalPerson"],
         "mail": ["user@example.com"],
     },

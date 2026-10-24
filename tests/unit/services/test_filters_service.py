@@ -11,16 +11,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
 from flext_ldif import ldif
 from flext_ldif.services import FlextLdifFilters
-from tests import c, m, tm, u
-
-if TYPE_CHECKING:
-    from tests import p, t
+from tests import c, m, p, t, tm, u
 
 
 class TestsFlextLdifFiltersService:
@@ -90,12 +85,12 @@ class TestsFlextLdifFiltersService:
             [],
         )
 
-        assert result.attributes is not None
-        remaining = set(result.attributes.attributes)
-        tm.that(remaining.isdisjoint(c.Tests.FILTERS_FORBIDDEN_ATTRS), eq=True)
+        attributes = tm.not_none(result.attributes)
+        remaining = set(attributes.attributes)
+        tm.ok(remaining.isdisjoint(c.Tests.FILTERS_FORBIDDEN_ATTRS))
         # Non-forbidden attributes survive untouched.
-        tm.that(c.Tests.NAME_CN in remaining, eq=True)
-        tm.that(c.Tests.NAME_OBJECTCLASS in remaining, eq=True)
+        tm.ok(c.Tests.NAME_CN in remaining)
+        tm.ok(c.Tests.NAME_OBJECTCLASS in remaining)
 
     @staticmethod
     def test_removes_forbidden_objectclass_values(
@@ -108,12 +103,12 @@ class TestsFlextLdifFiltersService:
             list(c.Tests.FILTERS_FORBIDDEN_OCS_ORDERED),
         )
 
-        assert result.attributes is not None
-        ocs = result.attributes.attributes.get(c.Tests.NAME_OBJECTCLASS, [])
+        attributes = tm.not_none(result.attributes)
+        ocs = attributes.attributes.get(c.Tests.NAME_OBJECTCLASS, [])
         for forbidden_oc in c.Tests.FILTERS_FORBIDDEN_OCS_ORDERED:
-            tm.that(forbidden_oc not in ocs, eq=True)
+            tm.ok(forbidden_oc not in ocs)
         # Allowed objectClasses remain.
-        tm.that(c.Tests.NAME_PERSON in ocs, eq=True)
+        tm.ok(c.Tests.NAME_PERSON in ocs)
 
     @staticmethod
     def test_drops_objectclass_key_when_all_values_forbidden() -> None:
@@ -131,20 +126,20 @@ class TestsFlextLdifFiltersService:
             list(c.Tests.FILTERS_FORBIDDEN_OCS_ORDERED),
         )
 
-        assert result.attributes is not None
-        tm.that(c.Tests.NAME_OBJECTCLASS not in result.attributes.attributes, eq=True)
+        attributes = tm.not_none(result.attributes)
+        tm.ok(c.Tests.NAME_OBJECTCLASS not in attributes.attributes)
 
     @staticmethod
     def test_empty_forbidden_lists_preserve_entry_identity(
         regular_entry: m.Ldif.Entry,
     ) -> None:
         """Test empty forbidden lists preserve entry identity."""
-        assert regular_entry.attributes is not None
+        original_attributes = tm.not_none(regular_entry.attributes)
         result = ldif.filter_entry_attributes(regular_entry, [], [])
 
-        assert result.attributes is not None
+        attributes = tm.not_none(result.attributes)
         tm.that(
-            result.attributes.attributes == regular_entry.attributes.attributes,
+            attributes.attributes == original_attributes.attributes,
             eq=True,
         )
 
@@ -157,9 +152,9 @@ class TestsFlextLdifFiltersService:
         once = ldif.filter_entry_attributes(regular_entry, forbidden, [])
         twice = ldif.filter_entry_attributes(once, forbidden, [])
 
-        assert once.attributes is not None
-        assert twice.attributes is not None
-        tm.that(twice.attributes.attributes == once.attributes.attributes, eq=True)
+        once_attributes = tm.not_none(once.attributes)
+        twice_attributes = tm.not_none(twice.attributes)
+        tm.ok(twice_attributes.attributes == once_attributes.attributes)
 
     @staticmethod
     def test_returns_entry_unchanged_when_no_attributes_present(
@@ -172,8 +167,8 @@ class TestsFlextLdifFiltersService:
             [],
         )
 
-        assert isinstance(result, m.Ldif.Entry)
-        tm.that(result.attributes is None, eq=True)
+        result = tm.instance(result, m.Ldif.Entry)
+        tm.ok(result.attributes is None)
 
     # ── filter_schema_attribute_values ────────────────────────────────────────
 
@@ -212,9 +207,9 @@ class TestsFlextLdifFiltersService:
             {attr_key.lower(): frozenset({allowed_oid})},
         )
 
-        assert result.attributes is not None
-        attr_vals = result.attributes.attributes.get(attr_key, [])
-        tm.that(raw_oid in attr_vals, eq=True)
+        attributes = tm.not_none(result.attributes)
+        attr_vals = attributes.attributes.get(attr_key, [])
+        tm.ok(raw_oid in attr_vals)
 
     @staticmethod
     def test_drops_schema_value_whose_oid_is_not_whitelisted() -> None:
@@ -232,14 +227,14 @@ class TestsFlextLdifFiltersService:
             },
         )
 
-        assert result.attributes is not None
-        attr_vals = result.attributes.attributes.get(
+        attributes = tm.not_none(result.attributes)
+        attr_vals = attributes.attributes.get(
             c.Tests.FILTERS_SCHEMA_ATTR_KEY,
             [],
         )
         tm.that(len(attr_vals), eq=1)
-        tm.that(c.Tests.FILTERS_ATTR_OID_VALID in attr_vals, eq=True)
-        tm.that(c.Tests.FILTERS_UNWANTED_ATTR_OID not in attr_vals, eq=True)
+        tm.ok(c.Tests.FILTERS_ATTR_OID_VALID in attr_vals)
+        tm.ok(c.Tests.FILTERS_UNWANTED_ATTR_OID not in attr_vals)
 
     @staticmethod
     def test_accepts_whitelist_rules_model_as_allowed_oids() -> None:
@@ -253,13 +248,13 @@ class TestsFlextLdifFiltersService:
 
         result = ldif.filter_schema_attribute_values(entry, whitelist_rules)
 
-        assert result.attributes is not None
-        attr_vals = result.attributes.attributes.get(
+        attributes = tm.not_none(result.attributes)
+        attr_vals = attributes.attributes.get(
             c.Tests.FILTERS_SCHEMA_ATTR_KEY,
             [],
         )
         tm.that(len(attr_vals), eq=1)
-        tm.that(c.Tests.FILTERS_ATTR_OID_VALID in attr_vals, eq=True)
+        tm.ok(c.Tests.FILTERS_ATTR_OID_VALID in attr_vals)
 
     @staticmethod
     def test_removes_key_when_all_schema_values_disallowed() -> None:
@@ -277,9 +272,9 @@ class TestsFlextLdifFiltersService:
             {c.Tests.FILTERS_SCHEMA_ATTR_KEY.lower(): frozenset()},
         )
 
-        assert result.attributes is not None
+        attributes = tm.not_none(result.attributes)
         tm.that(
-            c.Tests.FILTERS_SCHEMA_ATTR_KEY not in result.attributes.attributes,
+            c.Tests.FILTERS_SCHEMA_ATTR_KEY not in attributes.attributes,
             eq=True,
         )
 
@@ -290,8 +285,8 @@ class TestsFlextLdifFiltersService:
         """Test returns entry unchanged when no attributes to filter."""
         result = ldif.filter_schema_attribute_values(entry_without_attributes, {})
 
-        assert isinstance(result, m.Ldif.Entry)
-        tm.that(result.attributes is None, eq=True)
+        result = tm.instance(result, m.Ldif.Entry)
+        tm.ok(result.attributes is None)
 
     # ── filter_schema_by_oids (fallible r[T] contract) ────────────────────────
 
@@ -319,7 +314,7 @@ class TestsFlextLdifFiltersService:
             self._schema_entry([c.Tests.FILTERS_ATTR_OID_VALID]),
         )
 
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(len(result.unwrap()), eq=1)
 
     def test_schema_by_oids_drops_entry_outside_whitelist(self) -> None:
@@ -328,7 +323,7 @@ class TestsFlextLdifFiltersService:
             self._schema_entry([c.Tests.FILTERS_UNWANTED_ATTR_OID]),
         )
 
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(len(result.unwrap()), eq=0)
 
     def test_schema_by_oids_returns_all_entries_when_whitelist_empty(self) -> None:
@@ -343,5 +338,5 @@ class TestsFlextLdifFiltersService:
             allowed_oids=empty_whitelist,
         )
 
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(len(result.unwrap()), eq=1)

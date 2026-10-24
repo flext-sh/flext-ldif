@@ -1,3 +1,4 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """LDIF constants and enumerations.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
@@ -14,6 +15,7 @@ from flext_ldif._constants import (
     FlextLdifConstantsAclConvert,
     FlextLdifConstantsAclConvertOud,
     FlextLdifConstantsBase,
+    FlextLdifConstantsBaseParts,
     FlextLdifConstantsEnums,
     FlextLdifConstantsServers,
     FlextLdifConstantsServersBase,
@@ -29,16 +31,18 @@ class FlextLdifConstants(FlextCliConstants):
     """LDIF domain constants extending flext-core FlextConstants."""
 
     class Ldif(
-        FlextLdifConstantsBase,
-        FlextLdifConstantsEnums,
+        FlextLdifConstantsBaseParts,
         FlextLdifConstantsAclConvert,
-        FlextLdifConstantsAclConvertOud,
+        FlextLdifConstantsBase,
         FlextLdifConstantsServers,
         FlextLdifConstantsServersBase,
-        FlextLdifConstantsServersRfc,
         FlextLdifConstantsServersOid,
         FlextLdifConstantsServersOud,
         FlextLdifConstantsServersRelaxed,
+        FlextLdifConstantsServersRfc,
+        FlextLdifConstantsStrEnums,
+        FlextLdifConstantsEnums,
+        FlextLdifConstantsAclConvertOud,
     ):
         """LDIF domain constants namespace."""
 

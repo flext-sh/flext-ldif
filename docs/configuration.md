@@ -149,9 +149,10 @@ from flext_ldif import FlextLdifSettings, ldif
 def load_config_from_environment() -> FlextLdifSettings:
     """Load configuration from environment variables."""
     return FlextLdifSettings(
-        max_entries=int(os.getenv("FLEXT_LDIF_MAX_ENTRIES", "0")) or None,
+        max_entries=int(os.getenv("FLEXT_LDIF_MAX_ENTRIES", c.ParserBooleanToken.ZERO))
+        or None,
         strict_validation=os.getenv("FLEXT_LDIF_STRICT_VALIDATION", "").lower()
-        == "true",
+        == c.ParserBooleanToken.TRUE,
         encoding=os.getenv("FLEXT_LDIF_ENCODING", "utf-8"),
         buffer_size=int(os.getenv("FLEXT_LDIF_BUFFER_SIZE", "8192")),
         log_level=os.getenv("FLEXT_LDIF_LOG_LEVEL", "INFO"),
@@ -412,7 +413,7 @@ settings = FlextLdifSettings(ldif_max_entries=50000, ldif_strict_validation=True
 # ❌ Avoid: Raw dictionaries without validation
 config_dict = {
     "max_entries": "50000",  # Should be int
-    "strict_validation": "yes",  # Should be bool
+    "strict_validation": c.ParserBooleanToken.YES,  # Should be bool
 }
 ```
 
@@ -433,7 +434,8 @@ def initialize_application_config() -> p.Result[ldif]:
     try:
         settings = FlextLdifSettings(
             ldif_max_entries=int(os.getenv("MAX_ENTRIES", "50000")),
-            ldif_strict_validation=os.getenv("STRICT_VALIDATION", "").lower() == "true",
+            ldif_strict_validation=os.getenv("STRICT_VALIDATION", "").lower()
+            == c.ParserBooleanToken.TRUE,
         )
         api = ldif(settings=settings)
         return r[ldif].ok(api)

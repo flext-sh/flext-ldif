@@ -6,15 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 import pytest
 
-from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
-from tests import c, m, tm, u
-
-if TYPE_CHECKING:
-    from tests import p, t
+from flext_ldif import FlextLdif
+from flext_ldif.services import FlextLdifProcessingPipeline
+from tests import c, m, p, t, tm, u
 
 
 class TestsFlextLdifProcessingService:
@@ -29,7 +27,7 @@ class TestsFlextLdifProcessingService:
         )
 
     @pytest.mark.parametrize(
-        ("processor_name", "parallel", "batch_size", "max_workers"),
+        ("processor_name", c.ProcessingMode.PARALLEL, "batch_size", "max_workers"),
         list(c.Tests.PROCESSING_OPTIONS_CASES.values()),
         ids=list(c.Tests.PROCESSING_OPTIONS_CASES.keys()),
     )
@@ -52,12 +50,12 @@ class TestsFlextLdifProcessingService:
         )
 
         result = api.process_entries(entries, options=options)
-        processed: t.MutableSequenceOf[m.Ldif.ProcessingResult] = (
+        processed: t.MutableSequenceOf[p.Ldif.ProcessingResult] = (
             u.Tests.assert_success(result)
         )
         tm.that(len(processed), eq=len(entries))
         processed_dns = {item.dn for item in processed}
-        tm.that(processed_dns == set(c.Tests.PROCESSING_VALID_DNS), eq=True)
+        tm.ok(processed_dns == set(c.Tests.PROCESSING_VALID_DNS))
 
     def test_process_entries_supports_kwargs_option_payload(
         self,
@@ -73,7 +71,7 @@ class TestsFlextLdifProcessingService:
             batch_size=1,
             max_workers=1,
         )
-        processed: t.MutableSequenceOf[m.Ldif.ProcessingResult] = (
+        processed: t.MutableSequenceOf[p.Ldif.ProcessingResult] = (
             u.Tests.assert_success(result)
         )
         tm.that(len(processed), eq=1)
@@ -146,16 +144,15 @@ class TestsFlextLdifProcessingService:
             transform_config=config,
             entries_input=[entry],
         ).execute()
-        converted: t.MutableSequenceOf[m.Ldif.Entry] = u.Tests.assert_success(result)
-        assert converted[0].attributes is not None
-        attrs = converted[0].attributes.attributes
+        converted: t.SequenceOf[p.Ldif.Entry] = u.Tests.assert_success(result)
+        attrs = tm.not_none(converted[0].attributes).attributes
 
         tm.that(
             attrs["aci"],
             eq=[
                 (
-                    '(targetattr="*")(version 3.0; acl "users Entry by x"; '
-                    'allow (read, search) groupdn="ldap:///cn=a,dc=ctbc";)'
+                    '(targetattr="*")    (version 3.0; acl "users Entry by x";'
+                    '     allow (read, search)    groupdn="ldap:///cn=a,dc=ctbc";)'
                 ),
             ],
         )

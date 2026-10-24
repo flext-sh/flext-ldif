@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_core import m
+from flext_cli import m
 
 
 class FlextLdifNamespace(m.BaseModel):

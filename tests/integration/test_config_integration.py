@@ -19,15 +19,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING
 
 import pytest
 
 from flext_ldif import ldif
-from tests import c, s, tm
-
-if TYPE_CHECKING:
-    from tests import TestsFlextLdifSettings, m
+from tests import TestsFlextLdifSettings as LdifSettings, c, m, s, tm
 
 # Expected DN observable in CONFIG_BASIC_ENTRY.
 _BASIC_DN = "cn=Test,dc=example,dc=com"
@@ -49,9 +45,9 @@ class TestsFlextLdifConfigIntegration:
     """
 
     @staticmethod
-    def create_settings() -> TestsFlextLdifSettings:
+    def create_settings() -> LdifSettings:
         """Return an independent clone of the shared test settings singleton."""
-        settings: TestsFlextLdifSettings = s.fetch_settings().clone()
+        settings: LdifSettings = s.fetch_settings().clone()
         return settings
 
     @staticmethod
@@ -59,8 +55,7 @@ class TestsFlextLdifConfigIntegration:
         """Return each entry's public DN string (asserting the DN is present)."""
         values: list[str] = []
         for entry in entries:
-            dn = entry.dn
-            assert dn is not None
+            dn = tm.not_none(entry.dn)
             values.append(dn.value)
         return values
 
@@ -75,23 +70,23 @@ class TestsFlextLdifConfigIntegration:
 
     def test_custom_settings_expose_default_ldif_contract(self) -> None:
         """Cloned settings expose the documented public Ldif field defaults."""
-        settings: TestsFlextLdifSettings = self.create_settings()
+        settings: LdifSettings = self.create_settings()
 
-        tm.that(settings.ldif.ldif_encoding, eq=c.Ldif.Encoding.UTF8)
+        tm.that(settings.Ldif.ldif_encoding, eq=c.Ldif.Encoding.UTF8)
         tm.that(
-            settings.ldif.ldif_strict_validation,
+            settings.Ldif.ldif_strict_validation,
             eq=c.Ldif.DEFAULT_STRICT_VALIDATION,
         )
 
     def test_cloned_settings_preserve_public_field_values(self) -> None:
         """Independent clones agree on the public Ldif field contract."""
-        first: TestsFlextLdifSettings = self.create_settings()
-        second: TestsFlextLdifSettings = self.create_settings()
+        first: LdifSettings = self.create_settings()
+        second: LdifSettings = self.create_settings()
 
-        tm.that(first.ldif.ldif_encoding, eq=second.ldif.ldif_encoding)
+        tm.that(first.Ldif.ldif_encoding, eq=second.Ldif.ldif_encoding)
         tm.that(
-            first.ldif.ldif_strict_validation,
-            eq=second.ldif.ldif_strict_validation,
+            first.Ldif.ldif_strict_validation,
+            eq=second.Ldif.ldif_strict_validation,
         )
 
     @pytest.mark.parametrize("server_type", c.Tests.CONFIG_SERVER_TYPES)

@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from collections.abc import MutableMapping
 from typing import Annotated, ClassVar, Self, override
 
@@ -22,6 +23,7 @@ class FlextLdifServersBaseSchema(
     FlextLdifServersBaseSchemaValuesMixin,
     s[t.Ldif.SchemaConversionValue],
     FlextLdifServerMethodsMixin,
+    ABC,
 ):
     """Base class for schema servers using `s` with enhanced usability."""
 
@@ -107,6 +109,7 @@ class FlextLdifServersBaseSchema(
             The constructed instance.
 
         """
+        del _schema_service
         filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_server"}
         instance: Self = super().__new__(cls, **filtered_kwargs)
         if _parent_server is not None:
@@ -173,6 +176,7 @@ class FlextLdifServersBaseSchema(
 
     auto_execute: ClassVar[bool] = False
 
+    @abstractmethod
     def can_handle_attribute(
         self,
         attr_definition: str | m.Ldif.SchemaAttribute,
@@ -186,9 +190,11 @@ class FlextLdifServersBaseSchema(
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del attr_definition
         msg = "Schema servers must implement can_handle_attribute"
         raise NotImplementedError(msg)
 
+    @abstractmethod
     def can_handle_objectclass(
         self,
         oc_definition: str | m.Ldif.SchemaObjectClass,
@@ -202,6 +208,7 @@ class FlextLdifServersBaseSchema(
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del oc_definition
         msg = "Schema servers must implement can_handle_objectclass"
         raise NotImplementedError(msg)
 
@@ -241,7 +248,7 @@ class FlextLdifServersBaseSchema(
     def parse_server(
         self,
         value: str,
-    ) -> p.Result[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]:
+    ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
         """Parse a schema definition (attribute or objectClass).
 
         Args:
@@ -256,7 +263,7 @@ class FlextLdifServersBaseSchema(
     def parse_input(
         self,
         schema_text: str,
-    ) -> p.Result[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]:
+    ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
         """Compatibility parser entrypoint for direct schema server consumers.
 
         Args:
@@ -268,7 +275,7 @@ class FlextLdifServersBaseSchema(
         """
         return self.parse_server(schema_text)
 
-    def parse_attribute(self, definition: str) -> p.Result[p.Ldif.SchemaAttribute]:
+    def parse_attribute(self, definition: str) -> p.Result[m.Ldif.SchemaAttribute]:
         """Parse an attribute definition (public API).
 
         Args:
@@ -278,13 +285,9 @@ class FlextLdifServersBaseSchema(
             Typed result carrying the parsed attribute model.
 
         """
-        result = self._parse_attribute(definition)
-        if result.failure:
-            return r[p.Ldif.SchemaAttribute].from_failure(result)
-        payload: p.Ldif.SchemaAttribute = result.unwrap()
-        return r[p.Ldif.SchemaAttribute].ok(payload)
+        return self._parse_attribute(definition)
 
-    def parse_objectclass(self, definition: str) -> p.Result[p.Ldif.SchemaObjectClass]:
+    def parse_objectclass(self, definition: str) -> p.Result[m.Ldif.SchemaObjectClass]:
         """Parse an objectClass definition (public API).
 
         Args:
@@ -294,16 +297,12 @@ class FlextLdifServersBaseSchema(
             Typed result carrying the parsed objectClass model.
 
         """
-        result = self._parse_objectclass(definition)
-        if result.failure:
-            return r[p.Ldif.SchemaObjectClass].from_failure(result)
-        payload: p.Ldif.SchemaObjectClass = result.unwrap()
-        return r[p.Ldif.SchemaObjectClass].ok(payload)
+        return self._parse_objectclass(definition)
 
     def route_parse(
         self,
         definition: str,
-    ) -> p.Result[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]:
+    ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
         """Route a schema definition to the appropriate parse method.
 
         Args:
@@ -317,23 +316,23 @@ class FlextLdifServersBaseSchema(
             oc_result = self.parse_objectclass(definition)
             if oc_result.failure:
                 return r[
-                    p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass
+                    m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
                 ].from_failure(oc_result)
-            parsed_objectclass: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass = (
+            parsed_objectclass: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass = (
                 oc_result.unwrap()
             )
-            return r[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass].ok(
+            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(
                 parsed_objectclass
             )
         attr_result = self.parse_attribute(definition)
         if attr_result.failure:
-            return r[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass].from_failure(
+            return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].from_failure(
                 attr_result,
             )
-        parsed_attribute: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass = (
+        parsed_attribute: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass = (
             attr_result.unwrap()
         )
-        return r[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass].ok(parsed_attribute)
+        return r[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(parsed_attribute)
 
     def write(
         self,
@@ -473,6 +472,7 @@ class FlextLdifServersBaseSchema(
             return r[t.Ldif.SchemaConversionValue].fail(error_msg)
         return r[t.Ldif.SchemaConversionValue].fail("No write parameter provided")
 
+    @abstractmethod
     def _hook_post_parse_attribute(
         self,
         attr: m.Ldif.SchemaAttribute,
@@ -486,6 +486,7 @@ class FlextLdifServersBaseSchema(
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del attr
         msg = "Schema servers must implement _hook_post_parse_attribute"
         raise NotImplementedError(msg)
 
@@ -522,10 +523,10 @@ class FlextLdifServersBaseSchema(
             Typed result carrying the validation outcome.
 
         """
-        _ = attributes
-        _ = available_attrs
+        del attributes, available_attrs
         return r[bool].ok(value=True)
 
+    @abstractmethod
     def _parse_attribute(
         self,
         attr_definition: str,
@@ -539,9 +540,11 @@ class FlextLdifServersBaseSchema(
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del attr_definition
         msg = "Schema servers must implement _parse_attribute"
         raise NotImplementedError(msg)
 
+    @abstractmethod
     def _parse_objectclass(
         self,
         oc_definition: str,
@@ -555,6 +558,7 @@ class FlextLdifServersBaseSchema(
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del oc_definition
         msg = "Schema servers must implement _parse_objectclass"
         raise NotImplementedError(msg)
 
@@ -600,6 +604,7 @@ class FlextLdifServersBaseSchema(
             raise AssertionError(msg)
         return result
 
+    @abstractmethod
     def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
         """Write attribute data to the RFC-compliant string format (internal).
 
@@ -610,9 +615,11 @@ class FlextLdifServersBaseSchema(
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del attr_data
         msg = "Schema servers must implement _write_attribute"
         raise NotImplementedError(msg)
 
+    @abstractmethod
     def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> p.Result[str]:
         """Write objectClass data to the RFC-compliant string format (internal).
 
@@ -623,9 +630,11 @@ class FlextLdifServersBaseSchema(
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del oc_data
         msg = "Schema servers must implement _write_objectclass"
         raise NotImplementedError(msg)
 
+    @abstractmethod
     def _transform_attribute_for_write(
         self,
         attr_data: m.Ldif.SchemaAttribute,
@@ -639,9 +648,11 @@ class FlextLdifServersBaseSchema(
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del attr_data
         msg = "Schema servers must implement _transform_attribute_for_write"
         raise NotImplementedError(msg)
 
+    @abstractmethod
     def _transform_objectclass_for_write(
         self,
         oc_data: m.Ldif.SchemaObjectClass,
@@ -655,6 +666,7 @@ class FlextLdifServersBaseSchema(
             NotImplementedError: Always; concrete server flavors must override.
 
         """
+        del oc_data
         msg = "Schema servers must implement _transform_objectclass_for_write"
         raise NotImplementedError(msg)
 

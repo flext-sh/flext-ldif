@@ -13,16 +13,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING
 
 import pytest
 
 import flext_ldif
-from tests import tm
+from tests import t, tm
 from tests.unit.typings import TestsFlextLdifUnitTypings
-
-if TYPE_CHECKING:
-    from tests import t
 
 REQUIRED_PUBLIC_API: t.VariadicTuple[TestsFlextLdifUnitTypings.PublicSymbol] = (
     "FlextLdif",
@@ -144,7 +140,7 @@ class TestsFlextLdifApiFreeze:
         """Repeated access returns the identical object (stable identity)."""
         first = getattr(flext_ldif, symbol)
         second = getattr(flext_ldif, symbol)
-        assert first is second
+        tm.ok(first is second)
 
     @staticmethod
     @pytest.mark.parametrize("symbol", PUBLIC_API)
@@ -152,7 +148,7 @@ class TestsFlextLdifApiFreeze:
         symbol: TestsFlextLdifUnitTypings.PublicSymbol,
     ) -> None:
         """Every public name shows up in ``dir()`` for interactive discovery."""
-        tm.that(symbol in dir(flext_ldif), eq=True)
+        tm.ok(symbol in dir(flext_ldif))
 
     @staticmethod
     @pytest.mark.parametrize("symbol", CLASS_SYMBOLS)
@@ -160,7 +156,7 @@ class TestsFlextLdifApiFreeze:
         symbol: TestsFlextLdifUnitTypings.PublicSymbol,
     ) -> None:
         """Every ``FlextLdif*`` public name is a class consumers can use."""
-        tm.that(inspect.isclass(getattr(flext_ldif, symbol)), eq=True)
+        tm.ok(inspect.isclass(getattr(flext_ldif, symbol)))
 
     @staticmethod
     @pytest.mark.parametrize(("alias", "owner"), FACADE_ALIAS_OWNERS)
@@ -169,7 +165,7 @@ class TestsFlextLdifApiFreeze:
         owner: TestsFlextLdifUnitTypings.PublicSymbol,
     ) -> None:
         """Short facade aliases are the same object as their named owner."""
-        assert getattr(flext_ldif, alias) is getattr(flext_ldif, owner)
+        tm.ok(getattr(flext_ldif, alias) is getattr(flext_ldif, owner))
 
     @staticmethod
     def test_ldif_singleton_is_a_flext_ldif_instance() -> None:
@@ -197,7 +193,7 @@ class TestsFlextLdifApiFreeze:
         symbol: TestsFlextLdifUnitTypings.PublicSymbol,
     ) -> None:
         """Implementation classes never appear in the advertised surface."""
-        tm.that(symbol in flext_ldif.__all__, eq=False)
+        tm.fail(symbol in flext_ldif.__all__)
 
     @staticmethod
     @pytest.mark.parametrize("symbol", PRIVATE_ROOT_SYMBOLS)

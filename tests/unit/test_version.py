@@ -34,22 +34,25 @@ class TestsFlextLdifVersion:
             version_module.__title__,
             version_module.__license__,
         ):
-            tm.that(len(metadata) > 0, eq=True)
+            tm.ok(len(metadata) > 0)
 
     @staticmethod
     def test_all_expected_symbols_are_exported() -> None:
         """Every documented symbol is exported through __all__ and importable."""
         for export in c.Tests.VERSION_EXPECTED_EXPORTS:
             tm.that(version_module.__all__, has=export)
-            tm.that(hasattr(version_module, export), eq=True)
+            tm.ok(hasattr(version_module, export))
 
     @staticmethod
     def test_version_info_shape_matches_version_string() -> None:
         """__version_info__ is an exact three-integer release tuple."""
         tm.that(version_module.__version_info__, is_=tuple)
         tm.that(len(version_module.__version_info__), eq=3)
-        assert all(
-            isinstance(component, int) for component in version_module.__version_info__
+        tm.ok(
+            all(
+                isinstance(component, int)
+                for component in version_module.__version_info__
+            )
         )
 
     @staticmethod

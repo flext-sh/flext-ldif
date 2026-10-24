@@ -292,7 +292,7 @@ mail: jane.smith@example.com
 ### Docker Integration Fixtures (`docker_fixtures.py`)
 
 ```text
-@pytest.fixture(scope="session")
+@pytest.fixture(scope=c.ContextScope.SESSION)
 def ldap_server():
     """Docker-based LDAP server for integration testing."""
     container = docker_client.containers.run(

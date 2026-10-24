@@ -71,7 +71,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             "top",
             "person",
             "organizationalPerson",
-            "user",
+            c.ContextScope.USER,
         ])
         OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
             "objectGUID",
@@ -114,7 +114,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             "distinguishedname",
         ])
         DETECTION_OBJECTCLASS_NAMES: ClassVar[frozenset[str]] = frozenset([
-            "user",
+            c.ContextScope.USER,
             "computer",
             "group",
             "organizationalunit",

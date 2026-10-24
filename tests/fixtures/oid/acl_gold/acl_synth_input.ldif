@@ -1,0 +1,55 @@
+# provenance: devops-oud-iac@2225708e3ac8 tests/benchmark/gold/acl_synth_input.ldif sha256=e6e56c5311f7129970d5f0f7e8d8df47adbb5f505ced996ca8bae284c90cf80d
+dn: cn=admins,dc=ctbc
+objectClass: top
+objectClass: container
+cn: admins
+orclaci: access to entry by group="cn=SecurityAdmins,dc=ctbc" (browse,add,delete) by self (browse) by * (none)
+
+dn: cn=users-attrs,dc=ctbc
+objectClass: top
+objectClass: container
+cn: users-attrs
+orclaci: access to attr=(userPassword) filter=(objectclass=inetorgperson) by group="cn=SecurityAdmins,dc=ctbc" (read,search,write,compare) by self (read,search,write,selfwrite,compare) by * (none)
+
+dn: cn=owner-groups,dc=ctbc
+objectClass: top
+objectClass: container
+cn: owner-groups
+orclentrylevelaci: access to entry by dnattr=(owner) (browse) by * (none)
+orclentrylevelaci: access to attr=(uniquemember) by dnattr=(owner) (read,search,write) by * (none)
+
+dn: cn=groupattr-case,dc=ctbc
+objectClass: top
+objectClass: container
+cn: groupattr-case
+orclaci: access to attr=(member) by groupattr=(uniquemember) (read,search) by * (none)
+
+dn: cn=guidattr-case,dc=ctbc
+objectClass: top
+objectClass: container
+cn: guidattr-case
+orclaci: access to attr=(orclguid) by guidattr=(orclguid) (read) by * (none)
+
+dn: cn=superuser-case,dc=ctbc
+objectClass: top
+objectClass: container
+cn: superuser-case
+orclaci: access to attr=(*) by SuperUser (read,write,compare) by * (none)
+
+dn: cn=public-read,dc=ctbc
+objectClass: top
+objectClass: container
+cn: public-read
+orclaci: access to attr=(cn,sn,mail) by * (read,search,compare)
+
+dn: cn=negated-wildcard,dc=ctbc
+objectClass: top
+objectClass: container
+cn: negated-wildcard
+orclaci: access to attr=(orclpasswordhint) by group="cn=CommonUsers,dc=ctbc" (read,search,compare) by * (noread,nowrite,nocompare)
+
+dn: cn=combined-deny,dc=ctbc
+objectClass: top
+objectClass: container
+cn: combined-deny
+orclaci: access to entry by group="cn=Admins,dc=ctbc" (all) by * (none)

@@ -1,0 +1,10 @@
+# provenance: derived by awk from devops-oud-iac@2225708e3ac8 tests/benchmark/gold/acl_synth_gold.ldif sha256=02391ee84ada28158e64d2c94ff2aa30cc2d5cacc50ce40cac3dc5d8f99c36b2; per gold aci block before any DEDUP note: dn, DE lines (granted subjects), EXCL lines (deny-none subjects), SECAO 6.8 lines (complemented subjects)
+cn=admins,dc=ctbc	2	1	0
+cn=combined-deny,dc=ctbc	1	1	0
+cn=groupattr-case,dc=ctbc	1	1	0
+cn=negated-wildcard,dc=ctbc	2	0	1
+cn=owner-groups,dc=ctbc	1	1	0
+cn=owner-groups,dc=ctbc	1	1	0
+cn=public-read,dc=ctbc	1	0	0
+cn=superuser-case,dc=ctbc	1	1	0
+cn=users-attrs,dc=ctbc	2	1	0

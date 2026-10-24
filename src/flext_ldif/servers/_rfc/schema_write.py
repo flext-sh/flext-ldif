@@ -6,13 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from abc import ABC
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base import FlextLdifServersBaseSchema
 
 
-class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBaseSchema):
+class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBaseSchema, ABC):
     """Write schema attributes/objectClasses to RFC-compliant strings."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)

@@ -32,6 +32,7 @@ class FlextLdifUtilitiesObjectClass:
         _server_type: str = "oid",
     ) -> None:
         """Fix objectClass kind mismatches with superior classes (server-specific)."""
+        del _server_type
         if not schema_oc.sup or not schema_oc.kind:
             return
         structural_superiors = {

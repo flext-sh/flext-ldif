@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
     from flext_ldif.servers import FlextLdifServersBase
     from flext_ldif.services import FlextLdifConversion
-    from tests import p, t
+from tests import p, t
 
 
 def _assert_cross_server_identity(
@@ -78,8 +78,7 @@ class TestsFlextLdifCrossServerConversion:
             c.Tests.CROSS_SERVER_OID_ATTRIBUTE_ORCLGUID,
         )
         tm.ok(parse_result)
-        source = parse_result.value
-        assert isinstance(source, m.Ldif.SchemaAttribute)
+        source = tm.instance(parse_result.value, m.Ldif.SchemaAttribute)
         tm.that(source.oid, eq="2.16.840.1.113894.1.1.1")
         tm.that(source.name, eq="orclguid")
 
@@ -88,8 +87,7 @@ class TestsFlextLdifCrossServerConversion:
 
         oud_parse_result = oud_schema_server.parse_server(rfc_result.value)
         tm.ok(oud_parse_result)
-        target = oud_parse_result.value
-        assert isinstance(target, m.Ldif.SchemaAttribute)
+        target = tm.instance(oud_parse_result.value, m.Ldif.SchemaAttribute)
         tm.that(target.oid, eq=source.oid)
         tm.that(target.name, eq=source.name)
         tm.that(target.syntax, eq=source.syntax)
@@ -107,8 +105,7 @@ class TestsFlextLdifCrossServerConversion:
             c.Tests.CROSS_SERVER_OID_OBJECTCLASS_ORCLCONTAINER,
         )
         tm.ok(parse_result)
-        source = parse_result.value
-        assert isinstance(source, m.Ldif.SchemaObjectClass)
+        source = tm.instance(parse_result.value, m.Ldif.SchemaObjectClass)
         tm.that(source.oid, eq="2.16.840.1.113894.2.1.1")
         tm.that(source.name, eq="orclContainer")
         tm.that(source.kind, eq="STRUCTURAL")
@@ -118,8 +115,7 @@ class TestsFlextLdifCrossServerConversion:
 
         oud_parse_result = oud_schema_server.parse_server(rfc_result.value)
         tm.ok(oud_parse_result)
-        target = oud_parse_result.value
-        assert isinstance(target, m.Ldif.SchemaObjectClass)
+        target = tm.instance(oud_parse_result.value, m.Ldif.SchemaObjectClass)
         tm.that(target.oid, eq=source.oid)
         tm.that(target.name, eq=source.name)
         tm.that(target.kind, eq=source.kind)
@@ -134,8 +130,7 @@ class TestsFlextLdifCrossServerConversion:
             c.Tests.CROSS_SERVER_OID_ACL_ANONYMOUS,
         )
         tm.ok(parse_result)
-        parsed = parse_result.value
-        assert isinstance(parsed, m.Ldif.Acl)
+        parsed = tm.instance(parse_result.value, m.Ldif.Acl)
         tm.that({"oid", "oracle_oid"}, has=parsed.server_type)
 
     @staticmethod
@@ -147,14 +142,13 @@ class TestsFlextLdifCrossServerConversion:
             c.Tests.CROSS_SERVER_OUD_ACI_ANONYMOUS,
         )
         tm.ok(parse_result)
-        parsed = parse_result.value
-        assert isinstance(parsed, m.Ldif.Acl)
+        parsed = tm.instance(parse_result.value, m.Ldif.Acl)
         tm.that({"oud", "rfc", "generic"}, has=parsed.server_type)
 
         write_result = oud_acl_server.write(parsed)
         tm.ok(write_result)
         tm.that(write_result.value, is_=str)
-        assert write_result.value
+        tm.that(write_result.value, truth=True)
 
     @staticmethod
     def test_convert_model_translates_oid_acl_to_rfc_dialect(
@@ -169,16 +163,15 @@ class TestsFlextLdifCrossServerConversion:
             c.Tests.CROSS_SERVER_OID_ACL_ANONYMOUS,
         )
         tm.ok(parse_result)
-        assert isinstance(parse_result.value, m.Ldif.Acl)
+        parsed = tm.instance(parse_result.value, m.Ldif.Acl)
 
         result = conversion_matrix.convert_model(
             c.Tests.OID,
             c.Tests.RFC,
-            parse_result.value,
+            parsed,
         )
         tm.ok(result)
-        converted = result.value
-        assert isinstance(converted, m.Ldif.Acl)
+        converted = tm.instance(result.value, m.Ldif.Acl)
         tm.that(converted.server_type, eq=c.Tests.RFC)
         tm.that(converted.raw_acl, none=False)
 
@@ -197,7 +190,11 @@ class TestsFlextLdifCrossServerConversion:
             for line in oid_schema_fixture.split("\n")
             if "attributetypes:" in line.lower() and "2.16.840.1.113894" in line
         ]
-        assert oracle_attr_defs, "No Oracle attributes found in OID fixture"
+        tm.that(
+            oracle_attr_defs,
+            truth=True,
+            msg="No Oracle attributes found in OID fixture",
+        )
 
         # The fixture contains hundreds of attributes with the same conversion
         # contract. Exercise deterministic boundary samples so this behavioral
@@ -241,10 +238,10 @@ class TestsFlextLdifCrossServerConversion:
         A full-featured server resolves every kind.
         """
         supported = conversion_matrix.resolve_supported_conversions(oud_server)
-        tm.that(supported["attribute"], eq=True)
-        tm.that(supported["objectClass"], eq=True)
-        tm.that(supported["acl"], eq=True)
-        tm.that(supported["entry"], eq=True)
+        tm.ok(supported["attribute"])
+        tm.ok(supported["objectClass"])
+        tm.ok(supported["acl"])
+        tm.ok(supported["entry"])
 
     @staticmethod
     def test_attribute_converts_oud_to_oid_rendering_oracle_identity(

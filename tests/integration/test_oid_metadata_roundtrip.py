@@ -6,14 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
-from tests import c, m, tm
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import c, m, p, tm
 
 
 class TestsFlextLdifOidMetadataRoundtrip:
@@ -36,10 +31,10 @@ class TestsFlextLdifOidMetadataRoundtrip:
         )
         parsed = tm.ok(api.parse_ldif(source, server_type=c.Ldif.ServerTypes.OID))
         entry = parsed.entries[0]
-        assert entry.metadata is not None
-        assert entry.metadata.server_type is c.Ldif.ServerTypes.OID
-        serialized = entry.metadata.model_dump(warnings="error")
-        assert serialized["server_type"] is c.Ldif.ServerTypes.OID
+        metadata = tm.not_none(entry.metadata)
+        tm.that(metadata.server_type is c.Ldif.ServerTypes.OID, truth=True)
+        serialized = metadata.model_dump(warnings="error")
+        tm.that(serialized["server_type"] is c.Ldif.ServerTypes.OID, truth=True)
 
         written = tm.ok(
             api.write(
@@ -52,9 +47,10 @@ class TestsFlextLdifOidMetadataRoundtrip:
                 ),
             ),
         )
-        assert written.content
+        content = tm.not_none(written.content)
+        tm.that(content, truth=True)
         converted = tm.ok(
-            api.parse_ldif(written.content, server_type=c.Ldif.ServerTypes.OUD),
+            api.parse_ldif(content, server_type=c.Ldif.ServerTypes.OUD),
         )
         tm.that(len(converted.entries), eq=len(parsed.entries))
         tm.that(converted.entries[0].dn_str, eq=entry.dn_str)

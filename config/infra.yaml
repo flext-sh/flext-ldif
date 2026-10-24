@@ -1,0 +1,14 @@
+Infra:
+  refactor_csv_campaigns:
+    campaigns:
+      - csv: rules/ldif-settings-namespace.csv
+        rename_definitions: true
+        bindings:
+          "":
+            - flext_ldif._settings.FlextLdifSettings
+            - flext_ldif._protocols.base.FlextLdifProtocolsBase.Settings
+  release:
+    maintenance_line:
+      - 0
+      - 12
+    finalize_maintenance: true

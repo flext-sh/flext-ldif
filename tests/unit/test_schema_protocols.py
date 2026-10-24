@@ -25,7 +25,7 @@ class TestsFlextLdifSchemaProtocols:
     ) -> None:
         """The public parser exposes required and optional attributes directly."""
         server: p.Ldif.SchemaServer = ldif.schema_server(server_type).unwrap()
-        tm.that(isinstance(server, p.Ldif.SchemaServer), eq=True)
+        tm.ok(isinstance(server, p.Ldif.SchemaServer))
         attribute: p.Ldif.SchemaAttribute = server.parse_attribute(
             "( 2.5.4.3 NAME 'cn' SUP name )"
         ).unwrap()
@@ -35,8 +35,8 @@ class TestsFlextLdifSchemaProtocols:
             "( 2.5.6.6 NAME 'person' SUP top STRUCTURAL "
             "MUST ( sn $ cn ) MAY description )"
         )
-        parsed: p.Ldif.SchemaObjectClass = server.parse_objectclass(definition).unwrap()
-        tm.that(isinstance(parsed, p.Ldif.SchemaObjectClass), eq=True)
+        parsed = server.parse_objectclass(definition).unwrap()
+        tm.ok(isinstance(parsed, p.Ldif.SchemaObjectClass))
         tm.that(parsed.sup, eq="top")
         tm.that(set(parsed.must or ()), eq={"sn", "cn"})
         tm.that(list(parsed.may or ()), eq=["description"])
@@ -47,7 +47,7 @@ class TestsFlextLdifSchemaProtocols:
         tm.that(roundtrip.must, eq=parsed.must)
         tm.that(roundtrip.may, eq=parsed.may)
         routed = server.parse_input(server.write(parsed).unwrap()).unwrap()
-        tm.that(isinstance(routed, p.Ldif.SchemaObjectClass), eq=True)
+        tm.ok(isinstance(routed, p.Ldif.SchemaObjectClass))
         tm.that(routed.oid, eq=parsed.oid)
         tm.that(routed.name, eq=parsed.name)
 
@@ -67,7 +67,7 @@ class TestsFlextLdifSchemaProtocols:
             must=None,
             may=None,
         )
-        tm.that(isinstance(payload, p.Ldif.SchemaObjectClass), eq=True)
+        tm.ok(isinstance(payload, p.Ldif.SchemaObjectClass))
         tm.that(payload.sup, eq=superiors)
         tm.that(payload.must, none=True)
         tm.that(payload.may, none=True)
@@ -81,8 +81,8 @@ class TestsFlextLdifSchemaProtocols:
         ).unwrap()
         direct = server.parse_attribute(definition)
         routed = server.parse_server(definition)
-        tm.that(direct.failure, eq=True)
-        tm.that(routed.failure, eq=True)
+        tm.ok(direct.failure)
+        tm.ok(routed.failure)
         tm.that(routed.error, eq=direct.error)
         tm.that(routed.error_code, eq=direct.error_code)
         tm.that(routed.error_data, eq=direct.error_data)

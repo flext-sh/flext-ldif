@@ -21,14 +21,13 @@ import pytest
 
 from flext_ldif import FlextLdif, ldif
 from flext_ldif.servers import FlextLdifServersOid, FlextLdifServersOud
-from flext_ldif.services import FlextLdifMigrationPipeline
-from tests import c, tm, u
+from tests import c, m, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
     from pathlib import Path
 
-    from tests import m, p
+from tests import p
 
 MIN_OUD_ENTRIES = 10
 
@@ -117,7 +116,7 @@ class TestsFlextLdifOudToOidMigration:
             The resulting ``set[str]``.
 
         """
-        assert isinstance(entries, list)
+        tm.ok(isinstance(entries, list))
         split_re = c.Ldif.DN_SPLIT_OPTIONAL_SPACE_RE
         return {
             ",".join(split_re.split(entry.dn.value))
@@ -133,13 +132,14 @@ class TestsFlextLdifOudToOidMigration:
     ) -> None:
         """Write the OUD source and run the OUD->OID migration pipeline."""
         (input_dir / "source.ldif").write_text(source_content, encoding="utf-8")
-        pipeline = FlextLdifMigrationPipeline(
+        pipeline = FlextLdif().migration_pipeline(
             input_dir=input_dir,
             output_dir=output_dir,
-            output_filename="migrated.ldif",
-            source_server=c.Ldif.ServerTypes.OUD,
-            target_server=c.Ldif.ServerTypes.OID,
-            registry=FlextLdif().registry,
+            options=m.Ldif.MigrateOptions(output_filename="migrated.ldif"),
+            settings=m.Ldif.TransformConfig.servers(
+                source_server=c.Ldif.ServerTypes.OUD,
+                target_server=c.Ldif.ServerTypes.OID,
+            ),
         )
         tm.ok(pipeline.execute())
 
@@ -163,9 +163,9 @@ class TestsFlextLdifOudToOidMigration:
         )
 
         output_file = output_dir / "migrated.ldif"
-        assert output_file.exists(), "Migration did not produce an output file"
+        tm.ok(output_file.exists(), msg="Migration did not produce an output file")
         migrated_content = output_file.read_text(encoding="utf-8")
-        assert migrated_content.strip(), "Migrated LDIF is empty"
+        tm.ok(bool(migrated_content.strip()), msg="Migrated LDIF is empty")
         reparse = client.parse_ldif(migrated_content)
         tm.ok(reparse)
 
@@ -207,9 +207,9 @@ class TestsFlextLdifOudToOidMigration:
 
         tm.ok(result)
         entries = result.value.entries
-        assert len(entries) >= MIN_OUD_ENTRIES, (
-            f"Expected >= {MIN_OUD_ENTRIES} entries, got {len(entries)}"
-        )
+        if len(entries) < MIN_OUD_ENTRIES:
+            msg = f"Expected >= {MIN_OUD_ENTRIES} entries, got {len(entries)}"
+            tm.reject(msg)
 
     @staticmethod
     def test_oud_parse_ldif_on_empty_input_yields_no_entries(
@@ -230,7 +230,7 @@ class TestsFlextLdifOudToOidMigration:
         result = oud.parse_ldif(oud_schema)
 
         tm.ok(result)
-        assert result.value.entries, "Schema fixture produced no entries"
+        tm.ok(bool(result.value.entries), msg="Schema fixture produced no entries")
 
     # -- OUD -> OID server round-trip -------------------------------------
 
@@ -245,14 +245,15 @@ class TestsFlextLdifOudToOidMigration:
         parsed = oud.parse_ldif(oud_integration)
         tm.ok(parsed)
         source_entries = parsed.value.entries
-        assert source_entries, "No entries parsed from OUD integration fixture"
+        tm.ok(
+            bool(source_entries), msg="No entries parsed from OUD integration fixture"
+        )
         source_dns = self._dn_set(source_entries)
 
         write_result = oid.write(source_entries)
         tm.ok(write_result)
-        written_ldif = write_result.value
-        assert isinstance(written_ldif, str)
-        assert written_ldif.strip(), "OID write produced empty content"
+        written_ldif = tm.instance(write_result.value, str)
+        tm.ok(bool(written_ldif.strip()), msg="OID write produced empty content")
 
         reparse = client.parse_ldif(written_ldif)
         tm.ok(reparse)
@@ -271,13 +272,13 @@ class TestsFlextLdifOudToOidMigration:
 
         first = oid.write(entries)
         second = oid.write(entries)
-        assert first.success, "First OID write must succeed"
-        assert second.success, "Second OID write must succeed"
+        tm.ok(first.success, msg="First OID write must succeed")
+        tm.ok(second.success, msg="Second OID write must succeed")
 
         first_parse = ldif().parse_ldif(first.value)
         second_parse = ldif().parse_ldif(second.value)
-        assert first_parse.success
-        assert second_parse.success
+        tm.ok(first_parse.success)
+        tm.ok(second_parse.success)
         tm.that(
             self._dn_set(first_parse.value.entries),
             eq=self._dn_set(second_parse.value.entries),

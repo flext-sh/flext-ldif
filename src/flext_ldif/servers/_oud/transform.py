@@ -15,7 +15,6 @@ from typing import ClassVar
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oud import (
     FlextLdifServersOudAciMixin,
-    FlextLdifServersOudAclExtractMixin,
     FlextLdifServersOudAclMetadataMixin,
 )
 
@@ -24,33 +23,6 @@ class FlextLdifServersOudTransformMixin:
     """OUD Transform helpers."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
-
-    @staticmethod
-    def apply_phase_aware_acl_handling(
-        entry_data: m.Ldif.Entry,
-        write_options: m.Ldif.WriteFormatOptions | None,
-    ) -> m.Ldif.Entry:
-        """Comment out ACL attributes outside ACL-phase writes.
-
-        Args:
-            entry_data: Entry whose ACL attributes may be commented.
-            write_options: Output formatting options controlling phases.
-
-        Returns:
-            The entry, with ACL attributes commented when applicable.
-
-        """
-        if not (write_options and write_options.comment_acl_in_non_acl_phases):
-            return entry_data
-        category = write_options.entry_category
-        acl_attrs = write_options.acl_attribute_names
-        if not (category and category != "acl" and acl_attrs):
-            return entry_data
-        acl_attrs_list = list(acl_attrs)
-        return FlextLdifServersOudAclExtractMixin.comment_acl_attributes(
-            entry_data,
-            acl_attrs_list,
-        )
 
     @staticmethod
     def determine_attribute_order(
