@@ -37,9 +37,6 @@ if TYPE_CHECKING:
     from flext_ldif.servers._oid.entry_restore import (
         FlextLdifServersOidEntryRestoreMixin,
     )
-    from flext_ldif.servers._oid.entry_restore_lines import (
-        FlextLdifServersOidEntryRestoreLinesMixin,
-    )
     from flext_ldif.servers._oid.schema import FlextLdifServersOidSchema
     from flext_ldif.servers._oid.schema_normalize import (
         FlextLdifServersOidSchemaNormalizeMixin,
@@ -64,7 +61,6 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersOidEntryMetadataMixin",
     "FlextLdifServersOidEntryNormalizeMixin",
     "FlextLdifServersOidEntryParseMixin",
-    "FlextLdifServersOidEntryRestoreLinesMixin",
     "FlextLdifServersOidEntryRestoreMixin",
     "FlextLdifServersOidSchema",
     "FlextLdifServersOidSchemaNormalizeMixin",
@@ -90,7 +86,6 @@ install_lazy_exports(
         "FlextLdifServersOidEntryMetadataMixin": ".entry_metadata",
         "FlextLdifServersOidEntryNormalizeMixin": ".entry_normalize",
         "FlextLdifServersOidEntryParseMixin": ".entry_parse",
-        "FlextLdifServersOidEntryRestoreLinesMixin": ".entry_restore_lines",
         "FlextLdifServersOidEntryRestoreMixin": ".entry_restore",
         "FlextLdifServersOidSchema": ".schema",
         "FlextLdifServersOidSchemaNormalizeMixin": ".schema_normalize",

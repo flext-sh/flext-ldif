@@ -7,3 +7,8 @@ Infra:
           "":
             - flext_ldif._settings.FlextLdifSettings
             - flext_ldif._protocols.base.FlextLdifProtocolsBase.Settings
+  release:
+    maintenance_line:
+      - 0
+      - 12
+    finalize_maintenance: true

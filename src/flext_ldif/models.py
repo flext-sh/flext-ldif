@@ -67,7 +67,6 @@ class FlextLdifModels(FlextCliModels):
         FlextLdifModelsBasesParts,
         FlextLdifModelsCollections,
         FlextLdifModelsComposite,
-        FlextLdifNamespace,
         FlextLdifModelsDomainsEntries,
         FlextLdifModelsDomainEntry,
         FlextLdifModelsDomainEntryChangeOperation,
@@ -77,9 +76,6 @@ class FlextLdifModels(FlextCliModels):
         FlextLdifModelsDomainAttributes,
         FlextLdifModelsDomainSchema,
         FlextLdifModelsDomainDN,
-        FlextLdifModelsDomainEntryChangeOperationValue,
-        FlextLdifModelsDomainEntryControl,
-        FlextLdifModelsDomainEntryStatistics,
         FlextLdifModelsEvents,
         FlextLdifModelsProcessing,
         FlextLdifModelsResults,
@@ -93,20 +89,12 @@ class FlextLdifModels(FlextCliModels):
         FlextLdifModelsSettingsMigrate,
         FlextLdifModelsSettingsValidation,
         FlextLdifModelsSettingsMisc,
+        FlextLdifNamespace,
+        FlextLdifModelsDomainEntryChangeOperationValue,
+        FlextLdifModelsDomainEntryControl,
+        FlextLdifModelsDomainEntryStatistics,
     ):
         """LDIF namespace for cross-project access."""
-
-        # =================================================================
-        # COMPOSITE MODELS — owned by ``_models/composite.py``
-        # =================================================================
-
-        Stats: ClassVar[type[FlextLdifModelsComposite.Stats]] = (
-            FlextLdifModelsComposite.Stats
-        )
-
-        OidAclMetadataConfig: ClassVar[
-            type[FlextLdifModelsComposite.OidAclMetadataConfig]
-        ] = FlextLdifModelsComposite.OidAclMetadataConfig
 
     # Top-level facade aliases: the api-freeze contract requires
     # ``flext_ldif.m.X`` and ``flext_ldif.FlextLdifModels.X`` to be the same

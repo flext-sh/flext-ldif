@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from flext_ldif.services.detector import FlextLdifDetector
     from flext_ldif.services.detector_scoring import FlextLdifDetectorScoring
     from flext_ldif.services.entries import FlextLdifEntries
+    from flext_ldif.services.facade import FlextLdifFacade
     from flext_ldif.services.filters import FlextLdifFilters
     from flext_ldif.services.migration import FlextLdifMigrationPipeline
     from flext_ldif.services.parser import FlextLdifParser
@@ -64,6 +65,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifDetector",
     "FlextLdifDetectorScoring",
     "FlextLdifEntries",
+    "FlextLdifFacade",
     "FlextLdifFilters",
     "FlextLdifMigrationPipeline",
     "FlextLdifParser",
@@ -96,6 +98,7 @@ install_lazy_exports(
         "FlextLdifDetector": ".detector",
         "FlextLdifDetectorScoring": ".detector_scoring",
         "FlextLdifEntries": ".entries",
+        "FlextLdifFacade": ".facade",
         "FlextLdifFilters": ".filters",
         "FlextLdifMigrationPipeline": ".migration",
         "FlextLdifParser": ".parser",
