@@ -35,7 +35,9 @@ class TestsFlextLdifClientContract:
                 options=m.Cli.ProcessOptions(
                     env={
                         "FLEXT_LDIF_LDIF__LDIF_ENCODING": encoding,
-                        "FLEXT_LDIF_LDIF__LDIF_STRICT_VALIDATION": c.ParserBooleanToken.FALSE,
+                        "FLEXT_LDIF_LDIF__LDIF_STRICT_VALIDATION": (
+                            c.ParserBooleanToken.FALSE
+                        ),
                     },
                 ),
             ),

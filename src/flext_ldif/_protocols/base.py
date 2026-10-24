@@ -40,10 +40,7 @@ class FlextLdifProtocolsBase:
     class Settings(p.Cli.Settings, Protocol):
         """MRO-composed settings contract with the LDIF namespace."""
 
-        @property
-        def Ldif(self) -> FlextLdifProtocolsBase.LdifSettings:
-            """Namespaced LDIF settings branch."""
-            ...
+        Ldif: FlextLdifProtocolsBase.LdifSettings
 
     @runtime_checkable
     class ValidationService(Protocol):
