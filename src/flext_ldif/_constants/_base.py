@@ -151,11 +151,11 @@ class FlextLdifConstantsBaseParts:
 
         @unique
         class ChangeOperation(StrEnum):
-            """RFC 2849 modify operation names."""
+            """RFC 2849 modify names, independent of collection merge strategies."""
 
             ADD = "add"
             DELETE = "delete"
-            REPLACE = c.MergeStrategy.REPLACE
+            REPLACE = "replace"
             INCREMENT = "increment"
 
         @unique
