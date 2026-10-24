@@ -1,68 +1,33 @@
 # AGENTS.md — flext-ldif
 
-> **Parent workspace law** lives in [`../AGENTS.md`](../AGENTS.md) — read it first.
-> Universal engineering core: `~/.agents/UNIVERSAL_CORE.md`. Composition: global
-> skills + parent/root `AGENTS.md` + this scope delta. Do not re-embed universal law.
->
-> **Standalone / independent mode:** when `../AGENTS.md` does not resolve, pin the
-> parent raw `AGENTS.md` URL to the same branch/release as this package (never
-> `main`): <https://raw.githubusercontent.com/flext-sh/flext/0.12.0-dev/AGENTS.md>
+Read the branch-matched [FLEXT root](../AGENTS.md) and its local flext-law through
+that root's authority entry point. In standalone mode resolve the same branch or
+release; a coincidental parent instruction file does not establish FLEXT authority.
+This file adds only this package's domain delta. Command routing, architecture
+and universal execution stay with their parent owners.
+
+Embedded AI Hub or Beads generated blocks are retired delivery material, not
+active local rules. Their withdrawal remains the publisher's responsibility.
 
 <!-- AIHUB-AGENTS-SCOPE-LOCAL-BEGIN -->
 
-**Package:** `flext_ldif` · ~32.7k src LOC · deps: `flext-cli`, `flext-core`
+**Package:** `flext_ldif` · deps: `flext-cli`, `flext-core`
 
 ## Overview
 
 Enterprise LDIF processing — parse/write LDIF across many directory-server dialects.
 Base library for `flext-ldap`, `flext-tap-ldif`, `flext-target-ldif`, `flext-dbt-ldif`.
 
-## Structure
-
-```text
-src/flext_ldif/
-├── api.py                # FlextLdif facade: .categorization / .acl / .entry + registry resolution, migration, validation
-├── base.py shared.py
-├── servers/              # per-dialect handlers: rfc, relaxed, tivoli, novell, oud, oid, openldap(1), apache, ds389, ad …
-│   └── __init__.py       # REGISTRY — if emptied, ALL parsing breaks fleet-wide
-├── services/             # parser, writer, validation, conversion, acl, migration, pipeline, analysis
-├── constants.py typings.py protocols.py models.py utilities.py   # AUTO-GENERATED facets
-└── _constants/ _typings/ _protocols/ _models/ _utilities/
-```
-
-## Code Map
-
-| Symbol          | Kind    | Location        | Role                                                                     |
-| --------------- | ------- | --------------- | ------------------------------------------------------------------------ |
-| `FlextLdif`     | class   | `api.py`        | facade: categorization / acl / entry / registry / migration / validation |
-| server handlers | classes | `servers/*.py`  | dialect-specific parse/write                                             |
-| services        | classes | `services/*.py` | parser / writer / validation / conversion / acl / migration / pipeline   |
-
 ## Conventions (specific to this package)
 
 - **Server behavior is registry-selected via `server_type`** — never hardcode a dialect
   handler; go through the registry.
 - Entries and results are typed `m.*` models returned directly (no dict roundtrip).
-- Config/settings canonical pattern: ADR-012.
-- Codemod governance (ast-grep + make mod): ADR-014.
 
 ## Anti-Patterns / Gotchas
 
-- **The `servers/__init__.py` registry is fleet-critical:** if its imports are emptied
-  (a known past codegen regression), every downstream `parse_ldif` fails with `rfc`.
-  Keep all server imports wired.
-- Stray `test_typing_*.py.bak` files exist — not active code, don't treat as
-  entrypoints.
-
-## Commands
-
-Run from the workspace root (selector-free; the root dispatcher routes to every
-member — `PROJECT=` is not a root Make variable):
-
-```bash
-make check
-make test
-```
+- Server discovery must retain its public registry contract through generated
+  lazy exports. A historical eager-import workaround is not a second export path.
 
 <!-- AIHUB-AGENTS-SCOPE-LOCAL-END -->
 
