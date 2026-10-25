@@ -88,6 +88,13 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             "logindisabled",
             "loginexpirationtime",
         ])
+        ENTRY_DETECTION: ClassVar[m.Ldif.EntryDetectionMarkers] = (
+            m.Ldif.EntryDetectionMarkers(
+                dn_markers=DETECTION_DN_MARKERS,
+                objectclass_names=DETECTION_OBJECTCLASS_NAMES,
+                attribute_names=DETECTION_ATTRIBUTE_MARKERS,
+            )
+        )
         NOVELL_SEGMENT_INDEX_TRUSTEE: ClassVar[int] = 1
         NOVELL_SEGMENT_INDEX_RIGHTS: ClassVar[int] = 2
         NOVELL_SPECIFIC: ClassVar[frozenset[str]] = frozenset([
@@ -429,29 +436,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 True when the entry carries eDirectory markers.
 
             """
-            if not entry_dn:
-                return False
-            dn_lower = entry_dn.lower()
-            if any(
-                marker in dn_lower
-                for marker in FlextLdifServersNovell.Constants.DETECTION_DN_MARKERS
-            ):
-                return True
-            normalized_attrs = {
-                name.lower(): values for name, values in attributes.items()
-            }
-            if any(
-                marker in normalized_attrs
-                for marker in (
-                    FlextLdifServersNovell.Constants.DETECTION_ATTRIBUTE_MARKERS
-                )
-            ):
-                return True
-            object_classes = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
-            return any(
-                oc.lower()
-                in FlextLdifServersNovell.Constants.DETECTION_OBJECTCLASS_NAMES
-                for oc in object_classes
+            constants = FlextLdifServersNovell.Constants
+            return u.Ldif.entry_carries_markers(
+                entry_dn, attributes, constants.ENTRY_DETECTION
             )
 
         @override
