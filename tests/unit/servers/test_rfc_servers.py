@@ -13,7 +13,12 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import FlextLdif
-from flext_ldif.servers import FlextLdifServersBase, FlextLdifServersRfc
+from flext_ldif.servers import (
+    FlextLdifServersBaseEntry,
+    FlextLdifServersBaseSchema,
+    FlextLdifServersBaseSchemaAcl,
+    FlextLdifServersRfc,
+)
 from tests import c, m, tm
 
 
@@ -118,16 +123,16 @@ class TestsFlextLdifRfcServers:
     def test_base_acl_hook_raises_when_not_redefined() -> None:
         """An incomplete ACL capability cannot be constructed."""
         with pytest.raises(TypeError, match=r"abstract.*_parse_acl"):
-            FlextLdifServersBase.Acl()
+            FlextLdifServersBaseSchemaAcl()
 
     @staticmethod
     def test_base_entry_hook_raises_when_not_redefined() -> None:
         """An incomplete entry capability cannot be constructed."""
         with pytest.raises(TypeError, match=r"abstract.*_parse_content"):
-            FlextLdifServersBase.Entry()
+            FlextLdifServersBaseEntry()
 
     @staticmethod
     def test_base_schema_hook_raises_when_not_redefined() -> None:
         """An incomplete schema capability cannot be constructed."""
         with pytest.raises(TypeError, match=r"abstract.*can_handle_attribute"):
-            FlextLdifServersBase.Schema()
+            FlextLdifServersBaseSchema()

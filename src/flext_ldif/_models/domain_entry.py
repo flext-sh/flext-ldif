@@ -17,9 +17,7 @@ from flext_ldif._models import (
     FlextLdifModelsDomainAttributes,
     FlextLdifModelsDomainDN,
     FlextLdifModelsDomainEntryChangeOperation,
-    FlextLdifModelsDomainEntryChangeOperationValue,
     FlextLdifModelsDomainEntryControl,
-    FlextLdifModelsDomainEntryStatistics,
     FlextLdifModelsDomainMetadata,
 )
 from flext_ldif._utilities import FlextLdifUtilitiesEntry
@@ -27,24 +25,6 @@ from flext_ldif._utilities import FlextLdifUtilitiesEntry
 
 class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
     """Namespace for LDIF entry domain models."""
-
-    EntryStatistics = FlextLdifModelsDomainEntryStatistics
-    """Canonical entry statistics model.
-
-    Implementation module: ``domain_entry_statistics``.
-    """
-
-    Control = FlextLdifModelsDomainEntryControl
-    """Canonical RFC 2849 control line model.
-
-    Implementation module: ``domain_entry_control``.
-    """
-
-    ChangeOperationValue = FlextLdifModelsDomainEntryChangeOperationValue
-    """Canonical modify-operation value model.
-
-    Implementation module: ``domain_entry_change_value``.
-    """
 
     class Entry(m.Entity, m.DynamicModel):
         """LDIF entry domain model.
@@ -97,7 +77,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             ),
         ] = c.Ldif.RecordKind.CONTENT
         controls: Annotated[
-            t.SequenceOf[FlextLdifModelsDomainEntryControl],
+            t.SequenceOf[FlextLdifModelsDomainEntryControl.Control],
             m.Field(description="RFC 2849 control lines associated with the record"),
         ] = m.Field(default_factory=tuple)
         change_operations: Annotated[

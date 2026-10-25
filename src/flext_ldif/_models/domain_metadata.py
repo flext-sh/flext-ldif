@@ -293,7 +293,7 @@ class FlextLdifModelsDomainMetadata:
             ),
         ] = None
         processing_stats: Annotated[
-            FlextLdifModelsDomainEntryStatistics | None,
+            FlextLdifModelsDomainEntryStatistics.EntryStatistics | None,
             m.Field(
                 description="Complete statistics tracking for entry transformations",
             ),

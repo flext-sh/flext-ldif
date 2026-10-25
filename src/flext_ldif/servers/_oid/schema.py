@@ -25,27 +25,6 @@ class FlextLdifServersOidSchema(
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
-    def __init__(
-        self,
-        schema_service: p.Ldif.SchemaServer | None = None,
-        parent_server: p.Ldif.SchemaServer | None = None,
-        **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-    ) -> None:
-        """Initialize the OID schema server.
-
-        Args:
-            schema_service: Optional schema facade injected by the DI container.
-            parent_server: Optional parent schema server instance.
-            **kwargs: Scalar and schema-model fields forwarded to the base init.
-
-        """
-        self._init_base_schema(
-            schema_service,
-            parent_server,
-            frozenset({"_parent_server", "_schema_service"}),
-            **kwargs,
-        )
-
     @staticmethod
     def _add_target_metadata(
         attr_data: m.Ldif.SchemaAttribute,

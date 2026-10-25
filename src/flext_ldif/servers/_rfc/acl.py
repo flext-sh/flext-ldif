@@ -18,64 +18,6 @@ from flext_ldif.servers._base import (
 class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
     """LDAP ACL Server - Base Implementation."""
 
-    def __new__(
-        cls,
-        acl_service: p.Ldif.AclServer | None = None,
-        parent_server: Self | None = None,
-        **kwargs: t.Ldif.Scalar | m.Ldif.Acl,
-    ) -> Self:
-        """Override __new__ to support auto-execute and processor instantiation."""
-        del acl_service
-        instance: Self = super().__new__(cls)
-        auto_execute_kwargs = {
-            "data",
-            c.ContextScope.OPERATION,
-            "parent_server",
-            "_parent_server",
-        }
-        _ = {k: v for k, v in kwargs.items() if k not in auto_execute_kwargs}
-        parent_server_raw = (
-            parent_server if parent_server is not None else kwargs.get("_parent_server")
-        )
-        parent_server_value: Self | None = (
-            parent_server_raw if isinstance(parent_server_raw, cls) else None
-        )
-        acl_instance: Self = instance
-        if parent_server_value is not None:
-            object.__setattr__(acl_instance, "parent_server", parent_server_value)
-        if cls.auto_execute:
-            data_raw = kwargs.get("data")
-            data: str | m.Ldif.Acl | None = (
-                data_raw if isinstance(data_raw, str) else None
-            )
-            op_raw = kwargs.get(c.ContextScope.OPERATION)
-            op: str | None = None
-            if isinstance(op_raw, str) and op_raw == "parse":
-                op = "parse"
-            elif isinstance(op_raw, str) and op_raw == "write":
-                op = "write"
-            acl_instance.execute(data=data, operation=op)
-        return instance
-
-    def __init__(
-        self,
-        acl_service: p.Ldif.AclServer | None = None,
-        parent_server: Self | None = None,
-        **_kwargs: t.Ldif.Scalar | m.Ldif.Acl,
-    ) -> None:
-        """Initialize RFC ACL server service."""
-        acl_service_typed: p.Ldif.AclServer | None = (
-            acl_service if acl_service is not None else None
-        )
-        FlextLdifServersBaseSchemaAcl.__init__(
-            self,
-            acl_service=acl_service_typed,
-            _parent_server=None,
-        )
-        del _kwargs
-        if parent_server is not None:
-            object.__setattr__(self, "parent_server", parent_server)
-
     @overload
     def __call__(
         self,

@@ -47,11 +47,11 @@ class FlextLdifParserValues:
         return (payload, c.Ldif.ValueOrigin.PLAIN, payload)
 
     @staticmethod
-    def build_control(payload: str) -> FlextLdifModelsDomainEntryControl:
+    def build_control(payload: str) -> FlextLdifModelsDomainEntryControl.Control:
         """Parse RFC 2849 control payload into a structured model.
 
         Returns:
-            The resulting ``FlextLdifModelsDomainEntryControl``.
+            The resulting ``FlextLdifModelsDomainEntryControl.Control``.
 
         """
         minimum_control_tokens = 2
@@ -77,7 +77,7 @@ class FlextLdifParserValues:
             value, value_origin, raw_value = FlextLdifParserValues.decode_value(
                 value_token,
             )
-        return FlextLdifModelsDomainEntryControl(
+        return FlextLdifModelsDomainEntryControl.Control(
             control_type=control_type,
             criticality=criticality,
             control_value=value,

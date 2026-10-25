@@ -33,7 +33,7 @@ class FlextLdifMetadataEntryStats:
         updated_stats = (
             processing_stats
             if processing_stats is not None
-            else FlextLdifModelsDomainEntryStatistics(
+            else FlextLdifModelsDomainEntryStatistics.EntryStatistics(
                 attributes_added=[],
                 attributes_removed=[],
                 attributes_modified=[],

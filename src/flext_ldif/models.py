@@ -76,6 +76,9 @@ class FlextLdifModels(FlextCliModels):
         FlextLdifModelsDomainAttributes,
         FlextLdifModelsDomainSchema,
         FlextLdifModelsDomainDN,
+        FlextLdifModelsDomainEntryChangeOperationValue,
+        FlextLdifModelsDomainEntryControl,
+        FlextLdifModelsDomainEntryStatistics,
         FlextLdifModelsEvents,
         FlextLdifModelsProcessing,
         FlextLdifModelsResults,
@@ -90,9 +93,6 @@ class FlextLdifModels(FlextCliModels):
         FlextLdifModelsSettingsValidation,
         FlextLdifModelsSettingsMisc,
         FlextLdifNamespace,
-        FlextLdifModelsDomainEntryChangeOperationValue,
-        FlextLdifModelsDomainEntryControl,
-        FlextLdifModelsDomainEntryStatistics,
     ):
         """LDIF namespace for cross-project access."""
 

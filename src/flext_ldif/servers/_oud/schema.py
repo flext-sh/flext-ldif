@@ -166,20 +166,6 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
             sanitized.append(value.model_copy(update={"value": updated}))
         return sanitized
 
-    def __init__(
-        self,
-        schema_service: p.Ldif.SchemaServer | None = None,
-        parent_server: p.Ldif.SchemaServer | None = None,
-        **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-    ) -> None:
-        """Initialize OUD schema server."""
-        self._init_base_schema(
-            schema_service,
-            parent_server,
-            frozenset({"_parent_server", "_schema_service"}),
-            **kwargs,
-        )
-
     @override
     def extract_schemas_from_ldif(
         self,

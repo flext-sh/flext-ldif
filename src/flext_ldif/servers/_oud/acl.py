@@ -7,10 +7,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableMapping
-from typing import ClassVar, Self, override
+from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._base import FlextLdifServersBaseSchemaAcl
 from flext_ldif.servers._oud import (
     FlextLdifServersOudAclWriteMixin,
     FlextLdifServersOudConstants,
@@ -22,33 +21,6 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
     """Oracle OUD ACL Implementation (RFC 4876 ACI Format)."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
-
-    def __init__(
-        self,
-        acl_service: p.Ldif.AclServer | None = None,
-        parent_server: Self | None = None,
-        **kwargs: t.Ldif.Scalar,
-    ) -> None:
-        """Initialize OUD ACL server."""
-        filtered_kwargs: t.MutableConfigValueMapping = {
-            k: v
-            for k, v in kwargs.items()
-            if k != "_parent_server" and isinstance(v, (str, float, bool))
-        }
-        acl_service_typed: p.Ldif.AclServer | None = (
-            acl_service if acl_service is not None else None
-        )
-        parent_server_typed: FlextLdifServersBaseSchemaAcl | None = (
-            parent_server
-            if isinstance(parent_server, FlextLdifServersBaseSchemaAcl)
-            else None
-        )
-        FlextLdifServersBaseSchemaAcl.__init__(
-            self,
-            acl_service=acl_service_typed,
-            _parent_server=parent_server_typed,
-            **filtered_kwargs,
-        )
 
     @override
     def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
