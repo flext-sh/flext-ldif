@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import TypeAlias
 
 from flext_cli import FlextCliModels
 
@@ -99,9 +99,7 @@ class FlextLdifModels(FlextCliModels):
     # Top-level facade aliases: the api-freeze contract requires
     # ``flext_ldif.m.X`` and ``flext_ldif.FlextLdifModels.X`` to be the same
     # object for every published model.
-    Entry: ClassVar[type[FlextLdifModelsDomainEntry.Entry]] = (
-        FlextLdifModelsDomainEntry.Entry
-    )
+    Entry: TypeAlias = FlextLdifModelsDomainEntry.Entry
 
 
 m = FlextLdifModels

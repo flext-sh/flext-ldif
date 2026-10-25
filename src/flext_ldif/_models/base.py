@@ -10,7 +10,7 @@ from __future__ import annotations
 from flext_cli import m
 
 from flext_ldif import p, t
-from flext_ldif._models._base import FlextLdifModelsBasesParts, FlextLdifShared
+from flext_ldif._models.elements import FlextLdifModelsBasesParts
 
 
 class FlextLdifModelsBases(FlextLdifModelsBasesParts):
@@ -24,4 +24,4 @@ class FlextLdifModelsBases(FlextLdifModelsBasesParts):
         )
 
 
-__all__: list[str] = ["FlextLdifModelsBases", "FlextLdifShared"]
+__all__: list[str] = ["FlextLdifModelsBases"]

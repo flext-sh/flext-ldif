@@ -15,7 +15,7 @@ class FlextLdif(FlextLdifFacade):
     __init__ = FlextLdifFacade.__init__
 
 
-ldif: FlextLdif = FlextLdif.model_validate({})
-"""Callable public facade with an isolated instance-scoped registry."""
+ldif: FlextLdif = FlextLdif.fetch_global()
+"""Process-wide public facade singleton, the same instance ``fetch_global`` returns."""
 
 __all__: list[str] = ["FlextLdif", "ldif"]

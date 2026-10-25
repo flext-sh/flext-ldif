@@ -4,7 +4,6 @@ Enumerations and the OUD-output ACL taxonomy the ``_constants`` family base
 and its sibling parts consume without importing another family module.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
-src/flext_ldif/_constants/_base
 SPDX-License-Identifier: MIT
 """
 

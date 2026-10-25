@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldif._models._base import FlextLdifModelsBasesParts
     from flext_ldif._models._settings_acl import FlextLdifModelsSettingsAcl
     from flext_ldif._models._settings_criteria import FlextLdifModelsSettingsCriteria
     from flext_ldif._models._settings_migrate import FlextLdifModelsSettingsMigrate
@@ -29,7 +28,7 @@ if TYPE_CHECKING:
         FlextLdifModelsSettingsValidation,
     )
     from flext_ldif._models.acl_convert import FlextLdifModelsAclConvert
-    from flext_ldif._models.base import FlextLdifModelsBases, FlextLdifShared
+    from flext_ldif._models.base import FlextLdifModelsBases
     from flext_ldif._models.collections import FlextLdifModelsCollections
     from flext_ldif._models.composite import FlextLdifModelsComposite
     from flext_ldif._models.config import FlextLdifNamespace
@@ -52,6 +51,7 @@ if TYPE_CHECKING:
     )
     from flext_ldif._models.domain_metadata import FlextLdifModelsDomainMetadata
     from flext_ldif._models.domain_schema import FlextLdifModelsDomainSchema
+    from flext_ldif._models.elements import FlextLdifModelsBasesParts
     from flext_ldif._models.events import FlextLdifModelsEvents
     from flext_ldif._models.processing import FlextLdifModelsProcessing
     from flext_ldif._models.results import FlextLdifModelsResults
@@ -90,7 +90,6 @@ __all__: tuple[str, ...] = (
     "FlextLdifModelsSettingsRules",
     "FlextLdifModelsSettingsValidation",
     "FlextLdifNamespace",
-    "FlextLdifShared",
 )
 
 install_lazy_exports(
@@ -99,7 +98,7 @@ install_lazy_exports(
     MappingProxyType({
         "FlextLdifModelsAclConvert": ".acl_convert",
         "FlextLdifModelsBases": ".base",
-        "FlextLdifModelsBasesParts": "._base",
+        "FlextLdifModelsBasesParts": ".elements",
         "FlextLdifModelsCollections": ".collections",
         "FlextLdifModelsComposite": ".composite",
         "FlextLdifModelsDomainAcl": ".domain_acl",
@@ -127,7 +126,6 @@ install_lazy_exports(
         "FlextLdifModelsSettingsRules": "._settings_rules",
         "FlextLdifModelsSettingsValidation": "._settings_validation",
         "FlextLdifNamespace": ".config",
-        "FlextLdifShared": ".base",
     }),
     public_exports=__all__,
 )

@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from flext_cli import c
 
-from flext_ldif._constants._base import FlextLdifConstantsBaseParts
+from flext_ldif._constants.enums import FlextLdifConstantsBaseParts
 
 FlextLdifConstantsAclConvertOud = (
     FlextLdifConstantsBaseParts.FlextLdifConstantsAclConvertOud

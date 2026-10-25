@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING
 
 from flext_ldif import c, m, p, r, u
 from flext_ldif.services import FlextLdifDetectorScoring
@@ -16,11 +16,7 @@ if TYPE_CHECKING:
 
 
 class FlextLdifDetector(FlextLdifDetectorScoring):
-    """Detector service composed directly into the LDIF facade via MRO.
-
-    Overrides ``_get_effective_server_type_value`` from parser and writer
-    services so the facade can auto-detect the active server type.
-    """
+    """Detector service composed directly into the LDIF facade via MRO."""
 
     def detect_server_type(
         self,
@@ -89,21 +85,6 @@ class FlextLdifDetector(FlextLdifDetectorScoring):
             if detection_result.success:
                 return r[str].ok(detection_result.value.detected_server_type)
         return r[str].ok(c.Ldif.ServerTypes.RFC.value)
-
-    @override
-    def _get_effective_server_type_value(self) -> str:
-        """Resolve effective server type via detector (overrides ParserMixin default).
-
-        Returns:
-            The resulting ``str``.
-
-        """
-        result: p.Result[str] = self.resolve_effective_server_type()
-        if result.success:
-            effective_server_type: str = result.unwrap()
-            return effective_server_type
-        rfc_server_type: str = str(c.Ldif.ServerTypes.RFC.value)
-        return rfc_server_type
 
 
 __all__: list[str] = ["FlextLdifDetector"]
