@@ -63,7 +63,11 @@ class FlextLdifConversion(FlextLdifConversionEntryMixin, FlextLdifConversionAclM
                 source_schema_result.value,
                 target_schema_result.value,
             )
-        return self._convert_acl(source_server, target_server, model_instance)
+        return self._convert_acl(
+            source_server,
+            target_server,
+            m.Ldif.Acl.model_validate(model_instance, from_attributes=True),
+        )
 
     def convert_model(
         self,

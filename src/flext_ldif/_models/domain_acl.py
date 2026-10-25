@@ -281,10 +281,9 @@ class FlextLdifModelsDomainAcl:
 
         Example:
             >>> metadata = AclWriteMetadata.from_extensions(entry.metadata.extensions)
-            >>> if metadata.original_format:
-            ...     sanitized = FlextLdifUtilities.ACL.sanitize_acl_name(
-            ...         metadata.original_format
-            ...     )
+            >>> original = metadata.original_format
+            >>> if original:
+            ...     name = FlextLdifUtilities.ACL.sanitize_acl_name(original)
 
         """
 

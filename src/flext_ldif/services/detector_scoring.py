@@ -80,16 +80,7 @@ class FlextLdifDetectorScoring(FlextLdifServer):
                 constants.DETECTION_PATTERN,
                 constants.DETECTION_OID_PATTERN,
             )
-            has_detection_pattern = any(
-                bool(
-                    pattern_value
-                    if isinstance(pattern_value, str)
-                    else ""
-                    if pattern_value is None
-                    else pattern_value.pattern,
-                )
-                for pattern_value in pattern_values
-            )
+            has_detection_pattern = any(pattern_values)
             if (
                 constants.DETECTION_WEIGHT > 0
                 and constants.DETECTION_ATTRIBUTES
