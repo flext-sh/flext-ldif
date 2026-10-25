@@ -311,7 +311,6 @@ class FlextLdifServersOidSchema(
 
         """
         fixed_name = u.Ldif.normalize_name(attr_data.name) or attr_data.name
-        fixed_equality = attr_data.equality
         fixed_substr = attr_data.substr
         original_substr = fixed_substr
         fixed_substr = u.Ldif.replace_invalid_substr_rule(
@@ -336,26 +335,8 @@ class FlextLdifServersOidSchema(
                 attribute_name=fixed_name,
                 attribute_oid=attr_data.oid,
             )
-        x_origin_value = attr_data.x_origin
-        return m.Ldif.SchemaAttribute(
-            oid=attr_data.oid,
-            name=fixed_name,
-            desc=attr_data.desc,
-            sup=attr_data.sup,
-            equality=fixed_equality,
-            ordering=attr_data.ordering,
-            substr=fixed_substr,
-            syntax=attr_data.syntax,
-            length=attr_data.length,
-            usage=attr_data.usage,
-            single_value=attr_data.single_value,
-            no_user_modification=attr_data.no_user_modification,
-            metadata=attr_data.metadata,
-            x_origin=x_origin_value,
-            x_file_ref=attr_data.x_file_ref,
-            x_name=attr_data.x_name,
-            x_alias=attr_data.x_alias,
-            x_oid=attr_data.x_oid,
+        return attr_data.model_copy(
+            update={"name": fixed_name, "substr": fixed_substr},
         )
 
     def _oid_matching_rules(

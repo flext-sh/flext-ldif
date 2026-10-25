@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from flext_ldif import c, p, t
 from flext_ldif._models import FlextLdifModelsSettings
+from flext_ldif._utilities import FlextLdifEntryValidation
 
 
 class FlextLdifEntryServerRules:
@@ -57,10 +58,9 @@ class FlextLdifEntryServerRules:
         violations: t.MutableSequenceOf[str] = []
         if not rules.requires_naming_attr or not dn_value or (not entry.attributes):
             return violations
-        first_rdn = dn_value.split(",", maxsplit=1)[0].strip()
-        if "=" not in first_rdn:
+        naming_attr = FlextLdifEntryValidation.naming_attribute(dn_value)
+        if naming_attr is None:
             return violations
-        naming_attr = first_rdn.split("=")[0].strip().lower()
         has_naming_attr = any(
             attr_name.lower() == naming_attr
             for attr_name in entry.attributes.attributes

@@ -56,26 +56,21 @@ class FlextLdifServersOudAclSubjectMixin(FlextLdifServersRfcAcl):
         )
         if not subject_type or subject_type == "self":
             return f'userdn="{FlextLdifServersOudConstants.ACL_SELF_SUBJECT}";)'
-        attr_suffix_map = {
-            "dn_attr": "LDAPURL",
-            "guid_attr": "USERDN",
-            "group_attr": "GROUPDN",
-        }
-        if subject_type in attr_suffix_map:
-            suffix = attr_suffix_map[subject_type]
+        suffix = FlextLdifServersOudConstants.ACL_SUBJECT_ATTR_SUFFIXES.get(
+            subject_type
+        )
+        if suffix is not None:
             return f'userattr="{subject_value}#{suffix}";)'
         filtered_value = (
             subject_value[: -len(base_dn)].rstrip(",")
             if base_dn and subject_value.endswith(base_dn)
             else subject_value
         )
-        bind_operator = {
-            c.Ldif.AclSubjectType.USER: "userdn",
-            "group": "groupdn",
-            "role": "roledn",
-        }.get(
+        bind_operator = FlextLdifServersOudConstants.ACL_SUBJECT_BIND_OPERATORS.get(
             subject_type,
-            "userdn",
+            FlextLdifServersOudConstants.ACL_SUBJECT_BIND_OPERATORS[
+                c.Ldif.AclSubjectType.USER
+            ],
         )
         formatted: str = u.Ldif.format_aci_subject(
             subject_type,

@@ -225,15 +225,7 @@ class FlextLdifServersOudTransformMixin:
             else:
                 restored_values = fallback_values
             restored[orig_case] = restored_values
-        return entry_data.model_copy(
-            update={
-                "attributes": m.Ldif.Attributes.model_validate({
-                    "attributes": restored,
-                    "attribute_metadata": attributes.attribute_metadata,
-                    "metadata": attributes.metadata,
-                }),
-            },
-        )
+        return u.Ldif.entry_with_attributes(entry_data, restored)
 
     @staticmethod
     def apply_syntax_corrections(

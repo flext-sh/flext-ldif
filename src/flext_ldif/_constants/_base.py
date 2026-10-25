@@ -216,6 +216,15 @@ class FlextLdifConstantsBaseParts:
             OID = "oid"
 
         @unique
+        class RfcValidationContext(StrEnum):
+            """Context recorded with the RFC compliance findings of one entry."""
+
+            VALIDATOR_KEY = "validator"
+            ATTRIBUTE_COUNT_KEY = "attribute_count"
+            TOTAL_VIOLATIONS_KEY = "total_violations"
+            VALIDATOR_NAME = "validate_entry_rfc_compliance"
+
+        @unique
         class ServerMetadataKeys(StrEnum):
             """Dictionary keys for server metadata and specific entry properties."""
 

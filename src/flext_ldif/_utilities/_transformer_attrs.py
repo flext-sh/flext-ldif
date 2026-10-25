@@ -20,6 +20,31 @@ class FlextLdifUtilitiesEntryAttrsNormalization:
     """Stateless attribute normalization of one LDIF entry."""
 
     @staticmethod
+    def entry_with_attributes(
+        entry: m.Ldif.Entry,
+        attributes: t.MutableStrSequenceMapping,
+    ) -> m.Ldif.Entry:
+        """Replace an entry's attribute values, keeping its attribute metadata.
+
+        Returns:
+            A copy of ``entry`` carrying ``attributes`` with the original
+            per-attribute and container metadata.
+
+        """
+        current = entry.attributes
+        return entry.model_copy(
+            update={
+                "attributes": m.Ldif.Attributes.model_validate({
+                    "attributes": attributes,
+                    "attribute_metadata": (
+                        current.attribute_metadata if current is not None else {}
+                    ),
+                    "metadata": current.metadata if current is not None else None,
+                }),
+            },
+        )
+
+    @staticmethod
     def normalize_entry_attrs(
         item: m.Ldif.Entry,
         *,

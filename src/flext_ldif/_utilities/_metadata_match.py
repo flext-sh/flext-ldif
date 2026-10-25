@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import c, t
+from flext_ldif._utilities import FlextLdifMetadataSpacing
 
 
 class FlextLdifMetadataMatchDetails:
@@ -20,41 +21,12 @@ class FlextLdifMetadataMatchDetails:
             The resulting ``t.MutableFeatureFlagMapping``.
 
         """
-        details: t.MutableFeatureFlagMapping = {}
-        equality_match = c.Ldif.SCHEMA_EQUALITY_TOKEN_RE.search(definition)
-        if equality_match:
-            details["equality_presence"] = True
-            before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
-                definition[: equality_match.start()],
-            )
-            details["equality_spacing_before"] = (
-                before_match.group(1) if before_match else ""
-            )
-        else:
-            details["equality_presence"] = False
-        substr_match = c.Ldif.SCHEMA_SUBSTR_TOKEN_BARE_RE.search(definition)
-        if substr_match:
-            details["substr_presence"] = True
-            before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
-                definition[: substr_match.start()],
-            )
-            details["substr_spacing_before"] = (
-                before_match.group(1) if before_match else ""
-            )
-        else:
-            details["substr_presence"] = False
-        ordering_match = c.Ldif.SCHEMA_ORDERING_TOKEN_BARE_RE.search(definition)
-        if ordering_match:
-            details["ordering_presence"] = True
-            before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
-                definition[: ordering_match.start()],
-            )
-            details["ordering_spacing_before"] = (
-                before_match.group(1) if before_match else ""
-            )
-        else:
-            details["ordering_presence"] = False
-        return details
+        token = FlextLdifMetadataSpacing.token_details
+        return {
+            **token(definition, c.Ldif.SCHEMA_EQUALITY_TOKEN_RE, "equality"),
+            **token(definition, c.Ldif.SCHEMA_SUBSTR_TOKEN_BARE_RE, "substr"),
+            **token(definition, c.Ldif.SCHEMA_ORDERING_TOKEN_BARE_RE, "ordering"),
+        }
 
     @staticmethod
     def extract_sup_details(definition: str) -> t.MutableFeatureFlagMapping:
@@ -71,11 +43,8 @@ class FlextLdifMetadataMatchDetails:
             details["sup_value"] = sup_match.group(1)
             sup_pos = definition.find("SUP")
             if sup_pos >= 0:
-                before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
-                    definition[:sup_pos],
-                )
-                details["sup_spacing_before"] = (
-                    before_match.group(1) if before_match else ""
+                details["sup_spacing_before"] = FlextLdifMetadataSpacing.spacing_before(
+                    definition, sup_pos
                 )
         else:
             details["sup_presence"] = False
@@ -89,19 +58,9 @@ class FlextLdifMetadataMatchDetails:
             The resulting ``t.MutableFeatureFlagMapping``.
 
         """
-        details: t.MutableFeatureFlagMapping = {}
-        single_value_match = c.Ldif.SCHEMA_SINGLE_VALUE_RE.search(definition)
-        if single_value_match:
-            details["single_value_presence"] = True
-            before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
-                definition[: single_value_match.start()],
-            )
-            details["single_value_spacing_before"] = (
-                before_match.group(1) if before_match else ""
-            )
-        else:
-            details["single_value_presence"] = False
-        return details
+        return FlextLdifMetadataSpacing.token_details(
+            definition, c.Ldif.SCHEMA_SINGLE_VALUE_RE, "single_value"
+        )
 
     @staticmethod
     def extract_leading_trailing_spaces(definition: str) -> t.MutableStrMapping:

@@ -155,6 +155,20 @@ class FlextLdifConstantsServersOud:
         ACL_BIND_RULE_TYPE_GROUPDN: ACL_GROUPDN_PATTERN,
     })
 
+    ACL_SUBJECT_ATTR_SUFFIXES: ClassVar[t.StrMapping] = MappingProxyType({
+        "dn_attr": "LDAPURL",
+        "guid_attr": "USERDN",
+        "group_attr": "GROUPDN",
+    })
+    """``userattr`` value suffix per attribute-based ACI subject type."""
+
+    ACL_SUBJECT_BIND_OPERATORS: ClassVar[t.StrMapping] = MappingProxyType({
+        FlextLdifConstantsEnums.AclSubjectType.USER: "userdn",
+        FlextLdifConstantsEnums.AclSubjectType.GROUP: "groupdn",
+        FlextLdifConstantsEnums.AclSubjectType.ROLE: "roledn",
+    })
+    """ACI bind operator per DN-based subject type; others bind as ``userdn``."""
+
     ACL_NORMALIZE_DNS_IN_VALUES: ClassVar[bool] = False
 
     DS_PRIVILEGE_NAME_KEY: ClassVar[str] = "ds_privilege_name"

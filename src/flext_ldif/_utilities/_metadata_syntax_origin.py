@@ -9,6 +9,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 
 from flext_ldif import c, t
+from flext_ldif._utilities import FlextLdifMetadataSpacing
 
 
 class FlextLdifMetadataSyntaxOriginDetails:
@@ -44,11 +45,8 @@ class FlextLdifMetadataSyntaxOriginDetails:
                 spacing_match = c.Ldif.WHITESPACE_LEADING_RE.match(after_syntax)
                 if spacing_match:
                     details["syntax_spacing"] = spacing_match.group(1)
-                before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
-                    definition[:syntax_pos],
-                )
                 details["syntax_spacing_before"] = (
-                    before_match.group(1) if before_match else ""
+                    FlextLdifMetadataSpacing.spacing_before(definition, syntax_pos)
                 )
         return details
 
@@ -72,11 +70,8 @@ class FlextLdifMetadataSyntaxOriginDetails:
             details["x_origin_value"] = x_origin_match.group(2)
             x_origin_pos = definition.find("X-ORIGIN")
             if x_origin_pos >= 0:
-                before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
-                    definition[:x_origin_pos],
-                )
                 details["x_origin_spacing_before"] = (
-                    before_match.group(1) if before_match else ""
+                    FlextLdifMetadataSpacing.spacing_before(definition, x_origin_pos)
                 )
         else:
             details["x_origin_presence"] = False
@@ -99,11 +94,10 @@ class FlextLdifMetadataSyntaxOriginDetails:
         if obsolete_match:
             details["obsolete_presence"] = True
             details["obsolete_position"] = obsolete_match.start()
-            before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
-                definition[: obsolete_match.start()],
-            )
             details["obsolete_spacing_before"] = (
-                before_match.group(1) if before_match else ""
+                FlextLdifMetadataSpacing.spacing_before(
+                    definition, obsolete_match.start()
+                )
             )
         else:
             details["obsolete_presence"] = False

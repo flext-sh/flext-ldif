@@ -6,10 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import re
 from typing import override
 
-from flext_ldif import c, m, p, r, t, u
+from flext_ldif import c, m, p, r, u
 from flext_ldif.servers._relaxed import FlextLdifServersRelaxedConstants
 from flext_ldif.servers._rfc import FlextLdifServersRfcSchema
 
@@ -74,59 +73,6 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
         if isinstance(result, m.Ldif.SchemaObjectClass):
             return result
         return objectclass
-
-    @staticmethod
-    def _extract_must_may_from_objectclass(
-        oc_definition: str,
-    ) -> tuple[t.MutableSequenceOf[str] | None, t.MutableSequenceOf[str] | None]:
-        """Extract the MUST and MAY field lists from an objectClass definition.
-
-        Args:
-            oc_definition: Raw objectClass definition text.
-
-        Returns:
-            Pair of field-name lists for MUST and MAY; either element is None
-            when the corresponding clause is absent.
-
-        """
-        must = None
-        must_match = c.Ldif.SCHEMA_OBJECTCLASS_MUST_RE.search(oc_definition)
-        if must_match:
-            must = FlextLdifServersRelaxedSchema._split_grouped_field(
-                must_match,
-                FlextLdifServersRelaxedConstants.SCHEMA_MUST_SEPARATOR,
-            )
-        may = None
-        may_match = c.Ldif.SCHEMA_OBJECTCLASS_MAY_RE.search(oc_definition)
-        if may_match:
-            may = FlextLdifServersRelaxedSchema._split_grouped_field(
-                may_match,
-                FlextLdifServersRelaxedConstants.SCHEMA_MAY_SEPARATOR,
-            )
-        return (must, may)
-
-    @staticmethod
-    def _split_grouped_field(
-        field_match: re.Match[str],
-        separator: str,
-    ) -> t.MutableSequenceOf[str] | None:
-        """Split a regex-matched schema field into separator-delimited values.
-
-        Args:
-            field_match: Match whose first or second group holds the value.
-            separator: Delimiter between individual values.
-
-        Returns:
-            Stripped, trimmed field values, or None when no group captured.
-
-        """
-        if field_match.group(1):
-            field_value = field_match.group(1).strip()
-        elif field_match.group(2):
-            field_value = field_match.group(2).strip()
-        else:
-            field_value = ""
-        return [value.strip() for value in field_value.split(separator)]
 
     @staticmethod
     def _extract_oid_with_fallback_patterns(definition: str) -> str | None:
@@ -286,31 +232,9 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
                 "schema_source_server": "relaxed",
             },
         })
-        attr_domain = m.Ldif.SchemaAttribute(
-            name=name,
-            oid=oid,
-            desc=None,
-            sup=None,
-            equality=None,
-            ordering=None,
-            substr=None,
-            syntax=None,
-            length=None,
-            usage=None,
-            single_value=False,
-            collective=False,
-            no_user_modification=False,
-            immutable=False,
-            user_modification=True,
-            obsolete=False,
-            metadata=metadata,
-            x_origin=None,
-            x_file_ref=None,
-            x_name=None,
-            x_alias=None,
-            x_oid=None,
+        return r[m.Ldif.SchemaAttribute].ok(
+            m.Ldif.SchemaAttribute(name=name, oid=oid, metadata=metadata),
         )
-        return r[m.Ldif.SchemaAttribute].ok(attr_domain)
 
     @override
     def _parse_objectclass(
@@ -376,13 +300,12 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
             "\\bDESC\\s+'([^']+)'\\b",
         )
         sup = self._extract_sup_from_objectclass(oc_definition)
-        kind_match = c.Ldif.SCHEMA_OBJECTCLASS_KIND_RE.search(oc_definition)
-        kind = (
-            kind_match.group(1).upper()
-            if kind_match
-            else c.Ldif.SchemaKind.STRUCTURAL.value
+        kind = u.Ldif.extract_objectclass_kind(oc_definition)
+        must, may = u.Ldif.extract_objectclass_must_may(
+            oc_definition,
+            must_separator=FlextLdifServersRelaxedConstants.SCHEMA_MUST_SEPARATOR,
+            may_separator=FlextLdifServersRelaxedConstants.SCHEMA_MAY_SEPARATOR,
         )
-        must, may = self._extract_must_may_from_objectclass(oc_definition)
         metadata = m.Ldif.ServerMetadata.model_validate({
             "server_type": self._get_server_type(),
             "extensions": {

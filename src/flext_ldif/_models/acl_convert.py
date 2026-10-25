@@ -1,7 +1,5 @@
 """ACL-conversion models — OID rule / OUD aci typed value objects.
 
-from flext_ldif import m
-from flext_ldif import u
 Cohesive home for the OID→OUD ACL conversion model layer (parsed OID rules,
 assembled OUD aci rules, and the subject-matcher parse descriptor). Mirrors the
 ``_constants/acl_convert.py`` SSOT; composed into ``m.Ldif`` via MRO.
