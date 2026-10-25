@@ -207,7 +207,7 @@ class FlextLdifFilters(s[p.Ldif.Response]):
         """
         allowed_value_oids = cls._extract_allowed_oids(allowed_oids)
         attrs_dict = entry.attributes_dict
-        updated_attrs: t.MutableMappingKV[str, list[str]] = {
+        updated_attrs: t.MutableStrSequenceMapping = {
             k: list(v) for k, v in attrs_dict.items()
         }
         changed = False

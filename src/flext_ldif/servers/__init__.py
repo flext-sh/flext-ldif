@@ -13,13 +13,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldif.servers import (
-        _base as _base,
-        _oid as _oid,
-        _oud as _oud,
-        _relaxed as _relaxed,
-        _rfc as _rfc,
-    )
     from flext_ldif.servers._base import (
         FlextLdifServerMethodsMixin,
         FlextLdifServersBaseConstants,
@@ -189,11 +182,6 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersRfcSchemaValuesMixin",
     "FlextLdifServersRfcSchemaWriteMixin",
     "FlextLdifServersTivoli",
-    "_base",
-    "_oid",
-    "_oud",
-    "_relaxed",
-    "_rfc",
 )
 
 install_lazy_exports(
@@ -276,11 +264,6 @@ install_lazy_exports(
         "FlextLdifServersRfcSchemaValuesMixin": "._rfc.schema_values",
         "FlextLdifServersRfcSchemaWriteMixin": "._rfc.schema_write",
         "FlextLdifServersTivoli": ".tivoli",
-        "_base": "._base",
-        "_oid": "._oid",
-        "_oud": "._oud",
-        "_relaxed": "._relaxed",
-        "_rfc": "._rfc",
     }),
     public_exports=__all__,
 )

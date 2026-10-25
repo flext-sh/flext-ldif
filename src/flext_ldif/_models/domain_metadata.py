@@ -1,7 +1,5 @@
 """Domain models for LDIF metadata.
 
-from flext_ldif import m
-from flext_ldif import u
 Namespace mixin extracted from domain_entries.py containing
 ValidationMetadata, WriteOptions, FormatDetails, SchemaFormatDetails,
 and ServerMetadata inner classes.
@@ -295,7 +293,7 @@ class FlextLdifModelsDomainMetadata:
             ),
         ] = None
         processing_stats: Annotated[
-            FlextLdifModelsDomainEntryStatistics | None,
+            FlextLdifModelsDomainEntryStatistics.EntryStatistics | None,
             m.Field(
                 description="Complete statistics tracking for entry transformations",
             ),

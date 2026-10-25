@@ -1,7 +1,5 @@
 """LDIF settings mix-in: criteria.
 
-from flext_ldif import m
-from flext_ldif import u
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -71,6 +69,26 @@ class FlextLdifModelsSettingsCriteria:
                 "detection markers",
             ),
         ] = False
+
+    class EntryDetectionMarkers(m.Value):
+        """Lowercase markers that identify a dialect's entries."""
+
+        dn_markers: Annotated[
+            frozenset[str],
+            m.Field(description="Substrings that identify the dialect DN"),
+        ] = frozenset()
+        objectclass_names: Annotated[
+            frozenset[str],
+            m.Field(description="objectClass names of the dialect"),
+        ] = frozenset()
+        attribute_names: Annotated[
+            frozenset[str],
+            m.Field(description="Attribute names that identify the dialect"),
+        ] = frozenset()
+        attribute_prefixes: Annotated[
+            frozenset[str],
+            m.Field(description="Attribute-name prefixes of the dialect"),
+        ] = frozenset()
 
     class EntryCriteriaConfig(m.Value):
         """Configuration for entry criteria matching.

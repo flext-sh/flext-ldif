@@ -64,6 +64,11 @@ class FlextLdifConstantsServersOud:
 
     PERMISSION_ALL: ClassVar[str] = "all"
 
+    ACL_PERMISSION_TOKEN_MAP: ClassVar[t.StrMapping] = MappingProxyType({
+        PERMISSION_SELFWRITE: PERMISSION_SELF_WRITE,
+    })
+    """OUD ACI permission tokens mapped to their ``AclPermissions`` field names."""
+
     SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
         FlextLdifConstantsServersRfc.SUPPORTED_PERMISSIONS
         | frozenset([PERMISSION_SELFWRITE, PERMISSION_PROXY, PERMISSION_ALL])
@@ -154,6 +159,20 @@ class FlextLdifConstantsServersOud:
         ACL_BIND_RULE_TYPE_USERDN: ACL_USERDN_PATTERN,
         ACL_BIND_RULE_TYPE_GROUPDN: ACL_GROUPDN_PATTERN,
     })
+
+    ACL_SUBJECT_ATTR_SUFFIXES: ClassVar[t.StrMapping] = MappingProxyType({
+        "dn_attr": "LDAPURL",
+        "guid_attr": "USERDN",
+        "group_attr": "GROUPDN",
+    })
+    """``userattr`` value suffix per attribute-based ACI subject type."""
+
+    ACL_SUBJECT_BIND_OPERATORS: ClassVar[t.StrMapping] = MappingProxyType({
+        FlextLdifConstantsEnums.AclSubjectType.USER: "userdn",
+        FlextLdifConstantsEnums.AclSubjectType.GROUP: "groupdn",
+        FlextLdifConstantsEnums.AclSubjectType.ROLE: "roledn",
+    })
+    """ACI bind operator per DN-based subject type; others bind as ``userdn``."""
 
     ACL_NORMALIZE_DNS_IN_VALUES: ClassVar[bool] = False
 

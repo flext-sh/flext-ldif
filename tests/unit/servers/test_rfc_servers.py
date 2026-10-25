@@ -13,7 +13,12 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif import FlextLdif
-from flext_ldif.servers import FlextLdifServersBase, FlextLdifServersRfc
+from flext_ldif.servers import (
+    FlextLdifServersBaseEntry,
+    FlextLdifServersBaseSchema,
+    FlextLdifServersBaseSchemaAcl,
+    FlextLdifServersRfc,
+)
 from tests import c, m, tm
 
 
@@ -74,7 +79,7 @@ class TestsFlextLdifRfcServers:
     @classmethod
     def test_rfc_entry_ignores_schema_definitions(cls) -> None:
         """The RFC entry server is not aware of schema definitions."""
-        entry = FlextLdifServersRfc.Entry()
+        entry = FlextLdifServersRfc().entry_server
         tm.fail(entry.can_handle_attribute(cls._parsed_attribute()))
         tm.fail(entry.can_handle_objectclass(cls._parsed_objectclass()))
 
@@ -118,16 +123,16 @@ class TestsFlextLdifRfcServers:
     def test_base_acl_hook_raises_when_not_redefined() -> None:
         """An incomplete ACL capability cannot be constructed."""
         with pytest.raises(TypeError, match=r"abstract.*_parse_acl"):
-            FlextLdifServersBase.Acl()
+            FlextLdifServersBaseSchemaAcl()
 
     @staticmethod
     def test_base_entry_hook_raises_when_not_redefined() -> None:
         """An incomplete entry capability cannot be constructed."""
         with pytest.raises(TypeError, match=r"abstract.*_parse_content"):
-            FlextLdifServersBase.Entry()
+            FlextLdifServersBaseEntry()
 
     @staticmethod
     def test_base_schema_hook_raises_when_not_redefined() -> None:
         """An incomplete schema capability cannot be constructed."""
         with pytest.raises(TypeError, match=r"abstract.*can_handle_attribute"):
-            FlextLdifServersBase.Schema()
+            FlextLdifServersBaseSchema()

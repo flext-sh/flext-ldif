@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import TypeAlias
 
 from flext_cli import FlextCliModels
 
@@ -21,6 +21,7 @@ from flext_ldif._models import (
     FlextLdifModelsBasesParts,
     FlextLdifModelsCollections,
     FlextLdifModelsComposite,
+    FlextLdifModelsConfig,
     FlextLdifModelsDomainAcl,
     FlextLdifModelsDomainAttributes,
     FlextLdifModelsDomainDN,
@@ -45,7 +46,6 @@ from flext_ldif._models import (
     FlextLdifModelsSettingsProcessing,
     FlextLdifModelsSettingsRules,
     FlextLdifModelsSettingsValidation,
-    FlextLdifNamespace,
 )
 
 
@@ -57,16 +57,12 @@ class FlextLdifModels(FlextCliModels):
     Types live in ``typings.py``, constants in ``constants.py``.
     """
 
-    # The composite namespace carries only ``m.BaseModel`` descendants whose
-    # ``model_config`` is the models-facade ``ConfigDict``; the settings-derived
-    # and value/control model classes stay reachable through their owning
-    # aliases (``Ldif.Control`` / ``Ldif.ChangeOperationValue``) instead of
-    # direct inheritance, which would clash on ``model_config``/``value``.
     class Ldif(
         FlextLdifModelsBases,
         FlextLdifModelsBasesParts,
         FlextLdifModelsCollections,
         FlextLdifModelsComposite,
+        FlextLdifModelsConfig,
         FlextLdifModelsDomainsEntries,
         FlextLdifModelsDomainEntry,
         FlextLdifModelsDomainEntryChangeOperation,
@@ -76,6 +72,9 @@ class FlextLdifModels(FlextCliModels):
         FlextLdifModelsDomainAttributes,
         FlextLdifModelsDomainSchema,
         FlextLdifModelsDomainDN,
+        FlextLdifModelsDomainEntryChangeOperationValue,
+        FlextLdifModelsDomainEntryControl,
+        FlextLdifModelsDomainEntryStatistics,
         FlextLdifModelsEvents,
         FlextLdifModelsProcessing,
         FlextLdifModelsResults,
@@ -89,21 +88,14 @@ class FlextLdifModels(FlextCliModels):
         FlextLdifModelsSettingsMigrate,
         FlextLdifModelsSettingsValidation,
         FlextLdifModelsSettingsMisc,
-        FlextLdifNamespace,
-        FlextLdifModelsDomainEntryChangeOperationValue,
-        FlextLdifModelsDomainEntryControl,
-        FlextLdifModelsDomainEntryStatistics,
     ):
         """LDIF namespace for cross-project access."""
 
     # Top-level facade aliases: the api-freeze contract requires
     # ``flext_ldif.m.X`` and ``flext_ldif.FlextLdifModels.X`` to be the same
     # object for every published model.
-    Entry: ClassVar[type[FlextLdifModelsDomainEntry.Entry]] = (
-        FlextLdifModelsDomainEntry.Entry
-    )
+    Entry: TypeAlias = FlextLdifModelsDomainEntry.Entry
 
 
 m = FlextLdifModels
-
 __all__: list[str] = ["FlextLdifModels", "m"]

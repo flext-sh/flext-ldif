@@ -1,7 +1,6 @@
 """Base model parts for flext-ldif.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
-src/flext_ldif/_models/_base
 SPDX-License-Identifier: MIT
 """
 
@@ -123,4 +122,4 @@ class FlextLdifModelsBasesParts:
             return FlextLdifShared.normalize_server_type(value)
 
 
-__all__: list[str] = ["FlextLdifModelsBasesParts", "FlextLdifShared"]
+__all__: list[str] = ["FlextLdifModelsBasesParts"]

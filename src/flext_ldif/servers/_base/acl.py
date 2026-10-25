@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import Annotated, ClassVar, Self, override
+from typing import Annotated, ClassVar, override
 
 from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.servers._base import FlextLdifServerMethodsMixin
@@ -36,30 +36,13 @@ class FlextLdifServersBaseSchemaAcl(
         m.Field(description="Server priority (lower number = higher priority)"),
     ] = 0
     parent_server: Annotated[
-        Self | None,
+        t.Port[p.Ldif.ServerServer] | None,
         m.Field(
             exclude=True,
             repr=False,
             description="Reference to parent server instance for server-level access",
         ),
     ] = None
-
-    def __init__(
-        self,
-        acl_service: p.Ldif.AclServer | None = None,
-        _parent_server: Self | None = None,
-    ) -> None:
-        """Initialize the ACL server service with optional DI injection.
-
-        Args:
-            acl_service: Optional ACL server facade injected by the DI container.
-            _parent_server: Optional parent server instance for server-level access.
-
-        """
-        super().__init__()
-        self._acl_service = acl_service
-        if _parent_server is not None:
-            object.__setattr__(self, "parent_server", _parent_server)
 
     @abstractmethod
     def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
@@ -84,8 +67,6 @@ class FlextLdifServersBaseSchemaAcl(
         """
         all_attrs_lower = {a.lower() for a in self.resolve_acl_attributes()}
         return attribute_name.lower() in all_attrs_lower
-
-    auto_execute: ClassVar[bool] = False
 
     def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
         """Check whether this server can handle the ACL after normalization.

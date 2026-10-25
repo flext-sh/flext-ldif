@@ -56,22 +56,12 @@ class FlextLdifServersBase(
             },
             self_instance=self,
         )
-        parent_ref: FlextLdifServersBase = self
-        schema_server: FlextLdifServersBaseSchema = self.Schema().model_copy(
-            update={"server_type": self.server_type},
+        binding = {"server_type": self.server_type, "parent_server": self}
+        self._schema_server = self.Schema().model_copy(update=binding)
+        self._acl_server = self.Acl().model_copy(update=binding)
+        self._entry_server = self.Entry(acl_server=self._acl_server).model_copy(
+            update=binding
         )
-        self._schema_server = schema_server
-        object.__setattr__(self._schema_server, "parent_server", parent_ref)
-        acl_server: FlextLdifServersBaseSchemaAcl = self.Acl().model_copy(
-            update={"server_type": self.server_type},
-        )
-        self._acl_server = acl_server
-        object.__setattr__(self._acl_server, "parent_server", parent_ref)
-        entry_server: FlextLdifServersBaseEntry = self.Entry().model_copy(
-            update={"server_type": self.server_type},
-        )
-        self._entry_server = entry_server
-        object.__setattr__(self._entry_server, "parent_server", parent_ref)
 
     def __init_subclass__(cls, **kwargs: str | float | bool | None) -> None:
         """Initialize subclass with server_type and priority from Constants.
@@ -143,8 +133,6 @@ class FlextLdifServersBase(
 
         """
         return self.schema_server
-
-    auto_execute: ClassVar[bool] = False
 
     @overload
     def __call__(
@@ -290,9 +278,9 @@ class FlextLdifServersBase(
             result = r[m.Ldif.Entry].fail("No valid parameters")
         return result
 
-    Acl: ClassVar[type[FlextLdifServersBaseSchemaAcl]] = FlextLdifServersBaseSchemaAcl
-    Entry: ClassVar[type[FlextLdifServersBaseEntry]] = FlextLdifServersBaseEntry
-    Schema: ClassVar[type[FlextLdifServersBaseSchema]] = FlextLdifServersBaseSchema
+    Acl: ClassVar[type[FlextLdifServersBaseSchemaAcl]]
+    Entry: ClassVar[type[FlextLdifServersBaseEntry]]
+    Schema: ClassVar[type[FlextLdifServersBaseSchema]]
 
 
 __all__: list[str] = ["FlextLdifServersBase"]

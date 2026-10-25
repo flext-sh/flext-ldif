@@ -263,7 +263,6 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         """OpenLDAP 2.x ACL server (nested)."""
 
         @override
-        @override
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
             """Check whether this is an OpenLDAP 2.x ACL line.
 

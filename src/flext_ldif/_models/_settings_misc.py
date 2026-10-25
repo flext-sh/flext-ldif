@@ -1,7 +1,5 @@
 """LDIF settings mix-in: misc.
 
-from flext_ldif import m
-from flext_ldif import u
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 

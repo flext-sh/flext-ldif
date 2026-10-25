@@ -34,7 +34,7 @@ class FlextLdifParserRecord:
         attribute_metadata: t.MutableMappingKV[str, t.MutableAttributeMapping]
         comments: t.MutableSequenceOf[str]
         raw_record_lines: t.MutableSequenceOf[str]
-        controls: t.MutableSequenceOf[FlextLdifModelsDomainEntryControl]
+        controls: t.MutableSequenceOf[FlextLdifModelsDomainEntryControl.Control]
         change_operations: t.MutableSequenceOf[FlextLdifModels.Ldif.ChangeOperation]
         current_change_operation: FlextLdifModels.Ldif.ChangeOperation | None
         changetype: c.Ldif.ChangeType | None
@@ -54,7 +54,9 @@ class FlextLdifParserRecord:
             ] = {}
             self.comments: t.MutableSequenceOf[str] = []
             self.raw_record_lines: t.MutableSequenceOf[str] = []
-            self.controls: t.MutableSequenceOf[FlextLdifModelsDomainEntryControl] = []
+            self.controls: t.MutableSequenceOf[
+                FlextLdifModelsDomainEntryControl.Control
+            ] = []
             self.change_operations: t.MutableSequenceOf[
                 FlextLdifModels.Ldif.ChangeOperation
             ] = []
@@ -175,7 +177,7 @@ class FlextLdifParserRecord:
             return None
         if state.current_change_operation is not None:
             state.current_change_operation.values.append(
-                FlextLdifModelsDomainEntryChangeOperationValue(
+                FlextLdifModelsDomainEntryChangeOperationValue.ChangeOperationValue(
                     value=decoded.value,
                     value_origin=decoded.value_origin,
                     raw_value=decoded.raw_value,

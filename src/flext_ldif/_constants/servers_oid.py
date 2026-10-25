@@ -91,6 +91,12 @@ class FlextLdifConstantsServersOid:
         "cn=oracle context",
     ])
 
+    ACL_ENTRY_EXTENSION_KEYS: ClassVar[frozenset[str]] = frozenset([
+        FlextLdifConstantsBase.ACL_BINDMODE,
+        FlextLdifConstantsBase.ACL_DENY_GROUP_OVERRIDE,
+    ])
+    """Parsed orclaci extensions that an OID entry carries in its own metadata."""
+
     SCHEMA_FILTERABLE_FIELDS: ClassVar[frozenset[str]] = frozenset([
         "attributetypes",
         "objectclasses",

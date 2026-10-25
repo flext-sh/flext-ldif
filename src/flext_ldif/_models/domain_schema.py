@@ -1,6 +1,5 @@
 """Domain models for LDIF schema elements.
 
-from flext_ldif import u
 Extracted schema-related inner classes: SchemaAttribute, Syntax, SchemaObjectClass.
 These are composed into FlextLdifModels via MRO.
 

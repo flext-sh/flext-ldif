@@ -6,13 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, overload
+from typing import overload
 
 from flext_ldif import FlextLdifModels, c, p, r, t
-from flext_ldif._utilities import FlextLdifDNRdnParsing
-
-if TYPE_CHECKING:
-    from collections.abc import Generator, Iterator
+from flext_ldif._utilities import FlextLdifDNRdnParsing, FlextLdifEntryValidation
 
 
 class FlextLdifDNParsing:
@@ -29,19 +26,6 @@ class FlextLdifDNParsing:
         if isinstance(dn, str):
             return dn
         return dn.value
-
-    @staticmethod
-    def _consume_escape(chars: Iterator[str], current: str) -> str:
-        """Append an escaped pair, keeping a lone trailing backslash literal.
-
-        Returns:
-            The resulting ``str``.
-
-        """
-        try:
-            return current + "\\" + next(chars)
-        except StopIteration:
-            return current + "\\"
 
     @overload
     @staticmethod
@@ -68,27 +52,11 @@ class FlextLdifDNParsing:
             The resulting ``t.MutableSequenceOf[str]``.
 
         """
-        dn_str = FlextLdifDNParsing.resolve_dn_value(dn)
-        if not dn_str:
-            return []
-
-        def split_components() -> Generator[str]:
-            """Yield DN components respecting RFC 4514 escapes."""
-            current = ""
-            chars = iter(dn_str)
-            for char in chars:
-                if char == "\\":
-                    current = FlextLdifDNParsing._consume_escape(chars, current)
-                elif char == ",":
-                    if current.strip():
-                        yield current.strip()
-                        current = ""
-                else:
-                    current += char
-            if current.strip():
-                yield current.strip()
-
-        return list(split_components())
+        return list(
+            FlextLdifEntryValidation.dn_components(
+                FlextLdifDNParsing.resolve_dn_value(dn)
+            )
+        )
 
     @staticmethod
     def _parse_dn_components(dn_str: str) -> p.Result[t.MutableStrPairSequence]:

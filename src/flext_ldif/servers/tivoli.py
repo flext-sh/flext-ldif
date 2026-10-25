@@ -83,6 +83,13 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             "cn=configuration",
             "cn=ibm",
         ])
+        ENTRY_DETECTION: ClassVar[m.Ldif.EntryDetectionMarkers] = (
+            m.Ldif.EntryDetectionMarkers(
+                dn_markers=DETECTION_DN_MARKERS,
+                objectclass_names=DETECTION_OBJECTCLASS_NAMES,
+                attribute_prefixes=DETECTION_ATTRIBUTE_PREFIXES,
+            )
+        )
         IBM_TIVOLI_SPECIFIC: ClassVar[frozenset[str]] = frozenset([
             "ibm-entryuuid",
             "ibm-entrychecksum",
@@ -272,30 +279,9 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 The resulting ``bool``.
 
             """
-            if not entry_dn:
-                return False
-            dn_lower = entry_dn.lower()
-            if any(
-                marker in dn_lower
-                for marker in FlextLdifServersTivoli.Constants.DETECTION_DN_MARKERS
-            ):
-                return True
-            normalized_attrs = {
-                name.lower(): value for name, value in attributes.items()
-            }
-            if any(
-                attr_name.startswith(prefix)
-                for attr_name in normalized_attrs
-                for prefix in (
-                    FlextLdifServersTivoli.Constants.DETECTION_ATTRIBUTE_PREFIXES
-                )
-            ):
-                return True
-            object_classes = list(attributes.get(c.Ldif.DictKeys.OBJECTCLASS, []))
-            return any(
-                oc.lower()
-                in FlextLdifServersTivoli.Constants.DETECTION_OBJECTCLASS_NAMES
-                for oc in object_classes
+            constants = FlextLdifServersTivoli.Constants
+            return u.Ldif.entry_carries_markers(
+                entry_dn, attributes, constants.ENTRY_DETECTION
             )
 
         @staticmethod

@@ -1,7 +1,5 @@
 """ACL domain models — permissions, targets, subjects, and write metadata.
 
-from flext_ldif import m
-from flext_ldif import u
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -281,10 +279,9 @@ class FlextLdifModelsDomainAcl:
 
         Example:
             >>> metadata = AclWriteMetadata.from_extensions(entry.metadata.extensions)
-            >>> if metadata.original_format:
-            ...     sanitized = FlextLdifUtilities.ACL.sanitize_acl_name(
-            ...         metadata.original_format
-            ...     )
+            >>> original = metadata.original_format
+            >>> if original:
+            ...     name = FlextLdifUtilities.ACL.sanitize_acl_name(original)
 
         """
 

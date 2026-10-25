@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self, override
+from typing import TYPE_CHECKING, Self
 
 from flext_ldif import c, m, p, t, u
 from flext_ldif.servers import (
@@ -367,25 +367,6 @@ class FlextLdifFacade(
             options=options,
         )
         return pipeline.execute()
-
-    @override
-    def validate_entries(
-        self,
-        entries: t.SequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse,
-        validation_service: p.Ldif.ValidationService | None = None,
-    ) -> p.Result[p.Ldif.ValidationResult]:
-        """Validate a sequence of entries or a parse response.
-
-        Args:
-            entries: Entry sequence or parse response to validate.
-            validation_service: Optional validation service overriding self.
-
-        Returns:
-            Typed result carrying the validation result.
-
-        """
-        resolved_validation_service = validation_service or self
-        return super().validate_entries(entries, resolved_validation_service)
 
 
 __all__: list[str] = ["FlextLdifFacade"]

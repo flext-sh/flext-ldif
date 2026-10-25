@@ -132,7 +132,7 @@ class FlextLdifUtilitiesSchemaExtract:
         """
         must, may = (
             FlextLdifUtilitiesSchemaExtract.split_schema_values(
-                match.group(1) or match.group(2),
+                match.group(1) or match.group(2) or "",
                 separator=separator,
             )
             if (match := pattern.search(oc_definition))

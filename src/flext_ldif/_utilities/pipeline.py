@@ -11,6 +11,7 @@ from typing import override
 from flext_core import r
 
 from flext_ldif import c, m, p, t
+from flext_ldif._utilities import FlextLdifEntryValidation
 
 
 class FlextLdifUtilitiesPipeline:
@@ -133,8 +134,7 @@ class FlextLdifUtilitiesPipeline:
             if entry.dn is None:
                 errors.append("Entry has no DN (RFC 2849 violation)")
                 return
-            dn_str = str(entry.dn)
-            for component in dn_str.split(","):
+            for component in FlextLdifEntryValidation.dn_components(str(entry.dn)):
                 component_error = self._dn_component_error(component)
                 if component_error is not None:
                     errors.append(component_error)

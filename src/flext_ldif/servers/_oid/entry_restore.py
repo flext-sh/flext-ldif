@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from flext_ldif import m, t
+from flext_ldif import m, t, u
 from flext_ldif.servers._oid import FlextLdifServersOidEntryBooleanMixin
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
@@ -47,16 +47,7 @@ class FlextLdifServersOidEntryRestoreMixin(
             changed = True
         if not changed:
             return restored_entry
-        restored_copy: m.Ldif.Entry = restored_entry.model_copy(
-            update={
-                "attributes": m.Ldif.Attributes.model_validate({
-                    "attributes": restored_attrs,
-                    "attribute_metadata": attributes.attribute_metadata,
-                    "metadata": attributes.metadata,
-                }),
-            },
-        )
-        return restored_copy
+        return u.Ldif.entry_with_attributes(restored_entry, restored_attrs)
 
 
 __all__: list[str] = ["FlextLdifServersOidEntryRestoreMixin"]

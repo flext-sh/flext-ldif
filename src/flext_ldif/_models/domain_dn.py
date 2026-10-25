@@ -1,7 +1,5 @@
 """DN domain models — Distinguished Name, statistics, and registry.
 
-from flext_ldif import m
-from flext_ldif import u
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -13,8 +11,11 @@ from typing import Annotated, ClassVar, Self, override
 
 from flext_cli import m
 
-from flext_ldif import c, p, r, t
-from flext_ldif._utilities import FlextLdifUtilitiesCollectionLdif
+from flext_ldif import p, r, t
+from flext_ldif._utilities import (
+    FlextLdifEntryValidation,
+    FlextLdifUtilitiesCollectionLdif,
+)
 
 
 class FlextLdifModelsDomainDN:
@@ -176,19 +177,9 @@ class FlextLdifModelsDomainDN:
                 ValueError: If RFC 4514 § 2.3.
 
             """
-            if not value:
-                return value
-            for component in (
-                comp.strip()
-                for comp in c.Ldif.DN_SPLIT_UNESCAPED_COMMA_RE.split(value)
-                if comp.strip()
-            ):
-                if not c.Ldif.DN_COMPONENT_RE.match(component):
-                    msg = (
-                        f"RFC 4514 § 2.3: invalid DN component {component!r} "
-                        f"in DN {value!r}"
-                    )
-                    raise ValueError(msg)
+            violations = FlextLdifEntryValidation.dn_component_violations(value)
+            if violations:
+                raise ValueError(violations[0])
             return value
 
         @override

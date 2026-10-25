@@ -9,7 +9,7 @@ from __future__ import annotations
 import copy
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, MutableMapping, MutableSequence
-from typing import Annotated, ClassVar, Self, override
+from typing import Annotated, ClassVar, override
 
 from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.servers._base import (
@@ -34,26 +34,21 @@ class FlextLdifServersBaseEntry(
         m.Field(description="Server priority (lower number = higher priority)"),
     ] = 0
     parent_server: Annotated[
-        Self | None,
+        t.Port[p.Ldif.ServerServer] | None,
         m.Field(
             exclude=True,
             repr=False,
             description="Reference to parent server instance for server-level access",
         ),
     ] = None
-
-    def __init__(
-        self,
-        entry_service: p.Ldif.EntryServer | None = None,
-        _parent_server: Self | None = None,
-    ) -> None:
-        """Initialize entry server service with optional DI service injection."""
-        super().__init__()
-        self._entry_service = entry_service
-        if _parent_server is not None:
-            object.__setattr__(self, "parent_server", _parent_server)
-
-    auto_execute: ClassVar[bool] = False
+    acl_server: Annotated[
+        t.Port[p.Ldif.AclServer],
+        m.Field(
+            exclude=True,
+            repr=False,
+            description="ACL capability of the same dialect, injected at composition",
+        ),
+    ]
 
     @staticmethod
     def _extract_write_format_options(

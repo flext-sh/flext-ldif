@@ -115,12 +115,16 @@ class FlextLdifAnalysis(s[p.Ldif.Response]):
         is_entry_valid = is_entry_valid and oc_valid
         return (is_entry_valid, errors)
 
-    @staticmethod
     def validate_entries(
+        self,
         entries: t.SequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse,
         validation_service: p.Ldif.ValidationService | None = None,
     ) -> p.Result[p.Ldif.ValidationResult]:
         """Validate LDIF entries against RFC 2849/4512 standards.
+
+        Without an explicit ``validation_service``, a composition that is
+        itself a validation service (the facade) validates with itself;
+        otherwise a fresh ``FlextLdifValidation`` is used.
 
         Returns:
             The resulting ``p.Result[p.Ldif.ValidationResult]``.
@@ -131,11 +135,13 @@ class FlextLdifAnalysis(s[p.Ldif.Response]):
         normalized_entries = u.Ldif.as_entries(entries)
         errors: t.MutableSequenceOf[str] = []
         valid_count = 0
-        svc: p.Ldif.ValidationService = (
-            validation_service
-            if validation_service is not None
-            else FlextLdifValidation()
-        )
+        svc: p.Ldif.ValidationService
+        if validation_service is not None:
+            svc = validation_service
+        elif isinstance(self, p.Ldif.ValidationService):
+            svc = self
+        else:
+            svc = FlextLdifValidation()
 
         def validate_entry(entry: m.Ldif.Entry) -> bool:
             """Validate single entry and collect errors.

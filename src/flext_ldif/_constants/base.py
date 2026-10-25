@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from flext_cli import c
 
-from flext_ldif._constants._base import FlextLdifConstantsBaseParts
+from flext_ldif._constants.enums import FlextLdifConstantsBaseParts
 
 FlextLdifConstantsAclConvertOud = (
     FlextLdifConstantsBaseParts.FlextLdifConstantsAclConvertOud
@@ -270,9 +270,6 @@ class FlextLdifConstantsBase:
     ACI_MACRO_RE: ClassVar[t.RegexPattern] = re.compile(r"\(\$dn\)|\[\$dn\]|\(\$attr\.")
     ACL_NAME_QUOTED_RE: ClassVar[t.RegexPattern] = re.compile(r'acl\s+"[^"]*"')
     DN_SPLIT_OPTIONAL_SPACE_RE: ClassVar[t.RegexPattern] = re.compile(r"\s*,\s*")
-    DN_SPLIT_UNESCAPED_COMMA_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"(?<!\\)\s*,\s*",
-    )
 
     @staticmethod
     def compile_pattern(

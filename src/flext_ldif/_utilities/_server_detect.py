@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from flext_ldif import c
 
 if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModels
+    from flext_ldif import FlextLdifModels, t
 
 
 class FlextLdifServerDetection:
@@ -86,6 +86,40 @@ class FlextLdifServerDetection:
         if settings.detection_string and settings.detection_string in definition_lower:
             return True
         return any(marker in definition_lower for marker in detection_names)
+
+    @staticmethod
+    def entry_carries_markers(
+        entry_dn: str,
+        attributes: t.MutableStrSequenceMapping,
+        markers: FlextLdifModels.Ldif.EntryDetectionMarkers,
+    ) -> bool:
+        """Detect a dialect entry from its declared DN, attribute and class markers.
+
+        Attribute descriptions compare case-insensitively (RFC 4512).
+
+        Args:
+            entry_dn: Distinguished name of the entry.
+            attributes: Attribute names mapped to their value sequences.
+            markers: The dialect's lowercase entry detection markers.
+
+        Returns:
+            True when the DN, an attribute, or an objectClass carries a marker.
+
+        """
+        if not entry_dn:
+            return False
+        dn_lower = entry_dn.lower()
+        if any(marker in dn_lower for marker in markers.dn_markers):
+            return True
+        normalized = {name.lower(): values for name, values in attributes.items()}
+        prefixes = tuple(markers.attribute_prefixes)
+        if any(
+            name in markers.attribute_names or (prefixes and name.startswith(prefixes))
+            for name in normalized
+        ):
+            return True
+        object_classes = normalized.get(c.Ldif.DictKeys.OBJECTCLASS.lower(), [])
+        return any(oc.lower() in markers.objectclass_names for oc in object_classes)
 
     @staticmethod
     def matches_server_patterns(

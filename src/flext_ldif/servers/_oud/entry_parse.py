@@ -75,10 +75,6 @@ class FlextLdifServersOudEntryParseMixin(FlextLdifServersRfcEntry):
         )
         if not aci_values:
             return r[m.Ldif.Entry].ok(entry)
-        parent = self._get_parent_server_safe()
-        acl_server = parent.acl_server if parent is not None else None
-        if acl_server is None:
-            return r[m.Ldif.Entry].ok(entry)
         if entry.metadata is None:
             entry.metadata = u.Ldif.server_metadata_for("oud")
         existing: t.Ldif.MutableMetadataInputMapping = (
@@ -86,7 +82,7 @@ class FlextLdifServersOudEntryParseMixin(FlextLdifServersRfcEntry):
         )
         finalize_result = FlextLdifServersOudHelpersMixin.process_aci_list_for_finalize(
             aci_values,
-            acl_server,
+            self.acl_server,
             existing,
         )
         if finalize_result.failure:

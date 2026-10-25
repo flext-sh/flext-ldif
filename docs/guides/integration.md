@@ -338,7 +338,7 @@ class LdifCLIService(FlextCliService):
     def parse_command(
         self,
         input_file: str,
-        output_format: str = c.MetricType.SUMMARY,
+        output_format: str = "summary",
     ) -> p.Result[bool]:
         """CLI command for parsing LDIF files with size checking."""
         file_path = Path(input_file)
@@ -367,7 +367,7 @@ class LdifCLIService(FlextCliService):
         format_type: str,
     ) -> p.Result[bool]:
         """Output LDIF parsing results in specified format."""
-        if format_type == c.MetricType.SUMMARY:
+        if format_type == "summary":
             u.Cli.print("LDIF Processing Summary:")
             u.Cli.print(f"  Total entries: {len(entries)}")
 

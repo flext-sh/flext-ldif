@@ -146,6 +146,13 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             "lastlogontimestamp",
             "pwdlastset",
         ])
+        ENTRY_DETECTION: ClassVar[m.Ldif.EntryDetectionMarkers] = (
+            m.Ldif.EntryDetectionMarkers(
+                dn_markers=DETECTION_DN_MARKERS,
+                objectclass_names=DETECTION_OBJECTCLASS_NAMES,
+                attribute_names=DETECTION_ATTRIBUTE_MARKERS,
+            )
+        )
         DETECTION_MICROSOFT_ACTIVE_DIRECTORY: ClassVar[str] = (
             "microsoft active directory"
         )
@@ -330,33 +337,15 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 The resulting ``bool``.
 
             """
-            if not entry_dn:
-                return False
+            constants = FlextLdifServersAd.Constants
             dn_lower = entry_dn.lower()
-            if any(
-                marker in dn_lower
-                for marker in FlextLdifServersAd.Constants.DETECTION_DN_MARKERS
-            ):
-                return True
             if (
-                FlextLdifServersAd.Constants.DN_MARKER_DC in dn_lower
-                and FlextLdifServersAd.Constants.DN_MARKER_CN_CONFIGURATION in dn_lower
+                constants.DN_MARKER_DC in dn_lower
+                and constants.DN_MARKER_CN_CONFIGURATION in dn_lower
             ):
                 return True
-            normalized_attrs = {
-                name.lower(): value for name, value in attributes.items()
-            }
-            if any(
-                marker in normalized_attrs
-                for marker in FlextLdifServersAd.Constants.DETECTION_ATTRIBUTE_MARKERS
-            ):
-                return True
-            raw_object_classes = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
-            object_classes = list(raw_object_classes)
-            normalized_object_classes: t.MutableSequenceOf[str] = list(object_classes)
-            return any(
-                oc.lower() in FlextLdifServersAd.Constants.DETECTION_OBJECTCLASS_NAMES
-                for oc in normalized_object_classes
+            return u.Ldif.entry_carries_markers(
+                entry_dn, attributes, constants.ENTRY_DETECTION
             )
 
     # The AD dialect schema settings are owned by ``Constants`` and bound here

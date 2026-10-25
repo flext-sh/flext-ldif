@@ -4,7 +4,6 @@ Enumerations and the OUD-output ACL taxonomy the ``_constants`` family base
 and its sibling parts consume without importing another family module.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
-src/flext_ldif/_constants/_base
 SPDX-License-Identifier: MIT
 """
 
@@ -214,6 +213,15 @@ class FlextLdifConstantsBaseParts:
             OBJECTCLASS = "objectClass"
             CN = "cn"
             OID = "oid"
+
+        @unique
+        class RfcValidationContext(StrEnum):
+            """Context recorded with the RFC compliance findings of one entry."""
+
+            VALIDATOR_KEY = "validator"
+            ATTRIBUTE_COUNT_KEY = "attribute_count"
+            TOTAL_VIOLATIONS_KEY = "total_violations"
+            VALIDATOR_NAME = "validate_entry_rfc_compliance"
 
         @unique
         class ServerMetadataKeys(StrEnum):

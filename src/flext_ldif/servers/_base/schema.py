@@ -7,10 +7,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import MutableMapping
-from typing import Annotated, ClassVar, Self, override
+from typing import Annotated, ClassVar, override
 
-from flext_ldif import c, m, p, r, s, t, u
+from flext_ldif import m, p, r, s, t, u
 from flext_ldif.servers._base import (
     FlextLdifServerMethodsMixin,
     FlextLdifServersBaseSchemaMetadataMixin,
@@ -44,137 +43,13 @@ class FlextLdifServersBaseSchema(
         m.Field(description="Server priority (lower number = higher priority)"),
     ] = 0
     parent_server: Annotated[
-        Self | None,
+        t.Port[p.Ldif.ServerServer] | None,
         m.Field(
             exclude=True,
             repr=False,
             description="Reference to parent server instance for server-level access",
         ),
     ] = None
-    attr_definition: Annotated[
-        str | None,
-        m.Field(
-            exclude=True,
-            repr=False,
-            description="Attribute definition for auto-execute pattern",
-        ),
-    ] = None
-    oc_definition: Annotated[
-        str | None,
-        m.Field(
-            exclude=True,
-            repr=False,
-            description="ObjectClass definition for auto-execute pattern",
-        ),
-    ] = None
-    attr_model: Annotated[
-        m.Ldif.SchemaAttribute | None,
-        m.Field(
-            exclude=True,
-            repr=False,
-            description="SchemaAttribute model for auto-execute pattern",
-        ),
-    ] = None
-    oc_model: Annotated[
-        m.Ldif.SchemaObjectClass | None,
-        m.Field(
-            exclude=True,
-            repr=False,
-            description="SchemaObjectClass model for auto-execute pattern",
-        ),
-    ] = None
-    operation: Annotated[
-        str | None,
-        m.Field(
-            exclude=True,
-            repr=False,
-            description="Operation type for auto-execute pattern",
-        ),
-    ] = None
-
-    def __new__(
-        cls,
-        _schema_service: p.Ldif.SchemaServer | None = None,
-        _parent_server: p.Ldif.SchemaServer | None = None,
-        **kwargs: t.Ldif.Scalar,
-    ) -> Self:
-        """Filter ``_parent_server`` before passing remaining kwargs to the base.
-
-        Args:
-            _schema_service: Optional schema service injected by the DI container.
-            _parent_server: Optional parent server bound via ``object.__setattr__``.
-            **kwargs: Scalar fields forwarded to the base, minus ``_parent_server``.
-
-        Returns:
-            The constructed instance.
-
-        """
-        del _schema_service
-        filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_server"}
-        instance: Self = super().__new__(cls, **filtered_kwargs)
-        if _parent_server is not None:
-            object.__setattr__(instance, "parent_server", _parent_server)
-        return instance
-
-    def __init__(
-        self,
-        _schema_service: p.Ldif.SchemaServer | None = None,
-        _parent_server: p.Ldif.SchemaServer | None = None,
-        **kwargs: t.Ldif.Scalar,
-    ) -> None:
-        """Initialize the schema server with optional DI service injection.
-
-        Args:
-            _schema_service: Optional schema service injected by the DI container.
-            _parent_server: Optional parent server bound via ``object.__setattr__``.
-            **kwargs: Scalar fields forwarded to the service, minus
-                ``_parent_server``.
-
-        """
-        filtered_kwargs = {k: v for k, v in kwargs.items() if k != "_parent_server"}
-        service_kwargs: MutableMapping[str, t.Ldif.Scalar] = {}
-        for key, value in filtered_kwargs.items():
-            if isinstance(value, c.SCALAR_TYPES):
-                service_kwargs[key] = value
-        super().__init__()
-        self._schema_service = _schema_service
-        if _parent_server is not None:
-            object.__setattr__(self, "parent_server", _parent_server)
-
-    def _init_base_schema(
-        self: Self,
-        schema_service: p.Ldif.SchemaServer | None,
-        parent_server: p.Ldif.SchemaServer | None,
-        excluded_keys: frozenset[str],
-        **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-    ) -> None:
-        """Delegate to ``FlextLdifServersBaseSchema.__init__`` then wire the parent.
-
-        Args:
-            schema_service: Optional schema service injected by the DI container.
-            parent_server: Optional parent server instance.
-            excluded_keys: Kwarg names excluded from the filtered payload.
-            **kwargs: Scalar and schema-model fields forwarded to the init.
-
-        """
-        filtered_kwargs: t.MutableConfigValueMapping = {
-            key: val
-            for key, val in kwargs.items()
-            if key not in excluded_keys and isinstance(val, c.PRIMITIVES_TYPES)
-        }
-        # Why: pass parent_server straight into __init__ (which already
-        # performs the frozen-model object.__setattr__ dance for
-        # _parent_server) instead of a separate post-init patch — avoids a
-        # second, non-dunder-context __setattr__ call (ruff PLC2801) while
-        # keeping exactly one owner for that assignment.
-        FlextLdifServersBaseSchema.__init__(
-            self,
-            _schema_service=schema_service,
-            _parent_server=parent_server,
-            **filtered_kwargs,
-        )
-
-    auto_execute: ClassVar[bool] = False
 
     @abstractmethod
     def can_handle_attribute(

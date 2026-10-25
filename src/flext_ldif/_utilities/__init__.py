@@ -38,6 +38,7 @@ if TYPE_CHECKING:
     from flext_ldif._utilities._entry_oid_rfc import FlextLdifEntryOidRfcTransforming
     from flext_ldif._utilities._entry_server_rules import FlextLdifEntryServerRules
     from flext_ldif._utilities._entry_validation import FlextLdifEntryValidation
+    from flext_ldif._utilities._lazy_meta import FlextLdifUtilitiesLazyMeta
     from flext_ldif._utilities._lazy_tree import FlextLdifUtilitiesLazyTree
     from flext_ldif._utilities._metadata_builders import FlextLdifMetadataBuilders
     from flext_ldif._utilities._metadata_entry_stats import FlextLdifMetadataEntryStats
@@ -50,6 +51,7 @@ if TYPE_CHECKING:
     from flext_ldif._utilities._metadata_schema_analysis import (
         FlextLdifMetadataSchemaAnalysis,
     )
+    from flext_ldif._utilities._metadata_spacing import FlextLdifMetadataSpacing
     from flext_ldif._utilities._metadata_syntax_origin import (
         FlextLdifMetadataSyntaxOriginDetails,
     )
@@ -129,6 +131,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifMetadataNameDescDetails",
     "FlextLdifMetadataPrefixDetails",
     "FlextLdifMetadataSchemaAnalysis",
+    "FlextLdifMetadataSpacing",
     "FlextLdifMetadataSyntaxOriginDetails",
     "FlextLdifMetadataTracking",
     "FlextLdifParserMetadataBuilders",
@@ -149,6 +152,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifUtilitiesEntryAttrsNormalization",
     "FlextLdifUtilitiesEntryDnNormalization",
     "FlextLdifUtilitiesEvents",
+    "FlextLdifUtilitiesLazyMeta",
     "FlextLdifUtilitiesLazyTree",
     "FlextLdifUtilitiesMetadata",
     "FlextLdifUtilitiesOID",
@@ -204,6 +208,7 @@ install_lazy_exports(
         "FlextLdifMetadataNameDescDetails": "._metadata_name_desc",
         "FlextLdifMetadataPrefixDetails": "._metadata_prefix",
         "FlextLdifMetadataSchemaAnalysis": "._metadata_schema_analysis",
+        "FlextLdifMetadataSpacing": "._metadata_spacing",
         "FlextLdifMetadataSyntaxOriginDetails": "._metadata_syntax_origin",
         "FlextLdifMetadataTracking": "._metadata_tracking",
         "FlextLdifParserMetadataBuilders": "._parser_metadata",
@@ -224,6 +229,7 @@ install_lazy_exports(
         "FlextLdifUtilitiesEntryAttrsNormalization": "._transformer_attrs",
         "FlextLdifUtilitiesEntryDnNormalization": "._transformer_dn",
         "FlextLdifUtilitiesEvents": ".events",
+        "FlextLdifUtilitiesLazyMeta": "._lazy_meta",
         "FlextLdifUtilitiesLazyTree": "._lazy_tree",
         "FlextLdifUtilitiesMetadata": ".metadata",
         "FlextLdifUtilitiesOID": ".oid",

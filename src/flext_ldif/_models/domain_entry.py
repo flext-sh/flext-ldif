@@ -17,9 +17,7 @@ from flext_ldif._models import (
     FlextLdifModelsDomainAttributes,
     FlextLdifModelsDomainDN,
     FlextLdifModelsDomainEntryChangeOperation,
-    FlextLdifModelsDomainEntryChangeOperationValue,
     FlextLdifModelsDomainEntryControl,
-    FlextLdifModelsDomainEntryStatistics,
     FlextLdifModelsDomainMetadata,
 )
 from flext_ldif._utilities import FlextLdifUtilitiesEntry
@@ -27,24 +25,6 @@ from flext_ldif._utilities import FlextLdifUtilitiesEntry
 
 class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
     """Namespace for LDIF entry domain models."""
-
-    EntryStatistics = FlextLdifModelsDomainEntryStatistics
-    """Canonical entry statistics model.
-
-    Implementation module: ``domain_entry_statistics``.
-    """
-
-    Control = FlextLdifModelsDomainEntryControl
-    """Canonical RFC 2849 control line model.
-
-    Implementation module: ``domain_entry_control``.
-    """
-
-    ChangeOperationValue = FlextLdifModelsDomainEntryChangeOperationValue
-    """Canonical modify-operation value model.
-
-    Implementation module: ``domain_entry_change_value``.
-    """
 
     class Entry(m.Entity, m.DynamicModel):
         """LDIF entry domain model.
@@ -66,13 +46,6 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         _DATETIME_FIELDS: ClassVar[t.StrPair] = ("created_at", "updated_at")
         _VALIDATION_RULES_KEY: ClassVar[str] = "validation_rules"
         _VALIDATION_SERVER_TYPE_KEY: ClassVar[str] = "validation_server_type"
-        _VALIDATION_CONTEXT_VALIDATOR_KEY: ClassVar[str] = "validator"
-        _VALIDATION_CONTEXT_DN_KEY: ClassVar[str] = c.Ldif.DictKeys.DN
-        _VALIDATION_CONTEXT_ATTRIBUTE_COUNT_KEY: ClassVar[str] = "attribute_count"
-        _VALIDATION_CONTEXT_TOTAL_VIOLATIONS_KEY: ClassVar[str] = "total_violations"
-        _VALIDATION_CONTEXT_RFC_COMPLIANCE_NAME: ClassVar[str] = (
-            "validate_entry_rfc_compliance"
-        )
         dn: Annotated[
             FlextLdifModelsDomainDN.DN | None,
             m.Field(
@@ -104,7 +77,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             ),
         ] = c.Ldif.RecordKind.CONTENT
         controls: Annotated[
-            t.SequenceOf[FlextLdifModelsDomainEntryControl],
+            t.SequenceOf[FlextLdifModelsDomainEntryControl.Control],
             m.Field(description="RFC 2849 control lines associated with the record"),
         ] = m.Field(default_factory=tuple)
         change_operations: Annotated[
@@ -410,73 +383,25 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
                 The validated entry.
 
             """
-            dn_value, violations = self._collect_rfc_violations()
-            self._store_rfc_violations(dn_value, violations)
-            return self
-
-        def _collect_rfc_violations(self) -> tuple[str, t.MutableSequenceOf[str]]:
-            """Collect RFC violations without rejecting the entry.
-
-            Returns:
-                Pair of the DN value used for context and the collected
-                violation descriptions.
-
-            """
-            violations: t.MutableSequenceOf[str] = []
-            dn_value = "<None>"
-            if self.dn is None:
-                violations.append("RFC 2849 § 2: DN is required")
-                return (dn_value, violations)
-            dn_value = self.dn.value
-            violations.extend(FlextLdifUtilitiesEntry.validate_dn_format(dn_value))
-            violations.extend(
-                FlextLdifUtilitiesEntry.validate_attributes_required(self),
-            )
-            violations.extend(
-                FlextLdifUtilitiesEntry.validate_attribute_descriptions(self),
-            )
-            violations.extend(
-                FlextLdifUtilitiesEntry.validate_objectclass(self, dn_value),
-            )
-            violations.extend(
-                FlextLdifUtilitiesEntry.validate_naming_attribute(self, dn_value),
-            )
-            violations.extend(FlextLdifUtilitiesEntry.validate_binary_options(self))
-            violations.extend(
-                FlextLdifUtilitiesEntry.validate_attribute_syntax(self),
-            )
-            violations.extend(FlextLdifUtilitiesEntry.validate_changetype(self))
-            return (dn_value, violations)
-
-        def _store_rfc_violations(
-            self,
-            dn_value: str,
-            violations: t.MutableSequenceOf[str],
-        ) -> None:
-            """Persist RFC findings in the canonical validation metadata model."""
+            dn_value, violations = FlextLdifUtilitiesEntry.collect_rfc_violations(self)
             if not violations or self.metadata is None:
-                return
+                return self
             previous = self.metadata.validation_results
-            context = {
-                **({} if previous is None else previous.context),
-                self._VALIDATION_CONTEXT_VALIDATOR_KEY: (
-                    self._VALIDATION_CONTEXT_RFC_COMPLIANCE_NAME
-                ),
-                self._VALIDATION_CONTEXT_DN_KEY: dn_value,
-                self._VALIDATION_CONTEXT_ATTRIBUTE_COUNT_KEY: str(
-                    len(self.attributes) if self.attributes else 0
-                ),
-                self._VALIDATION_CONTEXT_TOTAL_VIOLATIONS_KEY: str(len(violations)),
-            }
             self.metadata.validation_results = (
                 FlextLdifModelsDomainMetadata.ValidationMetadata(
                     rfc_violations=list(violations),
                     errors=[],
                     warnings=[],
                     server_specific_violations=[],
-                    context=context,
+                    context=FlextLdifUtilitiesEntry.rfc_violation_context(
+                        self,
+                        dn_value,
+                        len(violations),
+                        {} if previous is None else previous.context,
+                    ),
                 )
             )
+            return self
 
         @m.model_validator(mode="after")
         def validate_server_specific_rules(self) -> Self:

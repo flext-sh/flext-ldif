@@ -67,49 +67,6 @@ class FlextLdifServerMethodsMixin:
         }
 
     @staticmethod
-    def resolve_parent_server_from_instance(
-        instance: FlextLdifServerMethodsMixin,
-    ) -> p.Ldif.ServerServer | None:
-        """Resolve the nested parent server of the given server instance.
-
-        Args:
-            instance: Server instance to probe for a parent.
-
-        Returns:
-            The parent server bundle, or None when absent or top-level.
-
-        """
-        parent: p.Ldif.ServerServer | None = getattr(
-            instance,
-            "parent_server",
-            None,
-        )
-        if parent is not None and getattr(parent, "parent_server", None) is not None:
-            return parent
-        return None
-
-    @staticmethod
-    def resolve_priority_from_parent(parent: p.Ldif.ServerServer | None) -> int:
-        """Resolve priority from the parent server Constants class.
-
-        Args:
-            parent: Parent server bundle, or None.
-
-        Returns:
-            The declared priority, or the default 100.
-
-        """
-        if parent is None:
-            return 100
-        constants_attr = getattr(parent, "Constants", None)
-        if constants_attr is None:
-            return 100
-        priority_raw = getattr(constants_attr, "PRIORITY", 100)
-        if isinstance(priority_raw, int):
-            return priority_raw
-        return 100
-
-    @staticmethod
     def resolve_server_type_from_utilities(server_class: type) -> c.Ldif.ServerTypes:
         """Infer the server type from the utilities namespace.
 
@@ -122,26 +79,6 @@ class FlextLdifServerMethodsMixin:
         """
         resolved: c.Ldif.ServerTypes = u.Ldif.resolve_parent_server_type(server_class)
         return resolved
-
-    def _get_parent_server_safe(self) -> p.Ldif.ServerServer | None:
-        """Return the effective parent server of this instance.
-
-        Returns:
-            The parent server bundle, or None when absent or top-level.
-
-        """
-        return FlextLdifServerMethodsMixin.resolve_parent_server_from_instance(self)
-
-    def _get_priority(self) -> int:
-        """Return this server's priority from the parent Constants class.
-
-        Returns:
-            The declared priority, or the default 100.
-
-        """
-        return FlextLdifServerMethodsMixin.resolve_priority_from_parent(
-            self._get_parent_server_safe(),
-        )
 
     def _get_server_type(self) -> c.Ldif.ServerTypes:
         """Resolve the server type for the current server class.

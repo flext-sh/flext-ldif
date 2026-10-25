@@ -40,6 +40,7 @@ from flext_ldif._utilities import (
     FlextLdifMetadataNameDescDetails,
     FlextLdifMetadataPrefixDetails,
     FlextLdifMetadataSchemaAnalysis,
+    FlextLdifMetadataSpacing,
     FlextLdifMetadataSyntaxOriginDetails,
     FlextLdifMetadataTracking,
     FlextLdifParserMetadataBuilders,
@@ -84,7 +85,9 @@ from flext_ldif._utilities import (
 
 
 class FlextLdifUtilities(
+    FlextLdifUtilitiesLazyMeta,
     FlextLdifUtilitiesLazyTree,
+    FlextLdifMetadataSpacing,
     FlextLdifUtilitiesACL,
     FlextLdifACLExtraction,
     FlextLdifACLExtensionFormatting,
@@ -164,5 +167,4 @@ class FlextLdifUtilities(
 
 
 u = FlextLdifUtilities
-
 __all__: list[str] = ["FlextLdifUtilities", "u"]

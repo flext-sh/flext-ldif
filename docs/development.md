@@ -110,7 +110,7 @@ from flext_ldif import FlextLdifModels, ldif
 entry_data = {
     "dn": "cn=user,ou=people,dc=example,dc=com",
     "attributes": {
-        "cn": [c.ContextScope.USER],
+        "cn": ["user"],
         "objectClass": ["person", "organizationalPerson"],
         "mail": ["user@example.com"],
     },
@@ -207,6 +207,7 @@ import os
 import pathlib
 
 import psutil
+from flext_tests import tm
 
 from flext_ldif import ldif
 

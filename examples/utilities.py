@@ -40,5 +40,4 @@ class ExamplesFlextLdifUtilities(FlextLdifUtilities):
 
 
 u = ExamplesFlextLdifUtilities
-
 __all__: list[str] = ["ExamplesFlextLdifUtilities", "u"]
