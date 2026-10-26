@@ -8,19 +8,15 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_cli import m
+from flext_ldif import FlextLdifConfig
 
 
 class FlextLdifModelsConfig:
-    """Config models for flext-ldif."""
+    """Publish the configuration schema from its independent layer-zero owner."""
 
-    class ConfigNamespace(m.BaseModel):
-        """Open, frozen namespace exposing every ``config/*.yaml`` domain."""
-
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-            extra="allow",
-            frozen=True,
-        )
+    ConfigNamespace: ClassVar[type[FlextLdifConfig.ConfigNamespace]] = (
+        FlextLdifConfig.ConfigNamespace
+    )
 
 
 __all__: list[str] = ["FlextLdifModelsConfig"]
