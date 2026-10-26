@@ -15,6 +15,15 @@ from flext_core.lazy import install_lazy_exports
 if TYPE_CHECKING:
     from flext_tests import api, d, e, h, r, td, tf, tk, tm, x
 
+    from _utilities.utilities_entries import TestsFlextLdifEntryBuildersMixin
+    from _utilities.utilities_ldap import TestsFlextLdifLdapClientMixin
+    from _utilities.utilities_schema import (
+        PARSE_DISPATCH,
+        TestsFlextLdifSchemaExpectations,
+        TestsSchemaAclAssertionsMixin,
+        assert_field_eq,
+        assert_must_contain,
+    )
     from tests.base import TestsFlextLdifServiceBase, s
     from tests.constants import TestsFlextLdifConstants, c
     from tests.constants_ldap import TestsFlextLdifLdapConstants
@@ -23,15 +32,6 @@ if TYPE_CHECKING:
     from tests.settings import TestsFlextLdifSettings
     from tests.typings import TestsFlextLdifTypes, t
     from tests.utilities import TestsFlextLdifUtilities, u
-    from tests.utilities_entries import TestsFlextLdifEntryBuildersMixin
-    from tests.utilities_ldap import TestsFlextLdifLdapClientMixin
-    from tests.utilities_schema import (
-        PARSE_DISPATCH,
-        TestsFlextLdifSchemaExpectations,
-        TestsSchemaAclAssertionsMixin,
-        assert_field_eq,
-        assert_must_contain,
-    )
 
 
 __all__: tuple[str, ...] = (

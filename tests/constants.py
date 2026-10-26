@@ -9,19 +9,21 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from types import MappingProxyType
-from typing import ClassVar, Final, Literal
+from typing import TYPE_CHECKING, ClassVar, Final, Literal
 
-from flext_tests import FlextTestsConstants
+from flext_tests import c as flext_tests_c
 
-from flext_ldif import FlextLdifConstants
-from tests import c, m, t
-from tests.constants_ldap import TestsFlextLdifLdapConstants
+from flext_ldif import c
+from tests import TestsFlextLdifLdapConstants
+
+if TYPE_CHECKING:
+    from tests import t
 
 
 class TestsFlextLdifConstants(
     TestsFlextLdifLdapConstants,
-    FlextTestsConstants,
-    FlextLdifConstants,
+    flext_tests_c,
+    c,
 ):
     """Flat test constants for flext-ldif.
 
@@ -29,23 +31,23 @@ class TestsFlextLdifConstants(
     ``c.Ldap3*`` surface stays unchanged without a second nested namespace.
     """
 
-    class Tests(FlextTestsConstants.Tests):
+    class Tests(flext_tests_c.Tests):
         """LDIF test constants namespace."""
 
         FIXTURES_DIR: ClassVar[Path] = Path(__file__).parent / "fixtures"
         PROJECT_ROOT: ClassVar[Path] = Path(__file__).resolve().parents[1]
 
-        RFC: ClassVar[str] = FlextLdifConstants.Ldif.ServerTypes.RFC.value
-        OID: ClassVar[str] = FlextLdifConstants.Ldif.ServerTypes.OID.value
-        OUD: ClassVar[str] = FlextLdifConstants.Ldif.ServerTypes.OUD.value
-        OPENLDAP: ClassVar[str] = FlextLdifConstants.Ldif.ServerTypes.OPENLDAP.value
-        OPENLDAP1: ClassVar[str] = FlextLdifConstants.Ldif.ServerTypes.OPENLDAP1.value
-        GENERIC: ClassVar[str] = FlextLdifConstants.Ldif.ServerTypes.GENERIC.value
-        DS389: ClassVar[str] = FlextLdifConstants.Ldif.ServerTypes.DS389.value
-        APACHE: ClassVar[str] = FlextLdifConstants.Ldif.ServerTypes.APACHE.value
-        NOVELL: ClassVar[str] = FlextLdifConstants.Ldif.ServerTypes.NOVELL.value
-        TIVOLI: ClassVar[str] = FlextLdifConstants.Ldif.ServerTypes.IBM_TIVOLI.value
-        AD: ClassVar[str] = FlextLdifConstants.Ldif.ServerTypes.AD.value
+        RFC: ClassVar[str] = c.Ldif.ServerTypes.RFC.value
+        OID: ClassVar[str] = c.Ldif.ServerTypes.OID.value
+        OUD: ClassVar[str] = c.Ldif.ServerTypes.OUD.value
+        OPENLDAP: ClassVar[str] = c.Ldif.ServerTypes.OPENLDAP.value
+        OPENLDAP1: ClassVar[str] = c.Ldif.ServerTypes.OPENLDAP1.value
+        GENERIC: ClassVar[str] = c.Ldif.ServerTypes.GENERIC.value
+        DS389: ClassVar[str] = c.Ldif.ServerTypes.DS389.value
+        APACHE: ClassVar[str] = c.Ldif.ServerTypes.APACHE.value
+        NOVELL: ClassVar[str] = c.Ldif.ServerTypes.NOVELL.value
+        TIVOLI: ClassVar[str] = c.Ldif.ServerTypes.IBM_TIVOLI.value
+        AD: ClassVar[str] = c.Ldif.ServerTypes.AD.value
 
         SCHEMA: ClassVar[str] = "schema"
         ACL: ClassVar[str] = "acl"
@@ -75,24 +77,16 @@ class TestsFlextLdifConstants(
         DOCKER_LEGACY_ADMIN_DN: ClassVar[str] = "cn=admin,dc=flext,dc=local"
         DOCKER_LEGACY_ADMIN_CREDENTIAL: ClassVar[str] = "flext-legacy-admin"
 
-        SCHEMA_STRUCTURAL: ClassVar[str] = (
-            FlextLdifConstants.Ldif.SchemaKind.STRUCTURAL.value
-        )
-        SCHEMA_AUXILIARY: ClassVar[str] = (
-            FlextLdifConstants.Ldif.SchemaKind.AUXILIARY.value
-        )
-        SCHEMA_ABSTRACT: ClassVar[str] = (
-            FlextLdifConstants.Ldif.SchemaKind.ABSTRACT.value
-        )
+        SCHEMA_STRUCTURAL: ClassVar[str] = c.Ldif.SchemaKind.STRUCTURAL.value
+        SCHEMA_AUXILIARY: ClassVar[str] = c.Ldif.SchemaKind.AUXILIARY.value
+        SCHEMA_ABSTRACT: ClassVar[str] = c.Ldif.SchemaKind.ABSTRACT.value
 
         NAME_CN: ClassVar[str] = "cn"
         NAME_SN: ClassVar[str] = "sn"
         NAME_MAIL: ClassVar[str] = "mail"
         NAME_DESCRIPTION: ClassVar[str] = "description"
         NAME_UID: ClassVar[str] = "uid"
-        NAME_OBJECTCLASS: ClassVar[str] = (
-            FlextLdifConstants.Ldif.DictKeys.OBJECTCLASS.value
-        )
+        NAME_OBJECTCLASS: ClassVar[str] = c.Ldif.DictKeys.OBJECTCLASS.value
         NAME_PERSON: ClassVar[str] = "person"
         NAME_TOP: ClassVar[str] = "top"
         NAME_ORCLUSER: ClassVar[str] = "orcluser"
@@ -502,36 +496,45 @@ class TestsFlextLdifConstants(
             })
         )
 
-        APACHE_ATTRIBUTE_TEST_CASES: ClassVar[
-            t.SequenceOf[m.Tests.AttributeTestCase]
+        APACHE_ATTRIBUTE_DETECTION_ROWS: ClassVar[
+            t.SequenceOf[t.Tests.AttributeCaseRow]
         ] = (
-            m.Tests.AttributeTestCase(
-                scenario="apache_oid",
-                attr_definition="( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' "
-                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )",
-                expected_can_handle=True,
-                expected_name="ads-enabled",
+            (
+                "apache_oid",
+                (
+                    "( 1.3.6.1.4.1.18060.0.4.1.2.100 NAME 'ads-enabled' "
+                    "SYNTAX 1.3.6.1.4.1.1466.115.121.1.7 )"
+                ),
+                True,
+                None,
+                "ads-enabled",
             ),
-            m.Tests.AttributeTestCase(
-                scenario="ads_prefix",
-                attr_definition="( 2.16.840.1.113730.3.1.1 NAME 'ads-searchBaseDN' "
-                "SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )",
-                expected_can_handle=True,
-                expected_name="ads-searchBaseDN",
+            (
+                "ads_prefix",
+                (
+                    "( 2.16.840.1.113730.3.1.1 NAME 'ads-searchBaseDN' "
+                    "SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 )"
+                ),
+                True,
+                None,
+                "ads-searchBaseDN",
             ),
-            m.Tests.AttributeTestCase(
-                scenario="apacheds_name",
-                attr_definition="( 1.2.3.4 NAME 'apachedsSystemId' SYNTAX "
-                "1.3.6.1.4.1.1466.115.121.1.15 )",
-                expected_can_handle=True,
-                expected_name="apachedsSystemId",
+            (
+                "apacheds_name",
+                (
+                    "( 1.2.3.4 NAME 'apachedsSystemId' SYNTAX "
+                    "1.3.6.1.4.1.1466.115.121.1.15 )"
+                ),
+                True,
+                None,
+                "apachedsSystemId",
             ),
-            m.Tests.AttributeTestCase(
-                scenario="standard_rfc",
-                attr_definition="( 2.5.4.3 NAME 'cn' SYNTAX "
-                "1.3.6.1.4.1.1466.115.121.1.15 )",
-                expected_can_handle=False,
-                expected_name="cn",
+            (
+                "standard_rfc",
+                ("( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"),
+                False,
+                None,
+                "cn",
             ),
         )
         APACHE_ATTRIBUTE_CASE_ROWS: ClassVar[t.SequenceOf[t.Tests.AttributeCaseRow]] = (
@@ -574,29 +577,6 @@ class TestsFlextLdifConstants(
             ),
         )
 
-        APACHE_OBJECTCLASS_TEST_CASES: ClassVar[
-            t.SequenceOf[m.Tests.ObjectClassTestCase]
-        ] = (
-            m.Tests.ObjectClassTestCase(
-                scenario="apache_oid",
-                oc_definition="( 1.3.6.1.4.1.18060.0.4.1.3.100 NAME "
-                "'ads-directoryService' SUP top STRUCTURAL )",
-                expected_can_handle=True,
-                expected_name="ads-directoryService",
-            ),
-            m.Tests.ObjectClassTestCase(
-                scenario="ads_name",
-                oc_definition="( 2.5.6.0 NAME 'ads-base' SUP top ABSTRACT )",
-                expected_can_handle=True,
-                expected_name="ads-base",
-            ),
-            m.Tests.ObjectClassTestCase(
-                scenario="standard_rfc",
-                oc_definition="( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
-                expected_can_handle=False,
-                expected_name="posixAccount",
-            ),
-        )
         APACHE_OBJECTCLASS_CASE_ROWS: ClassVar[
             t.SequenceOf[t.Tests.ObjectClassCaseRow]
         ] = (
@@ -680,43 +660,6 @@ class TestsFlextLdifConstants(
             ),
         )
 
-        APACHE_ENTRY_TEST_CASES: ClassVar[t.SequenceOf[m.Tests.EntryTestCase]] = (
-            *(
-                m.Tests.EntryTestCase(
-                    scenario=(
-                        "ou_config" if ou_name == "settings" else f"ou_{ou_name}"
-                    ),
-                    entry_dn=f"ou={ou_name},dc=example,dc=com",
-                    attributes={"objectClass": ["organizationalUnit"]},
-                    expected_can_handle=True,
-                )
-                for ou_name in ("settings", "services", "system", "partitions")
-            ),
-            m.Tests.EntryTestCase(
-                scenario="ads_attribute",
-                entry_dn=DN_TEST,
-                attributes={"ads-enabled": ["TRUE"], "objectClass": ["top"]},
-                expected_can_handle=True,
-            ),
-            m.Tests.EntryTestCase(
-                scenario="apacheds_attribute",
-                entry_dn=DN_TEST,
-                attributes={"apachedsSystemId": ["test"], "objectClass": ["top"]},
-                expected_can_handle=True,
-            ),
-            m.Tests.EntryTestCase(
-                scenario="ads_objectclass",
-                entry_dn=DN_TEST,
-                attributes={"objectClass": ["top", "ads-directory"]},
-                expected_can_handle=True,
-            ),
-            m.Tests.EntryTestCase(
-                scenario="standard_rfc",
-                entry_dn="cn=user,dc=example,dc=com",
-                attributes={"objectClass": ["person"], "cn": [ATTR_VALUE_USER]},
-                expected_can_handle=True,
-            ),
-        )
         DS389_ATTRIBUTE_CASE_ROWS: ClassVar[t.SequenceOf[t.Tests.AttributeCaseRow]] = (
             (
                 "ds389_oid",
@@ -737,51 +680,52 @@ class TestsFlextLdifConstants(
             ),
         )
 
-        DS389_ATTRIBUTE_TEST_CASES: ClassVar[
-            t.SequenceOf[m.Tests.AttributeTestCase]
+        DS389_ATTRIBUTE_DETECTION_ROWS: ClassVar[
+            t.SequenceOf[t.Tests.AttributeCaseRow]
         ] = (
-            m.Tests.AttributeTestCase(
-                scenario="ds389_oid",
-                attr_definition=(
+            (
+                "ds389_oid",
+                (
                     "( 2.16.840.1.113730.3.1.1 NAME 'nsslapd-suffix' SYNTAX "
                     "1.3.6.1.4.1.1466.115.121.1.12 )"
                 ),
-                expected_can_handle=True,
-                expected_oid="2.16.840.1.113730.3.1.1",
-                expected_name="nsslapd-suffix",
+                True,
+                "2.16.840.1.113730.3.1.1",
+                "nsslapd-suffix",
             ),
-            m.Tests.AttributeTestCase(
-                scenario="nsslapd_prefix",
-                attr_definition=(
+            (
+                "nsslapd_prefix",
+                (
                     "( 1.2.3.4 NAME 'nsslapd-port' SYNTAX "
                     "1.3.6.1.4.1.1466.115.121.1.27 )"
                 ),
-                expected_can_handle=True,
-                expected_name="nsslapd-port",
+                True,
+                None,
+                "nsslapd-port",
             ),
-            m.Tests.AttributeTestCase(
-                scenario="nsds_prefix",
-                attr_definition=(
+            (
+                "nsds_prefix",
+                (
                     "( 1.2.3.4 NAME 'nsds5ReplicaId' SYNTAX "
                     "1.3.6.1.4.1.1466.115.121.1.27 )"
                 ),
-                expected_can_handle=True,
-                expected_name="nsds5ReplicaId",
+                True,
+                None,
+                "nsds5ReplicaId",
             ),
-            m.Tests.AttributeTestCase(
-                scenario="nsuniqueid_prefix",
-                attr_definition=(
-                    "( 1.2.3.4 NAME 'nsuniqueid' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-                ),
-                expected_can_handle=True,
-                expected_name="nsuniqueid",
+            (
+                "nsuniqueid_prefix",
+                ("( 1.2.3.4 NAME 'nsuniqueid' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"),
+                True,
+                None,
+                "nsuniqueid",
             ),
-            m.Tests.AttributeTestCase(
-                scenario="standard_rfc",
-                attr_definition=(
-                    "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-                ),
-                expected_can_handle=False,
+            (
+                "standard_rfc",
+                ("( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"),
+                False,
+                None,
+                None,
             ),
         )
         DS389_OBJECTCLASS_CASE_ROWS: ClassVar[
@@ -805,36 +749,6 @@ class TestsFlextLdifConstants(
             ),
         )
 
-        DS389_OBJECTCLASS_TEST_CASES: ClassVar[
-            t.SequenceOf[m.Tests.ObjectClassTestCase]
-        ] = (
-            m.Tests.ObjectClassTestCase(
-                scenario="ds389_oid",
-                oc_definition="( 2.16.840.1.113730.3.2.1 NAME 'nscontainer' SUP top "
-                "STRUCTURAL )",
-                expected_can_handle=True,
-                expected_oid="2.16.840.1.113730.3.2.1",
-                expected_name="nscontainer",
-                expected_kind="STRUCTURAL",
-            ),
-            m.Tests.ObjectClassTestCase(
-                scenario="ns_name",
-                oc_definition="( 2.5.6.0 NAME 'nsperson' SUP top STRUCTURAL )",
-                expected_can_handle=True,
-                expected_name="nsperson",
-            ),
-            m.Tests.ObjectClassTestCase(
-                scenario="standard_rfc",
-                oc_definition="( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
-                expected_can_handle=False,
-            ),
-        )
-
-        _DS389_CN_KIND_CASES: Final[t.SequenceOf[tuple[str, t.StrSequence]]] = (
-            ("settings", ("nscontainer",)),
-            ("monitor", ("top",)),
-            ("changelog", ("top",)),
-        )
         DS389_ENTRY_CASE_ROWS: ClassVar[t.SequenceOf[t.Tests.EntryCaseRow]] = (
             (
                 "ds389_entry",
@@ -848,12 +762,6 @@ class TestsFlextLdifConstants(
                 {"objectClass": ["person"], "cn": [ATTR_VALUE_USER]},
                 False,
             ),
-        )
-
-        _DS389_ATTR_PROBE_CASES: Final[t.SequenceOf[tuple[str, str, str]]] = (
-            ("nsslapd_attribute", "nsslapd-port", "389"),
-            ("nsds_attribute", "nsds5ReplicaId", c.ParserBooleanToken.ONE),
-            ("nsuniqueid_attribute", "nsuniqueid", "12345"),
         )
 
         NOVELL_OBJECTCLASS_CASE_ROWS: ClassVar[
@@ -877,101 +785,56 @@ class TestsFlextLdifConstants(
             ),
         )
 
-        DS389_ENTRY_TEST_CASES: ClassVar[t.SequenceOf[m.Tests.EntryTestCase]] = (
-            *(
-                m.Tests.EntryTestCase(
-                    scenario=f"cn_{cn}",
-                    entry_dn=f"cn={cn}",
-                    attributes={
-                        FlextLdifConstants.Ldif.DictKeys.OBJECTCLASS.value: list(
-                            object_classes,
-                        ),
-                    },
-                    expected_can_handle=True,
-                )
-                for cn, object_classes in _DS389_CN_KIND_CASES
-            ),
-            *(
-                m.Tests.EntryTestCase(
-                    scenario=scenario,
-                    entry_dn="cn=test,dc=example,dc=com",
-                    attributes={attr: [value], "objectclass": ["top"]},
-                    expected_can_handle=True,
-                )
-                for scenario, attr, value in _DS389_ATTR_PROBE_CASES
-            ),
-            m.Tests.EntryTestCase(
-                scenario="ns_objectclass",
-                entry_dn=DN_TEST,
-                attributes={
-                    FlextLdifConstants.Ldif.DictKeys.OBJECTCLASS.value: [
-                        "top",
-                        "nscontainer",
-                    ],
-                },
-                expected_can_handle=True,
-            ),
-            m.Tests.EntryTestCase(
-                scenario="standard_rfc",
-                entry_dn="cn=user,dc=example,dc=com",
-                attributes={
-                    FlextLdifConstants.Ldif.DictKeys.OBJECTCLASS.value: ["person"],
-                    "cn": [ATTR_VALUE_USER],
-                },
-                expected_can_handle=False,
-            ),
-        )
-
-        # NB: cn_config / cn_settings naming preserved → first case key
-        # historically was "cn_config" (not "cn_settings"); align to that.
-
-        NOVELL_ATTRIBUTE_TEST_CASES: ClassVar[
-            t.SequenceOf[m.Tests.AttributeTestCase]
+        NOVELL_ATTRIBUTE_DETECTION_ROWS: ClassVar[
+            t.SequenceOf[t.Tests.AttributeCaseRow]
         ] = (
-            m.Tests.AttributeTestCase(
-                scenario="novell_oid",
-                attr_definition=(
+            (
+                "novell_oid",
+                (
                     "( 2.16.840.1.113719.1.1.4.1.501 NAME "
                     "'nspmPasswordPolicyDN' SYNTAX "
                     "1.3.6.1.4.1.1466.115.121.1.12 )"
                 ),
-                expected_can_handle=True,
-                expected_oid="2.16.840.1.113719.1.1.4.1.501",
-                expected_name="nspmPasswordPolicyDN",
+                True,
+                "2.16.840.1.113719.1.1.4.1.501",
+                "nspmPasswordPolicyDN",
             ),
-            m.Tests.AttributeTestCase(
-                scenario="nspm_prefix",
-                attr_definition=(
+            (
+                "nspm_prefix",
+                (
                     "( 1.2.3.4 NAME 'nspmPasswordPolicy' SYNTAX "
                     "1.3.6.1.4.1.1466.115.121.1.15 )"
                 ),
-                expected_can_handle=True,
-                expected_name="nspmPasswordPolicy",
+                True,
+                None,
+                "nspmPasswordPolicy",
             ),
-            m.Tests.AttributeTestCase(
-                scenario="login_prefix",
-                attr_definition=(
+            (
+                "login_prefix",
+                (
                     "( 1.2.3.4 NAME 'loginDisabled' SYNTAX "
                     "1.3.6.1.4.1.1466.115.121.1.7 )"
                 ),
-                expected_can_handle=True,
-                expected_name="loginDisabled",
+                True,
+                None,
+                "loginDisabled",
             ),
-            m.Tests.AttributeTestCase(
-                scenario="dirxml_prefix",
-                attr_definition=(
+            (
+                "dirxml_prefix",
+                (
                     "( 1.2.3.4 NAME 'dirxml-associations' SYNTAX "
                     "1.3.6.1.4.1.1466.115.121.1.15 )"
                 ),
-                expected_can_handle=True,
-                expected_name="dirxml-associations",
+                True,
+                None,
+                "dirxml-associations",
             ),
-            m.Tests.AttributeTestCase(
-                scenario="standard_rfc",
-                attr_definition=(
-                    "( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
-                ),
-                expected_can_handle=False,
+            (
+                "standard_rfc",
+                ("( 2.5.4.3 NAME 'cn' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"),
+                False,
+                None,
+                None,
             ),
         )
         NOVELL_ATTRIBUTE_CASE_ROWS: ClassVar[t.SequenceOf[t.Tests.AttributeCaseRow]] = (
@@ -994,29 +857,6 @@ class TestsFlextLdifConstants(
             ),
         )
 
-        NOVELL_OBJECTCLASS_TEST_CASES: ClassVar[
-            t.SequenceOf[m.Tests.ObjectClassTestCase]
-        ] = (
-            m.Tests.ObjectClassTestCase(
-                scenario="novell_oid",
-                oc_definition="( 2.16.840.1.113719.2.2.6.1 NAME 'ndsPerson' SUP top "
-                "STRUCTURAL )",
-                expected_can_handle=True,
-                expected_oid="2.16.840.1.113719.2.2.6.1",
-                expected_name="ndsPerson",
-            ),
-            m.Tests.ObjectClassTestCase(
-                scenario="nds_name",
-                oc_definition="( 2.5.6.0 NAME 'ndsserver' SUP top STRUCTURAL )",
-                expected_can_handle=True,
-                expected_name="ndsserver",
-            ),
-            m.Tests.ObjectClassTestCase(
-                scenario="standard_rfc",
-                oc_definition="( 2.5.6.6 NAME 'posixAccount' SUP top STRUCTURAL )",
-                expected_can_handle=False,
-            ),
-        )
         NOVELL_ENTRY_CASE_ROWS: ClassVar[t.SequenceOf[t.Tests.EntryCaseRow]] = (
             (
                 "novell_entry",
@@ -1032,42 +872,6 @@ class TestsFlextLdifConstants(
                 "cn=user,dc=example,dc=com",
                 {"objectClass": ["person"], "cn": [ATTR_VALUE_USER]},
                 False,
-            ),
-        )
-
-        NOVELL_ENTRY_TEST_CASES: ClassVar[t.SequenceOf[m.Tests.EntryTestCase]] = (
-            *(
-                m.Tests.EntryTestCase(
-                    scenario=f"ou_{ou_name}",
-                    entry_dn=f"ou={ou_name},o=Example",
-                    attributes={"objectClass": ["organizationalUnit"]},
-                    expected_can_handle=True,
-                )
-                for ou_name in ("services", "apps", "system")
-            ),
-            m.Tests.EntryTestCase(
-                scenario="nspm_attribute",
-                entry_dn="cn=user,o=Example",
-                attributes={"nspmpasswordpolicy": ["policy1"], "objectClass": ["top"]},
-                expected_can_handle=True,
-            ),
-            m.Tests.EntryTestCase(
-                scenario="login_attribute",
-                entry_dn="cn=user,o=Example",
-                attributes={"logindisabled": ["TRUE"], "objectClass": ["top"]},
-                expected_can_handle=True,
-            ),
-            m.Tests.EntryTestCase(
-                scenario="nds_objectclass",
-                entry_dn="cn=user,o=Example",
-                attributes={"objectClass": ["top", "ndsperson"]},
-                expected_can_handle=True,
-            ),
-            m.Tests.EntryTestCase(
-                scenario="standard_rfc",
-                entry_dn="cn=user,dc=example,dc=com",
-                attributes={"objectClass": ["person"], "cn": [ATTR_VALUE_USER]},
-                expected_can_handle=False,
             ),
         )
 

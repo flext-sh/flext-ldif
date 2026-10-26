@@ -12,37 +12,37 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_tests import FlextTestsUtilities
+from flext_tests import u as flext_tests_u
 
-from flext_ldif import FlextLdifUtilities
+from flext_ldif import u
 from tests import c, m, p, t
-from tests.utilities_entries import TestsFlextLdifEntryBuildersMixin
-from tests.utilities_ldap import TestsFlextLdifLdapClientMixin
-from tests.utilities_schema import (
+from tests._utilities import (
+    TestsFlextLdifEntryBuildersMixin,
+    TestsFlextLdifLdapClientMixin,
     TestsFlextLdifSchemaExpectations,
     TestsSchemaAclAssertionsMixin,
 )
 
 
-class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
+class TestsFlextLdifUtilities(flext_tests_u, u):
     """Project test utility namespace extension."""
 
     class Tests(
         TestsFlextLdifLdapClientMixin,
         TestsFlextLdifEntryBuildersMixin,
         TestsSchemaAclAssertionsMixin,
-        FlextTestsUtilities.Tests,
+        flext_tests_u.Tests,
     ):
         """Flat test utility namespace for flext-ldif."""
 
-        logger: ClassVar[p.Logger] = FlextLdifUtilities.fetch_logger(__name__)
+        logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
         @classmethod
         def server_attribute_test_cases(
             cls,
             server: str,
         ) -> t.VariadicTuple[m.Tests.AttributeTestCase]:
-            """Copy the selected dialect's canonical attribute cases.
+            """Materialize the selected dialect's canonical attribute cases.
 
             Args:
                 server: The server dialect to construct attribute test cases for.
@@ -52,15 +52,17 @@ class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
 
             """
             cases = {
-                c.Tests.APACHE: c.Tests.APACHE_ATTRIBUTE_TEST_CASES,
-                c.Tests.DS389: c.Tests.DS389_ATTRIBUTE_TEST_CASES,
-                c.Tests.NOVELL: c.Tests.NOVELL_ATTRIBUTE_TEST_CASES,
+                c.Tests.APACHE: c.Tests.APACHE_ATTRIBUTE_DETECTION_ROWS,
+                c.Tests.DS389: c.Tests.DS389_ATTRIBUTE_DETECTION_ROWS,
+                c.Tests.NOVELL: c.Tests.NOVELL_ATTRIBUTE_DETECTION_ROWS,
             }
-            return tuple(
-                case.model_copy(deep=True)
-                for dialect, dialect_cases in cases.items()
-                if dialect == server
-                for case in dialect_cases
+            return cls.attribute_test_cases(
+                tuple(
+                    row
+                    for dialect, dialect_cases in cases.items()
+                    if dialect == server
+                    for row in dialect_cases
+                )
             )
 
         @staticmethod
