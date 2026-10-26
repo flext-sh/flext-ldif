@@ -111,14 +111,16 @@ class TestsFlextLdifRelaxed:
 
     @staticmethod
     @pytest.fixture
-    def entry_server() -> FlextLdifServersRelaxedEntry:
+    def entry_server(
+        acl_server: FlextLdifServersRelaxed.Acl,
+    ) -> FlextLdifServersRelaxedEntry:
         """Create relaxed entry server instance.
 
         Returns:
             The resulting ``FlextLdifServersRelaxedEntry``.
 
         """
-        return FlextLdifServersRelaxedEntry()
+        return FlextLdifServersRelaxedEntry(acl_server=acl_server)
 
     @staticmethod
     @pytest.mark.parametrize(

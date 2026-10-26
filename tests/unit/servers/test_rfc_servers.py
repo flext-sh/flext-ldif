@@ -10,15 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_ldif import FlextLdif
-from flext_ldif.servers import (
-    FlextLdifServersBaseEntry,
-    FlextLdifServersBaseSchema,
-    FlextLdifServersBaseSchemaAcl,
-    FlextLdifServersRfc,
-)
+from flext_ldif.servers import FlextLdifServersRfc
 from tests import c, m, tm
 
 
@@ -79,7 +72,7 @@ class TestsFlextLdifRfcServers:
     @classmethod
     def test_rfc_entry_ignores_schema_definitions(cls) -> None:
         """The RFC entry server is not aware of schema definitions."""
-        entry = FlextLdifServersRfc().entry_server
+        entry = FlextLdifServersRfc().entry
         tm.fail(entry.can_handle_attribute(cls._parsed_attribute()))
         tm.fail(entry.can_handle_objectclass(cls._parsed_objectclass()))
 
@@ -120,19 +113,19 @@ class TestsFlextLdifRfcServers:
         tm.that(attribute.syntax, eq=None)
 
     @staticmethod
-    def test_base_acl_hook_raises_when_not_redefined() -> None:
-        """An incomplete ACL capability cannot be constructed."""
-        with pytest.raises(TypeError, match=r"abstract.*_parse_acl"):
-            FlextLdifServersBaseSchemaAcl()
+    def test_rfc_acl_accepts_raw_acl() -> None:
+        """The concrete RFC ACL capability accepts raw ACL content."""
+        acl = FlextLdifServersRfc.Acl()
+        tm.ok(acl.can_handle_acl("access to * by * read"))
 
     @staticmethod
-    def test_base_entry_hook_raises_when_not_redefined() -> None:
-        """An incomplete entry capability cannot be constructed."""
-        with pytest.raises(TypeError, match=r"abstract.*_parse_content"):
-            FlextLdifServersBaseEntry()
+    def test_rfc_entry_empty_content_yields_no_entries() -> None:
+        """The composed RFC entry capability does not fabricate entries."""
+        entry = FlextLdifServersRfc().entry_server
+        tm.that(entry.parse_server("").unwrap(), eq=[])
 
     @staticmethod
-    def test_base_schema_hook_raises_when_not_redefined() -> None:
-        """An incomplete schema capability cannot be constructed."""
-        with pytest.raises(TypeError, match=r"abstract.*can_handle_attribute"):
-            FlextLdifServersBaseSchema()
+    def test_rfc_schema_rejects_malformed_definition() -> None:
+        """The concrete RFC schema capability reports invalid schema input."""
+        schema = FlextLdifServersRfc().schema_server
+        tm.fail(schema.parse_attribute("MALFORMED"))

@@ -259,40 +259,40 @@ Output LDIF with OUD format (aci:)
 
 1. **Protocol Definition** (3-5 lines)
 
-   - `/flext_ldif/protocols.py` - Update Acl signature
+    - `/flext_ldif/protocols.py` - Update Acl signature
 
 1. **Base Class** (10-15 lines)
 
-   - `/flext_ldif/servers/base.py` - Update FlextLdifServersBase.Acl.parse()
+    - `/flext_ldif/servers/base.py` - Update FlextLdifServersBase.Acl.parse()
 
 1. **13 Server Servers** (520-650 lines)
 
-   - All 13 servers files in `/flext_ldif/servers/servers/`
-   - Each file needs parse() method signature updated
+    - All 13 servers files in `/flext_ldif/servers/servers/`
+    - Each file needs parse() method signature updated
 
 1. **Service Layer** (30-50 lines)
 
-   - `/flext_ldif/services/acl.py` - Update parse() wrapper
-   - `/flext_ldif/categorized_pipeline.py` - Update transformation logic
+    - `/flext_ldif/services/acl.py` - Update parse() wrapper
+    - `/flext_ldif/categorized_pipeline.py` - Update transformation logic
 
 1. **Tests** (1000+ lines)
 
-   - 50+ test methods in 4+ test files
-   - Mock returns, assertions, fixture data
+    - 50+ test methods in 4+ test files
+    - Mock returns, assertions, fixture data
 
 ### Should Review (Medium Impact)
 
 1. **Integration Tests** (tests/integration/)
 
-   - May have parse() calls in fixtures or helpers
+    - May have parse() calls in fixtures or helpers
 
 1. **Examples** (examples/06_acl_processing.py)
 
-   - Documentation examples using parse()
+    - Documentation examples using parse()
 
 1. **Type Hints**
 
-   - Any type hints expecting Acl model need updating
+    - Any type hints expecting Acl model need updating
 
 ---
 

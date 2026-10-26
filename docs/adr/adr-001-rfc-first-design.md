@@ -66,15 +66,15 @@ parse_result = api.parse_ldif_file(Path("data.ldif"), server_type="oid")
 
 1. **Direct Parser Access**: Allow direct use of parsers with optional servers
 
-   - **Rejected**: Would compromise standards compliance and create bypass paths
+    - **Rejected**: Would compromise standards compliance and create bypass paths
 
 1. **Server-Specific Parsers**: Separate parsers for each LDAP server
 
-   - **Rejected**: Would duplicate RFC logic and complicate maintenance
+    - **Rejected**: Would duplicate RFC logic and complicate maintenance
 
 1. **Configuration-Driven Extensions**: Runtime configuration instead of code
 
-   - **Rejected**: Less type-safe and harder to test server-specific logic
+    - **Rejected**: Less type-safe and harder to test server-specific logic
 
 **Related ADRs**:
 
