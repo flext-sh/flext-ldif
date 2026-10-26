@@ -15,7 +15,7 @@ from typing import ClassVar
 
 from flext_tests import u as flext_tests_u
 
-from flext_ldif import u
+from flext_ldif import u as flext_ldif_u
 from tests import c, m, p, t
 from tests._utilities import (
     TestsFlextLdifEntryBuildersMixin,
@@ -25,7 +25,7 @@ from tests._utilities import (
 )
 
 
-class TestsFlextLdifUtilities(flext_tests_u, u):
+class TestsFlextLdifUtilities(flext_tests_u, flext_ldif_u):
     """Project test utility namespace extension."""
 
     class Tests(
@@ -36,7 +36,7 @@ class TestsFlextLdifUtilities(flext_tests_u, u):
     ):
         """Flat test utility namespace for flext-ldif."""
 
-        logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
+        logger: ClassVar[p.Logger] = flext_ldif_u.fetch_logger(__name__)
 
         @classmethod
         def server_attribute_test_cases(

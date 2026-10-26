@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_cli import u
+from flext_cli import u as flext_cli_u
 
 from flext_ldif._utilities import (
     FlextLdifACLExtensionFormatting,
@@ -156,7 +156,7 @@ class FlextLdifUtilities(
     FlextLdifWriterSchemaParts,
     FlextLdifWriterLineFolding,
     FlextLdifWriterRfcChars,
-    u,
+    flext_cli_u,
     metaclass=FlextLdifUtilitiesLazyMeta,
 ):
     """Centralized helpers with domain collection behavior under ``Ldif``.

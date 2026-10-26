@@ -36,6 +36,7 @@ exclude_patterns = [
   "**/tests/unit/servers/__init__.py",
   "**/tests/unit/services/__init__.py",
   "**/tests/unit/utilities/__init__.py",
+  "**/tests/utilities.py",
 ]
 
 [smells]
