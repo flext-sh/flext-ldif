@@ -14,8 +14,8 @@ from flext_cli import p, t
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from flext_ldif._protocols import FlextLdifProtocolsDomain, FlextLdifProtocolsValues
     from flext_ldif.models import FlextLdifModels
-    from flext_ldif.protocols import FlextLdifProtocols
     from flext_ldif.typings import FlextLdifTypes
 
 
@@ -66,7 +66,7 @@ class FlextLdifProtocolsBase:
             ldif_path: Path | None = None,
             ldif_content: str | None = None,
             max_lines: int | None = None,
-        ) -> p.Result[FlextLdifProtocols.Ldif.ServerDetectionResult]:
+        ) -> p.Result[FlextLdifProtocolsValues.ServerDetectionResult]:
             """Detect LDAP server type from LDIF file or content."""
             ...
 
@@ -167,36 +167,36 @@ class FlextLdifProtocolsBase:
 
         def server(
             self, server_type: str
-        ) -> p.Result[FlextLdifProtocols.Ldif.ServerServer]: ...
+        ) -> p.Result[FlextLdifProtocolsDomain.ServerServer]: ...
 
         def resolve_base_server(
             self, server_type: str
-        ) -> p.Result[FlextLdifProtocols.Ldif.ServerServer]: ...
+        ) -> p.Result[FlextLdifProtocolsDomain.ServerServer]: ...
 
         def schema_server(
             self, server_type: str
-        ) -> p.Result[FlextLdifProtocols.Ldif.SchemaServer]: ...
+        ) -> p.Result[FlextLdifProtocolsDomain.SchemaServer]: ...
 
         def resolve_schema_server(
             self, server_type: str
-        ) -> p.Result[FlextLdifProtocols.Ldif.SchemaServer]: ...
+        ) -> p.Result[FlextLdifProtocolsDomain.SchemaServer]: ...
 
         def acl(
             self, server_type: str
-        ) -> p.Result[FlextLdifProtocols.Ldif.AclServer]: ...
+        ) -> p.Result[FlextLdifProtocolsDomain.AclServer]: ...
 
         def entry(
             self, server_type: str
-        ) -> p.Result[FlextLdifProtocols.Ldif.EntryServer]: ...
+        ) -> p.Result[FlextLdifProtocolsDomain.EntryServer]: ...
 
         def resolve_server_bundle(
             self, server_type: str
         ) -> p.Result[
             t.MappingKV[
                 str,
-                FlextLdifProtocols.Ldif.SchemaServer
-                | FlextLdifProtocols.Ldif.AclServer
-                | FlextLdifProtocols.Ldif.EntryServer,
+                FlextLdifProtocolsDomain.SchemaServer
+                | FlextLdifProtocolsDomain.AclServer
+                | FlextLdifProtocolsDomain.EntryServer,
             ]
         ]: ...
 
@@ -211,7 +211,7 @@ class FlextLdifProtocolsBase:
         ) -> p.Result[t.MutableJsonMapping]: ...
 
         def register_server(
-            self, server: FlextLdifProtocols.Ldif.ServerServer
+            self, server: FlextLdifProtocolsDomain.ServerServer
         ) -> p.Result[bool]: ...
 
         def unregister_server(self, server_type: str) -> p.Result[bool]: ...
@@ -375,9 +375,9 @@ class FlextLdifProtocolsBase:
         """Flexible entry categorization result."""
 
         categorized: t.MappingKV[
-            str, t.MutableSequenceOf[FlextLdifProtocols.Ldif.Entry]
+            str, t.MutableSequenceOf[FlextLdifProtocolsValues.Entry]
         ]
-        uncategorized: t.MutableSequenceOf[FlextLdifProtocols.Ldif.Entry]
+        uncategorized: t.MutableSequenceOf[FlextLdifProtocolsValues.Entry]
 
     @runtime_checkable
     class ProcessEntriesOptions(p.Model, Protocol):
@@ -475,31 +475,31 @@ class FlextLdifProtocolsBase:
     class ServerResolutionService(Protocol):
         """Contract for server registry resolution and model conversion."""
 
-        def acl(self, server_type: str) -> p.Result[FlextLdifProtocols.Ldif.AclServer]:
+        def acl(self, server_type: str) -> p.Result[FlextLdifProtocolsDomain.AclServer]:
             """Resolve ACL server by server type via the facade DSL."""
             ...
 
         def entry(
             self, server_type: str
-        ) -> p.Result[FlextLdifProtocols.Ldif.EntryServer]:
+        ) -> p.Result[FlextLdifProtocolsDomain.EntryServer]:
             """Resolve entry server by server type via the facade DSL."""
             ...
 
         def resolve_base_server(
             self, server_type: str
-        ) -> p.Result[FlextLdifProtocols.Ldif.ServerServer]:
+        ) -> p.Result[FlextLdifProtocolsDomain.ServerServer]:
             """Resolve base server by server type via the facade DSL."""
             ...
 
         def schema_server(
             self, server_type: str
-        ) -> p.Result[FlextLdifProtocols.Ldif.SchemaServer]:
+        ) -> p.Result[FlextLdifProtocolsDomain.SchemaServer]:
             """Resolve schema server by server type via the facade DSL."""
             ...
 
         def resolve_schema_server(
             self, server_type: str
-        ) -> p.Result[FlextLdifProtocols.Ldif.SchemaServer]:
+        ) -> p.Result[FlextLdifProtocolsDomain.SchemaServer]:
             """Resolve schema server by server type via the facade DSL."""
             ...
 
@@ -509,9 +509,9 @@ class FlextLdifProtocolsBase:
         ) -> p.Result[
             t.MappingKV[
                 str,
-                FlextLdifProtocols.Ldif.SchemaServer
-                | FlextLdifProtocols.Ldif.AclServer
-                | FlextLdifProtocols.Ldif.EntryServer,
+                FlextLdifProtocolsDomain.SchemaServer
+                | FlextLdifProtocolsDomain.AclServer
+                | FlextLdifProtocolsDomain.EntryServer,
             ]
         ]:
             """Resolve schema/acl/entry bundle by server type via the facade DSL."""
@@ -543,11 +543,11 @@ class FlextLdifProtocolsBase:
             self,
             source: str
             | FlextLdifProtocolsBase.ServerReference
-            | FlextLdifProtocols.Ldif.ServerServer,
+            | FlextLdifProtocolsDomain.ServerServer,
             target: str
             | FlextLdifProtocolsBase.ServerReference
-            | FlextLdifProtocols.Ldif.ServerServer,
-            model_instance: FlextLdifProtocols.Ldif.Entry
+            | FlextLdifProtocolsDomain.ServerServer,
+            model_instance: FlextLdifProtocolsValues.Entry
             | FlextLdifProtocolsBase.SchemaAttribute
             | FlextLdifProtocolsBase.SchemaObjectClass
             | FlextLdifProtocolsBase.Acl,

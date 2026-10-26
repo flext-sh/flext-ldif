@@ -79,15 +79,6 @@ if TYPE_CHECKING:
     from flext_ldif.servers._relaxed.server_constants import (
         FlextLdifServersRelaxedConstants,
     )
-    from flext_ldif.servers._rfc.acl import FlextLdifServersRfcAcl
-    from flext_ldif.servers._rfc.entry import FlextLdifServersRfcEntry
-    from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
-    from flext_ldif.servers._rfc.schema_parse import FlextLdifServersRfcSchemaParseMixin
-    from flext_ldif.servers._rfc.schema_values import (
-        FlextLdifServersRfcSchemaValuesMixin,
-    )
-    from flext_ldif.servers._rfc.schema_write import FlextLdifServersRfcSchemaWriteMixin
-    from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
     from flext_ldif.servers.ad import FlextLdifServersAd
     from flext_ldif.servers.apache import FlextLdifServersApache
     from flext_ldif.servers.base import FlextLdifServersBase
@@ -190,13 +181,6 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersRelaxedEntryWriteMixin",
     "FlextLdifServersRelaxedSchema",
     "FlextLdifServersRfc",
-    "FlextLdifServersRfcAcl",
-    "FlextLdifServersRfcConstants",
-    "FlextLdifServersRfcEntry",
-    "FlextLdifServersRfcSchema",
-    "FlextLdifServersRfcSchemaParseMixin",
-    "FlextLdifServersRfcSchemaValuesMixin",
-    "FlextLdifServersRfcSchemaWriteMixin",
     "FlextLdifServersTivoli",
 )
 
@@ -272,13 +256,6 @@ install_lazy_exports(
         "FlextLdifServersRelaxedEntryWriteMixin": ".relaxed_entry_write",
         "FlextLdifServersRelaxedSchema": ".relaxed_schema",
         "FlextLdifServersRfc": ".rfc",
-        "FlextLdifServersRfcAcl": "._rfc.acl",
-        "FlextLdifServersRfcConstants": "._rfc.server_constants",
-        "FlextLdifServersRfcEntry": "._rfc.entry",
-        "FlextLdifServersRfcSchema": "._rfc.schema",
-        "FlextLdifServersRfcSchemaParseMixin": "._rfc.schema_parse",
-        "FlextLdifServersRfcSchemaValuesMixin": "._rfc.schema_values",
-        "FlextLdifServersRfcSchemaWriteMixin": "._rfc.schema_write",
         "FlextLdifServersTivoli": ".tivoli",
     }),
     public_exports=__all__,
