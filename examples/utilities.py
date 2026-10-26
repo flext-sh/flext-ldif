@@ -12,10 +12,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from examples import m
-from flext_ldif import FlextLdifUtilities
+from flext_ldif import u
 
 
-class ExamplesFlextLdifUtilities(FlextLdifUtilities):
+class ExamplesFlextLdifUtilities(u):
     """Utility functions for flextldif."""
 
     @staticmethod

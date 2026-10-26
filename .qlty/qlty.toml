@@ -30,6 +30,7 @@ exclude_patterns = [
   "**/src/flext_ldif/typings.py",
   "**/src/flext_ldif/utilities.py",
   "**/tests/__init__.py",
+  "**/tests/_utilities/__init__.py",
   "**/tests/integration/__init__.py",
   "**/tests/unit/__init__.py",
   "**/tests/unit/servers/__init__.py",

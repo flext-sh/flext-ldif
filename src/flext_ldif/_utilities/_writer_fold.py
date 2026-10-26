@@ -14,8 +14,6 @@ from flext_ldif import c, t
 class FlextLdifWriterLineFolding:
     """Fold long LDIF lines into continuation lines without splitting tokens."""
 
-    _KEYWORD_TOKEN_MAX_LENGTH: int = 12
-
     class Fold:
         """Folding cursor: where the walk stands in the raw byte line."""
 
@@ -176,7 +174,7 @@ class FlextLdifWriterLineFolding:
             split_index = cls._adjust_split_for_keyword_token(
                 chunk,
                 split_index,
-                cls._KEYWORD_TOKEN_MAX_LENGTH,
+                c.Ldif.KEYWORD_TOKEN_MAX_LENGTH,
             )
         split_chunk = chunk[: split_index + 1]
         split_bytes = split_chunk.encode(c.Ldif.DEFAULT_ENCODING)

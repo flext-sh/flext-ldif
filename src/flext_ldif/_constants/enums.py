@@ -2,6 +2,8 @@
 
 Enumerations and the OUD-output ACL taxonomy the ``_constants`` family base
 and its sibling parts consume without importing another family module.
+ACL subject membership values derive from the subject enum on this owner;
+permission utilities consume this declaration through ``c.Ldif``.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -59,6 +61,10 @@ class FlextLdifConstantsBaseParts:
             AUTHENTICATED = "authenticated"
             SDDL = "sddl"
             DN = "dn"
+
+        ACL_SUBJECT_TYPE_VALUES: ClassVar[frozenset[str]] = frozenset(
+            subject_type.value for subject_type in AclSubjectType
+        )
 
         @unique
         class RfcAclPermission(StrEnum):

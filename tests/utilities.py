@@ -1,3 +1,4 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """Test utilities facade with shared helper re-exports.
 
 The focused helper mixins live in ``tests.utilities_ldap``,
@@ -28,8 +29,8 @@ class TestsFlextLdifUtilities(flext_tests_u, u):
     """Project test utility namespace extension."""
 
     class Tests(
-        TestsFlextLdifLdapClientMixin,
         TestsFlextLdifEntryBuildersMixin,
+        TestsFlextLdifLdapClientMixin,
         TestsSchemaAclAssertionsMixin,
         flext_tests_u.Tests,
     ):
@@ -141,7 +142,6 @@ class TestsFlextLdifUtilities(flext_tests_u, u):
 
 
 u = TestsFlextLdifUtilities
-
 __all__: list[str] = [
     "TestsFlextLdifSchemaExpectations",
     "TestsFlextLdifUtilities",

@@ -48,7 +48,7 @@ if TYPE_CHECKING:
     from examples.schema_validation import ExamplesFlextLdifSchemaValidation
     from examples.typings import ExamplesFlextLdifTypes
     from examples.utilities import ExamplesFlextLdifUtilities, u
-    from flext_ldif import c, d, e, h, m, p, r, s, t, x
+    from flext_ldif import c, cli, config, d, e, h, ldif, m, p, r, s, settings, t, x
 
 
 __all__: tuple[str, ...] = (
@@ -67,12 +67,15 @@ __all__: tuple[str, ...] = (
     "basic_batch_processing",
     "batch_schema_operations",
     "c",
+    "cli",
     "complete_processing_pipeline",
+    "config",
     "create_entry_or_none",
     "d",
     "e",
     "h",
     "intelligent_schema_building",
+    "ldif",
     "m",
     "main",
     "object_class_entries",
@@ -83,6 +86,7 @@ __all__: tuple[str, ...] = (
     "railway_schema_pipeline",
     "s",
     "schema_migration_pipeline",
+    "settings",
     "t",
     "u",
     "use_dn_utilities",
@@ -114,12 +118,15 @@ install_lazy_exports(
         "basic_batch_processing": ".advanced_processing",
         "batch_schema_operations": ".schema_operations",
         "c": "flext_ldif",
+        "cli": "flext_ldif",
         "complete_processing_pipeline": ".advanced_processing",
+        "config": "flext_ldif",
         "create_entry_or_none": ".schema_building",
         "d": "flext_ldif",
         "e": "flext_ldif",
         "h": "flext_ldif",
         "intelligent_schema_building": ".schema_operations",
+        "ldif": "flext_ldif",
         "m": "flext_ldif",
         "main": ".acl_processing",
         "object_class_entries": ".schema_building",
@@ -130,6 +137,7 @@ install_lazy_exports(
         "railway_schema_pipeline": ".schema_operations",
         "s": "flext_ldif",
         "schema_migration_pipeline": ".schema_operations",
+        "settings": "flext_ldif",
         "t": "flext_ldif",
         "u": ".utilities",
         "use_dn_utilities": ".advanced_processing",

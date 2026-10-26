@@ -13,14 +13,15 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_cli import cli
     from flext_tests import (
         api,
+        cli,
         config,
         d,
         e,
         h,
         install_local_packages,
+        main,
         r,
         settings,
         td,
@@ -30,7 +31,7 @@ if TYPE_CHECKING:
         x,
     )
 
-    from flext_ldif import ldif, main
+    from flext_ldif import ldif
     from tests.base import TestsFlextLdifServiceBase, s
     from tests.constants import TestsFlextLdifConstants, c
     from tests.constants_ldap import TestsFlextLdifLdapConstants
@@ -96,7 +97,7 @@ install_lazy_exports(
         "TestsFlextLdifUtilities": ".utilities",
         "api": "flext_tests",
         "c": ".constants",
-        "cli": "flext_cli",
+        "cli": "flext_tests",
         "config": "flext_tests",
         "d": "flext_tests",
         "e": "flext_tests",
@@ -104,7 +105,7 @@ install_lazy_exports(
         "install_local_packages": "flext_tests",
         "ldif": "flext_ldif",
         "m": ".models",
-        "main": "flext_ldif",
+        "main": "flext_tests",
         "p": ".protocols",
         "r": "flext_tests",
         "s": ".base",

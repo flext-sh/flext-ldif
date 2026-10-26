@@ -3,6 +3,7 @@
 Owns every compiled ``re.Pattern`` for the LDIF domain. Consumer modules
 import the pre-compiled ``*_RE`` constants directly; ``import re`` outside
 this module is forbidden by AGENTS.md §3.1 ``regex-from-constants`` rule.
+Line-folding limits are declared here and consumed through ``c.Ldif``.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -47,6 +48,7 @@ class FlextLdifConstantsBase:
 
     # Lines and formatting
     LINE_FOLD_WIDTH: ClassVar[int] = 76
+    KEYWORD_TOKEN_MAX_LENGTH: ClassVar[int] = 12
     LINE_CONTINUATION_SPACE: ClassVar[str] = " "
     LINE_SEPARATOR: ClassVar[str] = "\n"
 

@@ -17,7 +17,7 @@ class FlextLdifACLExtensionFormatting:
     """Format ACL bind rules and targets from metadata extensions."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
-    _OPERATOR_PLACEHOLDER: str = "{operator}"
+    _OPERATOR_PLACEHOLDER: ClassVar[str] = "{operator}"
 
     @staticmethod
     def _format_bind_rule_from_extension(
