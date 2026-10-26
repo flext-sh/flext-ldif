@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Tests package.
+"""Tests. Utilities package.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -39,10 +39,9 @@ install_lazy_exports(
     globals(),
     MappingProxyType({
         "PARSE_DISPATCH": ".utilities_schema",
-        "TestsFlextLdifConstants": ".constants",
         "TestsFlextLdifEntryBuildersMixin": ".utilities_entries",
         "TestsFlextLdifLdapClientMixin": ".utilities_ldap",
-        "TestsFlextLdifUtilities": ".utilities",
+        "TestsFlextLdifSchemaExpectations": ".utilities_schema",
         "TestsSchemaAclAssertionsMixin": ".utilities_schema",
         "assert_field_eq": ".utilities_schema",
         "assert_must_contain": ".utilities_schema",
