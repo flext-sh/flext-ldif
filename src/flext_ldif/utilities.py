@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_cli import FlextCliUtilities
+from flext_cli import u as flext_cli_u
 
 from flext_ldif._utilities import (
     FlextLdifACLExtensionFormatting,
@@ -40,6 +40,7 @@ from flext_ldif._utilities import (
     FlextLdifMetadataNameDescDetails,
     FlextLdifMetadataPrefixDetails,
     FlextLdifMetadataSchemaAnalysis,
+    FlextLdifMetadataSpacing,
     FlextLdifMetadataSyntaxOriginDetails,
     FlextLdifMetadataTracking,
     FlextLdifParserMetadataBuilders,
@@ -85,12 +86,7 @@ from flext_ldif._utilities import (
 
 class FlextLdifUtilities(
     FlextLdifUtilitiesLazyTree,
-    FlextLdifUtilitiesACL,
-    FlextLdifACLExtraction,
-    FlextLdifACLExtensionFormatting,
-    FlextLdifACLPermissions,
-    FlextLdifACLFormatting,
-    FlextLdifACLParsing,
+    FlextLdifMetadataSpacing,
     FlextLdifUtilitiesAttribute,
     FlextLdifUtilitiesCollectionLdif,
     FlextLdifUtilitiesDispatch,
@@ -116,6 +112,16 @@ class FlextLdifUtilities(
     FlextLdifEntryCriteria,
     FlextLdifUtilitiesEvents,
     FlextLdifServersOudUtilities,
+    FlextLdifUtilitiesObjectClass,
+    FlextLdifUtilitiesOID,
+    FlextLdifUtilitiesValidation,
+    FlextLdifUtilitiesLazyMeta,
+    FlextLdifUtilitiesACL,
+    FlextLdifACLExtraction,
+    FlextLdifACLExtensionFormatting,
+    FlextLdifACLPermissions,
+    FlextLdifACLFormatting,
+    FlextLdifACLParsing,
     FlextLdifUtilitiesMetadata,
     FlextLdifMetadataJsonCore,
     FlextLdifMetadataEntryStats,
@@ -126,8 +132,6 @@ class FlextLdifUtilities(
     FlextLdifMetadataSyntaxOriginDetails,
     FlextLdifMetadataMatchDetails,
     FlextLdifMetadataSchemaAnalysis,
-    FlextLdifUtilitiesObjectClass,
-    FlextLdifUtilitiesOID,
     FlextLdifUtilitiesParser,
     FlextLdifParserRecord,
     FlextLdifParserRecordSplitter,
@@ -148,12 +152,11 @@ class FlextLdifUtilities(
     FlextLdifUtilitiesTransformers,
     FlextLdifUtilitiesEntryDnNormalization,
     FlextLdifUtilitiesEntryAttrsNormalization,
-    FlextLdifUtilitiesValidation,
     FlextLdifUtilitiesWriter,
     FlextLdifWriterSchemaParts,
     FlextLdifWriterLineFolding,
     FlextLdifWriterRfcChars,
-    FlextCliUtilities,
+    flext_cli_u,
     metaclass=FlextLdifUtilitiesLazyMeta,
 ):
     """Centralized helpers with domain collection behavior under ``Ldif``.
@@ -164,5 +167,4 @@ class FlextLdifUtilities(
 
 
 u = FlextLdifUtilities
-
 __all__: list[str] = ["FlextLdifUtilities", "u"]

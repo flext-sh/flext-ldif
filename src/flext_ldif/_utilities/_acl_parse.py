@@ -82,7 +82,7 @@ class FlextLdifACLParsing:
             default_value = default_value_raw
         else:
             default_value = ""
-        return ("user", default_value)
+        return (c.ContextScope.USER, default_value)
 
     @staticmethod
     def parse_targetattr(
@@ -201,6 +201,7 @@ class FlextLdifACLParsing:
                 The extracted field value, or None when absent.
 
             """
+            del _pattern_name
             return FlextLdifACLExtraction.extract_component(
                 aci_content,
                 pattern,
@@ -246,7 +247,11 @@ class FlextLdifACLParsing:
             aci_content,
             settings.bind_patterns,
         )
-        subject_type_map = {"userdn": "user", "groupdn": "group", "roledn": "role"}
+        subject_type_map = {
+            "userdn": c.ContextScope.USER,
+            "groupdn": "group",
+            "roledn": "role",
+        }
         subject_type, subject_value = FlextLdifACLParsing.build_aci_subject(
             bind_rules_data,
             subject_type_map,

@@ -14,10 +14,6 @@ from flext_ldif import c, t
 class FlextLdifACLPermissions:
     """Normalize, build, and map ACL permission dictionaries."""
 
-    _ACL_SUBJECT_TYPE_VALUES: frozenset[str] = frozenset(
-        subject_type.value for subject_type in c.Ldif.AclSubjectType
-    )
-
     @staticmethod
     def valid_acl_subject_type(value: str) -> TypeIs[c.Ldif.AclSubjectType]:
         """Check whether a string is a valid ACL subject enum value.
@@ -29,7 +25,7 @@ class FlextLdifACLPermissions:
             True when the string names a known ACL subject type.
 
         """
-        return value in FlextLdifACLPermissions._ACL_SUBJECT_TYPE_VALUES
+        return value in c.Ldif.ACL_SUBJECT_TYPE_VALUES
 
     @staticmethod
     def _normalize_permission(

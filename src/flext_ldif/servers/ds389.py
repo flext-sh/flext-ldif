@@ -94,9 +94,16 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             "cn=monitor",
             "cn=changelog",
         ])
+        ENTRY_DETECTION: ClassVar[m.Ldif.EntryDetectionMarkers] = (
+            m.Ldif.EntryDetectionMarkers(
+                dn_markers=DETECTION_DN_MARKERS,
+                objectclass_names=DETECTION_OBJECTCLASS_NAMES,
+                attribute_prefixes=DETECTION_ATTRIBUTE_PREFIXES,
+            )
+        )
         SCHEMA_DN: ClassVar[str] = "cn=subschemasubentry"
         ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset(["x_origin", "x_ds_use"])
-        ACL_SUBJECT_TYPE_USER: ClassVar[str] = "user"
+        ACL_SUBJECT_TYPE_USER: ClassVar[str] = c.ContextScope.USER
         ACL_SUBJECT_TYPE_GROUP: ClassVar[str] = "group"
         ACL_SUBJECT_TYPE_SELF: ClassVar[str] = "self"
         ACL_SUBJECT_TYPE_ANONYMOUS: ClassVar[str] = "anyone"
@@ -499,31 +506,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 389 DS markers.
 
             """
-            if not entry_dn:
-                return False
-            dn_lower = entry_dn.lower()
-            if any(
-                marker in dn_lower
-                for marker in FlextLdifServersDs389.Constants.DETECTION_DN_MARKERS
-            ):
-                return True
-            normalized_attrs = {
-                name.lower(): value for name, value in attributes.items()
-            }
-            if any(
-                attr.startswith(
-                    tuple(FlextLdifServersDs389.Constants.DETECTION_ATTRIBUTE_PREFIXES),
-                )
-                for attr in normalized_attrs
-            ):
-                return True
-            objectclass_key = c.Ldif.DictKeys.OBJECTCLASS.lower()
-            object_classes_raw = normalized_attrs.get(objectclass_key, [])
-            object_classes: t.MutableSequenceOf[str] = object_classes_raw
-            return any(
-                oc.lower()
-                in FlextLdifServersDs389.Constants.DETECTION_OBJECTCLASS_NAMES
-                for oc in object_classes
+            constants = FlextLdifServersDs389.Constants
+            return u.Ldif.entry_carries_markers(
+                entry_dn, attributes, constants.ENTRY_DETECTION
             )
 
         def process_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:

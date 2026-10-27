@@ -23,24 +23,68 @@ class FlextLdifEntryValidation:
             List of validation violation messages (empty if valid)
 
         """
-        violations: t.MutableSequenceOf[str] = []
         if not dn_value or not dn_value.strip():
-            violations.append("RFC 2849 § 2: DN is required (empty or whitespace DN)")
-            return violations
-        components = [comp.strip() for comp in dn_value.split(",") if comp.strip()]
-        if not components:
-            violations.append("RFC 4514 § 2.4: DN is empty (no RDN components)")
-            return violations
-        for idx, comp in enumerate(components):
-            if not c.Ldif.DN_COMPONENT_RE.match(comp):
-                violations.append(
-                    f"RFC 4514 § 2.3: Component {idx} '{comp}' invalid format",
-                )
-        return violations
+            return ["RFC 2849 § 2: DN is required (empty or whitespace DN)"]
+        if not FlextLdifEntryValidation.dn_components(dn_value):
+            return ["RFC 4514 § 2.4: DN is empty (no RDN components)"]
+        return FlextLdifEntryValidation.dn_component_violations(dn_value)
+
+    @staticmethod
+    def dn_components(dn_value: str) -> t.StrSequence:
+        r"""Split a DN into its RDN components per RFC 4514 section 2.
+
+        A backslash escapes the next character (``\,`` is not a separator);
+        a lone trailing backslash stays literal.
+
+        Returns:
+            The stripped, non-empty RDN components in order.
+
+        """
+        components: list[str] = []
+        current = ""
+        chars = iter(dn_value)
+        for char in chars:
+            if char == "\\":
+                current += "\\" + next(chars, "")
+            elif char == "," and current.strip():
+                components.append(current.strip())
+                current = ""
+            elif char != ",":
+                current += char
+        if current.strip():
+            components.append(current.strip())
+        return tuple(components)
+
+    @staticmethod
+    def naming_attribute(dn_value: str) -> str | None:
+        """Return the lower-cased attribute naming the DN's first RDN.
+
+        Returns:
+            The naming attribute, or ``None`` when the first RDN has none.
+
+        """
+        components = FlextLdifEntryValidation.dn_components(dn_value)
+        if not components or "=" not in components[0]:
+            return None
+        return components[0].split("=", maxsplit=1)[0].strip().lower()
+
+    @staticmethod
+    def dn_component_violations(dn_value: str) -> t.MutableSequenceOf[str]:
+        """Return one RFC 4514 § 2.3 violation per malformed RDN component.
+
+        Returns:
+            The violation descriptions, empty when every component is valid.
+
+        """
+        return [
+            f"RFC 4514 § 2.3: invalid DN component {component!r} in DN {dn_value!r}"
+            for component in FlextLdifEntryValidation.dn_components(dn_value)
+            if not c.Ldif.DN_COMPONENT_RE.match(component)
+        ]
 
     @staticmethod
     def validate_attributes_required(
-        entry: p.Ldif.EntryValidationSubject,
+        entry: p.Ldif.Entry,
     ) -> t.MutableSequenceOf[str]:
         """Validate that entry has at least one attribute per RFC 2849 section 2.
 
@@ -70,7 +114,7 @@ class FlextLdifEntryValidation:
 
     @staticmethod
     def validate_changetype(
-        entry: p.Ldif.EntryValidationSubject,
+        entry: p.Ldif.Entry,
     ) -> t.MutableSequenceOf[str]:
         """Validate changetype field per RFC 2849 section 5.7.
 
@@ -90,7 +134,7 @@ class FlextLdifEntryValidation:
 
     @staticmethod
     def _attribute_required(
-        entry: p.Ldif.EntryValidationSubject,
+        entry: p.Ldif.Entry,
         attribute_name: str,
         violation_message: str,
     ) -> t.MutableSequenceOf[str]:
@@ -122,7 +166,7 @@ class FlextLdifEntryValidation:
 
     @staticmethod
     def validate_naming_attribute(
-        entry: p.Ldif.EntryValidationSubject,
+        entry: p.Ldif.Entry,
         dn_value: str,
     ) -> t.MutableSequenceOf[str]:
         """Validate naming attribute presence per RFC 4512 section 2.3.
@@ -134,16 +178,9 @@ class FlextLdifEntryValidation:
             The resulting ``t.MutableSequenceOf[str]``.
 
         """
-        if not dn_value:
+        naming_attr = FlextLdifEntryValidation.naming_attribute(dn_value)
+        if naming_attr is None:
             return []
-        first_rdn = (
-            dn_value.split(",", maxsplit=1)[0].strip()
-            if "," in dn_value
-            else dn_value.strip()
-        )
-        if "=" not in first_rdn:
-            return []
-        naming_attr = first_rdn.split("=")[0].strip().lower()
         return FlextLdifEntryValidation._attribute_required(
             entry,
             naming_attr,
@@ -152,7 +189,7 @@ class FlextLdifEntryValidation:
 
     @staticmethod
     def validate_objectclass(
-        entry: p.Ldif.EntryValidationSubject,
+        entry: p.Ldif.Entry,
         dn_value: str,
     ) -> t.MutableSequenceOf[str]:
         """Validate objectClass presence per RFC 4512 section 2.4.1.

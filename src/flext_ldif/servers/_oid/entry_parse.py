@@ -28,39 +28,6 @@ class FlextLdifServersOidEntryParseMixin(
 ):
     """OID entry parse hook helpers."""
 
-    def _detect_entry_acl_transformations(
-        self,
-        entry_attrs: t.MutableStrSequenceMapping,
-        converted_attributes: t.MutableStrSequenceMapping,
-    ) -> MutableMapping[str, m.Ldif.AttributeTransformation]:
-        """Detect ACL attribute transformations (orclaci→aci).
-
-        Returns:
-            The resulting ``MutableMapping[str, m.Ldif.AttributeTransformation]``.
-
-        """
-        original_attr_names: t.MutableStrMapping = {
-            normalized.lower(): raw_attr_name
-            for raw_attr_name in entry_attrs
-            if (normalized := self._normalize_attribute_name(raw_attr_name)).lower()
-            != raw_attr_name.lower()
-        }
-        acl_transformations: MutableMapping[str, m.Ldif.AttributeTransformation] = {
-            original_name: m.Ldif.AttributeTransformation.model_validate({
-                "original_name": original_name,
-                "target_name": attr_name,
-                "original_values": attr_values,
-                "target_values": attr_values,
-                "transformation_type": c.Ldif.TransformationType.ATTRIBUTE_RENAMED,
-                "reason": f"OID ACL ({original_name}) → RFC 2256 (aci)",
-            })
-            for attr_name, attr_values in converted_attributes.items()
-            if attr_name.lower() in original_attr_names
-            and (original_name := original_attr_names[attr_name.lower()]).lower()
-            in {"orclaci", "orclentrylevelaci"}
-        }
-        return acl_transformations
-
     @staticmethod
     def _detect_rfc_violations(
         converted_attributes: t.MutableStrSequenceMapping,
@@ -122,12 +89,15 @@ class FlextLdifServersOidEntryParseMixin(
         self,
         orclaci_values: t.MutableSequenceOf[str] | str | None,
         current_extensions: t.Ldif.MutableMetadataMapping,
-    ) -> None:
-        """Process orclaci values and extract ACL metadata."""
+    ) -> p.Result[t.Ldif.MutableMetadataMapping]:
+        """Extract ACL metadata from orclaci values through the injected ACL server.
+
+        Returns:
+            The extension mapping, or the first ACL parse failure.
+
+        """
         if not orclaci_values:
-            return
-        parent = self._get_parent_server_safe()
-        acl_server = parent.acl_server if parent is not None else None
+            return r[t.Ldif.MutableMetadataMapping].ok(current_extensions)
         acl_list = (
             list(orclaci_values)
             if u.matches_type(orclaci_values, (list, tuple))
@@ -137,39 +107,19 @@ class FlextLdifServersOidEntryParseMixin(
             if not u.matches_type(acl_value, str):
                 continue
             self.extract_acl_metadata_from_string(acl_value, current_extensions)
-            if acl_server is not None:
-                self._merge_parsed_acl_extensions(
-                    acl_server,
-                    acl_value,
-                    current_extensions,
-                )
-
-    @staticmethod
-    def _get_current_attrs_with_acl_equivalence(
-        entry_data: m.Ldif.Entry,
-    ) -> set[str]:
-        """Get current attribute names with OID ACL equivalence.
-
-        Returns:
-            The resulting ``set[str]``.
-
-        """
-        current_attrs: set[str] = set()
-        if entry_data.attributes and entry_data.attributes.attributes:
-            current_attrs = {
-                attr_name.lower() for attr_name in entry_data.attributes.attributes
-            }
-            if "aci" in current_attrs:
-                current_attrs.add("orclaci")
-            if "orclaci" in current_attrs:
-                current_attrs.add("aci")
-        return current_attrs
+            merged = self._merge_parsed_acl_extensions(
+                self.acl_server,
+                acl_value,
+                current_extensions,
+            )
+            if merged.failure:
+                return merged
+        return r[t.Ldif.MutableMetadataMapping].ok(current_extensions)
 
     def _hook_finalize_entry_parse(
         self,
         entry: m.Ldif.Entry,
         original_dn: str,
-        original_attrs: t.MutableStrSequenceMapping,
     ) -> p.Result[m.Ldif.Entry]:
         """Preserve typed OID metadata for serialization and phase-aware ACL writes.
 
@@ -177,7 +127,6 @@ class FlextLdifServersOidEntryParseMixin(
             The resulting ``p.Result[m.Ldif.Entry]``.
 
         """
-        _ = original_dn
         if not entry.attributes:
             return r[m.Ldif.Entry].ok(entry)
         normalized_attrs = entry.attributes.attributes
@@ -191,27 +140,16 @@ class FlextLdifServersOidEntryParseMixin(
         )
         mk = c.Ldif
         current_extensions[mk.ORIGINAL_DN_COMPLETE] = original_dn
-        orclaci_raw = original_attrs.get("orclaci") if original_attrs else None
-        if not orclaci_raw:
-            orclaci_raw = normalized_attrs.get("orclaci") if normalized_attrs else None
+        orclaci_raw = normalized_attrs.get("orclaci")
         orclaci_values: t.MutableSequenceOf[str] | str | None = None
         if isinstance(orclaci_raw, list):
             orclaci_values = list(orclaci_raw)
-        self._process_orclaci_values(orclaci_values, current_extensions)
-        acl_transformations = self._detect_entry_acl_transformations(
-            original_attrs,
-            normalized_attrs,
-        )
+        processed = self._process_orclaci_values(orclaci_values, current_extensions)
+        if processed.failure:
+            return r[m.Ldif.Entry].from_failure(processed)
         rfc_violations, attribute_conflicts = self._detect_rfc_violations(
             normalized_attrs,
         )
-        if acl_transformations:
-            acl_transformations_dict = {
-                name: trans.model_dump() for name, trans in acl_transformations.items()
-            }
-            current_extensions["acl_transformations"] = u.Ldif.dump_dynamic_metadata(
-                acl_transformations_dict,
-            )
         if rfc_violations:
             current_extensions["rfc_violations"] = u.Ldif.dump_json_payload(
                 list(rfc_violations),
@@ -291,8 +229,8 @@ class FlextLdifServersOidEntryParseMixin(
                     }
                     for attr_name, conversion_data in boolean_conversions.items()
                 }
-                boolean_conversions_json: t.JsonMapping = (
-                    u.Cli.JSON_MAPPING_ADAPTER.validate_python({
+                boolean_conversions_json: t.JsonDict = (
+                    u.json_dict_adapter().validate_python({
                         attr_name: u.normalize_to_json_value(conversion_data)
                         for attr_name, conversion_data in (
                             boolean_conversions_dict.items()
@@ -341,53 +279,29 @@ class FlextLdifServersOidEntryParseMixin(
             attrs,
         ))
 
-    def _merge_parsed_acl_extensions(
-        self,
-        acl_server: p.Ldif.AclServer,
-        acl_value: str,
-        current_extensions: t.Ldif.MutableMetadataMapping,
-    ) -> None:
-        """Parse ACL and merge additional extensions from parsed model."""
-        try:
-            self._merge_parsed_acl_extensions_core(
-                acl_server,
-                acl_value,
-                current_extensions,
-            )
-        except c.Ldif.EXC_LDIF_PARSE:
-            FlextLdifServersOidEntryParseMixin._module_logger.debug(
-                "Failed to parse ACL extension metadata",
-                exc_info=True,
-            )
-
     @staticmethod
-    def _merge_parsed_acl_extensions_core(
+    def _merge_parsed_acl_extensions(
         acl_server: p.Ldif.AclServer,
         acl_value: str,
         current_extensions: t.Ldif.MutableMetadataMapping,
-    ) -> None:
-        """Merge parsed ACL extension metadata into the current extension mapping."""
+    ) -> p.Result[t.Ldif.MutableMetadataMapping]:
+        """Merge the entry-level extensions of one parsed orclaci value.
+
+        Returns:
+            The extension mapping, or the ACL parse failure.
+
+        """
         acl_result = acl_server.parse_server(acl_value)
+        if acl_result.failure:
+            return r[t.Ldif.MutableMetadataMapping].from_failure(acl_result)
         acl_model = m.Ldif.Acl.model_validate(acl_result.value)
-        if not (acl_model.metadata and acl_model.metadata.extensions):
-            return
-        # Extensions is a plain mapping: isinstance(dict) replaces the
-        # hasattr(model_dump) dispatch.
-        extensions_value = acl_model.metadata.extensions
-        acl_extensions: t.MutableJsonMapping = (
-            extensions_value
-            if isinstance(extensions_value, dict)
-            else dict(extensions_value)
+        extensions = (
+            acl_model.metadata.extensions if acl_model.metadata is not None else {}
         )
-        key_mapping = {
-            "bindmode": c.Ldif.ACL_BINDMODE,
-            "deny_group_override": c.Ldif.ACL_DENY_GROUP_OVERRIDE,
-        }
-        for key, value in acl_extensions.items():
-            mapped_key = key_mapping.get(key)
-            if mapped_key and (not current_extensions.get(mapped_key)):
-                current_extensions[mapped_key] = value
-        return
+        for key in FlextLdifServersOidConstants.ACL_ENTRY_EXTENSION_KEYS:
+            if key in extensions and not current_extensions.get(key):
+                current_extensions[key] = extensions[key]
+        return r[t.Ldif.MutableMetadataMapping].ok(current_extensions)
 
 
 __all__: list[str] = ["FlextLdifServersOidEntryParseMixin"]

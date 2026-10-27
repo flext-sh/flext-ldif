@@ -19,7 +19,7 @@ from tests import c, tm
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tests import p
+from tests import p
 
 
 @pytest.fixture

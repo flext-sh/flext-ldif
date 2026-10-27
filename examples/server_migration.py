@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping, MutableSequence
 from pathlib import Path
 
-from examples import c, m, p, r, t, u
+from examples import c, p, r, t, u
 from flext_ldif import ldif
 
 
@@ -302,11 +302,11 @@ class ExamplesFlextLdifServerMigration:
         )
 
     @staticmethod
-    def parallel_server_migration() -> p.Result[m.Ldif.MigrationPipelineResult]:
+    def parallel_server_migration() -> p.Result[p.Ldif.MigrationPipelineResult]:
         """Parallel migration between servers with comprehensive error handling.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.MigrationPipelineResult]``.
+            The migration outcome through its public result contract.
 
         """
         api = ldif()
@@ -319,7 +319,7 @@ class ExamplesFlextLdifServerMigration:
             "person\nobjectClass: inetOrgPerson\ncn: OID User\nsn: Test\n"
             "mail: oid@example.com\n"
             "orclguid: 1234567890abcdef\n"
-            "orclaci: access to * by * read\n\n"
+            "orclaci: access to attr=(*) by * (read)\n\n"
             "dn: cn=OID Group,ou=Groups,dc=example,dc=com\n"
             "objectClass: groupOfUniqueNames\ncn: OID Group\n"
             "uniquemember: cn=OID User,ou=People,dc=example,dc=com\n"
@@ -345,11 +345,11 @@ class ExamplesFlextLdifServerMigration:
             target_server="oud",
         )
         if migration_result.failure:
-            return r[m.Ldif.MigrationPipelineResult].fail(
+            return r[p.Ldif.MigrationPipelineResult].fail(
                 f"Migration failed: {migration_result.error}",
             )
         pipeline_result = migration_result.unwrap()
         _ = len(pipeline_result.entries)
         stats = pipeline_result.stats
         _ = stats.processed_entries
-        return r[m.Ldif.MigrationPipelineResult].ok(pipeline_result)
+        return r[p.Ldif.MigrationPipelineResult].ok(pipeline_result)

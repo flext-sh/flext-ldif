@@ -22,7 +22,7 @@ class FlextLdifParserRecord:
     _MODIFY_OPS: ClassVar[t.MutableMappingKV[str, c.Ldif.ChangeOperation]] = {
         "add": c.Ldif.ChangeOperation.ADD,
         "delete": c.Ldif.ChangeOperation.DELETE,
-        "replace": c.Ldif.ChangeOperation.REPLACE,
+        c.MergeStrategy.REPLACE: c.Ldif.ChangeOperation.REPLACE,
         "increment": c.Ldif.ChangeOperation.INCREMENT,
     }
 
@@ -34,7 +34,7 @@ class FlextLdifParserRecord:
         attribute_metadata: t.MutableMappingKV[str, t.MutableAttributeMapping]
         comments: t.MutableSequenceOf[str]
         raw_record_lines: t.MutableSequenceOf[str]
-        controls: t.MutableSequenceOf[FlextLdifModelsDomainEntryControl]
+        controls: t.MutableSequenceOf[FlextLdifModelsDomainEntryControl.Control]
         change_operations: t.MutableSequenceOf[FlextLdifModels.Ldif.ChangeOperation]
         current_change_operation: FlextLdifModels.Ldif.ChangeOperation | None
         changetype: c.Ldif.ChangeType | None
@@ -54,7 +54,9 @@ class FlextLdifParserRecord:
             ] = {}
             self.comments: t.MutableSequenceOf[str] = []
             self.raw_record_lines: t.MutableSequenceOf[str] = []
-            self.controls: t.MutableSequenceOf[FlextLdifModelsDomainEntryControl] = []
+            self.controls: t.MutableSequenceOf[
+                FlextLdifModelsDomainEntryControl.Control
+            ] = []
             self.change_operations: t.MutableSequenceOf[
                 FlextLdifModels.Ldif.ChangeOperation
             ] = []
@@ -137,7 +139,11 @@ class FlextLdifParserRecord:
             state.newrdn = FlextLdifParserValues.decode_value(value)[0]
             return True
         if key_lower == "deleteoldrdn":
-            state.deleteoldrdn = value.lower() in {"1", "true", "yes"}
+            state.deleteoldrdn = value.lower() in {
+                c.ParserBooleanToken.ONE,
+                c.ParserBooleanToken.TRUE,
+                c.ParserBooleanToken.YES,
+            }
             return True
         if key_lower == "newsuperior":
             state.newsuperior = FlextLdifParserValues.decode_value(value)[0]
@@ -171,7 +177,7 @@ class FlextLdifParserRecord:
             return None
         if state.current_change_operation is not None:
             state.current_change_operation.values.append(
-                FlextLdifModelsDomainEntryChangeOperationValue(
+                FlextLdifModelsDomainEntryChangeOperationValue.ChangeOperationValue(
                     value=decoded.value,
                     value_origin=decoded.value_origin,
                     raw_value=decoded.raw_value,

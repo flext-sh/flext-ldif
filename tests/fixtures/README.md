@@ -61,6 +61,7 @@ Each server has 4 types of fixtures:
 ### Loading Fixtures
 
 ```python
+from tests import c, r
 from tests import c, u
 
 schema = u.Tests.load(c.Tests.OID, c.Tests.SCHEMA)
@@ -107,6 +108,7 @@ tm.that(tm.ok(u.Ldif.extract_from_definition(definition)), eq="2.5.4.3")
 <!-- pytest-markdown-docs: next-code-block: ignore -->
 
 ```python notest
+from tests import c, r
 from tests import FixtureValidator
 
 validator = FixtureValidator()
@@ -154,6 +156,7 @@ Run fixture coverage report:
 <!-- pytest-markdown-docs: next-code-block: ignore -->
 
 ```python notest
+from tests import c, r
 from tests import FixtureCoverageReport
 
 coverage = FixtureCoverageReport.generate_summary(all_fixtures)

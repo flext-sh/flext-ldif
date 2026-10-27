@@ -1,3 +1,4 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """LDIF type facade.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
@@ -6,18 +7,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_cli import FlextCliTypes
+from flext_cli import t as flext_cli_t
 
 from flext_ldif._typings import FlextLdifTypesBase, FlextLdifTypesDomain
 
 
-class FlextLdifTypes(FlextCliTypes):
+class FlextLdifTypes(flext_cli_t):
     """LDIF domain types extending flext-core FlextTypes."""
 
-    class Ldif(FlextLdifTypesDomain, FlextLdifTypesBase):
+    class Ldif(FlextLdifTypesBase, FlextLdifTypesDomain):
         """LDIF-specific type namespace."""
 
 
 t = FlextLdifTypes
-
 __all__: list[str] = ["FlextLdifTypes", "t"]

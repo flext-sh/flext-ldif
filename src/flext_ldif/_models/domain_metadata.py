@@ -1,7 +1,5 @@
 """Domain models for LDIF metadata.
 
-from flext_ldif import m
-from flext_ldif import u
 Namespace mixin extracted from domain_entries.py containing
 ValidationMetadata, WriteOptions, FormatDetails, SchemaFormatDetails,
 and ServerMetadata inner classes.
@@ -14,16 +12,29 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableMapping
-from typing import Annotated
+from typing import Annotated, ClassVar
 
-from flext_core import m, u
+from flext_core import m
 
 from flext_ldif import FlextLdifShared, c, t
-from flext_ldif._models import FlextLdifModelsDomainAttributes
+from flext_ldif._models import (
+    FlextLdifModelsAclConvert,
+    FlextLdifModelsDomainAttributes,
+    FlextLdifModelsDomainEntryStatistics,
+)
 
 
 class FlextLdifModelsDomainMetadata:
     """Namespace mixin for LDIF metadata domain models."""
+
+    class CommentedAttributeValues(m.RootModel[t.StrSequenceMapping]):
+        """Original text values retained by attribute name for LDIF comments."""
+
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(strict=True, frozen=True)
+        root: Annotated[
+            t.StrSequenceMapping,
+            m.Field(description="Original comment values indexed by attribute name"),
+        ]
 
     class ValidationMetadata(m.FrozenModel):
         """Validation results and error tracking metadata.
@@ -187,7 +198,6 @@ class FlextLdifModelsDomainMetadata:
         server_type: Annotated[
             c.Ldif.ServerTypes,
             m.Field(
-                ...,
                 description="Type of server this metadata represents (ServerTypes enum "
                 "or literal)",
             ),
@@ -283,10 +293,9 @@ class FlextLdifModelsDomainMetadata:
             ),
         ] = None
         processing_stats: Annotated[
-            m.BaseModel | None,
+            FlextLdifModelsDomainEntryStatistics.EntryStatistics | None,
             m.Field(
-                description="Complete statistics tracking for entry transformations "
-                "(accepts EntryStatistics)",
+                description="Complete statistics tracking for entry transformations",
             ),
         ] = None
         write_options: Annotated[
@@ -314,6 +323,12 @@ class FlextLdifModelsDomainMetadata:
             (FlextLdifModelsDomainMetadata.SchemaFormatDetails | None),
             m.Field(
                 description="Schema formatting details for round-trip preservation",
+            ),
+        ] = None
+        acl_conversion: Annotated[
+            FlextLdifModelsAclConvert.AclEntryConversion | None,
+            m.Field(
+                description="Typed OID→OUD ACL conversion outcome of this entry",
             ),
         ] = None
         soft_delete_markers: Annotated[
@@ -401,7 +416,7 @@ class FlextLdifModelsDomainMetadata:
             ),
         ] = m.Field(default_factory=list[t.MutableStrMapping])
 
-        @u.field_validator("server_type", mode="before")
+        @m.field_validator("server_type", mode="before")
         @classmethod
         def _coerce_server_type(
             cls,

@@ -9,15 +9,15 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Annotated, ClassVar
 
-from flext_cli import m, u
+from flext_cli import m
 
 from flext_ldif import c, p, t
 from flext_ldif._models import (
     FlextLdifModelsCollections,
     FlextLdifModelsDomainsEntries,
     FlextLdifModelsResultsStatistics,
+    FlextLdifModelsSettingsMigrate,
 )
-from flext_ldif._models._settings_migrate import FlextLdifModelsSettingsMigrate
 
 
 class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
@@ -39,6 +39,8 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
     class MigrationPipelineOptions(m.ArbitraryTypesModel):
         """Validated configuration consumed by the migration service."""
 
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(use_enum_values=False)
+
         input_dir: Path | None = m.Field(
             default=None,
             exclude=True,
@@ -54,35 +56,32 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
             exclude=True,
             description="Single-file output name override",
         )
-        mode: str | None = m.Field(
-            default=None,
-            exclude=True,
-            description="Migration mode supplied by the caller",
-        )
-        source_server: str | c.Ldif.ServerTypes | None = m.Field(
-            default=None,
-            exclude=True,
-            description="Source dialect input",
-        )
-        target_server: str | c.Ldif.ServerTypes | None = m.Field(
-            default=None,
-            exclude=True,
-            description="Target dialect input",
-        )
-        source_server_type: str | c.Ldif.ServerTypes | None = m.Field(
-            default=None,
+        source_server_type: c.Ldif.ServerTypes = m.Field(
+            default=c.Ldif.ServerTypes.RFC,
             exclude=True,
             description="Canonical source dialect",
         )
-        target_server_type: str | c.Ldif.ServerTypes | None = m.Field(
-            default=None,
+        target_server_type: c.Ldif.ServerTypes = m.Field(
+            default=c.Ldif.ServerTypes.RFC,
             exclude=True,
             description="Canonical target dialect",
         )
-        base_dn: str | None = m.Field(
-            default=None,
+        base_dn: str = m.Field(
+            default="",
             exclude=True,
             description="DN scope for ACL migration",
+        )
+        sort_entries_hierarchically: bool = m.Field(
+            default=False,
+            exclude=True,
+            description="Write entries by DN depth, then by reversed DN text",
+        )
+        format_options: FlextLdifModelsSettingsMigrate.WriteFormatOptions | None = (
+            m.Field(
+                default=None,
+                exclude=True,
+                description="LDIF formatting applied to the written output",
+            )
         )
 
     class MigrationSummary(m.FrozenModel):
@@ -123,12 +122,12 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
             description="Output file paths produced by the migration pipeline.",
         )
 
-        @u.computed_field
+        @m.computed_field
         @property
         def entry_count(self) -> int:
             return len(self.entries)
 
-        @u.computed_field
+        @m.computed_field
         @property
         def is_empty(self) -> bool:
             has_schema = (
@@ -136,7 +135,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
             )
             return not has_schema and self.stats.total_entries == 0
 
-        @u.computed_field
+        @m.computed_field
         @property
         def migration_summary(self) -> FlextLdifModelsResults.MigrationSummary:
             return FlextLdifModelsResults.MigrationSummary(
@@ -150,7 +149,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
                 and self.stats.total_entries == 0,
             )
 
-        @u.computed_field
+        @m.computed_field
         @property
         def output_file_count(self) -> int:
             return len(self.output_files)
@@ -172,7 +171,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
             m.Field(description="Validation error messages"),
         ]
 
-        @u.computed_field
+        @m.computed_field
         @property
         def success_rate(self) -> float:
             if self.total_entries == 0:
@@ -205,7 +204,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
             m.Field(description="Reason for using fallback server type"),
         ] = None
 
-        @u.computed_field
+        @m.computed_field
         @property
         def is_confident(self) -> bool:
             confidence: float = self.confidence
@@ -241,7 +240,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
 
     class AclResponse(Response):
         acls: Annotated[
-            t.MutableSequenceOf[p.Ldif.Acl],
+            t.MutableSequenceOf[t.Port[p.Ldif.Acl]],
             m.Field(description="Extracted ACL models"),
         ]
 
@@ -251,7 +250,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
             m.Field(description="Whether the ACL granted access"),
         ] = False
         matched_acl: Annotated[
-            p.Ldif.Acl | None,
+            t.Port[p.Ldif.Acl] | None,
             m.Field(description="ACL rule that matched the evaluation"),
         ] = None
         message: Annotated[

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import time
 
-from flext_ldif import c, m, p, r, u
+from flext_ldif import c, m, p, r, t, u
 from flext_ldif.services import (
     FlextLdifConversionAclMixin,
     FlextLdifConversionEntryMixin,
@@ -31,11 +31,11 @@ class FlextLdifConversion(FlextLdifConversionEntryMixin, FlextLdifConversionAclM
         | p.Ldif.SchemaAttribute
         | p.Ldif.SchemaObjectClass
         | p.Ldif.Acl,
-    ) -> p.Result[p.Ldif.ConvertedModel]:
+    ) -> p.Result[t.Ldif.ConvertedModel]:
         """DSL: orchestrate model conversion between servers.
 
         Returns:
-            The resulting ``p.Result[p.Ldif.ConvertedModel]``.
+            The resulting ``p.Result[t.Ldif.ConvertedModel]``.
 
         """
         if isinstance(model_instance, m.Ldif.Entry):
@@ -49,13 +49,13 @@ class FlextLdifConversion(FlextLdifConversionEntryMixin, FlextLdifConversionAclM
                 role="Source",
             )
             if source_schema_result.failure:
-                return r[p.Ldif.ConvertedModel].from_failure(source_schema_result)
+                return r[t.Ldif.ConvertedModel].from_failure(source_schema_result)
             target_schema_result = self._resolve_schema_server(
                 target_server,
                 role="Target",
             )
             if target_schema_result.failure:
-                return r[p.Ldif.ConvertedModel].from_failure(target_schema_result)
+                return r[t.Ldif.ConvertedModel].from_failure(target_schema_result)
             return self._convert_schema_model_via_entry(
                 source_server,
                 target_server,
@@ -63,7 +63,11 @@ class FlextLdifConversion(FlextLdifConversionEntryMixin, FlextLdifConversionAclM
                 source_schema_result.value,
                 target_schema_result.value,
             )
-        return self._convert_acl(source_server, target_server, model_instance)
+        return self._convert_acl(
+            source_server,
+            target_server,
+            m.Ldif.Acl.model_validate(model_instance, from_attributes=True),
+        )
 
     def convert_model(
         self,
@@ -73,11 +77,11 @@ class FlextLdifConversion(FlextLdifConversionEntryMixin, FlextLdifConversionAclM
         | p.Ldif.SchemaAttribute
         | p.Ldif.SchemaObjectClass
         | p.Ldif.Acl,
-    ) -> p.Result[p.Ldif.ConvertedModel]:
+    ) -> p.Result[t.Ldif.ConvertedModel]:
         """Convert a model from a source server format to a target server format.
 
         Returns:
-            The resulting ``p.Result[p.Ldif.ConvertedModel]``.
+            The resulting ``p.Result[t.Ldif.ConvertedModel]``.
 
         """
         start_time = time.perf_counter()
@@ -100,7 +104,7 @@ class FlextLdifConversion(FlextLdifConversionEntryMixin, FlextLdifConversionAclM
                 model_instance,
             )
         except c.Ldif.EXC_LDIF_PARSE as e:
-            result = r[p.Ldif.ConvertedModel].fail_op("Model conversion", e)
+            result = r[t.Ldif.ConvertedModel].fail_op("Model conversion", e)
         duration_ms = (time.perf_counter() - start_time) * 1000.0
         items_converted = 1 if result.success else 0
         items_failed = 0 if result.success else 1

@@ -16,7 +16,7 @@ class FlextLdifStatistics(s[p.Ldif.Response]):
 
     @staticmethod
     def calculate_for_entries(
-        entries: t.MutableSequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse,
+        entries: t.SequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse,
     ) -> p.Result[p.Ldif.EntriesStatistics]:
         """Calculate general-purpose statistics for a list of Entry models.
 
@@ -34,16 +34,14 @@ class FlextLdifStatistics(s[p.Ldif.Response]):
                 server_type_value = metadata.extensions.get("server_type")
                 if isinstance(server_type_value, str):
                     server_type_distribution[server_type_value] += 1
-        obj_class_model = m.Ldif.DynamicCounts()
-        for class_name, count in object_class_distribution.items():
-            obj_class_model.update_count(class_name, count)
-        server_type_model = m.Ldif.DynamicCounts()
-        for server_type, count in server_type_distribution.items():
-            server_type_model.update_count(server_type, count)
         entries_stats: p.Ldif.EntriesStatistics = m.Ldif.EntriesStatistics(
             total_entries=len(normalized_entries),
-            object_class_distribution=obj_class_model,
-            server_type_distribution=server_type_model,
+            object_class_distribution=m.Ldif.DynamicCounts(
+                root=object_class_distribution
+            ),
+            server_type_distribution=m.Ldif.DynamicCounts(
+                root=server_type_distribution
+            ),
         )
         return r[p.Ldif.EntriesStatistics].ok(entries_stats)
 

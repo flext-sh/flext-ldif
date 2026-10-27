@@ -16,12 +16,13 @@ from __future__ import annotations
 
 import pytest
 
+from flext_ldif import FlextLdif
 from flext_ldif.servers import (
     FlextLdifServersOid,
     FlextLdifServersOud,
     FlextLdifServersRfc,
 )
-from tests import t, tm
+from tests import c, t, tm
 from tests.unit.services.typings import TestsFlextLdifServiceTypings
 
 # (server class, canonical identity, priority) — the standardized identity table.
@@ -99,46 +100,44 @@ class TestsFlextLdifServersStandardization:
         constants = server_cls.Constants
         tm.that(constants.ALIASES, has=constants.CANONICAL_NAME)
         tm.that(constants.ALIASES, has=canonical)
-        assert all(constants.ALIASES)
+        tm.that(all(constants.ALIASES), truth=True)
 
     @staticmethod
     def test_rfc_is_the_lowest_precedence_fallback() -> None:
         """RFC's higher PRIORITY number ranks it last behind specific servers."""
         rfc_priority = FlextLdifServersRfc.Constants.PRIORITY
-        assert rfc_priority > FlextLdifServersOid.Constants.PRIORITY
-        assert rfc_priority > FlextLdifServersOud.Constants.PRIORITY
+        tm.that(rfc_priority > FlextLdifServersOid.Constants.PRIORITY, truth=True)
+        tm.that(rfc_priority > FlextLdifServersOud.Constants.PRIORITY, truth=True)
 
     # -- Parsing contract --------------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize("server_cls", [s[0] for s in _STANDARDIZED_SERVERS])
+    @pytest.mark.parametrize("server_type", [s[1] for s in _STANDARDIZED_SERVERS])
     def test_parse_server_returns_parsed_entry_for_valid_ldif(
-        server_cls: TestsFlextLdifServiceTypings.ServerClass,
+        server_type: str,
         valid_ldif: str,
     ) -> None:
         """parse_server yields a successful result carrying the parsed entry."""
-        result = server_cls.Entry().parse_server(valid_ldif)
+        result = FlextLdif().entry(server_type).unwrap().parse_server(valid_ldif)
         tm.ok(result, len=1)
         tm.that(str(result.value[0].dn), eq=_EXPECTED_DN)
 
     @staticmethod
-    @pytest.mark.parametrize("server_cls", [s[0] for s in _STANDARDIZED_SERVERS])
+    @pytest.mark.parametrize("server_type", [s[1] for s in _STANDARDIZED_SERVERS])
     def test_parse_input_mirrors_successful_parse(
-        server_cls: TestsFlextLdifServiceTypings.ServerClass,
+        server_type: str,
         valid_ldif: str,
     ) -> None:
         """parse_input hands back the same entry list as parse_server's value."""
-        result = server_cls.Entry().parse_input(valid_ldif)
-        assert result is not None
+        result = FlextLdif().entry(server_type).unwrap().parse_input(valid_ldif)
+        result = tm.not_none(result)
         tm.that([str(entry.dn) for entry in result], eq=[_EXPECTED_DN])
 
     @staticmethod
-    @pytest.mark.parametrize("server_cls", [s[0] for s in _STANDARDIZED_SERVERS])
-    def test_empty_content_parses_to_no_entries(
-        server_cls: TestsFlextLdifServiceTypings.ServerClass,
-    ) -> None:
+    @pytest.mark.parametrize("server_type", [s[1] for s in _STANDARDIZED_SERVERS])
+    def test_empty_content_parses_to_no_entries(server_type: str) -> None:
         """Empty input is a valid, empty parse -- success with zero entries."""
-        entry = server_cls.Entry()
+        entry = FlextLdif().entry(server_type).unwrap()
         result = entry.parse_server("")
         tm.ok(result, len=0)
         tm.that(list(result.value), eq=[])
@@ -148,12 +147,13 @@ class TestsFlextLdifServersStandardization:
     @pytest.mark.parametrize("content", ["", "   \n  \t\n"])
     def test_parse_input_treats_blank_content_as_empty(content: str) -> None:
         """Blank / whitespace-only content returns an empty list, never None."""
-        tm.that(FlextLdifServersRfc.Entry().parse_input(content), eq=[])
+        entry = FlextLdif().entry(c.Ldif.ServerTypes.RFC).unwrap()
+        tm.that(entry.parse_input(content), eq=[])
 
     @staticmethod
     def test_unparseable_content_is_empty_success_not_failure() -> None:
         """Non-LDIF text is skipped: success with no entries, and [] via input."""
-        entry = FlextLdifServersRfc.Entry()
+        entry = FlextLdif().entry(c.Ldif.ServerTypes.RFC).unwrap()
         result = entry.parse_server("this is not ldif at all")
         tm.ok(result, len=0)
         tm.that(list(result.value), eq=[])
@@ -163,8 +163,8 @@ class TestsFlextLdifServersStandardization:
     def test_all_servers_agree_on_standard_ldif(valid_ldif: str) -> None:
         """Standard RFC LDIF parses identically across every server type."""
         parsed_dns: list[list[str]] = []
-        for server_cls, _canonical, _priority in _STANDARDIZED_SERVERS:
-            result = server_cls.Entry().parse_server(valid_ldif)
+        for _server_cls, server_type, _priority in _STANDARDIZED_SERVERS:
+            result = FlextLdif().entry(server_type).unwrap().parse_server(valid_ldif)
             tm.ok(result)
             parsed_dns.append([str(entry.dn) for entry in result.value])
         tm.that(parsed_dns, eq=[[_EXPECTED_DN]] * len(_STANDARDIZED_SERVERS))
@@ -172,17 +172,18 @@ class TestsFlextLdifServersStandardization:
     @staticmethod
     def test_parse_input_is_idempotent(valid_ldif: str) -> None:
         """Re-parsing identical content yields an equal DN sequence."""
-        entry = FlextLdifServersRfc.Entry()
+        entry = FlextLdif().entry(c.Ldif.ServerTypes.RFC).unwrap()
         first = entry.parse_input(valid_ldif)
         second = entry.parse_input(valid_ldif)
-        assert first is not None
-        assert second is not None
+        first = tm.not_none(first)
+        second = tm.not_none(second)
         tm.that([str(e.dn) for e in first], eq=[str(e.dn) for e in second])
 
     @staticmethod
     def test_multi_record_ldif_parses_every_entry(multi_ldif: str) -> None:
         """A multi-record stream produces one entry per record, in order."""
-        result = FlextLdifServersRfc.Entry().parse_server(multi_ldif)
+        entry = FlextLdif().entry(c.Ldif.ServerTypes.RFC).unwrap()
+        result = entry.parse_server(multi_ldif)
         tm.ok(result, len=2)
         tm.that(
             [str(entry.dn) for entry in result.value],
@@ -192,7 +193,8 @@ class TestsFlextLdifServersStandardization:
     @staticmethod
     def test_parse_entry_builds_entry_from_dn_and_attributes() -> None:
         """parse_entry composes a successful entry from a DN and attribute map."""
-        result = FlextLdifServersRfc.Entry().parse_entry(
+        entry = FlextLdif().entry(c.Ldif.ServerTypes.RFC).unwrap()
+        result = entry.parse_entry(
             "cn=alice,dc=example,dc=com",
             {"objectClass": ["person"], "cn": ["alice"]},
         )
@@ -221,4 +223,5 @@ class TestsFlextLdifServersStandardization:
         expected: bool,
     ) -> None:
         """can_handle accepts entries with a DN and object-class/changetype only."""
-        assert FlextLdifServersRfc.Entry().can_handle(entry_dn, attributes) is expected
+        entry = FlextLdif().entry(c.Ldif.ServerTypes.RFC).unwrap()
+        tm.that(entry.can_handle(entry_dn, attributes) is expected, truth=True)

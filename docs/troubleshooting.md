@@ -366,6 +366,7 @@ api = ldif(settings=settings)
 
 ```python
 from flext_core import FlextContainer
+
 from flext_ldif import ldif
 
 container = FlextContainer()
@@ -381,6 +382,7 @@ result = container.bind("ldif_api", api)
 from __future__ import annotations
 
 from flext_core import FlextContainer
+
 from flext_ldif import ldif, p, r, u
 
 
@@ -514,6 +516,7 @@ api = ldif()
 from __future__ import annotations
 
 from flext_core import FlextContainer
+
 from flext_ldif import ldif, t, u
 
 

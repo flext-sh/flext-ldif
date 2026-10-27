@@ -8,17 +8,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_tests import FlextTestsProtocols
+from flext_tests import p as flext_tests_p
 
-from flext_ldif import FlextLdifModels, FlextLdifProtocols
+from flext_ldif import p
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
-    from tests import c, m
+    from tests import m
 
 
-class TestsFlextLdifLdapProtocols(FlextLdifProtocols):
+class TestsFlextLdifLdapProtocols(p):
     """ldap3 client contracts grouped for composition by the tests facade."""
 
     @runtime_checkable
@@ -31,9 +29,9 @@ class TestsFlextLdifLdapProtocols(FlextLdifProtocols):
             ...
 
     # ── Shared structural contracts (SSOT: flext_ldif._protocols.ldap3) ──
-    type Ldap3Attribute = FlextLdifProtocols.Ldif.Ldap3Attribute
-    type Ldap3Entry = FlextLdifProtocols.Ldif.Ldap3Entry
-    type Ldap3Connection = FlextLdifProtocols.Ldif.Ldap3Connection
+    type Ldap3Attribute = p.Ldif.Ldap3Attribute
+    type Ldap3Entry = p.Ldif.Ldap3Entry
+    type Ldap3Connection = p.Ldif.Ldap3Connection
 
     @runtime_checkable
     class Ldap3EntryAdapter(Protocol):
@@ -42,15 +40,15 @@ class TestsFlextLdifLdapProtocols(FlextLdifProtocols):
         def ldap3_to_ldif_entry(
             self,
             ldap3_entry: TestsFlextLdifLdapProtocols.Ldap3Entry,
-        ) -> FlextLdifProtocols.Result[FlextLdifModels.Ldif.Entry]:
+        ) -> p.Result[m.Ldif.Entry]:
             """Convert one ldap3 entry into the LDIF entry model."""
             ...
 
 
 class TestsFlextLdifProtocols(
     TestsFlextLdifLdapProtocols,
-    FlextTestsProtocols,
-    FlextLdifProtocols,
+    flext_tests_p,
+    p,
 ):
     """Protocol definitions for flext-ldif tests.
 
@@ -58,7 +56,7 @@ class TestsFlextLdifProtocols(
     ``p.Ldap3*`` surface stays unchanged without a second nested namespace.
     """
 
-    class Tests(FlextTestsProtocols.Tests):
+    class Tests(flext_tests_p.Tests):
         """LDIF helper protocols used only by tests."""
 
         @runtime_checkable
@@ -118,20 +116,6 @@ class TestsFlextLdifProtocols(
 
             def write(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
                 """Write ACL content from the test model."""
-                ...
-
-        class MigrationPipelineFactory(Protocol):
-            """Callable contract for the migration pipeline factory fixture."""
-
-            def __call__(
-                self,
-                *,
-                input_dir: Path | None = None,
-                output_dir: Path | None = None,
-                source_server_type: c.Ldif.ServerTypes | str | None = None,
-                target_server_type: c.Ldif.ServerTypes | str | None = None,
-            ) -> FlextLdifProtocols.Ldif.MigrationPipeline:
-                """Provide ``__call__``."""
                 ...
 
 

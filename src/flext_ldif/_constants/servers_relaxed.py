@@ -12,6 +12,8 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING, ClassVar
 
+from flext_cli import c
+
 from flext_ldif._constants.base import FlextLdifConstantsBase, FlextLdifConstantsEnums
 
 if TYPE_CHECKING:
@@ -53,7 +55,7 @@ class FlextLdifConstantsServersRelaxed:
     LDIF_DN_PREFIX: ClassVar[str] = "dn: "
     LDIF_ATTR_SEPARATOR: ClassVar[str] = ": "
     ENCODING_UTF8: ClassVar[str] = "utf-8"
-    ENCODING_ERROR_HANDLING: ClassVar[str] = "replace"
+    ENCODING_ERROR_HANDLING: ClassVar[str] = c.MergeStrategy.REPLACE
     LDIF_NEWLINE: ClassVar[str] = "\n"
     LDIF_JOIN_SEPARATOR: ClassVar[str] = "\n"
 

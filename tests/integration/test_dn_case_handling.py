@@ -13,14 +13,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
-from tests import m, tm
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import m, t, tm
 
 _LATER_VARIANT_CASES: t.VariadicTuple[str] = (
     "cn=admin,dc=example,dc=com",
@@ -146,7 +141,7 @@ class TestsFlextLdifDnCaseHandling:
         result = registry.validate_oud_consistency()
 
         tm.ok(result)
-        tm.that(result.unwrap(), eq=True)
+        tm.ok(result.unwrap())
 
     @staticmethod
     def test_single_case_per_dn_is_consistent(
@@ -159,7 +154,7 @@ class TestsFlextLdifDnCaseHandling:
         result = registry.validate_oud_consistency()
 
         tm.ok(result)
-        tm.that(result.unwrap(), eq=True)
+        tm.ok(result.unwrap())
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -180,7 +175,7 @@ class TestsFlextLdifDnCaseHandling:
         result = registry.validate_oud_consistency()
 
         tm.ok(result)
-        tm.that(result.unwrap(), eq=False)
+        tm.fail(result.unwrap())
 
     @staticmethod
     def test_inconsistency_does_not_break_resolution(
@@ -192,7 +187,7 @@ class TestsFlextLdifDnCaseHandling:
         registry.register_dn("cn=ADMIN,dc=COM")
 
         tm.that(registry.resolve_canonical_dn("CN=ADMIN,DC=COM"), eq="cn=admin,dc=com")
-        tm.that(registry.validate_oud_consistency().unwrap(), eq=False)
+        tm.fail(registry.validate_oud_consistency().unwrap())
 
     @staticmethod
     def test_hierarchical_dns_track_independently_and_stay_consistent(
@@ -209,7 +204,7 @@ class TestsFlextLdifDnCaseHandling:
 
         for dn in hierarchy:
             tm.that(registry.resolve_canonical_dn(dn), eq=dn)
-        tm.that(registry.validate_oud_consistency().unwrap(), eq=True)
+        tm.ok(registry.validate_oud_consistency().unwrap())
 
     # -- clearing ------------------------------------------------------------
 
@@ -229,11 +224,11 @@ class TestsFlextLdifDnCaseHandling:
         """Clearing an inconsistent registry restores a consistent result."""
         registry.register_dn("cn=admin,dc=com")
         registry.register_dn("CN=Admin,DC=Com")
-        tm.that(registry.validate_oud_consistency().unwrap(), eq=False)
+        tm.fail(registry.validate_oud_consistency().unwrap())
 
         registry.clear()
 
-        tm.that(registry.validate_oud_consistency().unwrap(), eq=True)
+        tm.ok(registry.validate_oud_consistency().unwrap())
 
     @staticmethod
     def test_registry_is_reusable_after_clear(

@@ -9,11 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, m, t, u
-from flext_ldif.servers._oud import (
-    FlextLdifServersOudAclExtractMixin,
-    FlextLdifServersOudAclMetadataMixin,
-)
+from flext_ldif import c, m, t
+from flext_ldif.servers._oud import FlextLdifServersOudAclMetadataMixin
 
 
 class FlextLdifServersOudCommentsAclMixin:
@@ -24,15 +21,15 @@ class FlextLdifServersOudCommentsAclMixin:
         comments: t.MutableSequenceOf[str],
         original_attr: str,
         attr_name: str,
-        acl_values: t.MutableSequenceOf[str] | str | m.Ldif.Acl,
+        acl_values: t.SequenceOf[str],
     ) -> None:
         """Add TRANSFORMED and SKIP_TO_04 comments for ACL values."""
-        values = acl_values if isinstance(acl_values, list) else [str(acl_values)]
-        for v in values:
-            comments.extend([
-                f"# [TRANSFORMED] {original_attr}: {v}",
-                f"# [SKIP_TO_04] {attr_name}: {v}",
-            ])
+        for value in acl_values:
+            for text in (
+                f"[TRANSFORMED] {original_attr}: {value}",
+                f"[SKIP_TO_04] {attr_name}: {value}",
+            ):
+                comments.extend(f"# {line}" for line in text.splitlines())
 
     @staticmethod
     def _collect_acl_from_extensions(
@@ -46,10 +43,16 @@ class FlextLdifServersOudCommentsAclMixin:
         commented_acl_values_raw = entry.metadata.extensions.get(
             c.Ldif.COMMENTED_ATTRIBUTE_VALUES,
         )
+        if commented_acl_values_raw is None:
+            return
         commented_acl_values = (
-            FlextLdifServersOudAclExtractMixin.parse_commented_values(
+            m.Ldif.CommentedAttributeValues.model_validate_json(
                 commented_acl_values_raw,
-            )
+            ).root
+            if isinstance(commented_acl_values_raw, str)
+            else m.Ldif.CommentedAttributeValues.model_validate(
+                commented_acl_values_raw,
+            ).root
         )
         if not commented_acl_values:
             return
@@ -65,26 +68,11 @@ class FlextLdifServersOudCommentsAclMixin:
             sort_key = original_acl_attr or acl_attr_name
             if sort_key not in acl_comments_dict:
                 acl_comments_dict[sort_key] = []
-            if isinstance(acl_values_raw, list):
-                acl_values: t.MutableSequenceOf[str] = [
-                    u.to_str(item) for item in acl_values_raw
-                ]
-            elif isinstance(acl_values_raw, dict):
-                acl_values = [u.to_str(acl_values_raw)]
-            else:
-                normalized = FlextLdifServersOudAclExtractMixin.normalize_acl_values(
-                    acl_values_raw,
-                )
-                acl_values = (
-                    list(normalized)
-                    if isinstance(normalized, list)
-                    else [u.to_str(normalized)]
-                )
             FlextLdifServersOudCommentsAclMixin._add_acl_value_comments(
                 acl_comments_dict[sort_key],
                 original_acl_attr,
                 acl_attr_name,
-                acl_values,
+                acl_values_raw,
             )
 
     @staticmethod

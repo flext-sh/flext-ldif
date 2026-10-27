@@ -31,7 +31,9 @@ class FlextLdifUtilitiesDispatch:
     ] = u.type_adapter(list[FlextLdifModels.Ldif.Acl])
 
     @staticmethod
-    def as_entry(value: t.Ldif.EntryLike | t.ModelInput) -> FlextLdifModels.Ldif.Entry:
+    def as_entry(
+        value: t.ModelInput[t.Ldif.EntryLike] | p.Model,
+    ) -> FlextLdifModels.Ldif.Entry:
         """Coerce an entry-like value into the canonical LDIF entry model.
 
         Returns:
@@ -45,10 +47,9 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def as_entries(
-        values: t.SequenceOf[t.Ldif.EntryLike]
+        values: t.ModelInput[t.SequenceOf[t.Ldif.EntryLike]]
         | FlextLdifModels.Ldif.ParseResponse
-        | p.Ldif.ParseResponse
-        | t.ModelInput,
+        | p.Ldif.ParseResponse,
     ) -> t.MutableSequenceOf[FlextLdifModels.Ldif.Entry]:
         """Coerce an entry sequence into canonical LDIF entry models.
 
@@ -66,7 +67,7 @@ class FlextLdifUtilitiesDispatch:
         return validated
 
     @staticmethod
-    def as_acl(value: t.Ldif.AclLike | t.ModelInput) -> FlextLdifModels.Ldif.Acl:
+    def as_acl(value: t.ModelInput[t.Ldif.AclLike]) -> FlextLdifModels.Ldif.Acl:
         """Coerce an ACL-like value into the canonical LDIF ACL model.
 
         Returns:
@@ -80,7 +81,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def as_acls(
-        values: t.SequenceOf[t.Ldif.AclLike] | t.ModelInput,
+        values: t.ModelInput[t.SequenceOf[t.Ldif.AclLike]],
     ) -> t.MutableSequenceOf[FlextLdifModels.Ldif.Acl]:
         """Coerce an ACL sequence into canonical LDIF ACL models.
 

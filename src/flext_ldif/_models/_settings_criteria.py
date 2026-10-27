@@ -1,7 +1,5 @@
 """LDIF settings mix-in: criteria.
 
-from flext_ldif import m
-from flext_ldif import u
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -11,9 +9,9 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import m, t
+from flext_core import m
 
-from flext_ldif._constants.base import FlextLdifConstantsEnums
+from flext_ldif import c, t
 
 
 class FlextLdifModelsSettingsCriteria:
@@ -72,6 +70,26 @@ class FlextLdifModelsSettingsCriteria:
             ),
         ] = False
 
+    class EntryDetectionMarkers(m.Value):
+        """Lowercase markers that identify a dialect's entries."""
+
+        dn_markers: Annotated[
+            frozenset[str],
+            m.Field(description="Substrings that identify the dialect DN"),
+        ] = frozenset()
+        objectclass_names: Annotated[
+            frozenset[str],
+            m.Field(description="objectClass names of the dialect"),
+        ] = frozenset()
+        attribute_names: Annotated[
+            frozenset[str],
+            m.Field(description="Attribute names that identify the dialect"),
+        ] = frozenset()
+        attribute_prefixes: Annotated[
+            frozenset[str],
+            m.Field(description="Attribute-name prefixes of the dialect"),
+        ] = frozenset()
+
     class EntryCriteriaConfig(m.Value):
         """Configuration for entry criteria matching.
 
@@ -93,9 +111,9 @@ class FlextLdifModelsSettingsCriteria:
             m.Field(description="Required objectClasses"),
         ] = None
         objectclass_mode: Annotated[
-            FlextLdifConstantsEnums.EntryCriteriaMode,
+            c.Ldif.EntryCriteriaMode,
             m.Field(description='"any" (has any) or "all" (has all)'),
-        ] = FlextLdifConstantsEnums.EntryCriteriaMode.ANY
+        ] = c.Ldif.EntryCriteriaMode.ANY
         required_attrs: Annotated[
             t.MutableSequenceOf[str] | None,
             m.Field(description="All of these attributes must exist"),
@@ -133,17 +151,16 @@ class FlextLdifModelsSettingsCriteria:
         """
 
         server_type: Annotated[
-            FlextLdifConstantsEnums.ServerTypes,
+            c.Ldif.ServerTypes,
             m.Field(
-                ...,
                 description="Server type performing the parse (oid, oud, rfc, etc.)",
             ),
         ]
         original_entry_dn: Annotated[
             str,
-            m.Field(..., description="Original DN as parsed from LDIF"),
+            m.Field(description="Original DN as parsed from LDIF"),
         ]
-        cleaned_dn: Annotated[str, m.Field(..., description="Cleaned/normalized DN")]
+        cleaned_dn: Annotated[str, m.Field(description="Cleaned/normalized DN")]
         original_dn_line: Annotated[
             str | None,
             m.Field(description="Original DN line from LDIF (with folding if present)"),

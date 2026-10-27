@@ -31,7 +31,7 @@ class FlextLdifParserValues:
             try:
                 decoded_value = base64.b64decode(encoded_value).decode(
                     c.Ldif.DEFAULT_ENCODING,
-                    errors="replace",
+                    errors=c.MergeStrategy.REPLACE,
                 )
             except ValueError:
                 decoded_value = encoded_value
@@ -47,11 +47,11 @@ class FlextLdifParserValues:
         return (payload, c.Ldif.ValueOrigin.PLAIN, payload)
 
     @staticmethod
-    def build_control(payload: str) -> FlextLdifModelsDomainEntryControl:
+    def build_control(payload: str) -> FlextLdifModelsDomainEntryControl.Control:
         """Parse RFC 2849 control payload into a structured model.
 
         Returns:
-            The resulting ``FlextLdifModelsDomainEntryControl``.
+            The resulting ``FlextLdifModelsDomainEntryControl.Control``.
 
         """
         minimum_control_tokens = 2
@@ -64,8 +64,11 @@ class FlextLdifParserValues:
         raw_value: str | None = None
         value_token: str | None = None
         if len(tokens) >= minimum_control_tokens:
-            if tokens[1].lower() in {"true", "false"}:
-                criticality = tokens[1].lower() == "true"
+            if tokens[1].lower() in {
+                c.ParserBooleanToken.TRUE,
+                c.ParserBooleanToken.FALSE,
+            }:
+                criticality = tokens[1].lower() == c.ParserBooleanToken.TRUE
                 if len(tokens) == control_tokens_with_value:
                     value_token = tokens[2]
             else:
@@ -74,7 +77,7 @@ class FlextLdifParserValues:
             value, value_origin, raw_value = FlextLdifParserValues.decode_value(
                 value_token,
             )
-        return FlextLdifModelsDomainEntryControl(
+        return FlextLdifModelsDomainEntryControl.Control(
             control_type=control_type,
             criticality=criticality,
             control_value=value,

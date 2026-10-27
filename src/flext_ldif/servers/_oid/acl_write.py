@@ -86,6 +86,7 @@ class FlextLdifServersOidAclWriteMixin(
             The resulting ``p.Result[str]``.
 
         """
+        del _format_option
         if acl_data.raw_acl and acl_data.raw_acl.startswith(
             FlextLdifServersOidConstants.ORCLACI + ":",
         ):

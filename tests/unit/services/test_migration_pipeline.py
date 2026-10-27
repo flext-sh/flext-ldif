@@ -17,15 +17,13 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif import FlextLdif
-from flext_ldif.services import FlextLdifMigrationPipeline
-from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
+from flext_ldif import FlextLdif, services
 from tests import c, m, p, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tests import t
+from tests import t
 
 _BASIC_RFC_ENTRY_LDIF = "dn: cn=test,dc=example,dc=com\nobjectClass: person\ncn: test\n"
 
@@ -37,34 +35,27 @@ _KNOWN_COERCE_CASES = {
 
 
 class TestsFlextLdifMigrationPipeline:
-    """Behavioral suite for the migration and processing pipeline services.
-
-    Covers public initialization contract, fallible-operation ``r[T]`` outcomes,
-    and public result model state for both ``FlextLdifMigrationPipeline`` and its
-    delegate ``FlextLdifProcessingPipeline``.
-    """
+    """Public pipeline configuration and complete migration protocol tests."""
 
     # ── Initialization contract (public fields) ──────────────────────────
 
     @staticmethod
     def test_complete_protocol_accepts_entry_sequences_and_pathlike_files(
-        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
+        migration_pipeline: p.Ldif.MigrationPipeline,
         migration_dirs: t.Pair[Path, Path],
     ) -> None:
         """The fixture exposes real migration operations through one protocol."""
-        pipeline = migration_pipeline_factory()
-        tm.that(isinstance(pipeline, p.Ldif.MigrationPipeline))
         entry = u.Tests.create_real_entry(
             dn=c.Tests.DN_TEST,
             attributes={"objectClass": ["person"], "cn": ["sequence"]},
         )
-        tm.ok(pipeline.migrate_entries((entry,)))
+        tm.ok(migration_pipeline.migrate_entries((entry,)))
         input_dir, output_dir = migration_dirs
         input_file = input_dir / "protocol.ldif"
         output_file = output_dir / "protocol.ldif"
         input_file.write_text(c.Tests.RFC_SAMPLE_LDIF_BASIC)
         outcome = tm.ok(
-            pipeline.migrate_file(
+            migration_pipeline.migrate_file(
                 PurePath(input_file),
                 PurePath(output_file),
             )
@@ -75,55 +66,57 @@ class TestsFlextLdifMigrationPipeline:
 
     @staticmethod
     def test_initialization_exposes_supplied_configuration(
-        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
+        server: p.Ldif.ServerRegistry,
         migration_dirs: t.Pair[Path, Path],
     ) -> None:
         """Supplied directories and server types surface on public fields."""
         input_dir, output_dir = migration_dirs
-        pipeline = migration_pipeline_factory(
-            source_server_type=c.Tests.OID,
-            target_server_type=c.Tests.OUD,
+        pipeline = services.FlextLdifMigrationPipeline(
+            registry=server.registry,
+            input_dir=input_dir,
+            output_dir=output_dir,
+            source_server_type=c.Ldif.ServerTypes.OID,
+            target_server_type=c.Ldif.ServerTypes.OUD,
         )
-        assert pipeline is not None
         tm.that(pipeline.input_dir, eq=input_dir)
         tm.that(pipeline.output_dir, eq=output_dir)
-        tm.that(pipeline.source_server_type, eq=c.Ldif.ServerTypes(c.Tests.OID))
-        tm.that(pipeline.target_server_type, eq=c.Ldif.ServerTypes(c.Tests.OUD))
+        tm.that(pipeline.source_server_type, eq=c.Ldif.ServerTypes.OID)
+        tm.that(pipeline.target_server_type, eq=c.Ldif.ServerTypes.OUD)
 
     @staticmethod
-    def test_initialization_defaults_to_rfc_server_types(
-        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
+    def test_initialization_uses_model_owned_server_defaults(
+        migration_pipeline: p.Ldif.MigrationPipeline,
     ) -> None:
-        """Omitting server types yields the RFC default on both public fields."""
-        pipeline = migration_pipeline_factory()
-        assert pipeline is not None
-        tm.that(pipeline.source_server_type, eq=c.Ldif.ServerTypes(c.Tests.RFC))
-        tm.that(pipeline.target_server_type, eq=c.Ldif.ServerTypes(c.Tests.RFC))
+        """Omitted selectors use their declaration owner's defaults."""
+        defaults = m.Ldif.MigrationPipelineOptions()
+        tm.that(migration_pipeline.source_server_type, eq=defaults.source_server_type)
+        tm.that(migration_pipeline.target_server_type, eq=defaults.target_server_type)
 
     @staticmethod
     @pytest.mark.parametrize(
         ("source", "target"),
         [
-            (c.Tests.OID, c.Tests.OUD),
-            (c.Tests.OID, c.Tests.OPENLDAP),
-            (c.Tests.OUD, c.Tests.OPENLDAP),
-            (c.Tests.OPENLDAP, c.Tests.OID),
-            (c.Tests.OPENLDAP, c.Tests.OUD),
-            (c.Tests.RFC, c.Tests.RFC),
+            (c.Ldif.ServerTypes.OID, c.Ldif.ServerTypes.OUD),
+            (c.Ldif.ServerTypes.OID, c.Ldif.ServerTypes.OPENLDAP),
+            (c.Ldif.ServerTypes.OUD, c.Ldif.ServerTypes.OPENLDAP),
+            (c.Ldif.ServerTypes.OPENLDAP, c.Ldif.ServerTypes.OID),
+            (c.Ldif.ServerTypes.OPENLDAP, c.Ldif.ServerTypes.OUD),
+            (c.Ldif.ServerTypes.RFC, c.Ldif.ServerTypes.RFC),
         ],
     )
     def test_initialization_preserves_server_type_pairs(
-        source: str,
-        target: str,
-        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
+        source: c.Ldif.ServerTypes,
+        target: c.Ldif.ServerTypes,
+        server: p.Ldif.ServerRegistry,
     ) -> None:
         """Each known source/target pair round-trips onto the public fields."""
-        pipeline = migration_pipeline_factory(
+        pipeline = services.FlextLdifMigrationPipeline(
+            registry=server.registry,
             source_server_type=source,
             target_server_type=target,
         )
-        tm.that(pipeline.source_server_type, eq=c.Ldif.ServerTypes(source))
-        tm.that(pipeline.target_server_type, eq=c.Ldif.ServerTypes(target))
+        tm.that(pipeline.source_server_type, where=lambda value: value is source)
+        tm.that(pipeline.target_server_type, where=lambda value: value is target)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -134,74 +127,92 @@ class TestsFlextLdifMigrationPipeline:
     def test_known_server_type_input_normalizes_on_public_fields(
         raw_server: str,
         expected_server: str,
-        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
+        server: p.Ldif.ServerRegistry,
     ) -> None:
-        """Case-insensitive known server input maps to its canonical member.
-
-        Exercised purely through construction: the public ``source_server_type``
-        / ``target_server_type`` fields expose the normalized ``ServerTypes``.
-        """
-        pipeline = migration_pipeline_factory(
-            source_server_type=raw_server,
-            target_server_type=raw_server,
+        """The configuration boundary parses aliases once and retains enum identity."""
+        configuration = m.Ldif.TransformConfig.servers(
+            source_server=raw_server,
+            target_server=raw_server,
+        )
+        process = tm.not_none(configuration.process_config)
+        pipeline = FlextLdif(registry=server.registry).migration_pipeline(
+            settings=configuration,
         )
         tm.that(pipeline.source_server_type, eq=c.Ldif.ServerTypes(expected_server))
         tm.that(pipeline.target_server_type, eq=c.Ldif.ServerTypes(expected_server))
+        tm.that(
+            pipeline.source_server_type,
+            where=lambda value: value is process.source_server,
+        )
+        tm.that(
+            pipeline.target_server_type,
+            where=lambda value: value is process.target_server,
+        )
 
     @staticmethod
-    def test_unknown_server_type_input_is_rejected_at_construction(
-        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
-    ) -> None:
-        """An unrecognized server type is rejected when building the pipeline.
+    def test_unknown_server_type_input_is_rejected_at_configuration() -> None:
+        """Invalid external selectors fail before the service is constructed."""
+        with pytest.raises(m.ValidationError):
+            m.Ldif.ProcessConfig.model_validate({
+                "source_server": c.Tests.MIGRATION_UNKNOWN_SERVER,
+                "target_server": c.Tests.MIGRATION_UNKNOWN_SERVER,
+            })
 
-        Observable public behavior: construction with an unknown server type
-        raises a validation error rather than silently producing an instance.
-        (The RFC fallback in the coercion helper is not reachable through the
-        public constructor, so this asserts the real contract, not the intent.)
-        """
-        with pytest.raises(ValueError, match="FlextLdifMigrationPipeline"):
-            migration_pipeline_factory(
-                source_server_type=c.Tests.MIGRATION_UNKNOWN_SERVER,
-                target_server_type=c.Tests.MIGRATION_UNKNOWN_SERVER,
-            )
+    @staticmethod
+    @pytest.mark.parametrize("value", [True, 1, [], {}])
+    def test_configuration_rejects_non_string_server_inputs(value: t.JsonValue) -> None:
+        """The input boundary rejects values outside the server selector contract."""
+        with pytest.raises(m.ValidationError):
+            m.Ldif.ProcessConfig.model_validate({"source_server": value})
+
+    @staticmethod
+    @pytest.mark.parametrize("field", ["source_server_type", "target_server_type"])
+    def test_pipeline_rejects_explicit_null_selectors(
+        field: str, server: p.Ldif.ServerRegistry
+    ) -> None:
+        """Omission uses a model default, while an explicit null is invalid."""
+        with pytest.raises(m.ValidationError):
+            services.FlextLdifMigrationPipeline.model_validate({
+                "registry": server.registry,
+                field: None,
+            })
+
+
+class TestsFlextLdifMigrationPipelineExecution:
+    """Execution, entry migration, and file migration outcomes."""
 
     # ── execute() fallible outcomes ──────────────────────────────────────
 
     @staticmethod
-    def test_execute_fails_without_input_dir() -> None:
+    def test_execute_fails_without_input_dir(server: p.Ldif.ServerRegistry) -> None:
         """execute() returns failure naming input_dir when none was configured."""
-        pipeline = FlextLdifMigrationPipeline(
-            registry=FlextLdif().registry,
-            source_server_type=c.Tests.OID,
-            target_server_type=c.Tests.OUD,
-        )
+        pipeline = services.FlextLdifMigrationPipeline(registry=server.registry)
         tm.fail(pipeline.execute(), has="input_dir")
 
     @staticmethod
     def test_execute_fails_without_output_dir(
         migration_dirs: t.Pair[Path, Path],
+        server: p.Ldif.ServerRegistry,
     ) -> None:
         """execute() returns failure naming output_dir when none was configured."""
         input_dir, _ = migration_dirs
-        pipeline = FlextLdifMigrationPipeline(
-            registry=FlextLdif().registry,
+        pipeline = services.FlextLdifMigrationPipeline(
+            registry=server.registry,
             input_dir=input_dir,
-            source_server_type=c.Tests.OID,
-            target_server_type=c.Tests.OUD,
         )
         tm.fail(pipeline.execute(), has="output_dir")
 
     @staticmethod
     def test_execute_fails_when_input_dir_missing(
-        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
+        server: p.Ldif.ServerRegistry,
         tmp_path: Path,
     ) -> None:
         """execute() reports 'not found' when the input directory is absent."""
         tm.fail(
-            migration_pipeline_factory(
+            services.FlextLdifMigrationPipeline(
+                registry=server.registry,
                 input_dir=tmp_path / "nonexistent",
-                source_server_type=c.Tests.OID,
-                target_server_type=c.Tests.OUD,
+                output_dir=tmp_path,
             ).execute(),
             has="not found",
         )
@@ -209,43 +220,48 @@ class TestsFlextLdifMigrationPipeline:
     @staticmethod
     def test_execute_creates_missing_output_dir(
         migration_dirs: t.Pair[Path, Path],
-        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
+        server: p.Ldif.ServerRegistry,
         tmp_path: Path,
     ) -> None:
         """A successful execute() materializes the configured output directory."""
         input_dir, _ = migration_dirs
         nonexistent_output = tmp_path / "nonexistent"
         (input_dir / "test.ldif").write_text(_BASIC_RFC_ENTRY_LDIF)
-        tm.ok(migration_pipeline_factory(output_dir=nonexistent_output).execute())
-        tm.that(nonexistent_output.exists(), eq=True)
+        pipeline = services.FlextLdifMigrationPipeline(
+            registry=server.registry,
+            input_dir=input_dir,
+            output_dir=nonexistent_output,
+        )
+        tm.ok(pipeline.execute())
+        tm.that(nonexistent_output.exists())
 
     @staticmethod
     def test_execute_with_empty_input_reports_zero_entries(
-        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
+        migration_pipeline: p.Ldif.MigrationPipeline,
     ) -> None:
         """An empty input directory succeeds with zero total entries."""
         migration_result: p.Ldif.MigrationPipelineResult = tm.ok(
-            migration_pipeline_factory().execute(),
+            migration_pipeline.execute(),
         )
         tm.that(migration_result.stats.total_entries, eq=0)
 
     @staticmethod
     def test_execute_rfc_to_rfc_processes_entries(
         migration_dirs: t.Pair[Path, Path],
-        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
+        migration_pipeline: p.Ldif.MigrationPipeline,
     ) -> None:
         """An RFC-to-RFC run reports at least one processed entry."""
         input_dir, _ = migration_dirs
         (input_dir / "test.ldif").write_text(c.Tests.RFC_SAMPLE_LDIF_BASIC)
         migration_result: p.Ldif.MigrationPipelineResult = tm.ok(
-            migration_pipeline_factory().execute(),
+            migration_pipeline.execute(),
         )
         tm.that(migration_result.stats.processed_entries, gte=1)
 
     @staticmethod
     def test_execute_aggregates_across_multiple_files(
         migration_dirs: t.Pair[Path, Path],
-        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
+        migration_pipeline: p.Ldif.MigrationPipeline,
     ) -> None:
         """execute() sums entries across every ``*.ldif`` input file."""
         input_dir, _ = migration_dirs
@@ -254,28 +270,25 @@ class TestsFlextLdifMigrationPipeline:
         )
         (input_dir / "data.ldif").write_text(_BASIC_RFC_ENTRY_LDIF)
         migration_result: p.Ldif.MigrationPipelineResult = tm.ok(
-            migration_pipeline_factory().execute(),
+            migration_pipeline.execute(),
         )
         tm.that(migration_result.stats.total_entries, gte=2)
 
     @staticmethod
-    def test_execute_continues_when_a_file_fails_to_parse(
+    def test_execute_propagates_the_first_file_failure(
         migration_dirs: t.Pair[Path, Path],
-        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
+        migration_pipeline: p.Ldif.MigrationPipeline,
     ) -> None:
-        """A single unparsable file is skipped; execute() still succeeds."""
+        """An unreadable input fails the directory instead of faking a zero result."""
         input_dir, _ = migration_dirs
         (input_dir / "bad.ldif").write_bytes(c.Tests.WRITER_INVALID_UTF8_BYTES)
-        migration_result: p.Ldif.MigrationPipelineResult = tm.ok(
-            migration_pipeline_factory().execute(),
-        )
-        tm.that(migration_result.stats.total_entries, eq=0)
+        tm.fail(migration_pipeline.execute())
 
     # ── migrate_entries() fallible outcomes ──────────────────────────────
 
     @staticmethod
     def test_migrate_entries_returns_migrated_entries(
-        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
+        migration_pipeline: p.Ldif.MigrationPipeline,
     ) -> None:
         """migrate_entries() yields one output entry per input entry."""
         entries = [
@@ -288,45 +301,46 @@ class TestsFlextLdifMigrationPipeline:
             ),
         ]
         migrated: t.SequenceOf[p.Ldif.Entry] = tm.ok(
-            migration_pipeline_factory().migrate_entries(entries),
+            migration_pipeline.migrate_entries(entries),
         )
         tm.that(len(migrated), eq=1)
 
     @staticmethod
     def test_migrate_entries_with_empty_list_returns_empty(
-        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
+        migration_pipeline: p.Ldif.MigrationPipeline,
     ) -> None:
         """migrate_entries([]) succeeds with an empty result."""
         migrated: t.SequenceOf[p.Ldif.Entry] = tm.ok(
-            migration_pipeline_factory().migrate_entries([]),
+            migration_pipeline.migrate_entries([]),
         )
         tm.that(migrated, empty=True)
 
     @staticmethod
-    def test_migrate_entries_base_dn_filters_out_of_scope_acl_bind_dn() -> None:
+    def test_migrate_entries_base_dn_filters_out_of_scope_acl_bind_dn(
+        server: p.Ldif.ServerRegistry,
+    ) -> None:
         """base_dn threads to the OID→OUD ACL scope filter, dropping out-of-scope binds.
 
         Observable contract: the migrated entry's public ``aci`` attribute retains
         only the in-scope ACL clause and is rewritten to OUD syntax.
         """
         entry = u.Tests.orclaci_base_dn_entry(dn="cn=users,dc=ctbc")
-        pipeline = FlextLdifMigrationPipeline(
-            registry=FlextLdif().registry,
-            source_server_type="oid",
-            target_server_type="oud",
+        pipeline = services.FlextLdifMigrationPipeline(
+            registry=server.registry,
+            source_server_type=c.Ldif.ServerTypes.OID,
+            target_server_type=c.Ldif.ServerTypes.OUD,
             base_dn="dc=ctbc",
         )
 
-        migrated: t.SequenceOf[p.Ldif.Entry] = u.Tests.assert_success(
+        migrated = tm.ok(
             pipeline.migrate_entries([entry]),
         )
-        assert migrated[0].attributes is not None
         tm.that(
-            migrated[0].attributes.attributes["aci"],
+            tm.not_none(migrated[0].attributes).attributes["aci"],
             eq=[
                 (
-                    '(targetattr="*")(version 3.0; acl "users Entry by x"; '
-                    'allow (read, search) groupdn="ldap:///cn=a,dc=ctbc";)'
+                    '(targetattr="*")    (version 3.0; acl "users Entry by x";'
+                    '     allow (read, search)    groupdn="ldap:///cn=a,dc=ctbc";)'
                 ),
             ],
         )
@@ -336,33 +350,33 @@ class TestsFlextLdifMigrationPipeline:
     @staticmethod
     def test_migrate_file_reports_total_entries(
         migration_dirs: t.Pair[Path, Path],
-        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
+        migration_pipeline: p.Ldif.MigrationPipeline,
     ) -> None:
         """migrate_file() succeeds and reports the parsed entry count."""
         input_dir, _ = migration_dirs
         input_file = input_dir / "test.ldif"
         input_file.write_text(c.Tests.CONFIG_BASIC_ENTRY)
         migration_result: p.Ldif.MigrationPipelineResult = tm.ok(
-            migration_pipeline_factory().migrate_file(input_file),
+            migration_pipeline.migrate_file(input_file),
         )
         tm.that(migration_result.stats.total_entries, gte=1)
 
     @staticmethod
     def test_migrate_file_fails_when_file_missing(
         migration_dirs: t.Pair[Path, Path],
-        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
+        migration_pipeline: p.Ldif.MigrationPipeline,
     ) -> None:
         """migrate_file() on an absent path returns a 'not found' failure."""
         input_dir, _ = migration_dirs
         tm.fail(
-            migration_pipeline_factory().migrate_file(input_dir / "nonexistent.ldif"),
+            migration_pipeline.migrate_file(input_dir / "nonexistent.ldif"),
             has="not found",
         )
 
     @staticmethod
     def test_migrate_file_fails_when_write_target_is_a_directory(
         migration_dirs: t.Pair[Path, Path],
-        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
+        migration_pipeline: p.Ldif.MigrationPipeline,
     ) -> None:
         """A write that cannot complete surfaces as a 'Write failed' failure."""
         input_dir, output_dir = migration_dirs
@@ -371,7 +385,7 @@ class TestsFlextLdifMigrationPipeline:
         output_as_directory = output_dir / "existing_dir"
         output_as_directory.mkdir()
         tm.fail(
-            migration_pipeline_factory().migrate_file(
+            migration_pipeline.migrate_file(
                 input_file,
                 output_file=output_as_directory,
             ),
@@ -381,16 +395,17 @@ class TestsFlextLdifMigrationPipeline:
     @staticmethod
     def test_migrate_file_fails_on_undecodable_input(
         migration_dirs: t.Pair[Path, Path],
-        migration_pipeline_factory: p.Tests.MigrationPipelineFactory,
+        migration_pipeline: p.Ldif.MigrationPipeline,
     ) -> None:
-        """Undecodable bytes surface as a 'File migration failed' failure."""
+        """Undecodable input retains the original reader failure without rewriting."""
         input_dir, _ = migration_dirs
         input_file = input_dir / c.Tests.MIGRATION_INPUT_FILENAME
         input_file.write_bytes(c.Tests.WRITER_INVALID_UTF8_BYTES)
-        tm.fail(
-            migration_pipeline_factory().migrate_file(input_file),
-            has="File migration failed",
-        )
+        reader_failure = u.Cli.files_read_text(input_file)
+        tm.fail(reader_failure)
+        migration_failure = migration_pipeline.migrate_file(input_file)
+        tm.fail(migration_failure)
+        tm.that(migration_failure.error, eq=tm.not_none(reader_failure.error))
 
 
 class TestsFlextLdifMigrationPipelineFileAndProcessing:
@@ -399,38 +414,41 @@ class TestsFlextLdifMigrationPipelineFileAndProcessing:
     @staticmethod
     def test_migrate_file_fails_without_output_target(
         migration_dirs: t.Pair[Path, Path],
+        server: p.Ldif.ServerRegistry,
     ) -> None:
         """migrate_file() fails when neither output_dir nor output_file is given."""
         input_dir, _ = migration_dirs
         input_file = input_dir / "test.ldif"
         input_file.write_text(c.Tests.RFC_SAMPLE_LDIF_BASIC)
-        pipeline = FlextLdifMigrationPipeline(
-            registry=FlextLdif().registry,
-            source_server_type=c.Tests.RFC,
-            target_server_type=c.Tests.RFC,
-        )
+        pipeline = services.FlextLdifMigrationPipeline(registry=server.registry)
         tm.fail(pipeline.migrate_file(input_file, output_file=None))
 
     # ── FlextLdifProcessingPipeline (delegate) public contract ───────────
 
     @staticmethod
-    def test_processing_execute_fails_without_entries() -> None:
+    def test_processing_execute_fails_without_entries(
+        server: p.Ldif.ServerRegistry,
+    ) -> None:
         """Processing execute() fails when no entry batch was provided."""
         tm.fail(
-            FlextLdifProcessingPipeline(registry=FlextLdif().registry, transform_config=None).execute(),
+            services.FlextLdifProcessingPipeline(
+                registry=server.registry, transform_config=None
+            ).execute(),
             has="No entries provided",
         )
 
     @staticmethod
-    def test_processing_execute_succeeds_with_entries() -> None:
+    def test_processing_execute_succeeds_with_entries(
+        server: p.Ldif.ServerRegistry,
+    ) -> None:
         """Processing execute() succeeds when an entry batch is supplied."""
         entry = m.Ldif.Entry(
             dn=m.Ldif.DN(value=c.Tests.ANALYSIS_DN_VALID),
             attributes=m.Ldif.Attributes(attributes={}),
         )
         tm.ok(
-            FlextLdifProcessingPipeline(
-                registry=FlextLdif().registry,
+            services.FlextLdifProcessingPipeline(
+                registry=server.registry,
                 transform_config=None,
                 entries_input=[entry],
             ).execute(),
@@ -440,18 +458,16 @@ class TestsFlextLdifMigrationPipelineFileAndProcessing:
     @pytest.mark.parametrize("field", ["normalize_dns", "normalize_attrs"])
     def test_processing_execute_succeeds_with_normalization_config(
         field: str,
+        server: p.Ldif.ServerRegistry,
     ) -> None:
         """Normalization flags with a process_config execute successfully."""
-        transform_config = m.Ldif.TransformConfig(
-            **{field: True},
-            process_config=m.Ldif.ProcessConfig(
-                source_server=c.Tests.RFC,
-                target_server=c.Tests.RFC,
-            ),
-        )
+        transform_config = m.Ldif.TransformConfig.model_validate({
+            field: True,
+            "process_config": m.Ldif.ProcessConfig(),
+        })
         tm.ok(
-            FlextLdifProcessingPipeline(
-                registry=FlextLdif().registry,
+            services.FlextLdifProcessingPipeline(
+                registry=server.registry,
                 transform_config=transform_config,
                 entries_input=[],
             ).execute(),

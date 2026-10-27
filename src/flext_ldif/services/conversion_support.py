@@ -112,7 +112,7 @@ class FlextLdifConversionSupportMixin(FlextLdifServer):
 
     def resolve_supported_conversions(
         self,
-        server: p.Ldif.ServerReference | str,
+        server: p.Ldif.ServerReference | p.Ldif.ServerServer | str,
     ) -> t.MutableBoolMapping:
         """Check which data types a server supports for conversion.
 

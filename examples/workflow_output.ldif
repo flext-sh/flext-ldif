@@ -1,0 +1,4 @@
+dn: cn=Workflow User,dc=example,dc=com
+objectClass: person
+cn: Workflow User
+sn: User

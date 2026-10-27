@@ -1,7 +1,5 @@
 """LDIF settings mix-in: processing.
 
-from flext_ldif import m
-from flext_ldif import u
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -9,36 +7,36 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, Self
+from typing import Annotated, ClassVar, Self
 
 from flext_core import m
 
-from flext_ldif._constants.base import FlextLdifConstantsEnums
-from flext_ldif._models._settings_normalization import (
-    FlextLdifModelsSettingsNormalization,
-)
-from flext_ldif._models.base import FlextLdifShared
+from flext_ldif import FlextLdifShared, t
+from flext_ldif._constants import FlextLdifConstantsEnums
+from flext_ldif._models import FlextLdifModelsSettingsNormalization
 
 
 class FlextLdifModelsSettingsProcessing:
     """LDIF settings mix-in: processing."""
 
-    class ProcessConfig(m.Value):
+    class ProcessConfig(m.StrictModel):
         """Configuration for processing operations."""
 
-        @staticmethod
-        def _coerce_server_type_value(
-            value: FlextLdifConstantsEnums.ServerTypes | str | None,
-        ) -> str | None:
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(use_enum_values=False)
 
-            if value is None:
-                return None
-            return FlextLdifShared.normalize_server_type(value).value
+        @m.field_validator("source_server", "target_server", mode="before")
+        @classmethod
+        def _validate_server_type(cls, value: t.JsonValue) -> t.JsonValue:
+            """Normalize aliases before the enum field validates the input.
 
-        type NormalizedServerTypeValue = Annotated[
-            str | None,
-            m.BeforeValidator(_coerce_server_type_value),
-        ]
+            Returns:
+                The native enum for a string selector, or the original input
+                for the declared field schema to validate.
+
+            """
+            if isinstance(value, str):
+                return FlextLdifShared.normalize_server_type(value)
+            return value
 
         batch_size: Annotated[
             int,
@@ -53,11 +51,11 @@ class FlextLdifModelsSettingsProcessing:
             m.Field(description="Maximum retry attempts on failure"),
         ] = 3
         source_server: Annotated[
-            NormalizedServerTypeValue,
+            FlextLdifConstantsEnums.ServerTypes | None,
             m.Field(description="Source LDAP server type identifier"),
         ] = None
         target_server: Annotated[
-            NormalizedServerTypeValue,
+            FlextLdifConstantsEnums.ServerTypes | None,
             m.Field(description="Target LDAP server type identifier"),
         ] = None
         base_dn: Annotated[
@@ -87,11 +85,11 @@ class FlextLdifModelsSettingsProcessing:
                 The resulting ``Self``.
 
             """
-            return cls(
-                source_server=source_server,
-                target_server=target_server,
-                base_dn=base_dn,
-            )
+            return cls.model_validate({
+                "source_server": source_server,
+                "target_server": target_server,
+                "base_dn": base_dn,
+            })
 
     class TransformConfig(m.Value):
         """Configuration for transformation operations."""

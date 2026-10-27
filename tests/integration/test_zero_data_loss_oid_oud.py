@@ -21,15 +21,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING
 
 import pytest
 
 from flext_ldif import ldif
-from tests import c, m, t, tm, u
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import c, m, p, t, tm, u
 
 
 class TestsFlextLdifZeroDataLossOidOud:
@@ -121,11 +117,13 @@ class TestsFlextLdifZeroDataLossOidOud:
 
         tm.ok(result)
         entries = result.value.entries
-        assert entries, "No entries parsed"
+        tm.ok(bool(entries), msg="No entries parsed")
         for entry in entries:
-            assert entry.metadata is not None
-            original = u.to_str(entry.metadata.original_strings["entry_original_ldif"])
-            assert original, f"Entry {entry.dn} lost its original LDIF"
+            metadata = tm.not_none(entry.metadata)
+            original = u.to_str(metadata.original_strings["entry_original_ldif"])
+            if not original:
+                msg = f"Entry {entry.dn} lost its original LDIF"
+                tm.reject(msg)
             tm.that(original.lower(), has="dn:")
 
     @staticmethod
@@ -138,11 +136,15 @@ class TestsFlextLdifZeroDataLossOidOud:
         tm.ok(result)
 
         for entry in result.value.entries:
-            assert entry.metadata is not None
-            dn_diff = entry.metadata.minimal_differences.get("dn", {})
-            assert isinstance(dn_diff, Mapping)
+            metadata = tm.not_none(entry.metadata)
+            dn_diff = metadata.minimal_differences.get("dn", {})
+            match dn_diff:
+                case Mapping():
+                    pass
+                case _:
+                    tm.reject()
             if bool(dn_diff.get("has_differences", False)):
-                tm.that(entry.metadata.original_strings, has="dn_original")
+                tm.that(metadata.original_strings, has="dn_original")
 
     # -- conversion tracking ----------------------------------------------
 
@@ -170,19 +172,32 @@ orclIsEnabled: 1
             if metadata is None:
                 continue
             converted = metadata.extensions[c.Ldif.CONVERTED_ATTRIBUTES]
-            assert isinstance(converted, Mapping)
+            match converted:
+                case Mapping():
+                    pass
+                case _:
+                    tm.reject()
             boolean_conversions = converted[c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS]
-            assert isinstance(boolean_conversions, Mapping)
+            match boolean_conversions:
+                case Mapping():
+                    pass
+                case _:
+                    tm.reject()
             tracked_conversions.append(boolean_conversions)
 
-        assert tracked_conversions, (
-            "OID boolean fixture must produce boolean conversion metadata"
+        tm.ok(
+            bool(tracked_conversions),
+            msg="OID boolean fixture must produce boolean conversion metadata",
         )
 
         for boolean_conversions in tracked_conversions:
             for raw in boolean_conversions.values():
                 conversion = raw
-                assert isinstance(conversion, Mapping)
+                match conversion:
+                    case Mapping():
+                        pass
+                    case _:
+                        tm.reject()
                 tm.that(conversion, has="original")
                 tm.that(conversion, has="converted")
                 tm.that(conversion.get(c.Ldif.ORIGINAL_FORMAT), eq="1/0")
@@ -216,8 +231,8 @@ orclIsEnabled: 1
         tm.ok(result)
 
         for entry in result.value.entries:
-            assert entry.metadata is not None
-            tm.that(entry.metadata.conversion_history, is_=list)
+            metadata = tm.not_none(entry.metadata)
+            tm.that(metadata.conversion_history, is_=list)
 
     @staticmethod
     def test_soft_deleted_attributes_are_preserved(
@@ -236,10 +251,9 @@ orclIsEnabled: 1
             for attr_name in metadata.soft_delete_markers:
                 tm.that(removed, has=attr_name)
                 value = removed[attr_name]
-                if isinstance(value, (str, list, tuple)):
-                    assert value, (
-                        f"Soft-deleted attribute {attr_name} has no preserved values"
-                    )
+                if isinstance(value, (str, list, tuple)) and not value:
+                    msg = f"Soft-deleted attribute {attr_name} has no preserved values"
+                    tm.reject(msg)
 
     # -- conversion / round-trip ------------------------------------------
 
@@ -254,9 +268,9 @@ orclIsEnabled: 1
 
         rfc = api.write(oid.value.entries, server_type=c.Tests.RFC)
         tm.ok(rfc)
-        assert rfc.value.content is not None
+        rfc_content = tm.not_none(rfc.value.content)
 
-        oud = api.parse_ldif(rfc.value.content, server_type=c.Tests.OUD)
+        oud = api.parse_ldif(rfc_content, server_type=c.Tests.OUD)
         tm.ok(oud)
 
         oid_entries = oid.value.entries
@@ -264,16 +278,18 @@ orclIsEnabled: 1
         tm.that(len(oid_entries), eq=len(oud_entries))
 
         for original, converted in zip(oid_entries, oud_entries, strict=True):
-            assert original.attributes is not None
-            assert converted.attributes is not None
-            original_attrs = set(original.attributes.attributes.keys())
-            converted_attrs = set(converted.attributes.attributes.keys())
+            original_attributes = tm.not_none(original.attributes)
+            converted_attributes = tm.not_none(converted.attributes)
+            original_attrs = set(original_attributes.attributes.keys())
+            converted_attrs = set(converted_attributes.attributes.keys())
             lost = {
                 attr
                 for attr in original_attrs - converted_attrs
                 if attr.lower() not in self._OPERATIONAL_ATTRS
             }
-            assert not lost, f"Data loss detected for {original.dn}: {sorted(lost)}"
+            if lost:
+                msg = f"Data loss detected for {original.dn}: {sorted(lost)}"
+                tm.reject(msg)
 
     @staticmethod
     def test_round_trip_oid_oud_oid_preserves_entry_count_and_original_text(
@@ -286,9 +302,9 @@ orclIsEnabled: 1
 
         to_oud = api.write(original.value.entries, server_type=c.Tests.OUD)
         tm.ok(to_oud)
-        assert to_oud.value.content is not None
+        oud_content = tm.not_none(to_oud.value.content)
 
-        reparsed = api.parse_ldif(to_oud.value.content, server_type=c.Tests.OUD)
+        reparsed = api.parse_ldif(oud_content, server_type=c.Tests.OUD)
         tm.ok(reparsed)
 
         back_to_oid = api.write(
@@ -297,9 +313,9 @@ orclIsEnabled: 1
             format_options=m.Ldif.WriteFormatOptions(restore_original_format=True),
         )
         tm.ok(back_to_oid)
-        assert back_to_oid.value.content is not None
+        oid_content = tm.not_none(back_to_oid.value.content)
 
-        roundtrip = api.parse_ldif(back_to_oid.value.content, server_type=c.Tests.OID)
+        roundtrip = api.parse_ldif(oid_content, server_type=c.Tests.OID)
         tm.ok(roundtrip)
 
         original_entries = original.value.entries
@@ -307,11 +323,11 @@ orclIsEnabled: 1
         tm.that(len(original_entries), eq=len(roundtrip_entries))
 
         for orig, final in zip(original_entries, roundtrip_entries, strict=True):
-            assert orig.metadata is not None
-            assert final.metadata is not None
-            assert u.to_str(orig.metadata.original_strings["entry_original_ldif"]), (
-                f"Original text lost for {orig.dn}"
-            )
+            metadata = tm.not_none(orig.metadata)
+            tm.not_none(final.metadata)
+            if not u.to_str(metadata.original_strings["entry_original_ldif"]):
+                msg = f"Original text lost for {orig.dn}"
+                tm.reject(msg)
 
     @staticmethod
     def test_restore_original_format_reproduces_original_entry_text(
@@ -328,10 +344,9 @@ orclIsEnabled: 1
             format_options=m.Ldif.WriteFormatOptions(restore_original_format=True),
         )
         tm.ok(written)
-        restored = written.value.content
-        assert restored is not None
+        restored = tm.not_none(written.value.content)
 
         for entry in parsed.value.entries:
-            assert entry.metadata is not None
-            original = u.to_str(entry.metadata.original_strings["entry_original_ldif"])
+            metadata = tm.not_none(entry.metadata)
+            original = u.to_str(metadata.original_strings["entry_original_ldif"])
             tm.that(restored, has=original.strip())

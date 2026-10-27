@@ -207,6 +207,7 @@ import os
 import pathlib
 
 import psutil
+from flext_tests import tm
 
 from flext_ldif import ldif
 

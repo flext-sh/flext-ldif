@@ -27,6 +27,7 @@ class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
         comment_type: str,
     ) -> None:
         """Add comment for attribute transformation."""
+        del _transformation
         comment_lines.append(f"# [{comment_type}] {attr_name}: transformation applied")
 
     @staticmethod
@@ -67,7 +68,7 @@ class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
         return ldif_parts
 
     @staticmethod
-    def _add_oud_acl_comments(
+    def add_oud_acl_comments(
         comment_lines: t.MutableSequenceOf[str],
         entry: m.Ldif.Entry,
         format_options: m.Ldif.WriteFormatOptions | None = None,
@@ -152,7 +153,7 @@ class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
         """
         if not entry.metadata:
             return
-        acl_attr_names_to_skip = FlextLdifServersOudCommentsMixin._add_oud_acl_comments(
+        acl_attr_names_to_skip = FlextLdifServersOudCommentsMixin.add_oud_acl_comments(
             comment_lines,
             entry,
             format_options,

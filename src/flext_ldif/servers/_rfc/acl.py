@@ -18,65 +18,13 @@ from flext_ldif.servers._base import (
 class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
     """LDAP ACL Server - Base Implementation."""
 
-    def __new__(
-        cls,
-        acl_service: p.Ldif.AclServer | None = None,
-        parent_server: Self | None = None,
-        **kwargs: t.Ldif.Scalar | m.Ldif.Acl,
-    ) -> Self:
-        """Override __new__ to support auto-execute and processor instantiation."""
-        _ = acl_service
-        instance: Self = super().__new__(cls)
-        auto_execute_kwargs = {"data", "operation", "parent_server", "_parent_server"}
-        _ = {k: v for k, v in kwargs.items() if k not in auto_execute_kwargs}
-        parent_server_raw = (
-            parent_server if parent_server is not None else kwargs.get("_parent_server")
-        )
-        parent_server_value: Self | None = (
-            parent_server_raw if isinstance(parent_server_raw, cls) else None
-        )
-        acl_instance: Self = instance
-        if parent_server_value is not None:
-            object.__setattr__(acl_instance, "parent_server", parent_server_value)
-        if cls.auto_execute:
-            data_raw = kwargs.get("data")
-            data: str | m.Ldif.Acl | None = (
-                data_raw if isinstance(data_raw, str) else None
-            )
-            op_raw = kwargs.get("operation")
-            op: str | None = None
-            if isinstance(op_raw, str) and op_raw == "parse":
-                op = "parse"
-            elif isinstance(op_raw, str) and op_raw == "write":
-                op = "write"
-            acl_instance.execute(data=data, operation=op)
-        return instance
-
-    def __init__(
-        self,
-        acl_service: p.Ldif.AclServer | None = None,
-        parent_server: Self | None = None,
-        **kwargs: t.Ldif.Scalar | m.Ldif.Acl,
-    ) -> None:
-        """Initialize RFC ACL server service."""
-        _ = kwargs
-        acl_service_typed: p.Ldif.AclServer | None = (
-            acl_service if acl_service is not None else None
-        )
-        FlextLdifServersBaseSchemaAcl.__init__(
-            self,
-            acl_service=acl_service_typed,
-            _parent_server=None,
-        )
-        if parent_server is not None:
-            object.__setattr__(self, "parent_server", parent_server)
-
     @overload
     def __call__(
         self,
         *,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
+        registry: p.Registry | None = None,
         **fields: t.JsonValue,
     ) -> Self: ...
 
@@ -100,6 +48,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
         operation: t.JsonValue | None = None,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
+        registry: p.Registry | None = None,
         **fields: t.JsonValue,
     ) -> Self | m.Ldif.Acl | str:
         """Polymorphic callable interface for parse and write operations.
@@ -112,21 +61,26 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
             operation: Explicit operation name; inferred from data when None.
             server: Optional server registry for the configured builder path.
             settings: Optional settings for the configured builder path.
+            registry: Explicit registry for the configured builder path.
             **fields: Additional processor fields.
 
         Returns:
             A configured processor, the parsed ACL, or the serialized text.
 
         """
+        if registry is not None:
+            return self.configure_runtime(
+                server=server, settings=settings, registry=registry, **fields
+            )
         processor_fields: t.MutableMappingKV[str, t.JsonValue | m.Ldif.Acl | None] = (
             dict(fields)
         )
         processor_fields["data"] = data
-        processor_fields["operation"] = operation
+        processor_fields[c.ContextScope.OPERATION] = operation
         configured = FlextLdifServerMethodsMixin.dispatch_builder(
             super().__call__,
             processor_fields,
-            frozenset({"data", "operation"}),
+            frozenset({"data", c.ContextScope.OPERATION}),
             server,
             settings,
         )
@@ -138,8 +92,8 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
             if isinstance(data_raw, (str, m.Ldif.Acl)) or data_raw is None
             else None
         )
-        operation_raw = processor_fields.get("operation")
-        # Why: "operation" never actually carries an Acl value (only "data"
+        operation_raw = processor_fields.get(c.ContextScope.OPERATION)
+        # Why: c.ContextScope.OPERATION never actually carries an Acl value (only "data"
         # does); narrow the dict-value union before _narrow_operation, which
         # accepts t.JsonValue | None and does not accept m.Ldif.Acl.
         narrowed_operation = self._narrow_operation(
@@ -172,7 +126,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
             True; the RFC server handles every ACL definition.
 
         """
-        _ = acl_line
+        del acl_line
         return True
 
     @override
@@ -186,7 +140,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
             False; schema attributes belong to the schema server.
 
         """
-        _ = attribute
+        del attribute
         return False
 
     @override
@@ -200,7 +154,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
             False; objectClasses belong to the schema server.
 
         """
-        _ = objectclass
+        del objectclass
         return False
 
     @staticmethod
@@ -220,6 +174,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
             The permission name in RFC form.
 
         """
+        del _feature_id, _metadata
         return permission
 
     @override
@@ -233,6 +188,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
             None; the RFC server provides no vendor feature fallback.
 
         """
+        del _feature_id
         return None
 
     @staticmethod
@@ -250,6 +206,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
             Pair of the RFC permission name and its optional feature id.
 
         """
+        del _metadata
         return (permission, None)
 
     @override
@@ -302,6 +259,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
             False; the RFC server supports no vendor-specific features.
 
         """
+        del _feature_id
         return False
 
     @override

@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from os import PathLike
 from pathlib import Path
-from typing import Final, override
+from typing import override
 
-from flext_ldif import FlextLdifShared, c, m, p, r, s, t, u
+from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.services import (
     FlextLdifParser,
     FlextLdifProcessingPipeline,
@@ -24,35 +24,6 @@ class FlextLdifMigrationPipeline(
     m.Ldif.MigrationPipelineOptions,
 ):
     """Migrate files and entry sequences through one explicitly supplied graph."""
-
-    _DEFAULT_SERVER: Final[c.Ldif.ServerTypes] = c.Ldif.ServerTypes.RFC
-
-    @override
-    def model_post_init(self, __context: t.JsonMapping | None, /) -> None:
-        """Normalize the model-owned source and target selectors."""
-        super().model_post_init(__context)
-        self.source_server_type = self._coerce_server_type(
-            self.source_server_type or self.source_server or self._DEFAULT_SERVER,
-        )
-        self.target_server_type = self._coerce_server_type(
-            self.target_server_type or self.target_server or self._DEFAULT_SERVER,
-        )
-
-    @staticmethod
-    def _coerce_server_type(value: str | c.Ldif.ServerTypes) -> c.Ldif.ServerTypes:
-        """Normalize known dialects and reject invalid explicit selectors.
-
-        Returns:
-            The normalized ``c.Ldif.ServerTypes`` selector.
-
-        """
-        if isinstance(value, c.Ldif.ServerTypes):
-            return value
-        lowered = value.lower().strip()
-        try:
-            return c.Ldif.ServerTypes(lowered)
-        except ValueError:
-            return FlextLdifShared.normalize_server_type(lowered)
 
     @override
     def execute(self) -> p.Result[p.Ldif.MigrationPipelineResult]:
@@ -74,22 +45,20 @@ class FlextLdifMigrationPipeline(
                 f"Input directory not found: {in_dir}",
             )
         try:
-            outcome = self._collect_directory_outcomes(in_dir)
+            return self._collect_directory_outcomes(in_dir)
         except c.Ldif.EXC_LDIF_PARSE as exc:
             self.logger.exception("Migration pipeline failed", error=str(exc))
             return r[p.Ldif.MigrationPipelineResult].fail_op("Migration pipeline", exc)
-        return r[p.Ldif.MigrationPipelineResult].ok(outcome)
 
     def _collect_directory_outcomes(
         self,
         in_dir: Path,
-    ) -> m.Ldif.MigrationPipelineResult:
+    ) -> p.Result[p.Ldif.MigrationPipelineResult]:
         """Migrate every LDIF file in the directory and aggregate the outcomes.
 
         Returns:
-            The aggregated ``m.Ldif.MigrationPipelineResult`` over every
-            successfully migrated file; per-file failures are logged as
-            warnings and skipped.
+            The aggregated result when every file succeeds, or the first file
+            failure with its original metadata preserved.
 
         """
         all_entries: t.MutableSequenceOf[p.Ldif.Entry] = []
@@ -99,25 +68,22 @@ class FlextLdifMigrationPipeline(
         for input_file in in_dir.glob("*.ldif"):
             result = self.migrate_file(input_file)
             if result.failure:
-                self.logger.warning(
-                    "File migration failed",
-                    file=str(input_file),
-                    error=result.error,
-                )
-                continue
+                return r[p.Ldif.MigrationPipelineResult].from_failure(result)
             outcome = result.value
             total_processed += outcome.stats.total_entries
             total_migrated += outcome.stats.processed_entries
             all_entries.extend(outcome.entries)
             output_files.extend(outcome.output_files)
-        return m.Ldif.MigrationPipelineResult.model_validate({
-            "entries": all_entries,
-            "output_files": output_files,
-            "stats": m.Ldif.Statistics(
-                total_entries=total_processed,
-                processed_entries=total_migrated,
-            ),
-        })
+        return r[p.Ldif.MigrationPipelineResult].ok(
+            m.Ldif.MigrationPipelineResult.model_validate({
+                "entries": all_entries,
+                "output_files": output_files,
+                "stats": m.Ldif.Statistics(
+                    total_entries=total_processed,
+                    processed_entries=total_migrated,
+                ),
+            }),
+        )
 
     def migrate_entries(
         self,
@@ -131,13 +97,11 @@ class FlextLdifMigrationPipeline(
             ``fail_op`` metadata when the migration raises.
 
         """
-        source_server = self.source_server_type or self._DEFAULT_SERVER
-        target_server = self.target_server_type or self._DEFAULT_SERVER
         try:
             configuration = m.Ldif.TransformConfig.servers(
-                source_server=source_server,
-                target_server=target_server,
-                base_dn=self.base_dn or "",
+                source_server=self.source_server_type,
+                target_server=self.target_server_type,
+                base_dn=self.base_dn,
             )
             pipeline = FlextLdifProcessingPipeline.model_validate({
                 "transform_config": configuration,
@@ -152,8 +116,8 @@ class FlextLdifMigrationPipeline(
         except c.Ldif.EXC_LDIF_PARSE as exc:
             self.logger.exception(
                 "Migration failed",
-                source=str(source_server),
-                target=str(target_server),
+                source=str(self.source_server_type),
+                target=str(self.target_server_type),
                 error=str(exc),
             )
             return r[t.SequenceOf[p.Ldif.Entry]].fail_op("Migration", exc)
@@ -259,13 +223,21 @@ class FlextLdifMigrationPipeline(
     ) -> p.Result[p.Ldif.MigrationPipelineResult]:
         """Build the outcome model and write the migrated entries to disk.
 
+        With ``sort_entries_hierarchically`` the entries are ordered by
+        ``u.Ldif.hierarchy_key``; ``format_options`` shape the written LDIF.
+
         Returns:
             The resulting ``p.Result[p.Ldif.MigrationPipelineResult]`` with the
             written outcome or the propagated write failure metadata.
 
         """
+        ordered = (
+            sorted(migrated, key=lambda entry: u.Ldif.hierarchy_key(entry.dn_str))
+            if self.sort_entries_hierarchically
+            else migrated
+        )
         outcome = m.Ldif.MigrationPipelineResult.model_validate({
-            "entries": migrated,
+            "entries": ordered,
             "output_files": [str(output_path)],
             "stats": m.Ldif.Statistics(
                 total_entries=len(entries),
@@ -279,6 +251,7 @@ class FlextLdifMigrationPipeline(
             outcome.entries,
             output_path,
             server_type=self.target_server_type,
+            format_options=self.format_options,
         )
         if written.failure:
             return r[p.Ldif.MigrationPipelineResult].from_failure(written)

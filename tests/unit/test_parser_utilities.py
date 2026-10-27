@@ -184,7 +184,7 @@ class TestsFlextLdifParserUtilities:
         expected: bool,
     ) -> None:
         """Test extract boolean flag detects token."""
-        assert u.Ldif.extract_boolean_flag(definition, "SINGLE-VALUE") is expected
+        tm.ok(u.Ldif.extract_boolean_flag(definition, "SINGLE-VALUE") is expected)
 
     @staticmethod
     def test_extract_optional_field_returns_match_when_present() -> None:
@@ -217,7 +217,7 @@ class TestsFlextLdifParserUtilities:
             "( 1.1 NAME 'x' DESC 'hi there' X-ORIGIN 'user' )",
         )
 
-        tm.that(extensions["X-ORIGIN"], eq=["user"])
+        tm.that(extensions["X-ORIGIN"], eq=[c.ContextScope.USER])
         tm.that(extensions["DESC"], eq=["hi there"])
 
     @staticmethod
@@ -274,7 +274,7 @@ class TestsFlextLdifParserUtilities:
         operation = entry.change_operations[0]
         tm.that(operation.attribute, eq="description")
         tm.that([value.value for value in operation.values], eq=["schema change"])
-        assert "add" not in entry.attributes_dict
+        tm.that(entry.attributes_dict, lacks="add")
 
     @staticmethod
     def test_parse_ldif_record_builds_entry_from_valid_record() -> None:
@@ -286,11 +286,11 @@ class TestsFlextLdifParserUtilities:
                 "objectClass: person",
             ]),
         )
-        assert entry.dn is not None
-        assert entry.attributes is not None
-        tm.that(entry.dn.value, eq="cn=alice,dc=example,dc=com")
-        tm.that(entry.attributes.attributes["cn"], eq=["alice"])
-        tm.that(entry.attributes.attributes["objectClass"], eq=["person"])
+        dn = tm.not_none(entry.dn)
+        attributes = tm.not_none(entry.attributes)
+        tm.that(dn.value, eq="cn=alice,dc=example,dc=com")
+        tm.that(attributes.attributes["cn"], eq=["alice"])
+        tm.that(attributes.attributes["objectClass"], eq=["person"])
 
     @staticmethod
     def test_parse_ldif_record_decodes_base64_dn_to_utf8() -> None:
@@ -299,6 +299,7 @@ class TestsFlextLdifParserUtilities:
         Regression: the dn branch stored the raw value-spec (``: <b64>``)
         without decoding, so every base64 DN (accented production data)
         failed DN validation and the record was silently dropped.
+
         """
         entry = tm.ok(
             u.Ldif.parse_ldif_record([
@@ -307,12 +308,15 @@ class TestsFlextLdifParserUtilities:
                 "objectClass: person",
             ]),
         )
-        assert entry.dn is not None
-        assert entry.metadata is not None
-        tm.that(entry.dn.value, eq="cn=marcelo.araújo,dc=example,dc=com")
-        flag = entry.metadata.extensions[c.Ldif.META_DN_WAS_BASE64]
-        assert isinstance(flag, list)
-        tm.that(list(flag), eq=[True])
+        dn = tm.not_none(entry.dn)
+        metadata = tm.not_none(entry.metadata)
+        tm.that(dn.value, eq="cn=marcelo.araújo,dc=example,dc=com")
+        flag = metadata.extensions[c.Ldif.META_DN_WAS_BASE64]
+        match flag:
+            case list():
+                tm.that(list(flag), eq=[True])
+            case _:
+                tm.reject()
 
     @staticmethod
     def test_parse_ldif_record_preserves_significant_dn_whitespace() -> None:
@@ -329,8 +333,8 @@ class TestsFlextLdifParserUtilities:
                 "objectClass: person",
             ]),
         )
-        assert entry.dn is not None
-        tm.that(entry.dn.value, eq="cn=spot\t,dc=example,dc=com")
+        dn = tm.not_none(entry.dn)
+        tm.that(dn.value, eq="cn=spot\t,dc=example,dc=com")
 
     @staticmethod
     def test_parse_ldif_record_fails_without_dn() -> None:

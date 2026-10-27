@@ -1,7 +1,5 @@
 """LDIF settings mix-in: migrate.
 
-from flext_ldif import m
-from flext_ldif import u
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -9,91 +7,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
 from typing import Annotated
 
-from flext_core import m, t
+from flext_core import m
 
-from flext_ldif._constants.base import FlextLdifConstantsBase, FlextLdifConstantsEnums
-from flext_ldif._models._settings_rules import FlextLdifModelsSettingsRules
+from flext_ldif import c, t
+from flext_ldif._models import FlextLdifModelsSettingsRules
 
 
 class FlextLdifModelsSettingsMigrate:
     """LDIF settings mix-in: migrate."""
-
-    class MigrateOptions(m.Value):
-        """Options for FlextLdif.migrate() operation.
-
-        Consolidates 12+ optional parameters into single typed Model.
-        Reduces migrate() signature from 16 parameters to 5 parameters.
-
-        Supports three migration modes:
-        - Structured: 6-file output with full tracking (via migration_config)
-        - Categorized: Custom multi-file output (via categorization_rules)
-        - Simple: Single output file (default)
-
-        Inherits from m.Value:
-        - Immutable (frozen=True)
-        - Validates assignment
-        - Extra fields forbidden
-        """
-
-        migration_config: Annotated[
-            t.MutableScalarMapping | None,
-            m.Field(
-                description="Structured migration settings with 6-file output and "
-                "tracking",
-            ),
-        ] = None
-        categorization_rules: Annotated[
-            FlextLdifModelsSettingsRules.CategoryRules | None,
-            m.Field(
-                description="Entry categorization rules (enables categorized mode)",
-            ),
-        ] = None
-        input_files: Annotated[
-            t.MutableSequenceOf[str] | None,
-            m.Field(
-                description="Ordered list of LDIF files to process (categorized mode)",
-            ),
-        ] = None
-        output_files: Annotated[
-            MutableMapping[FlextLdifConstantsEnums.Categories, str] | None,
-            m.Field(description="Category to filename mapping (categorized mode)"),
-        ] = None
-        schema_whitelist_rules: Annotated[
-            FlextLdifModelsSettingsRules.WhitelistRules | None,
-            m.Field(description="Allowed schema elements whitelist (categorized mode)"),
-        ] = None
-        input_filename: Annotated[
-            str | None,
-            m.Field(description="Specific input file to process (simple mode only)"),
-        ] = None
-        output_filename: Annotated[
-            str | None,
-            m.Field(
-                description="Output filename (simple mode, defaults to "
-                "'migrated.ldif')",
-            ),
-        ] = None
-        forbidden_attributes: Annotated[
-            t.MutableSequenceOf[str] | None,
-            m.Field(description="Attributes to remove from entries"),
-        ] = None
-        forbidden_objectclasses: Annotated[
-            t.MutableSequenceOf[str] | None,
-            m.Field(description="ObjectClasses to remove from entries"),
-        ] = None
-        base_dn: Annotated[
-            str | None,
-            m.Field(description="Base DN filter (only process entries under this DN)"),
-        ] = None
-        sort_entries_hierarchically: Annotated[
-            bool,
-            m.Field(
-                description="Sort entries by DN hierarchy depth then alphabetically",
-            ),
-        ] = False
 
     class WriteFormatOptions(m.Value):
         """Formatting options for LDIF serialization.
@@ -140,7 +63,7 @@ class FlextLdifModelsSettingsMigrate:
                 description="Maximum line width before folding (RFC 2849 recommends "
                 "76). Only used if fold_long_lines=True.",
             ),
-        ] = FlextLdifConstantsBase.DEFAULT_LINE_WIDTH
+        ] = c.Ldif.DEFAULT_LINE_WIDTH
         respect_attribute_order: Annotated[
             bool,
             m.Field(
@@ -289,7 +212,7 @@ class FlextLdifModelsSettingsMigrate:
             ),
         ] = None
         acl_attribute_names: Annotated[
-            frozenset[str],
+            t.Ldif.AclAttributeNames,
             m.Field(
                 description="Set of ACL attribute names (e.g., {'orclaci', "
                 "'orclentrylevelaci'}). Used to identify ACL attributes.",
@@ -383,6 +306,84 @@ class FlextLdifModelsSettingsMigrate:
                 "42}.",
             ),
         ] = m.Field(default_factory=dict[str, int])
+
+    class MigrateOptions(m.Value):
+        """Options for FlextLdif.migrate() operation.
+
+        Consolidates 12+ optional parameters into single typed Model.
+        Reduces migrate() signature from 16 parameters to 5 parameters.
+
+        Supports three migration modes:
+        - Structured: 6-file output with full tracking (via migration_config)
+        - Categorized: Custom multi-file output (via categorization_rules)
+        - Simple: Single output file (default)
+
+        Inherits from m.Value:
+        - Immutable (frozen=True)
+        - Validates assignment
+        - Extra fields forbidden
+        """
+
+        migration_config: Annotated[
+            t.MutableScalarMapping | None,
+            m.Field(
+                description="Structured migration settings with 6-file output and "
+                "tracking",
+            ),
+        ] = None
+        categorization_rules: Annotated[
+            FlextLdifModelsSettingsRules.CategoryRules | None,
+            m.Field(
+                description="Entry categorization rules (enables categorized mode)",
+            ),
+        ] = None
+        input_files: Annotated[
+            t.MutableSequenceOf[str] | None,
+            m.Field(
+                description="Ordered list of LDIF files to process (categorized mode)",
+            ),
+        ] = None
+        output_files: Annotated[
+            t.MutableMappingKV[c.Ldif.Categories, str] | None,
+            m.Field(description="Category to filename mapping (categorized mode)"),
+        ] = None
+        schema_whitelist_rules: Annotated[
+            FlextLdifModelsSettingsRules.WhitelistRules | None,
+            m.Field(description="Allowed schema elements whitelist (categorized mode)"),
+        ] = None
+        input_filename: Annotated[
+            str | None,
+            m.Field(description="Specific input file to process (simple mode only)"),
+        ] = None
+        output_filename: Annotated[
+            str | None,
+            m.Field(
+                description="Output filename (simple mode, defaults to "
+                "'migrated.ldif')",
+            ),
+        ] = None
+        forbidden_attributes: Annotated[
+            t.MutableSequenceOf[str] | None,
+            m.Field(description="Attributes to remove from entries"),
+        ] = None
+        forbidden_objectclasses: Annotated[
+            t.MutableSequenceOf[str] | None,
+            m.Field(description="ObjectClasses to remove from entries"),
+        ] = None
+        base_dn: Annotated[
+            str | None,
+            m.Field(description="Base DN filter (only process entries under this DN)"),
+        ] = None
+        sort_entries_hierarchically: Annotated[
+            bool,
+            m.Field(
+                description="Sort entries by DN hierarchy depth then alphabetically",
+            ),
+        ] = False
+        format_options: Annotated[
+            FlextLdifModelsSettingsMigrate.WriteFormatOptions | None,
+            m.Field(description="LDIF formatting applied to the migrated output"),
+        ] = None
 
 
 __all__: list[str] = ["FlextLdifModelsSettingsMigrate"]

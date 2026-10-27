@@ -25,7 +25,7 @@ from tests import m, tm
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tests import p
+from tests import p
 
 
 @pytest.mark.integration
@@ -73,23 +73,23 @@ class TestsFlextLdifRealLdapConfig:
         flext_api: p.Ldif.LdifClient,
     ) -> None:
         """The configured LDIF encoding resolves to a real Python codec."""
-        encoding: str = str(flext_api.settings.ldif.ldif_encoding)
+        encoding = flext_api.settings.Ldif.ldif_encoding
 
         # A settings value that is not a resolvable codec is a broken contract.
-        assert codecs.lookup(encoding).name
+        tm.that(codecs.lookup(encoding).name, where=bool)
 
     @staticmethod
     def test_settings_strict_validation_is_boolean(
         flext_api: p.Ldif.LdifClient,
     ) -> None:
         """The strict-validation flag is exposed as a plain bool."""
-        tm.that(flext_api.settings.ldif.ldif_strict_validation, is_=bool)
+        tm.that(flext_api.settings.Ldif.ldif_strict_validation, is_=bool)
 
     @staticmethod
     def test_process_options_expose_positive_worker_capacity() -> None:
         """Processing options always advertise at least one worker (SSOT)."""
         options = m.Ldif.ProcessEntriesOptions(processor_name="transform")
-        assert options.max_workers >= 1
+        tm.that(options.max_workers >= 1)
 
     # -- railway composition ----------------------------------------------
 
@@ -134,9 +134,9 @@ class TestsFlextLdifRealLdapConfig:
         entries = parsed.value.entries
         tm.that(len(entries), eq=1)
         tm.that(entries[0].dn_str, eq=sample_entry.dn_str)
-        assert (
-            entries[0].attributes_dict["objectClass"]
-            == sample_entry.attributes_dict["objectClass"]
+        tm.that(
+            entries[0].attributes_dict["objectClass"],
+            eq=sample_entry.attributes_dict["objectClass"],
         )
 
     @staticmethod
@@ -149,7 +149,7 @@ class TestsFlextLdifRealLdapConfig:
 
         tm.ok(result)
         validation = result.value
-        tm.that(validation.valid, eq=True)
+        tm.ok(validation.valid)
         tm.that(validation.total_entries, eq=1)
         tm.that(validation.errors, eq=[])
 
@@ -166,8 +166,8 @@ class TestsFlextLdifRealLdapConfig:
         result = flext_api.parse_ldif(missing)
 
         tm.fail(result)
-        assert result.error is not None
-        tm.that(result.error.lower(), has="not found")
+        error = tm.not_none(result.error)
+        tm.that(error.lower(), has="not found")
 
     @staticmethod
     @pytest.mark.parametrize(

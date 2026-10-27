@@ -141,25 +141,11 @@ export FLEXT_LDIF_LOG_LEVEL=DEBUG
 ```python
 from __future__ import annotations
 
-import os
-
 from flext_ldif import FlextLdifSettings, ldif
 
-
-def load_config_from_environment() -> FlextLdifSettings:
-    """Load configuration from environment variables."""
-    return FlextLdifSettings(
-        max_entries=int(os.getenv("FLEXT_LDIF_MAX_ENTRIES", "0")) or None,
-        strict_validation=os.getenv("FLEXT_LDIF_STRICT_VALIDATION", "").lower()
-        == "true",
-        encoding=os.getenv("FLEXT_LDIF_ENCODING", "utf-8"),
-        buffer_size=int(os.getenv("FLEXT_LDIF_BUFFER_SIZE", "8192")),
-        log_level=os.getenv("FLEXT_LDIF_LOG_LEVEL", "INFO"),
-    )
-
-
-# Use environment-based configuration
-settings = load_config_from_environment()
+# The settings read FLEXT_LDIF_* variables natively; nested fields use the
+# "__" delimiter, e.g. FLEXT_LDIF_LDIF__LDIF_ENCODING or FLEXT_LDIF_LOG_LEVEL.
+settings = FlextLdifSettings()
 api = ldif(settings=settings)
 ```
 
@@ -350,8 +336,8 @@ api = ldif(settings=ConfigurationProfiles.enterprise())
 
 ```python
 from flext_cli import u
-
 from flext_core import FlextContainer
+
 from flext_ldif import FlextLdifModels, ldif
 
 # Register configuration in container
@@ -406,14 +392,11 @@ Always use the Pydantic-based configuration models:
 ```python
 from flext_ldif import FlextLdifSettings
 
-# ✅ Good: Type-safe configuration
-settings = FlextLdifSettings(ldif_max_entries=50000, ldif_strict_validation=True)
+# ✅ Good: typed settings validate once, at construction
+settings = FlextLdifSettings.model_validate({"Ldif": {"ldif_strict_validation": True}})
 
-# ❌ Avoid: Raw dictionaries without validation
-config_dict = {
-    "max_entries": "50000",  # Should be int
-    "strict_validation": "yes",  # Should be bool
-}
+# ❌ Avoid: raw dictionaries passed around without validation
+config_dict = {"ldif_strict_validation": "yes"}  # a string, not a bool
 ```
 
 ### 2. Validate Configuration Early
@@ -423,22 +406,11 @@ Validate configuration at application startup:
 ```python
 from __future__ import annotations
 
-import os
+from flext_ldif import FlextLdifSettings, ldif
 
-from flext_ldif import FlextLdifSettings, ldif, p, r
-
-
-def initialize_application_config() -> p.Result[ldif]:
-    """Initialize application with validated configuration."""
-    try:
-        settings = FlextLdifSettings(
-            ldif_max_entries=int(os.getenv("MAX_ENTRIES", "50000")),
-            ldif_strict_validation=os.getenv("STRICT_VALIDATION", "").lower() == "true",
-        )
-        api = ldif(settings=settings)
-        return r[ldif].ok(api)
-    except (TypeError, ValueError) as e:
-        return r[ldif].fail(f"Configuration initialization failed: {e}")
+# Construction validates the FLEXT_LDIF_* environment once and raises on an
+# invalid value, so a misconfigured application never starts.
+api = ldif(settings=FlextLdifSettings())
 ```
 
 ### 3. Use Environment-Specific Profiles

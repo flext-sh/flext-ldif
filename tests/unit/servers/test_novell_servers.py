@@ -44,8 +44,7 @@ class TestsFlextLdifNovellServers:
 
         """
         server = novell_server.schema_server
-        assert isinstance(server, FlextLdifServersNovell.Schema)
-        return server
+        return tm.instance(server, FlextLdifServersNovell.Schema)
 
     @staticmethod
     @pytest.fixture
@@ -59,8 +58,7 @@ class TestsFlextLdifNovellServers:
 
         """
         server = novell_server.acl_server
-        assert isinstance(server, FlextLdifServersNovell.Acl)
-        return server
+        return tm.instance(server, FlextLdifServersNovell.Acl)
 
     @staticmethod
     @pytest.fixture
@@ -74,8 +72,7 @@ class TestsFlextLdifNovellServers:
 
         """
         server = novell_server.entry_server
-        assert isinstance(server, FlextLdifServersNovell.Entry)
-        return server
+        return tm.instance(server, FlextLdifServersNovell.Entry)
 
     # ── Schema: attribute detection ─────────────────────────────────────
 
@@ -89,7 +86,7 @@ class TestsFlextLdifNovellServers:
     ) -> None:
         """Novell attribute definitions are recognised, RFC ones are not."""
         result = schema_server.can_handle_attribute(test_case.attr_definition)
-        tm.that(result is test_case.expected_can_handle, eq=True)
+        tm.ok(result is test_case.expected_can_handle)
 
     # ── Schema: attribute parsing ───────────────────────────────────────
 
@@ -158,7 +155,7 @@ class TestsFlextLdifNovellServers:
     ) -> None:
         """Novell objectClass definitions are recognised, RFC ones are not."""
         result = schema_server.can_handle_objectclass(test_case.oc_definition)
-        tm.that(result is test_case.expected_can_handle, eq=True)
+        tm.ok(result is test_case.expected_can_handle)
 
     # ── Schema: objectClass parsing ─────────────────────────────────────
 
@@ -243,7 +240,7 @@ class TestsFlextLdifNovellServers:
         acl_server: FlextLdifServersNovell.Acl,
     ) -> None:
         """ACL recognition keys off the ``acl``/``inheritedacl`` attribute name."""
-        tm.that(acl_server.can_handle(acl_line) is expected, eq=True)
+        tm.ok(acl_server.can_handle(acl_line) is expected)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -271,8 +268,8 @@ class TestsFlextLdifNovellServers:
     ) -> None:
         """Splitting an ACL line yields the trimmed attribute name and payload."""
         attr_name, payload = FlextLdifServersNovell.Acl.splitacl_line(acl_line)
-        tm.that(attr_name == expected_name, eq=True)
-        tm.that(payload == expected_payload, eq=True)
+        tm.ok(attr_name == expected_name)
+        tm.ok(payload == expected_payload)
 
     # ── Entry detection ─────────────────────────────────────────────────
 
@@ -288,7 +285,7 @@ class TestsFlextLdifNovellServers:
     ) -> None:
         """Novell entries (by DN marker, attribute, or objectClass) are detected."""
         result = entry_server.can_handle(test_case.entry_dn, test_case.attributes)
-        tm.that(result is test_case.expected_can_handle, eq=True)
+        tm.ok(result is test_case.expected_can_handle)
 
     @staticmethod
     def test_can_handle_entry_rejects_empty_dn(
@@ -309,14 +306,13 @@ class TestsFlextLdifNovellServers:
         """Processing an entry preserves attributes and stamps the server type."""
         entry = m.Ldif.Entry.model_validate({
             "dn": "cn=user,o=Example",
-            "attributes": {"cn": ["user"], "objectClass": ["ndsperson"]},
+            "attributes": {"cn": [c.ContextScope.USER], "objectClass": ["ndsperson"]},
         })
-        processed: m.Ldif.Entry = tm.ok(entry_server.process_entry(entry))
-        assert isinstance(processed, m.Ldif.Entry)
-        assert processed.attributes is not None
-        attributes = processed.attributes.attributes
-        tm.that(attributes["cn"] == ["user"], eq=True)
-        tm.that(attributes["objectClass"] == ["ndsperson"], eq=True)
+        processed = tm.instance(tm.ok(entry_server.process_entry(entry)), m.Ldif.Entry)
+        validated_attributes = tm.not_none(processed.attributes)
+        attributes = validated_attributes.attributes
+        tm.ok(attributes["cn"] == [c.ContextScope.USER])
+        tm.ok(attributes["objectClass"] == ["ndsperson"])
         tm.that(
             attributes[c.Ldif.ServerMetadataKeys.SERVER_TYPE]
             == [FlextLdifServersNovell.Constants.SERVER_TYPE],
@@ -332,7 +328,6 @@ class TestsFlextLdifNovellServers:
             "dn": "cn=user,o=Example",
             "attributes": {},
         })
-        processed: m.Ldif.Entry = tm.ok(entry_server.process_entry(entry))
-        assert isinstance(processed, m.Ldif.Entry)
-        assert processed.attributes is not None
-        tm.that(dict(processed.attributes.attributes) == {}, eq=True)
+        processed = tm.instance(tm.ok(entry_server.process_entry(entry)), m.Ldif.Entry)
+        attributes = tm.not_none(processed.attributes)
+        tm.ok(dict(attributes.attributes) == {})

@@ -382,76 +382,76 @@ tests/unit/
 
 1. **Code Reduction**: 1500-2000 lines removed
 
-   - Processors: ~200 lines
-   - Wrapper methods: ~600 lines
-   - Property accessors: ~100 lines
-   - Unified method simplification: ~600 lines
+    - Processors: ~200 lines
+    - Wrapper methods: ~600 lines
+    - Property accessors: ~100 lines
+    - Unified method simplification: ~600 lines
 
 1. **Simpler Navigation**
 
-   - Flat structure eliminates directory drilling
-   - Direct module access
-   - Clear module relationships
+    - Flat structure eliminates directory drilling
+    - Direct module access
+    - Clear module relationships
 
 1. **Better flext-core Integration**
 
-   - Direct `FlextProcessors` usage
-   - `d` applied
-   - `s` inheritance
-   - Maximum code reuse
+    - Direct `FlextProcessors` usage
+    - `d` applied
+    - `s` inheritance
+    - Maximum code reuse
 
 1. **Improved Observability**
 
-   - Automatic operation logging
-   - Performance tracking
-   - Context propagation
+    - Automatic operation logging
+    - Performance tracking
+    - Context propagation
 
 1. **Type Safety**
 
-   - Pattern matching with `Literal` types
-   - Clearer type signatures
-   - Better IDE support
+    - Pattern matching with `Literal` types
+    - Clearer type signatures
+    - Better IDE support
 
 ### **Negative**
 
 1. **Import Path Changes** (Internal Breaking Change)
 
-   - All internal imports must be updated
-   - External users importing internal modules affected
-   - Migration script provided
+    - All internal imports must be updated
+    - External users importing internal modules affected
+    - Migration script provided
 
 1. **Learning Curve**
 
-   - Developers must learn new structure
-   - Different from previous organization
-   - Migration guide required
+    - Developers must learn new structure
+    - Different from previous organization
+    - Migration guide required
 
 1. **One-Time Migration Cost**
 
-   - ~11 hours estimated effort
-   - Documentation updates
-   - Test reorganization
+    - ~11 hours estimated effort
+    - Documentation updates
+    - Test reorganization
 
 ### **Mitigation**
 
 1. **Public API Stability**
 
-   - `from flext_ldif import ldif` unchanged
-   - Main API methods unchanged
-   - No breaking changes for typical users
+    - `from flext_ldif import ldif` unchanged
+    - Main API methods unchanged
+    - No breaking changes for typical users
 
 1. **Automated Migration**
 
-   - Scripts for import updates
-   - Clear migration guide
-   - Before/after examples
+    - Scripts for import updates
+    - Clear migration guide
+    - Before/after examples
 
 1. **Documentation**
 
-   - ADR documenting decision
-   - Migration guide for users
-   - Updated architecture docs
-   - Professional README.md
+    - ADR documenting decision
+    - Migration guide for users
+    - Updated architecture docs
+    - Professional README.md
 
 ---
 

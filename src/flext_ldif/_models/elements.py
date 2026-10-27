@@ -1,7 +1,6 @@
 """Base model parts for flext-ldif.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
-src/flext_ldif/_models/_base_parts
 SPDX-License-Identifier: MIT
 """
 
@@ -9,7 +8,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_cli import m, u
+from flext_cli import m
 
 from flext_ldif import c, t
 from flext_ldif.shared import FlextLdifShared
@@ -41,14 +40,14 @@ class FlextLdifModelsBasesParts:
             ),
         ] = None
 
-        @u.computed_field
+        @m.computed_field
         @property
         def has_metadata(self) -> bool:
             """Whether schema element has server metadata."""
             metadata = getattr(self, "metadata", None)
             return metadata is not None
 
-        @u.computed_field
+        @m.computed_field
         @property
         def has_server_extensions(self) -> bool:
             """Whether element has server-specific extensions."""
@@ -58,7 +57,7 @@ class FlextLdifModelsBasesParts:
             extensions = getattr(metadata, "extensions", None)
             return bool(extensions)
 
-        @u.computed_field
+        @m.computed_field
         @property
         def server_type(self) -> str:
             """The server type from metadata, default to RFC."""
@@ -99,19 +98,19 @@ class FlextLdifModelsBasesParts:
             m.Field(description="Validation metadata captured during ACL processing."),
         ] = None
 
-        @u.computed_field
+        @m.computed_field
         @property
         def has_server_servers(self) -> bool:
             """Whether element uses server-specific servers."""
             return str(self.server_type) != "rfc"
 
-        @u.computed_field
+        @m.computed_field
         @property
         def valid(self) -> bool:
             """Whether ACL element passed validation."""
             return not self.validation_violations
 
-        @u.field_validator("server_type", mode="before")
+        @m.field_validator("server_type", mode="before")
         @classmethod
         def _coerce_server_type(
             cls,
@@ -123,4 +122,4 @@ class FlextLdifModelsBasesParts:
             return FlextLdifShared.normalize_server_type(value)
 
 
-__all__: list[str] = ["FlextLdifModelsBasesParts", "FlextLdifShared"]
+__all__: list[str] = ["FlextLdifModelsBasesParts"]

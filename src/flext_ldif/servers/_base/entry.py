@@ -7,8 +7,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import copy
+from abc import ABC, abstractmethod
 from collections.abc import Mapping, MutableMapping, MutableSequence
-from typing import Annotated, ClassVar, Self, override
+from typing import Annotated, ClassVar, override
 
 from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.servers._base import (
@@ -17,7 +18,11 @@ from flext_ldif.servers._base import (
 )
 
 
-class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMixin):
+class FlextLdifServersBaseEntry(
+    s[t.Ldif.EntryPayload],
+    FlextLdifServerMethodsMixin,
+    ABC,
+):
     """Base class for entry processing servers - satisfies Entry (structural typing)."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -29,26 +34,21 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         m.Field(description="Server priority (lower number = higher priority)"),
     ] = 0
     parent_server: Annotated[
-        Self | None,
+        t.Port[p.Ldif.ServerServer] | None,
         m.Field(
             exclude=True,
             repr=False,
             description="Reference to parent server instance for server-level access",
         ),
     ] = None
-
-    def __init__(
-        self,
-        entry_service: p.Ldif.EntryServer | None = None,
-        _parent_server: Self | None = None,
-    ) -> None:
-        """Initialize entry server service with optional DI service injection."""
-        super().__init__()
-        self._entry_service = entry_service
-        if _parent_server is not None:
-            object.__setattr__(self, "parent_server", _parent_server)
-
-    auto_execute: ClassVar[bool] = False
+    acl_server: Annotated[
+        t.Port[p.Ldif.AclServer],
+        m.Field(
+            exclude=True,
+            repr=False,
+            description="ACL capability of the same dialect, injected at composition",
+        ),
+    ]
 
     @staticmethod
     def _extract_write_format_options(
@@ -78,22 +78,28 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
                 return validated
         return None
 
+    @abstractmethod
     def can_handle(
         self,
         entry_dn: str,
         attributes: t.MutableStrSequenceMapping,
     ) -> bool:
         """Check if this server can handle the entry."""
+        del attributes, entry_dn
         msg = "Entry servers must implement can_handle"
         raise NotImplementedError(msg)
 
+    @abstractmethod
     def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
         """Check if this server can handle a schema attribute."""
+        del attribute
         msg = "Entry servers must implement can_handle_attribute"
         raise NotImplementedError(msg)
 
+    @abstractmethod
     def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
         """Check if this server can handle a schema objectClass."""
+        del objectclass
         msg = "Entry servers must implement can_handle_objectclass"
         raise NotImplementedError(msg)
 
@@ -250,7 +256,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         for attr_name, attr_values in entry_attrs.items():
             canonical_attr_name = self._normalize_attribute_name(attr_name)
             string_values = [
-                value.decode("utf-8", errors="replace")
+                value.decode("utf-8", errors=c.MergeStrategy.REPLACE)
                 if isinstance(value, bytes)
                 else value
                 for value in attr_values
@@ -264,28 +270,29 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
     @staticmethod
     def _denormalize_entry(
         entry: m.Ldif.Entry,
-        target_server: str | None = None,
     ) -> m.Ldif.Entry:
         """Convert an entry from RFC form to the target server's dialect.
 
         Args:
             entry: Entry in RFC-normalized form.
-            target_server: Identifier of the target server dialect.
 
         Returns:
             The converted entry.
 
         """
-        _ = target_server
         return entry
 
+    @abstractmethod
     def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
         """Run hook after parsing an entry."""
+        del entry
         msg = "Entry servers must implement _hook_post_parse_entry"
         raise NotImplementedError(msg)
 
+    @abstractmethod
     def _hook_pre_write_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
         """Run hook before writing an entry."""
+        del entry
         msg = "Entry servers must implement _hook_pre_write_entry"
         raise NotImplementedError(msg)
 
@@ -304,7 +311,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
             Result carrying True when the entry is acceptable, or a failure.
 
         """
-        _ = attrs
+        del attrs
         if not dn:
             return r[bool].fail("DN cannot be empty")
         return r[bool].ok(value=True)
@@ -346,8 +353,10 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         copied: m.Ldif.Entry = entry.model_copy(update={"metadata": updated_metadata})
         return copied
 
+    @abstractmethod
     def _normalize_attribute_name(self, attr_name: str) -> str:
         """Normalize attribute name to the server's canonical form."""
+        del attr_name
         msg = "Entry servers must implement _normalize_attribute_name"
         raise NotImplementedError(msg)
 
@@ -364,19 +373,23 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         """
         return entry
 
+    @abstractmethod
     def _parse_content(
         self,
         ldif_content: str,
     ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models (internal)."""
+        del ldif_content
         msg = "Entry servers must implement _parse_content"
         raise NotImplementedError(msg)
 
+    @abstractmethod
     def _parse_entry_from_lines(
         self,
         lines: t.MutableSequenceOf[str],
     ) -> p.Result[m.Ldif.Entry]:
         """Parse one unfolded LDIF record into an Entry model."""
+        del lines
         msg = "Entry servers must implement _parse_entry_from_lines"
         raise NotImplementedError(msg)
 
@@ -422,11 +435,12 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         header_lines = self._build_header_lines(write_options, len(entries))
 
         def format_output(results: t.StrSequence) -> str:
-            all_lines = [*header_lines, *results]
-            ldif_output = "\n".join(all_lines) if all_lines else ""
-            if header_lines and (not ldif_output.endswith("\n")):
-                ldif_output += "\n"
-            return ldif_output
+            # RFC 2849 SEP: a blank line closes the header and every record.
+            blocks = [
+                *(("\n".join(header_lines) + "\n",) if header_lines else ()),
+                *(record for record in results if record),
+            ]
+            return "".join(f"{block}\n" for block in blocks)
 
         def write_entry(entry: m.Ldif.Entry) -> p.Result[str]:
             return self._write_single_entry(entry, write_options)

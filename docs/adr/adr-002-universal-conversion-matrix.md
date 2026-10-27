@@ -84,15 +84,15 @@ result = pipeline.execute()
 
 1. **Direct Server-to-Server Conversions**: Implement each conversion pair directly
 
-   - **Rejected**: O(n²) implementations, exponential complexity
+    - **Rejected**: O(n²) implementations, exponential complexity
 
 1. **Common Intermediate Format**: Use custom format instead of RFC
 
-   - **Rejected**: Would create proprietary standard, reduce interoperability
+    - **Rejected**: Would create proprietary standard, reduce interoperability
 
 1. **Runtime Translation Rules**: Configuration-driven translation instead of code
 
-   - **Rejected**: Less type-safe, harder to handle complex server-specific logic
+    - **Rejected**: Less type-safe, harder to handle complex server-specific logic
 
 **Related ADRs**:
 

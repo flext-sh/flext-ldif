@@ -2,9 +2,10 @@
 
 Enumerations and the OUD-output ACL taxonomy the ``_constants`` family base
 and its sibling parts consume without importing another family module.
+ACL subject membership values derive from the subject enum on this owner;
+permission utilities consume this declaration through ``c.Ldif``.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
-src/flext_ldif/_constants/_base_parts
 SPDX-License-Identifier: MIT
 """
 
@@ -60,6 +61,10 @@ class FlextLdifConstantsBaseParts:
             AUTHENTICATED = "authenticated"
             SDDL = "sddl"
             DN = "dn"
+
+        ACL_SUBJECT_TYPE_VALUES: ClassVar[frozenset[str]] = frozenset(
+            subject_type.value for subject_type in AclSubjectType
+        )
 
         @unique
         class RfcAclPermission(StrEnum):
@@ -151,7 +156,7 @@ class FlextLdifConstantsBaseParts:
 
         @unique
         class ChangeOperation(StrEnum):
-            """RFC 2849 modify operation names."""
+            """RFC 2849 modify names, independent of collection merge strategies."""
 
             ADD = "add"
             DELETE = "delete"
@@ -216,6 +221,15 @@ class FlextLdifConstantsBaseParts:
             OID = "oid"
 
         @unique
+        class RfcValidationContext(StrEnum):
+            """Context recorded with the RFC compliance findings of one entry."""
+
+            VALIDATOR_KEY = "validator"
+            ATTRIBUTE_COUNT_KEY = "attribute_count"
+            TOTAL_VIOLATIONS_KEY = "total_violations"
+            VALIDATOR_NAME = "validate_entry_rfc_compliance"
+
+        @unique
         class ServerMetadataKeys(StrEnum):
             """Dictionary keys for server metadata and specific entry properties."""
 
@@ -278,8 +292,14 @@ class FlextLdifConstantsBaseParts:
         ACI_VERSION: ClassVar[str] = "version 3.0"
         ACI_VERSION_NUMBER: ClassVar[str] = "3.0"
         ACI_ALLOW: ClassVar[str] = "allow"
-        BIND_OR: ClassVar[str] = " or "
-        "Separator joining same-permission bind-rules inside one ``allow`` clause."
+        BIND_OR: ClassVar[str] = "or "
+        "Keyword opening each further same-permission bind-rule of an ``allow``."
+        ACI_PART_INDENT: ClassVar[str] = "    "
+        "Unfolded indent before each ACI target part after the first and ``(version``."
+        ACI_CLAUSE_INDENT: ClassVar[str] = "     "
+        "Unfolded indent before each ``allow`` clause of a rendered ACI."
+        ACI_BIND_GAP: ClassVar[int] = 4
+        "Spaces between the longest ``allow (perms)`` and its first bind-rule."
         UNKNOWN_CONTAINER: ClassVar[str] = "Unknown"
         "acl-name container fallback when the DN has no ``cn=`` RDN."
         ACL_NAME_ENTRY: ClassVar[str] = "Entry"

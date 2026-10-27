@@ -1,7 +1,5 @@
 """DN domain models — Distinguished Name, statistics, and registry.
 
-from flext_ldif import m
-from flext_ldif import u
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -11,10 +9,13 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 from typing import Annotated, ClassVar, Self, override
 
-from flext_core import m, u
+from flext_cli import m
 
-from flext_ldif import c, p, r, t
-from flext_ldif._utilities import FlextLdifUtilitiesCollectionLdif
+from flext_ldif import p, r, t
+from flext_ldif._utilities import (
+    FlextLdifEntryValidation,
+    FlextLdifUtilitiesCollectionLdif,
+)
 
 
 class FlextLdifModelsDomainDN:
@@ -80,25 +81,25 @@ class FlextLdifModelsDomainDN:
             m.Field(description="Fatal validation errors"),
         ]
 
-        @u.computed_field
+        @m.computed_field
         @property
         def has_errors(self) -> bool:
             """Whether any validation errors exist."""
             return bool(self.validation_errors)
 
-        @u.computed_field
+        @m.computed_field
         @property
         def has_warnings(self) -> bool:
             """Whether any validation warnings exist."""
             return bool(self.validation_warnings)
 
-        @u.computed_field
+        @m.computed_field
         @property
         def transformation_count(self) -> int:
             """Count of unique transformations applied."""
             return len(self.transformations)
 
-        @u.computed_field
+        @m.computed_field
         @property
         def was_transformed(self) -> bool:
             """Whether any transformations were applied."""
@@ -119,7 +120,7 @@ class FlextLdifModelsDomainDN:
             })
             return validated
 
-        @u.field_validator("transformations", mode="after")
+        @m.field_validator("transformations", mode="after")
         @classmethod
         def deduplicate_transformations(
             cls,
@@ -158,7 +159,7 @@ class FlextLdifModelsDomainDN:
             ),
         ] = m.Field(default_factory=dict)
 
-        @u.field_validator("value", mode="after")
+        @m.field_validator("value", mode="after")
         @classmethod
         def _validate_dn_components(cls, value: str) -> str:
             """Validate every RDN component against RFC 4514 § 2.3 syntax.
@@ -176,19 +177,9 @@ class FlextLdifModelsDomainDN:
                 ValueError: If RFC 4514 § 2.3.
 
             """
-            if not value:
-                return value
-            for component in (
-                comp.strip()
-                for comp in c.Ldif.DN_SPLIT_UNESCAPED_COMMA_RE.split(value)
-                if comp.strip()
-            ):
-                if not c.Ldif.DN_COMPONENT_RE.match(component):
-                    msg = (
-                        f"RFC 4514 § 2.3: invalid DN component {component!r} "
-                        f"in DN {value!r}"
-                    )
-                    raise ValueError(msg)
+            violations = FlextLdifEntryValidation.dn_component_violations(value)
+            if violations:
+                raise ValueError(violations[0])
             return value
 
         @override

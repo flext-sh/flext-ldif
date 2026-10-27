@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import c, t
+from flext_ldif._utilities import FlextLdifMetadataSpacing
 
 
 class FlextLdifMetadataNameDescDetails:
@@ -57,9 +58,8 @@ class FlextLdifMetadataNameDescDetails:
             })
         name_pos = definition.find("NAME")
         if name_pos >= 0:
-            before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(definition[:name_pos])
-            details["name_spacing_before"] = (
-                before_match.group(1) if before_match else ""
+            details["name_spacing_before"] = FlextLdifMetadataSpacing.spacing_before(
+                definition, name_pos
             )
         return details
 
@@ -79,11 +79,8 @@ class FlextLdifMetadataNameDescDetails:
             details["desc_value"] = desc_match.group(2)
             desc_pos = definition.find("DESC")
             if desc_pos >= 0:
-                before_match = c.Ldif.WHITESPACE_TRAILING_RE.search(
-                    definition[:desc_pos],
-                )
                 details["desc_spacing_before"] = (
-                    before_match.group(1) if before_match else ""
+                    FlextLdifMetadataSpacing.spacing_before(definition, desc_pos)
                 )
         else:
             details["desc_presence"] = False

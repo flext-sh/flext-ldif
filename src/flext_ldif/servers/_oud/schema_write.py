@@ -214,7 +214,7 @@ class FlextLdifServersOudSchemaWriteMixin:
                 normalized_operations.append(change_operation)
                 continue
             new_values: t.MutableSequenceOf[
-                FlextLdifModelsDomainEntryChangeOperationValue
+                FlextLdifModelsDomainEntryChangeOperationValue.ChangeOperationValue
             ] = []
             for value_data in change_operation.values:
                 normalized_result = cls._normalize_definition_value(

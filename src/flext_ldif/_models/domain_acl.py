@@ -1,7 +1,5 @@
 """ACL domain models — permissions, targets, subjects, and write metadata.
 
-from flext_ldif import m
-from flext_ldif import u
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -10,7 +8,7 @@ from __future__ import annotations
 
 from typing import Annotated, Self
 
-from flext_cli import m, u
+from flext_cli import m
 
 from flext_ldif import c, t
 from flext_ldif._models import FlextLdifModelsBases, FlextLdifModelsDomainMetadata
@@ -205,7 +203,7 @@ class FlextLdifModelsDomainAcl:
             )
             return f"{canonical_server_type}_acl"
 
-        @u.model_validator(mode="after")
+        @m.model_validator(mode="after")
         def validate_acl_format(self) -> Self:
             """Validate ACL format - capture violations in metadata, DON'T reject.
 
@@ -281,10 +279,9 @@ class FlextLdifModelsDomainAcl:
 
         Example:
             >>> metadata = AclWriteMetadata.from_extensions(entry.metadata.extensions)
-            >>> if metadata.original_format:
-            ...     sanitized = FlextLdifUtilities.ACL.sanitize_acl_name(
-            ...         metadata.original_format
-            ...     )
+            >>> original = metadata.original_format
+            >>> if original:
+            ...     name = FlextLdifUtilities.ACL.sanitize_acl_name(original)
 
         """
 

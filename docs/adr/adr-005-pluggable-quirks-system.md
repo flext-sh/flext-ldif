@@ -2,9 +2,13 @@
 
 <!-- TOC START -->
 
+- [Amendment 2026-10-25: servers by dependency injection only](#amendment-2026-10-25-servers-by-dependency-injection-only)
+- [Amendment 2026-10-25: capability composition](#amendment-2026-10-25-capability-composition)
+
 <!-- TOC END -->
 
-**Status**: Accepted
+**Status**: Accepted; registry and priority resolution superseded on 2026-10-25 (see
+the amendments at the end)
 
 **Date**: 2026-04-14
 
@@ -107,15 +111,15 @@ result = rfc_parser.parse_withs(content, server, data_type="schema")
 
 1. **Conditional Logic**: Hard-coded if/else statements for each server
 
-   - **Rejected**: Inextensible, violates OCP, hard to maintain
+    - **Rejected**: Inextensible, violates OCP, hard to maintain
 
 1. **Configuration Files**: External configuration instead of code
 
-   - **Rejected**: Cannot handle complex server-specific logic, less type-safe
+    - **Rejected**: Cannot handle complex server-specific logic, less type-safe
 
 1. **Inheritance Hierarchy**: Complex inheritance instead of composition
 
-   - **Rejected**: Tightly coupled, harder to test and maintain
+    - **Rejected**: Tightly coupled, harder to test and maintain
 
 **Related ADRs**:
 
@@ -142,6 +146,39 @@ different server requirements are resolved.
 - **Graceful Degradation**: Stubs allow framework to recognize servers even without full
   implementation
 
-```
+## Amendment 2026-10-25: servers by dependency injection only
 
-```
+Operator order of 2026-10-25 supersedes the auto-discovery registry, the priority-based
+resolution and every lookup of a server by name above:
+
+- LDIF and LDAP servers are used only through dependency injection. No registry, no
+  lookup by server type and no ready-made list of servers selects a dialect.
+- Services, and the `c`, `t`, `p`, `m` and `u` facades, never know which server they
+  use. They depend on `p.Ldif` protocols received as typed ports; the composition root
+  alone chooses and constructs the concrete dialect.
+- The facades and services understand only RFC LDIF, its extensions and metadata.
+  They declare no dialect name, enumeration, constant, model, utility or branch for
+  OID, OUD, OpenLDAP or any other dialect. Each dialect owns its own constants and
+  logic inside its server package and translates between its format and the neutral
+  RFC + extensions + metadata form.
+- Dialects never know one another. No dialect imports, names, branches on or converts
+  directly to another dialect; a conversion is the source dialect reading into the
+  neutral form and the target dialect writing from it.
+
+The cutover of the existing registry surface is planned separately; until it lands,
+the sections above that describe the registry are historical.
+
+## Amendment 2026-10-25: capability composition
+
+Operator ruling of 2026-10-25 (CA/DI, "Corrigir todos").
+
+- A server composes its Schema, ACL and Entry capabilities once, at construction. Each
+  capability receives its owning server through the typed `parent_server` port
+  (`t.Port[p.Ldif.ServerServer]`).
+- The Entry capability receives its dialect's ACL capability through the required
+  `acl_server` port (`t.Port[p.Ldif.AclServer]`). A composition that does not provide
+  it fails when the capability is built, not during parsing.
+- Entry parsing merges parsed ACL extensions through that injected capability. No
+  capability looks up a parent at runtime, and none is constructed without its server;
+  tests reach capabilities through the server's public `schema_server`, `acl_server`
+  and `entry_server`.

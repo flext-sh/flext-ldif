@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, m, p, r, t
+from flext_ldif import c, m, p, r, t, u
 
 
 class FlextLdifServersOidAclToOud:
@@ -42,11 +42,7 @@ class FlextLdifServersOidAclToOud:
 
         all).
         """
-        if not base_dn:
-            return True
-        dn_lower = dn.lower().strip()
-        base = base_dn.lower()
-        return dn_lower == base or dn_lower.endswith(f",{base}")
+        return not base_dn or u.Ldif.under_base(dn, base_dn)
 
     @staticmethod
     def regex_to_wildcard(value: str) -> str:
@@ -113,7 +109,7 @@ class FlextLdifServersOidAclToOud:
                 continue
             if perm == "none":
                 deny_all = True
-            elif perm.startswith("no"):
+            elif perm.startswith(c.ParserBooleanToken.NO):
                 base = c.Ldif.NEGATION_TO_BASE.get(perm)
                 if base is None:
                     return r[tuple[set[str], set[str], bool, bool]].fail(

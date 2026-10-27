@@ -20,15 +20,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
 from flext_ldif.services import FlextLdifEntries
-from tests import c, m, tm, u
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import c, m, t, tm, u
 
 
 class TestsFlextLdifEntries:
@@ -41,7 +36,7 @@ class TestsFlextLdifEntries:
         attrs: t.MutableMappingKV[str, list[str]] = {
             "objectClass": list(c.Tests.ENTRIES_OBJECTCLASS_PERSON),
             "cn": ["entries-test"],
-            "sn": ["user"],
+            "sn": [c.ContextScope.USER],
             "mail": ["entries-test@example.com"],
         }
         if extra_attrs:
@@ -75,9 +70,9 @@ class TestsFlextLdifEntries:
             {"cn": ["x"], "objectClass": ["top"]},
         )
         entry: m.Ldif.Entry = u.Tests.assert_success(result)
-        assert entry.attributes is not None
-        tm.that("cn" in entry.attributes.attributes, eq=True)
-        tm.that(entry.attributes.attributes["cn"], eq=["x"])
+        attributes = tm.not_none(entry.attributes).attributes
+        tm.ok("cn" in attributes)
+        tm.that(attributes["cn"], eq=["x"])
 
     @staticmethod
     def test_create_entry_injects_supplied_objectclasses() -> None:
@@ -88,10 +83,10 @@ class TestsFlextLdifEntries:
             objectclasses=list(c.Tests.ENTRIES_OBJECTCLASS_PERSON),
         )
         entry: m.Ldif.Entry = u.Tests.assert_success(result)
-        assert entry.attributes is not None
-        tm.that(c.Tests.NAME_OBJECTCLASS in entry.attributes.attributes, eq=True)
+        attributes = tm.not_none(entry.attributes).attributes
+        tm.ok(c.Tests.NAME_OBJECTCLASS in attributes)
         tm.that(
-            entry.attributes.attributes[c.Tests.NAME_OBJECTCLASS],
+            attributes[c.Tests.NAME_OBJECTCLASS],
             eq=list(c.Tests.ENTRIES_OBJECTCLASS_PERSON),
         )
 
@@ -121,7 +116,7 @@ class TestsFlextLdifEntries:
         should_succeed: bool,
     ) -> None:
         """Test normalize attribute values yields expected list."""
-        tm.that(bool(scenario), eq=True)
+        tm.ok(bool(scenario))
         result = FlextLdifEntries.normalize_attribute_values(value)
         if not should_succeed:
             tm.fail(result)
@@ -165,7 +160,7 @@ class TestsFlextLdifEntries:
         should_succeed: bool,
     ) -> None:
         """Test resolve dn from dict yields expected value."""
-        tm.that(bool(scenario), eq=True)
+        tm.ok(bool(scenario))
         result = FlextLdifEntries.resolve_entry_dn(
             self._to_attribute_mapping(entry_dict),
         )
@@ -184,9 +179,9 @@ class TestsFlextLdifEntries:
         """Test resolve entry attributes returns mapping copy."""
         result = FlextLdifEntries.resolve_entry_attributes(self._basic_entry())
         attrs: t.MutableStrSequenceMapping = u.Tests.assert_success(result)
-        tm.that("cn" in attrs, eq=True)
+        tm.ok("cn" in attrs)
         tm.that(attrs["cn"], eq=["entries-test"])
-        tm.that("mail" in attrs, eq=True)
+        tm.ok("mail" in attrs)
 
     def test_resolve_entry_attributes_fails_when_none(self) -> None:
         """Test resolve entry attributes fails when none."""
@@ -233,11 +228,10 @@ class TestsFlextLdifEntries:
             list(c.Tests.ENTRIES_ATTR_REMOVE_SET),
         )
         cleaned: m.Ldif.Entry = u.Tests.assert_success(result)
-        assert cleaned.attributes is not None
-        remaining = {k.lower() for k in cleaned.attributes.attributes}
-        tm.that(remaining.isdisjoint(c.Tests.ENTRIES_ATTR_REMOVE_SET), eq=True)
-        tm.that("cn" in remaining, eq=True)
-        tm.that("objectclass" in remaining, eq=True)
+        remaining = {k.lower() for k in tm.not_none(cleaned.attributes).attributes}
+        tm.ok(remaining.isdisjoint(c.Tests.ENTRIES_ATTR_REMOVE_SET))
+        tm.ok("cn" in remaining)
+        tm.ok("objectclass" in remaining)
 
     def test_remove_attributes_is_idempotent(self) -> None:
         """Test remove attributes is idempotent."""
@@ -254,10 +248,10 @@ class TestsFlextLdifEntries:
                 list(c.Tests.ENTRIES_ATTR_REMOVE_SET),
             ),
         )
-        assert once.attributes is not None
-        assert twice.attributes is not None
+        once_attributes = tm.not_none(once.attributes).attributes
+        twice_attributes = tm.not_none(twice.attributes).attributes
         tm.that(
-            set(twice.attributes.attributes) == set(once.attributes.attributes),
+            set(twice_attributes) == set(once_attributes),
             eq=True,
         )
 
@@ -267,7 +261,7 @@ class TestsFlextLdifEntries:
         cleaned: m.Ldif.Entry = u.Tests.assert_success(
             FlextLdifEntries.remove_attributes(entry, ["cn"]),
         )
-        tm.that(cleaned.attributes is None, eq=True)
+        tm.ok(cleaned.attributes is None)
 
     # ── run_configured_operation ──────────────────────────────────────────────
 
@@ -286,7 +280,7 @@ class TestsFlextLdifEntries:
         should_succeed: bool,
     ) -> None:
         """Test run configured operation outcome."""
-        tm.that(bool(scenario), eq=True)
+        tm.ok(bool(scenario))
         entries_svc = FlextLdifEntries(
             entries=[self._basic_entry()],
             operation=op,
@@ -297,11 +291,10 @@ class TestsFlextLdifEntries:
             tm.fail(result)
             return
         cleaned: t.MutableSequenceOf[m.Ldif.Entry] = u.Tests.assert_success(result)
-        tm.that(len(cleaned) == 1, eq=True)
+        tm.ok(len(cleaned) == 1)
         stripped = cleaned[0]
-        assert stripped.attributes is not None
-        remaining = {k.lower() for k in stripped.attributes.attributes}
-        tm.that(remaining.isdisjoint(c.Tests.ENTRIES_ATTR_REMOVE_SET), eq=True)
+        remaining = {k.lower() for k in tm.not_none(stripped.attributes).attributes}
+        tm.ok(remaining.isdisjoint(c.Tests.ENTRIES_ATTR_REMOVE_SET))
 
     def test_run_configured_operation_fails_without_attributes_to_remove(self) -> None:
         """Test run configured operation fails without attributes to remove."""

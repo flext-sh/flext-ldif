@@ -52,10 +52,10 @@ class TestsFlextLdifApiIntegration:
         entries = result.value.entries
         tm.that(len(entries), eq=expected_entries)
         for entry in entries:
-            assert entry.dn is not None
-            assert entry.attributes is not None
-            assert entry.dn.value
-            assert entry.attributes.attributes
+            dn = tm.not_none(entry.dn)
+            attributes = tm.not_none(entry.attributes)
+            tm.that(dn.value, truth=True)
+            tm.that(attributes.attributes, truth=True)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -85,8 +85,8 @@ class TestsFlextLdifApiIntegration:
         # Assert
         tm.ok(result)
         (entry,) = result.value.entries
-        assert entry.attributes is not None
-        tm.that(entry.attributes.attributes[c.Tests.NAME_CN], eq=["a", "b"])
+        attributes = tm.not_none(entry.attributes)
+        tm.that(attributes.attributes[c.Tests.NAME_CN], eq=["a", "b"])
 
     @staticmethod
     def test_parse_write_parse_round_trip_is_idempotent() -> None:
@@ -106,8 +106,8 @@ class TestsFlextLdifApiIntegration:
         tm.that(len(reparsed.value.entries), eq=len(entries))
         reparsed_dn = reparsed.value.entries[0].dn
         original_dn = entries[0].dn
-        assert reparsed_dn is not None
-        assert original_dn is not None
+        reparsed_dn = tm.not_none(reparsed_dn)
+        original_dn = tm.not_none(original_dn)
         tm.that(reparsed_dn.value, eq=original_dn.value)
 
     # ------------------------------------------------------------------
@@ -131,11 +131,11 @@ class TestsFlextLdifApiIntegration:
         )
 
         # Assert
-        assert entry.dn is not None
-        assert entry.attributes is not None
-        tm.that(entry.dn.value, eq=c.Tests.RFC_TEST_DN)
+        dn = tm.not_none(entry.dn)
+        attributes = tm.not_none(entry.attributes)
+        tm.that(dn.value, eq=c.Tests.RFC_TEST_DN)
         tm.that(
-            entry.attributes.attributes[c.Tests.NAME_CN],
+            attributes.attributes[c.Tests.NAME_CN],
             eq=[c.Tests.ATTR_VALUE_TEST],
         )
 
@@ -154,8 +154,7 @@ class TestsFlextLdifApiIntegration:
 
         # Assert
         tm.ok(create_result)
-        created = create_result.value
-        assert isinstance(created, m.Ldif.Entry)
+        created = tm.instance(create_result.value, m.Ldif.Entry)
         tm.ok(ldif.validate_entries([created]))
 
     # ------------------------------------------------------------------
@@ -215,13 +214,13 @@ class TestsFlextLdifApiIntegration:
         result2 = ldif2.parse_ldif(c.Tests.RFC_SAMPLE_LDIF_BASIC)
 
         # Assert
-        assert ldif1 is not ldif2
+        tm.that(ldif1 is not ldif2, truth=True)
         tm.ok(result1)
         tm.ok(result2)
         dn1 = result1.value.entries[0].dn
         dn2 = result2.value.entries[0].dn
-        assert dn1 is not None
-        assert dn2 is not None
+        dn1 = tm.not_none(dn1)
+        dn2 = tm.not_none(dn2)
         tm.that(dn1.value, eq=dn2.value)
 
     # ------------------------------------------------------------------
@@ -246,7 +245,7 @@ class TestsFlextLdifApiIntegration:
         )
 
         # Assert
-        assert isinstance(categorization, FlextLdifCategorization)
+        categorization = tm.instance(categorization, FlextLdifCategorization)
         tm.that(categorization.base_dn, eq="dc=override,dc=example")
         tm.that(categorization.forbidden_attributes, eq=["userPassword"])
         tm.that(categorization.forbidden_objectclasses, eq=["groupOfNames"])
@@ -264,7 +263,7 @@ class TestsFlextLdifApiIntegration:
         categorization = ldif.categorization(options=options, server_type=c.Tests.OUD)
 
         # Assert
-        assert isinstance(categorization, FlextLdifCategorization)
+        categorization = tm.instance(categorization, FlextLdifCategorization)
         tm.that(categorization.base_dn, eq="dc=options,dc=example")
         tm.that(categorization.forbidden_attributes, eq=["userPassword"])
 
@@ -283,9 +282,11 @@ class TestsFlextLdifApiIntegration:
         )
 
         # Assert
-        assert isinstance(categorization, FlextLdifCategorization)
-        assert isinstance(categorization.schema_whitelist_rules, m.Ldif.WhitelistRules)
-        assert categorization.schema_whitelist_rules.has_oid_filters
+        categorization = tm.instance(categorization, FlextLdifCategorization)
+        rules = tm.instance(
+            categorization.schema_whitelist_rules, m.Ldif.WhitelistRules
+        )
+        tm.that(rules.has_oid_filters, truth=True)
 
     # ------------------------------------------------------------------
     # Migration pipeline factory — configuration contract
@@ -314,7 +315,7 @@ class TestsFlextLdifApiIntegration:
         )
 
         # Assert
-        assert isinstance(pipeline, FlextLdifMigrationPipeline)
+        pipeline = tm.instance(pipeline, FlextLdifMigrationPipeline)
         tm.that(pipeline.input_dir, eq=input_dir)
         tm.that(pipeline.output_dir, eq=output_dir)
         tm.that(pipeline.source_server_type, eq=c.Tests.OID)

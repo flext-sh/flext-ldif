@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from flext_core import m
+from flext_cli import m
 
 from flext_ldif import c, t
 from flext_ldif._models import FlextLdifModelsDomainEntryChangeOperationValue
@@ -30,11 +30,13 @@ class FlextLdifModelsDomainEntryChangeOperation:
             str,
             m.Field(description="Target attribute for the modify block"),
         ]
-        values: t.MutableSequenceOf[FlextLdifModelsDomainEntryChangeOperationValue] = (
-            m.Field(
-                default_factory=list[FlextLdifModelsDomainEntryChangeOperationValue],
-                description="Decoded values in the block",
-            )
+        values: t.MutableSequenceOf[
+            FlextLdifModelsDomainEntryChangeOperationValue.ChangeOperationValue
+        ] = m.Field(
+            default_factory=list[
+                FlextLdifModelsDomainEntryChangeOperationValue.ChangeOperationValue
+            ],
+            description="Decoded values in the block",
         )
 
 

@@ -34,29 +34,34 @@ class FlextLdifServersBase(
     )
     server_type: ClassVar[str] = c.Ldif.UNKNOWN_VALUE
     priority: ClassVar[int] = 0
+    Constants: ClassVar[type[p.Ldif.ServerConstants]]
 
     def __init__(
         self,
+        *,
+        runtime_settings: p.Ldif.Settings | None = None,
+        settings_type: p.SettingsType | None = None,
+        settings_overrides: t.JsonMapping | None = None,
+        initial_context: p.Context | None = None,
         **kwargs: t.JsonValue | p.Registry | p.Ldif.Settings,
     ) -> None:
         """Initialize base server and its nested servers."""
-        super().__init__(**kwargs)
-        parent_ref: FlextLdifServersBase = self
-        schema_server: FlextLdifServersBaseSchema = self.Schema().model_copy(
-            update={"server_type": self.server_type},
+        self.__pydantic_validator__.validate_python(
+            {
+                **kwargs,
+                "runtime_settings": runtime_settings,
+                "settings_type": settings_type,
+                "settings_overrides": settings_overrides,
+                "initial_context": initial_context,
+            },
+            self_instance=self,
         )
-        self._schema_server = schema_server
-        object.__setattr__(self._schema_server, "parent_server", parent_ref)
-        acl_server: FlextLdifServersBaseSchemaAcl = self.Acl().model_copy(
-            update={"server_type": self.server_type},
+        binding = {"server_type": self.server_type, "parent_server": self}
+        self._schema_server = self.Schema().model_copy(update=binding)
+        self._acl_server = self.Acl().model_copy(update=binding)
+        self._entry_server = self.Entry(acl_server=self._acl_server).model_copy(
+            update=binding
         )
-        self._acl_server = acl_server
-        object.__setattr__(self._acl_server, "parent_server", parent_ref)
-        entry_server: FlextLdifServersBaseEntry = self.Entry().model_copy(
-            update={"server_type": self.server_type},
-        )
-        self._entry_server = entry_server
-        object.__setattr__(self._entry_server, "parent_server", parent_ref)
 
     def __init_subclass__(cls, **kwargs: str | float | bool | None) -> None:
         """Initialize subclass with server_type and priority from Constants.
@@ -66,6 +71,7 @@ class FlextLdifServersBase(
                 None``; or if ``priority_value is None``.
 
         """
+        del kwargs
         super().__init_subclass__()
         constants_class = getattr(cls, "Constants", None)
         if constants_class is None:
@@ -83,6 +89,11 @@ class FlextLdifServersBase(
         priority_number = int(priority_value)
         type.__setattr__(cls, "server_type", server_type_text)
         type.__setattr__(cls, "priority", priority_number)
+
+    @property
+    def server_constants(self) -> type[p.Ldif.ServerConstants]:
+        """The dialect's original constants namespace, exposed read-only."""
+        return self.Constants
 
     @property
     def acl(self) -> FlextLdifServersBaseSchemaAcl:
@@ -123,14 +134,13 @@ class FlextLdifServersBase(
         """
         return self.schema_server
 
-    auto_execute: ClassVar[bool] = False
-
     @overload
     def __call__(
         self,
         *,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
+        registry: p.Registry | None = None,
     ) -> Self: ...
 
     @overload
@@ -147,6 +157,7 @@ class FlextLdifServersBase(
         *args: str | t.MutableSequenceOf[m.Ldif.Entry] | None,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
+        registry: p.Registry | None = None,
         **fields: t.JsonValue | t.MutableSequenceOf[m.Ldif.Entry],
     ) -> Self | m.Ldif.Entry | str: ...
 
@@ -155,6 +166,7 @@ class FlextLdifServersBase(
         *args: str | t.MutableSequenceOf[m.Ldif.Entry] | None,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
+        registry: p.Registry | None = None,
         **fields: t.JsonValue | t.MutableSequenceOf[m.Ldif.Entry],
     ) -> Self | m.Ldif.Entry | str:
         """Callable interface - use as processor.
@@ -162,11 +174,23 @@ class FlextLdifServersBase(
         Returns:
             The resulting ``Self | m.Ldif.Entry | str``.
 
+        Raises:
+            ValueError: If both server and registry dependencies are supplied.
+
         """
+        if registry is not None:
+            if server is not None:
+                message = "Provide one explicit registry dependency"
+                raise ValueError(message)
+            return type(self).model_validate({
+                **fields,
+                "registry": registry,
+                "runtime_settings": self.settings if settings is None else settings,
+            })
         configured = FlextLdifServerMethodsMixin.dispatch_builder(
             super().__call__,
             fields,
-            frozenset({"ldif_text", "entries", "operation"}),
+            frozenset({"ldif_text", "entries", c.ContextScope.OPERATION}),
             server,
             settings,
         )
@@ -186,10 +210,10 @@ class FlextLdifServersBase(
                 entries_raw,
             )
             execute_kwargs["entries"] = validated_entries
-        operation_raw = fields.get("operation")
+        operation_raw = fields.get(c.ContextScope.OPERATION)
         if operation_raw is not None:
             validated_operation: str = u.str_adapter().validate_python(operation_raw)
-            execute_kwargs["operation"] = validated_operation
+            execute_kwargs[c.ContextScope.OPERATION] = validated_operation
         self._absorb_positional_args(args, execute_kwargs)
         ldif_text, entries, operation = self._extract_execute_params(execute_kwargs)
         result = self.execute(ldif_text=ldif_text, entries=entries, operation=operation)
@@ -213,8 +237,10 @@ class FlextLdifServersBase(
                     execute_kwargs["entries"] = u.Ldif.as_entries(value)
                 case 1 if "entries" not in execute_kwargs and value is not None:
                     execute_kwargs["entries"] = u.Ldif.as_entries(value)
-                case 2 if "operation" not in execute_kwargs and isinstance(value, str):
-                    execute_kwargs["operation"] = value
+                case 2 if c.ContextScope.OPERATION not in execute_kwargs and isinstance(
+                    value, str
+                ):
+                    execute_kwargs[c.ContextScope.OPERATION] = value
                 case _:
                     continue
 
@@ -252,9 +278,9 @@ class FlextLdifServersBase(
             result = r[m.Ldif.Entry].fail("No valid parameters")
         return result
 
-    Acl: ClassVar[type[FlextLdifServersBaseSchemaAcl]] = FlextLdifServersBaseSchemaAcl
-    Entry: ClassVar[type[FlextLdifServersBaseEntry]] = FlextLdifServersBaseEntry
-    Schema: ClassVar[type[FlextLdifServersBaseSchema]] = FlextLdifServersBaseSchema
+    Acl: ClassVar[type[FlextLdifServersBaseSchemaAcl]]
+    Entry: ClassVar[type[FlextLdifServersBaseEntry]]
+    Schema: ClassVar[type[FlextLdifServersBaseSchema]]
 
 
 __all__: list[str] = ["FlextLdifServersBase"]

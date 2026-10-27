@@ -1,7 +1,5 @@
 """LDIF settings mix-in: misc.
 
-from flext_ldif import m
-from flext_ldif import u
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -11,7 +9,9 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import m, t
+from flext_core import m
+
+from flext_ldif import t
 
 
 class FlextLdifModelsSettingsMisc:

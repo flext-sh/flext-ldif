@@ -72,15 +72,15 @@ class FlextLdifUtilitiesEvents:
         if not extras:
             return filtered_extras
         if extras.user_id is not None:
-            filtered_extras["user_id"] = extras.user_id
+            filtered_extras[c.ContextKey.USER_ID] = extras.user_id
         if extras.session_id is not None:
             filtered_extras["session_id"] = extras.session_id
         if extras.request_id is not None:
-            filtered_extras["request_id"] = extras.request_id
+            filtered_extras[c.ContextKey.REQUEST_ID] = extras.request_id
         if extras.component is not None:
             filtered_extras["component"] = extras.component
         if extras.correlation_id is not None:
-            filtered_extras["correlation_id"] = extras.correlation_id
+            filtered_extras[c.ContextKey.CORRELATION_ID] = extras.correlation_id
         if extras.trace_id is not None:
             filtered_extras["trace_id"] = extras.trace_id
         return filtered_extras

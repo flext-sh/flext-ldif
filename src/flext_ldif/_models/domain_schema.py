@@ -1,6 +1,5 @@
 """Domain models for LDIF schema elements.
 
-from flext_ldif import u
 Extracted schema-related inner classes: SchemaAttribute, Syntax, SchemaObjectClass.
 These are composed into FlextLdifModels via MRO.
 
@@ -13,7 +12,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_cli import m, u
+from flext_cli import m
 
 from flext_ldif import c, t
 from flext_ldif._models import FlextLdifModelsBases, FlextLdifModelsDomainMetadata
@@ -215,7 +214,7 @@ class FlextLdifModelsDomainSchema:
             m.Field(description="Server-specific server metadata"),
         ] = None
 
-        @u.field_validator("oid")
+        @m.field_validator("oid")
         @classmethod
         def validate_oid(cls, v: str) -> str:
             """Validate that OID is not empty.

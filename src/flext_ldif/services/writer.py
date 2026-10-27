@@ -62,6 +62,8 @@ class FlextLdifWriter(FlextLdifServer):
     ) -> p.Result[m.Ldif.WriteResponse]:
         """Write entries to an LDIF file and return canonical write metadata.
 
+        Relative paths use the current directory without resolving symbolic links.
+
         Returns:
             The resulting ``p.Result[m.Ldif.WriteResponse]``.
 
@@ -77,7 +79,7 @@ class FlextLdifWriter(FlextLdifServer):
         if content_result.failure:
             return r[m.Ldif.WriteResponse].from_failure(content_result)
         ldif_content = content_result.value
-        write = u.Cli.atomic_write_text_file(Path(path), ldif_content)
+        write = u.Cli.atomic_write_text_file(Path(path).absolute(), ldif_content)
         if write.failure:
             return r[m.Ldif.WriteResponse].from_failure(write)
         return r[m.Ldif.WriteResponse].ok(

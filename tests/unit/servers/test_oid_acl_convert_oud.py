@@ -12,15 +12,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
 from flext_ldif.servers import FlextLdifServersOidAclToOud
-from tests import m, tm
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import c, m, t, tm
 
 
 class TestsFlextLdifOidAclConvertOud:
@@ -49,7 +44,7 @@ class TestsFlextLdifOidAclConvertOud:
         ("kind", "value", "bind_type", "bind_value"),
         [
             ("group", "cn=admins , dc=ctbc", "groupdn", "cn=admins,dc=ctbc"),
-            ("user", "uid=joe,dc=ctbc", "userdn", "uid=joe,dc=ctbc"),
+            (c.ContextScope.USER, "uid=joe,dc=ctbc", "userdn", "uid=joe,dc=ctbc"),
             ("self", "self", "userdn", "self"),
             ("anyone", "anyone", "userdn", "anyone"),
             ("superuser", "cn=Directory Manager", "userdn", "cn=Directory Manager"),
@@ -76,7 +71,7 @@ class TestsFlextLdifOidAclConvertOud:
     def test_converted_subject_leaves_permissions_empty(self) -> None:
         """Test converted subject leaves permissions empty."""
         result = FlextLdifServersOidAclToOud.convert_subject_to_oud(
-            self._subject("user", "uid=joe,dc=ctbc")
+            self._subject(c.ContextScope.USER, "uid=joe,dc=ctbc")
         )
 
         tm.that(result.unwrap().permissions, eq=())
@@ -95,7 +90,7 @@ class TestsFlextLdifOidAclConvertOud:
             self._subject(kind, value)
         )
 
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(result.error, contains="manual review")
 
     # -- convert_permissions ----------------------------------------------
@@ -138,7 +133,7 @@ class TestsFlextLdifOidAclConvertOud:
             permissions, is_entry=False
         )
 
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
 
     # -- resolve_targetattr ---------------------------------------------------
 
@@ -175,7 +170,7 @@ class TestsFlextLdifOidAclConvertOud:
             has_anyone_subject=False,
         )
 
-        tm.that(scope is None, eq=True)
+        tm.ok(scope is None)
 
     def test_scope_orclaci_with_anyone_is_base(self) -> None:
         """Test scope orclaci with anyone is base."""
@@ -234,5 +229,5 @@ class TestsFlextLdifOidAclConvertOud:
         """Test high level containers are base relative and case folded."""
         containers = FlextLdifServersOidAclToOud.high_level_containers("dc=CTBC")
 
-        tm.that("dc=ctbc" in containers, eq=True)
-        tm.that("dc=network,dc=ctbc" in containers, eq=True)
+        tm.ok("dc=ctbc" in containers)
+        tm.ok("dc=network,dc=ctbc" in containers)

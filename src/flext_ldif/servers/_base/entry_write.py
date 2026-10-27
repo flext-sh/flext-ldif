@@ -140,8 +140,10 @@ class FlextLdifServersEntryWriteContext(FlextLdifServersEntryWriteBodyEmitter):
             or entry.metadata.processing_stats is None
         ):
             return
-        statistics = FlextLdifModelsDomainEntryStatistics.model_validate(
-            entry.metadata.processing_stats.model_dump(),
+        statistics = (
+            FlextLdifModelsDomainEntryStatistics.EntryStatistics.model_validate(
+                entry.metadata.processing_stats.model_dump(),
+            )
         )
         if statistics.was_rejected:
             for label, value in (

@@ -1,8 +1,7 @@
 """FlextLdifConfig — frozen config singleton for flext-ldif (ADR-005 §7).
 
-Model-less: business rules live in ``config/*.yaml`` under the ``Ldif:`` key and
-are exposed through the open ``config.Ldif`` namespace (``extra="allow"``), with
-no per-domain model. Access is ``config.Ldif.<domain>[<key>...]``.
+Business rules live in ``config/*.yaml`` under the ``Ldif:`` key. The namespace
+schema is declared by this layer-zero owner, independently of the model facade.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,15 +9,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, ClassVar
 
 from flext_cli import FlextCliConfig, m
 
-from flext_ldif._models import FlextLdifNamespace
-
 
 class FlextLdifConfig(FlextCliConfig):
-    """Ldif config auto-loaded model-less from ``config/*.yaml``.
+    """Ldif config auto-loaded from ``config/*.yaml``.
 
     The fleet-converged config inherits only the declared profile capability
     base (``FlextCliConfig``, the frozen YAML lifecycle owner); runtime settings
@@ -27,12 +24,20 @@ class FlextLdifConfig(FlextCliConfig):
     construction machinery stays intact.
     """
 
+    class ConfigNamespace(m.BaseModel):
+        """Open, frozen namespace exposing every configured LDIF domain."""
+
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+            extra="allow",
+            frozen=True,
+        )
+
     Ldif: Annotated[
-        FlextLdifNamespace,
+        ConfigNamespace,
         m.Field(
             description="Open namespace exposing ``config/*.yaml`` under ``Ldif``.",
         ),
-    ] = FlextLdifNamespace()
+    ] = ConfigNamespace()
 
 
 config: FlextLdifConfig = FlextLdifConfig.fetch_global()

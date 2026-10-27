@@ -10,19 +10,13 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif import FlextLdif, ldif
-from flext_ldif.services import (
-    FlextLdifConversion,
-    FlextLdifMigrationPipeline,
-    FlextLdifParser,
-    FlextLdifServer,
-)
+from flext_ldif import FlextLdif, ldif, services
 from tests import c, u
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tests import m, p, t
+from tests import m, p, t
 
 
 def _parse_fixture_entries(
@@ -61,14 +55,14 @@ def api() -> p.Ldif.LdifClient:
 
 
 @pytest.fixture
-def parser() -> FlextLdifParser:
+def parser(server: p.Ldif.ServerRegistry) -> services.FlextLdifParser:
     """Provide a parser service instance.
 
     Returns:
         A fresh ``FlextLdifParser``.
 
     """
-    return FlextLdifParser(registry=FlextLdif().registry)
+    return services.FlextLdifParser(registry=server.registry)
 
 
 @pytest.fixture
@@ -235,14 +229,14 @@ def fixtures_dir() -> Path:
 
 
 @pytest.fixture
-def conversion_matrix() -> FlextLdifConversion:
+def conversion_matrix(server: p.Ldif.ServerRegistry) -> services.FlextLdifConversion:
     """Provide a conversion service for schema conversion tests.
 
     Returns:
         A fresh ``FlextLdifConversion`` instance.
 
     """
-    return FlextLdifConversion(registry=FlextLdif().registry)
+    return services.FlextLdifConversion(registry=server.registry)
 
 
 @pytest.fixture
@@ -253,7 +247,7 @@ def server() -> p.Ldif.ServerRegistry:
         The process-wide ``FlextLdifServer`` registry instance.
 
     """
-    server_registry: p.Ldif.ServerRegistry = FlextLdifServer(
+    server_registry: p.Ldif.ServerRegistry = services.FlextLdifServer(
         registry=FlextLdif().registry
     )
     return server_registry
@@ -373,39 +367,19 @@ def migration_dirs(tmp_path: Path) -> t.Pair[Path, Path]:
 
 
 @pytest.fixture
-def migration_pipeline_factory(
+def migration_pipeline(
     migration_dirs: t.Pair[Path, Path],
     server: p.Ldif.ServerRegistry,
-) -> p.Tests.MigrationPipelineFactory:
-    """Return a factory that builds ``FlextLdifMigrationPipeline`` instances.
-
-    Defaults to the canonical ``RFC -> RFC`` flow with the migration_dirs
-    fixture. Callers override any kwarg (``source_server_type``,
-    ``target_server_type``, ``input_dir``, ``output_dir``) to vary the case.
-
-    Args:
-        migration_dirs: Canonical input and output directory pair.
-        server: Server provider whose registry is injected into each pipeline.
+) -> p.Ldif.MigrationPipeline:
+    """Provide the real registry-bound pipeline with model-owned defaults.
 
     Returns:
-        Factory callable accepting keyword overrides for the pipeline.
+        The migration pipeline bound to the supplied registry and directories.
 
     """
-    default_input, default_output = migration_dirs
-
-    def _build(
-        *,
-        input_dir: Path | None = None,
-        output_dir: Path | None = None,
-        source_server_type: c.Ldif.ServerTypes | str | None = None,
-        target_server_type: c.Ldif.ServerTypes | str | None = None,
-    ) -> p.Ldif.MigrationPipeline:
-        return FlextLdifMigrationPipeline(
-            registry=server.registry,
-            input_dir=input_dir if input_dir is not None else default_input,
-            output_dir=output_dir if output_dir is not None else default_output,
-            source_server_type=source_server_type or c.Tests.RFC,
-            target_server_type=target_server_type or c.Tests.RFC,
-        )
-
-    return _build
+    input_dir, output_dir = migration_dirs
+    return services.FlextLdifMigrationPipeline(
+        registry=server.registry,
+        input_dir=input_dir,
+        output_dir=output_dir,
+    )

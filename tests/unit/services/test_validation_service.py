@@ -15,7 +15,7 @@ from tests import c, tm, u
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests import p, t
+from tests import p, t
 
 _INVALID_DESCRIPTORS: t.VariadicTuple[str] = ("invalid name", "", " ", "has space")
 

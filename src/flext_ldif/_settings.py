@@ -5,6 +5,9 @@ parsing, writing, server detection, and validation settings. Provides
 comprehensive LDIF processing configuration with server-specific servers
 handling, format options for parsing and writing, and advanced validation rules.
 
+The project branch is ``settings.Ldif``. Case-insensitive environment loading
+retains the existing ``FLEXT_LDIF_LDIF__*`` nested input names.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 
@@ -38,7 +41,7 @@ class FlextLdifSettings(FlextCliSettings, FlextSettings):
         extra="ignore",
     )
 
-    ldif: LdifSettings = m.Field(
+    Ldif: LdifSettings = m.Field(
         default_factory=LdifSettings,
         description="Namespaced LDIF settings branch.",
     )

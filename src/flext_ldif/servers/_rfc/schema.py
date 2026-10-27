@@ -30,89 +30,13 @@ class FlextLdifServersRfcSchema(
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
-    def __new__(
-        cls,
-        schema_service: p.Ldif.SchemaServer | None = None,
-        parent_server: p.Ldif.SchemaServer | None = None,
-        **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-    ) -> Self:
-        """Override __new__ to support auto-execute and processor instantiation."""
-        instance = object.__new__(cls)
-        parent_server_raw = (
-            parent_server if parent_server is not None else kwargs.get("_parent_server")
-        )
-        parent_server_value: p.Ldif.SchemaServer | None = (
-            parent_server_raw
-            if isinstance(parent_server_raw, p.Ldif.SchemaServer)
-            else None
-        )
-        schema_instance: Self = instance
-        super(FlextLdifServersBaseSchema, schema_instance).__init__()
-        if schema_service is not None:
-            object.__setattr__(schema_instance, "_schema_service", schema_service)
-        if parent_server_value is not None:
-            object.__setattr__(schema_instance, "parent_server", parent_server_value)
-        if cls.auto_execute:
-            attr_def_raw = kwargs.get("attr_definition")
-            attr_def: str | None = (
-                attr_def_raw if isinstance(attr_def_raw, str) else None
-            )
-            oc_def_raw = kwargs.get("oc_definition")
-            oc_def: str | None = oc_def_raw if isinstance(oc_def_raw, str) else None
-            attr_mod_raw = kwargs.get("attr_model")
-            attr_mod: m.Ldif.SchemaAttribute | None = (
-                attr_mod_raw
-                if isinstance(attr_mod_raw, m.Ldif.SchemaAttribute)
-                else None
-            )
-            oc_mod_raw = kwargs.get("oc_model")
-            oc_mod: m.Ldif.SchemaObjectClass | None = (
-                oc_mod_raw if isinstance(oc_mod_raw, m.Ldif.SchemaObjectClass) else None
-            )
-            op_raw = kwargs.get("operation")
-            op: str | None = (
-                "parse" if isinstance(op_raw, str) and op_raw == "parse" else None
-            )
-            data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = next(
-                (
-                    candidate
-                    for candidate in (attr_def, oc_def, attr_mod, oc_mod)
-                    if candidate is not None
-                ),
-                None,
-            )
-            schema_instance.execute(data=data, operation=op)
-        return instance
-
-    def __init__(
-        self,
-        schema_service: p.Ldif.SchemaServer | None = None,
-        parent_server: p.Ldif.SchemaServer | None = None,
-        **kwargs: t.Ldif.Scalar | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
-    ) -> None:
-        """Initialize RFC schema server service."""
-        self._init_base_schema(
-            schema_service,
-            parent_server,
-            frozenset({
-                "_parent_server",
-                "_schema_service",
-                "parent_server",
-                "attr_definition",
-                "oc_definition",
-                "attr_model",
-                "oc_model",
-                "operation",
-            }),
-            **kwargs,
-        )
-
     @overload
     def __call__(
         self,
         *,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
+        registry: p.Registry | None = None,
         **fields: t.JsonValue,
     ) -> Self: ...
 
@@ -148,6 +72,7 @@ class FlextLdifServersRfcSchema(
         operation: t.JsonValue | None = None,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
+        registry: p.Registry | None = None,
         **fields: t.JsonValue,
     ) -> Self | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str:
         """Callable interface - automatic polymorphic processor.
@@ -161,10 +86,14 @@ class FlextLdifServersRfcSchema(
             ValueError: If ``result.failure``.
 
         """
+        if registry is not None:
+            return self.configure_runtime(
+                server=server, settings=settings, registry=registry, **fields
+            )
         configured = FlextLdifServerMethodsMixin.dispatch_builder(
             super().__call__,
             fields,
-            frozenset({"data", "operation"}),
+            frozenset({"data", c.ContextScope.OPERATION}),
             server,
             settings,
         )
@@ -198,6 +127,7 @@ class FlextLdifServersRfcSchema(
             The resulting ``bool``.
 
         """
+        del attr_definition
         return True
 
     @override
@@ -211,6 +141,7 @@ class FlextLdifServersRfcSchema(
             The resulting ``bool``.
 
         """
+        del oc_definition
         return True
 
     def create_metadata(
@@ -242,6 +173,7 @@ class FlextLdifServersRfcSchema(
             The resulting ``bool``.
 
         """
+        del _attribute
         return False
 
     @staticmethod
@@ -254,6 +186,7 @@ class FlextLdifServersRfcSchema(
             The resulting ``bool``.
 
         """
+        del _objectclass
         return False
 
     @override

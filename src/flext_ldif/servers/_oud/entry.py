@@ -12,7 +12,6 @@ from collections.abc import Mapping
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._base import FlextLdifServersBaseEntry
 from flext_ldif.servers._oud import (
     FlextLdifServersOudConstants,
     FlextLdifServersOudEntryParseMixin,
@@ -38,16 +37,6 @@ class FlextLdifServersOudEntry(
     """
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
-
-    def __init__(
-        self,
-        entry_service: p.Ldif.EntryServer | None = None,
-        _parent_server: p.Ldif.ServerServer | None = None,
-    ) -> None:
-        """Initialize OUD entry server."""
-        FlextLdifServersBaseEntry.__init__(self, entry_service, _parent_server=None)
-        if _parent_server is not None:
-            object.__setattr__(self, "parent_server", _parent_server)
 
     @override
     def can_handle(
@@ -235,10 +224,23 @@ class FlextLdifServersOudEntry(
                 write_options,
             ),
         )
-        entry_data = FlextLdifServersOudHelpersMixin.apply_phase_aware_acl_handling(
-            normalized_entry,
-            write_options,
-        )
+        entry_data = normalized_entry
+        if (
+            write_options is not None
+            and write_options.comment_acl_in_non_acl_phases
+            and write_options.entry_category is not None
+            and write_options.entry_category != c.Ldif.Categories.ACL
+            and write_options.acl_attribute_names
+        ):
+            entry_data = FlextLdifServersOudHelpersMixin.comment_acl_attributes(
+                entry_data,
+                write_options.acl_attribute_names,
+            )
+            FlextLdifServersOudHelpersMixin.add_oud_acl_comments(
+                ldif_parts,
+                entry_data,
+                write_options,
+            )
         if FlextLdifServersOudConstants.ACL_NORMALIZE_DNS_IN_VALUES:
             entry_data = FlextLdifServersOudHelpersMixin.normalize_acl_dns(entry_data)
         return (

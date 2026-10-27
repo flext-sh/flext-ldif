@@ -22,7 +22,7 @@ from tests import c, tm
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tests import p
+from tests import p
 
 
 class TestsFlextLdifLdifFixturesIntegration:
@@ -70,14 +70,17 @@ class TestsFlextLdifLdifFixturesIntegration:
         """Parse a valid fixture successfully.
 
         At least the expected number of entries is returned.
+
         """
         result = ldif_client.parse_ldif(self._fixture_path(subdir, filename))
 
         tm.ok(result)
         entries = result.value.entries
-        assert len(entries) >= min_entries, (
-            f"Expected >= {min_entries} entries from {filename}, got {len(entries)}"
-        )
+        if len(entries) < min_entries:
+            message = (
+                f"Expected >= {min_entries} entries from {filename}, got {len(entries)}"
+            )
+            tm.reject(message)
 
     @pytest.mark.parametrize(("subdir", "filename", "_min_entries"), _FIXTURE_CASES)
     def test_every_parsed_entry_exposes_a_wellformed_dn(
@@ -92,9 +95,11 @@ class TestsFlextLdifLdifFixturesIntegration:
 
         tm.ok(result)
         for entry in result.value.entries:
-            assert entry.dn is not None
-            dn_value = entry.dn.value
-            assert dn_value, f"entry in {filename} has empty DN"
+            dn = tm.not_none(entry.dn)
+            dn_value = dn.value
+            if not dn_value:
+                message = f"entry in {filename} has empty DN"
+                tm.reject(message)
             tm.that(entry.dn_str, eq=dn_value)
             tm.that(dn_value, has="=")
 
@@ -110,7 +115,7 @@ class TestsFlextLdifLdifFixturesIntegration:
         response = ldif_client.parse_ldif(self._fixture_path(subdir, filename)).value
 
         tm.that(response.statistics.total_entries, eq=len(response.entries))
-        assert response.detected_server_type
+        tm.that(response.detected_server_type, truth=True)
 
     @pytest.mark.parametrize(("subdir", "filename", "_min_entries"), _FIXTURE_CASES)
     def test_write_then_reparse_preserves_entry_count(
@@ -128,7 +133,9 @@ class TestsFlextLdifLdifFixturesIntegration:
         written = ldif_client.write(original)
         tm.ok(written)
         content = written.value.content
-        assert content, f"write produced empty content for {filename}"
+        if not content:
+            message = f"write produced empty content for {filename}"
+            tm.reject(message)
 
         reparsed = ldif_client.parse_string(content)
         tm.ok(reparsed)
@@ -151,9 +158,11 @@ class TestsFlextLdifLdifFixturesIntegration:
 
         tm.ok(validation)
         report = validation.value
-        assert report.valid, f"fixture {filename} unexpectedly invalid: {report.errors}"
+        if not report.valid:
+            message = f"fixture {filename} unexpectedly invalid: {report.errors}"
+            tm.reject(message)
         tm.that(report.total_entries, eq=len(entries))
-        assert not report.invalid_entries
+        tm.that(report.invalid_entries, eq=0)
 
     def test_parse_string_matches_parse_ldif_for_same_content(
         self,
@@ -165,7 +174,7 @@ class TestsFlextLdifLdifFixturesIntegration:
         tm.ok(from_file)
 
         content = ldif_client.write(from_file.value.entries).value.content
-        assert content is not None
+        content = tm.not_none(content)
         from_string = ldif_client.parse_string(content)
         tm.ok(from_string)
 
@@ -184,5 +193,5 @@ class TestsFlextLdifLdifFixturesIntegration:
         result = ldif_client.parse_ldif(missing)
 
         tm.fail(result)
-        assert result.error is not None
+        tm.not_none(result.error)
         tm.that(result.error, has="does_not_exist.ldif")

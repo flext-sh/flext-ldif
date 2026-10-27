@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Annotated, Self
 
-from flext_core import m, u
+from flext_core import m
 
 from flext_ldif import c, t
 from flext_ldif._models import FlextLdifModelsCollections, FlextLdifModelsEvents
@@ -177,22 +177,22 @@ class FlextLdifModelsResultsStatistics:
             description="Domain events emitted during processing",
         )
 
-        @u.computed_field
+        @m.computed_field
         @property
         def failure_rate(self) -> float:
             return self._rate(self.failed_entries)
 
-        @u.computed_field
+        @m.computed_field
         @property
         def rejection_rate(self) -> float:
             return self._rate(self.rejected_entries)
 
-        @u.computed_field
+        @m.computed_field
         @property
         def success_rate(self) -> float:
             return self._rate(self.processed_entries)
 
-        @u.computed_field
+        @m.computed_field
         @property
         def summary(self) -> FlextLdifModelsResultsStatistics.StatisticsSummary:
             return self.to_summary()
@@ -233,7 +233,7 @@ class FlextLdifModelsResultsStatistics:
                 "output_file": self.output_file or other.output_file,
                 "encoding": self.encoding,
                 "rejection_reasons": FlextLdifModelsCollections.DynamicCounts(
-                    **merged_reasons
+                    root=merged_reasons,
                 ),
                 "events": [*self.events, *other.events],
             }

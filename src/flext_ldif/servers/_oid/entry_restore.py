@@ -8,11 +8,9 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from flext_ldif import c, m, t
+from flext_ldif import m, t, u
 from flext_ldif.servers._oid import FlextLdifServersOidEntryBooleanMixin
-from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
-from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
 
 
 class FlextLdifServersOidEntryRestoreMixin(
@@ -20,43 +18,6 @@ class FlextLdifServersOidEntryRestoreMixin(
     FlextLdifServersRfcEntry,
 ):
     """OID entry round-trip attribute denormalization from metadata."""
-
-    def _denormalize_oid_attributes_for_output(
-        self,
-        attrs: t.MutableStrSequenceMapping,
-        metadata: m.Ldif.ServerMetadata | None,
-    ) -> t.MutableStrSequenceMapping:
-        """Denormalize RFC attributes to OID format.
-
-        Returns:
-            The resulting ``t.MutableStrSequenceMapping``.
-
-        """
-        mk = c.Ldif
-        original_attrs_raw = (
-            metadata.extensions.get(mk.ORIGINAL_ATTRIBUTES_COMPLETE)
-            if metadata and metadata.extensions
-            else None
-        )
-        original_attrs_value: t.JsonPayload | None = original_attrs_raw
-        original_attrs: t.MutableStrSequenceMapping | None = None
-        if isinstance(original_attrs_value, Mapping):
-            result_attrs: t.MutableStrSequenceMapping = {}
-            for k, v in original_attrs_value.items():
-                if isinstance(v, list):
-                    result_attrs[k] = [str(item) for item in v]
-                else:
-                    result_attrs[k] = [str(v)]
-            original_attrs = result_attrs
-        denormalized: t.MutableStrSequenceMapping = {}
-        for attr_name, attr_values in attrs.items():
-            restored_name, restored_values = self._restore_single_attribute(
-                attr_name,
-                attr_values,
-                original_attrs,
-            )
-            denormalized[restored_name] = restored_values
-        return denormalized
 
     def restore_entry_from_metadata(self, entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
         """Restore OID-specific formats from metadata (RFC → OID denormalization).
@@ -86,41 +47,7 @@ class FlextLdifServersOidEntryRestoreMixin(
             changed = True
         if not changed:
             return restored_entry
-        restored_copy: m.Ldif.Entry = restored_entry.model_copy(
-            update={
-                "attributes": m.Ldif.Attributes.model_validate({
-                    "attributes": restored_attrs,
-                    "attribute_metadata": attributes.attribute_metadata,
-                    "metadata": attributes.metadata,
-                }),
-            },
-        )
-        return restored_copy
-
-    def _restore_single_attribute(
-        self,
-        attr_name: str,
-        attr_values: t.MutableSequenceOf[str],
-        original_attrs: t.MutableStrSequenceMapping | None,
-    ) -> tuple[str, t.MutableSequenceOf[str]]:
-        """Restore attribute from metadata or apply denormalization.
-
-        Returns:
-            The resulting ``tuple[str, t.MutableSequenceOf[str]]``.
-
-        """
-        if original_attrs:
-            for orig_name, orig_values in original_attrs.items():
-                if self._normalize_attribute_name(orig_name) == attr_name:
-                    restored_values = list(orig_values)
-                    return (orig_name, restored_values)
-        denorm_name = (
-            FlextLdifServersOidConstants.ORCLACI
-            if attr_name.lower()
-            == FlextLdifServersRfcConstants.ACL_ATTRIBUTE_NAME.lower()
-            else attr_name
-        )
-        return (denorm_name, attr_values)
+        return u.Ldif.entry_with_attributes(restored_entry, restored_attrs)
 
 
 __all__: list[str] = ["FlextLdifServersOidEntryRestoreMixin"]

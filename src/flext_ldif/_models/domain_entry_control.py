@@ -8,42 +8,45 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from flext_core import m
+from flext_cli import m
 
 from flext_ldif import c
 
 
-class FlextLdifModelsDomainEntryControl(m.Value):
-    """Structured RFC 2849 control line.
+class FlextLdifModelsDomainEntryControl:
+    """Namespace for the RFC 2849 control-line model."""
 
-    The control payload uses the ``control_`` field convention so the control
-    line and the modify-operation value compose into the ``Ldif`` namespace
-    without an incompatible sibling ``value`` / ``value_origin`` override (the
-    control payload is optional; a modify value is not).
-    """
+    class Control(m.Value):
+        """Structured RFC 2849 control line.
 
-    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(use_enum_values=False)
+        The control payload uses the ``control_`` field convention so the control
+        line and the modify-operation value compose into the ``Ldif`` namespace
+        without an incompatible sibling ``value`` / ``value_origin`` override (the
+        control payload is optional; a modify value is not).
+        """
 
-    control_type: Annotated[
-        str,
-        m.Field(description="LDAP control OID or descriptor"),
-    ]
-    criticality: Annotated[
-        bool | None,
-        m.Field(description="Optional criticality flag from control line"),
-    ] = None
-    control_value: Annotated[
-        str | None,
-        m.Field(description="Optional control value"),
-    ] = None
-    control_value_origin: Annotated[
-        c.Ldif.ValueOrigin | None,
-        m.Field(description="Original control value encoding/source"),
-    ] = None
-    raw_value: Annotated[
-        str | None,
-        m.Field(description="Original serialized control payload"),
-    ] = None
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(use_enum_values=False)
+
+        control_type: Annotated[
+            str,
+            m.Field(description="LDAP control OID or descriptor"),
+        ]
+        criticality: Annotated[
+            bool | None,
+            m.Field(description="Optional criticality flag from control line"),
+        ] = None
+        control_value: Annotated[
+            str | None,
+            m.Field(description="Optional control value"),
+        ] = None
+        control_value_origin: Annotated[
+            c.Ldif.ValueOrigin | None,
+            m.Field(description="Original control value encoding/source"),
+        ] = None
+        raw_value: Annotated[
+            str | None,
+            m.Field(description="Original serialized control payload"),
+        ] = None
 
 
 __all__: list[str] = ["FlextLdifModelsDomainEntryControl"]

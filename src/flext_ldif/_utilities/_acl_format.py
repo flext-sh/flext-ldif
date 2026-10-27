@@ -42,6 +42,7 @@ class FlextLdifACLFormatting:
             The resulting ``str``.
 
         """
+        del _subject_type
         cleaned_value = subject_value.replace(", ", ",")
         default_value = f'by dn="{cleaned_value}"'
         bind_rules: t.MutableStrMapping = {

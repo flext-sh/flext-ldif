@@ -11,9 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar
-
-from flext_cli import FlextCliModels
+from flext_cli import m as flext_cli_m
 
 from flext_ldif._models import (
     FlextLdifModelsAclConvert,
@@ -21,6 +19,7 @@ from flext_ldif._models import (
     FlextLdifModelsBasesParts,
     FlextLdifModelsCollections,
     FlextLdifModelsComposite,
+    FlextLdifModelsConfig,
     FlextLdifModelsDomainAcl,
     FlextLdifModelsDomainAttributes,
     FlextLdifModelsDomainDN,
@@ -45,11 +44,10 @@ from flext_ldif._models import (
     FlextLdifModelsSettingsProcessing,
     FlextLdifModelsSettingsRules,
     FlextLdifModelsSettingsValidation,
-    FlextLdifNamespace,
 )
 
 
-class FlextLdifModels(FlextCliModels):
+class FlextLdifModels(flext_cli_m):
     """LDIF domain models — flat façade with MRO class inheritance.
 
     Architecture: Domain layer helper
@@ -57,17 +55,12 @@ class FlextLdifModels(FlextCliModels):
     Types live in ``typings.py``, constants in ``constants.py``.
     """
 
-    # The composite namespace carries only ``m.BaseModel`` descendants whose
-    # ``model_config`` is the models-facade ``ConfigDict``; the settings-derived
-    # and value/control model classes stay reachable through their owning
-    # aliases (``Ldif.Control`` / ``Ldif.ChangeOperationValue``) instead of
-    # direct inheritance, which would clash on ``model_config``/``value``.
     class Ldif(
         FlextLdifModelsBases,
         FlextLdifModelsBasesParts,
         FlextLdifModelsCollections,
         FlextLdifModelsComposite,
-        FlextLdifNamespace,
+        FlextLdifModelsConfig,
         FlextLdifModelsDomainsEntries,
         FlextLdifModelsDomainEntry,
         FlextLdifModelsDomainEntryChangeOperation,
@@ -96,26 +89,6 @@ class FlextLdifModels(FlextCliModels):
     ):
         """LDIF namespace for cross-project access."""
 
-        # =================================================================
-        # COMPOSITE MODELS — owned by ``_models/composite.py``
-        # =================================================================
-
-        Stats: ClassVar[type[FlextLdifModelsComposite.Stats]] = (
-            FlextLdifModelsComposite.Stats
-        )
-
-        OidAclMetadataConfig: ClassVar[
-            type[FlextLdifModelsComposite.OidAclMetadataConfig]
-        ] = FlextLdifModelsComposite.OidAclMetadataConfig
-
-    # Top-level facade aliases: the api-freeze contract requires
-    # ``flext_ldif.m.X`` and ``flext_ldif.FlextLdifModels.X`` to be the same
-    # object for every published model.
-    Entry: ClassVar[type[FlextLdifModelsDomainEntry.Entry]] = (
-        FlextLdifModelsDomainEntry.Entry
-    )
-
 
 m = FlextLdifModels
-
 __all__: list[str] = ["FlextLdifModels", "m"]

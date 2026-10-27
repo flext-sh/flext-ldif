@@ -77,19 +77,19 @@ parse_result = api.parse_ldif_file(Path("data.ldif"))
 
 1. **Streaming Parser**: Process files incrementally without full memory load
 
-   - **Rejected**: Would complicate type validation and RFC compliance checking
-   - **Complexity**: Much harder to maintain complete file context for validation
-   - **Performance**: Similar memory usage for validation of complex schemas
+    - **Rejected**: Would complicate type validation and RFC compliance checking
+    - **Complexity**: Much harder to maintain complete file context for validation
+    - **Performance**: Similar memory usage for validation of complex schemas
 
 1. **Chunked Processing**: Process file in configurable chunks
 
-   - **Rejected**: Would break RFC compliance for cross-chunk validations
-   - **Complexity**: Significant architectural complexity for marginal benefits
+    - **Rejected**: Would break RFC compliance for cross-chunk validations
+    - **Complexity**: Significant architectural complexity for marginal benefits
 
 1. **Memory-Mapped Files**: Use OS memory mapping for large files
 
-   - **Rejected**: Still loads entire file into virtual memory, doesn't solve RAM limits
-   - **Platform Dependencies**: Memory mapping behavior varies by OS
+    - **Rejected**: Still loads entire file into virtual memory, doesn't solve RAM limits
+    - **Platform Dependencies**: Memory mapping behavior varies by OS
 
 **Related ADRs**:
 

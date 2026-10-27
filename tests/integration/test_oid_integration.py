@@ -15,14 +15,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
-from tests import tm, u
-
-if TYPE_CHECKING:
-    from tests import m, p, t
+from tests import m, p, t, tm, u
 
 ORACLE_OID_PREFIX = "2.16.840.1.113894"
 
@@ -87,8 +82,8 @@ class TestsFlextLdifOidIntegration:
             api.write(list(entries)),
             error_msg="writing OID entries failed",
         )
-        assert written.content is not None
-        return cls._entries(api, written.content)
+        content = tm.not_none(written.content)
+        return cls._entries(api, content)
 
     # ----------------------------------------------------------------- schema
 
@@ -100,9 +95,10 @@ class TestsFlextLdifOidIntegration:
         """Parsing the OID schema returns entries, each exposing a DN."""
         entries = self._entries(api, oid_schema_fixture)
 
-        assert entries, "OID schema produced no entries"
-        assert all(entry.dn_str for entry in entries), (
-            "every parsed schema entry must expose a non-empty DN"
+        tm.ok(bool(entries), msg="OID schema produced no entries")
+        tm.ok(
+            all(entry.dn_str for entry in entries),
+            msg="every parsed schema entry must expose a non-empty DN",
         )
 
     @pytest.mark.parametrize(
@@ -120,6 +116,7 @@ class TestsFlextLdifOidIntegration:
 
         Stronger than a mere ``>= 0`` smoke check: the OID schema fixture is
         Oracle's own, so at least one definition must carry the Oracle OID arc.
+
         """
         entries = self._entries(api, oid_schema_fixture)
         schema_entry = entries[0]
@@ -129,9 +126,9 @@ class TestsFlextLdifOidIntegration:
             definition for definition in definitions if ORACLE_OID_PREFIX in definition
         ]
 
-        assert oracle_definitions, (
-            f"no Oracle {definition_attr} (OID {ORACLE_OID_PREFIX}.*) parsed"
-        )
+        if not oracle_definitions:
+            msg = f"no Oracle {definition_attr} (OID {ORACLE_OID_PREFIX}.*) parsed"
+            tm.reject(msg)
 
     # ------------------------------------------------------------- entry data
 
@@ -144,9 +141,9 @@ class TestsFlextLdifOidIntegration:
         entries = self._entries(api, oid_integration_fixture)
 
         min_expected_entries = 100
-        assert len(entries) > min_expected_entries, (
-            f"expected > {min_expected_entries} entries, got {len(entries)}"
-        )
+        if len(entries) <= min_expected_entries:
+            msg = f"expected > {min_expected_entries} entries, got {len(entries)}"
+            tm.reject(msg)
 
     @pytest.mark.parametrize(
         "attribute_name",
@@ -166,9 +163,9 @@ class TestsFlextLdifOidIntegration:
             1 for entry in entries if attribute_name in entry.attributes_dict
         )
 
-        assert entries_with_attribute > 0, (
-            f"no parsed entry carries the {attribute_name} attribute"
-        )
+        if entries_with_attribute <= 0:
+            msg = f"no parsed entry carries the {attribute_name} attribute"
+            tm.reject(msg)
 
     # --------------------------------------------------------------- roundtrip
 
@@ -179,7 +176,7 @@ class TestsFlextLdifOidIntegration:
     ) -> None:
         """Parse -> write -> parse keeps the entry count identical."""
         original = self._entries(api, oid_integration_fixture)
-        assert original, "no entries in original parse"
+        tm.ok(bool(original), msg="no entries in original parse")
 
         roundtrip = self._roundtrip(api, original)
 
@@ -214,9 +211,9 @@ class TestsFlextLdifOidIntegration:
         original_count = sum(
             self._attribute_value_count(entry, acl_attribute) for entry in original
         )
-        assert original_count > 0, (
-            f"fixture must contain {acl_attribute} values to be meaningful"
-        )
+        if original_count <= 0:
+            msg = f"fixture must contain {acl_attribute} values to be meaningful"
+            tm.reject(msg)
 
         roundtrip_count = sum(
             self._attribute_value_count(entry, acl_attribute)

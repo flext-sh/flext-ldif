@@ -28,8 +28,7 @@ class FlextLdifServersRelaxedEntryWriteMixin(FlextLdifServersRfcEntry):
             The resulting ``bool``.
 
         """
-        _ = entry_dn
-        _ = attributes
+        del entry_dn, attributes
         return True
 
     @override
@@ -40,7 +39,7 @@ class FlextLdifServersRelaxedEntryWriteMixin(FlextLdifServersRfcEntry):
             The resulting ``bool``.
 
         """
-        _ = attribute
+        del attribute
         return True
 
     @override
@@ -51,7 +50,7 @@ class FlextLdifServersRelaxedEntryWriteMixin(FlextLdifServersRfcEntry):
             The resulting ``bool``.
 
         """
-        _ = objectclass
+        del objectclass
         return True
 
     @staticmethod
