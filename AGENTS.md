@@ -21,11 +21,14 @@ Base library for `flext-ldap`, `flext-tap-ldif`, `flext-target-ldif`, `flext-dbt
 
 ```text
 src/flext_ldif/
-├── api.py                # FlextLdif facade: .categorization / .acl / .entry + registry resolution, migration, validation
+├── api.py                # FlextLdif facade: .categorization / .acl / .entry
+│                         # + registry resolution, migration, validation
 ├── base.py shared.py
-├── servers/              # per-dialect handlers: rfc, relaxed, tivoli, novell, oud, oid, openldap(1), apache, ds389, ad …
+├── servers/              # per-dialect handlers: rfc, relaxed, tivoli, novell,
+│                         # oud, oid, openldap(1), apache, ds389, ad …
 │   └── __init__.py       # REGISTRY — if emptied, ALL parsing breaks fleet-wide
-├── services/             # parser, writer, validation, conversion, acl, migration, pipeline, analysis
+├── services/             # parser, writer, validation, conversion, acl,
+│                         # migration, pipeline, analysis
 ├── constants.py typings.py protocols.py models.py utilities.py   # AUTO-GENERATED facets
 └── _constants/ _typings/ _protocols/ _models/ _utilities/
 ```
