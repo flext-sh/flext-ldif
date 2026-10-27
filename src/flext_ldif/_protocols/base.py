@@ -38,7 +38,12 @@ class FlextLdifProtocolsBase:
 
     @runtime_checkable
     class Settings(p.Cli.Settings, Protocol):
-        """MRO-composed settings contract with the LDIF namespace."""
+        """MRO-composed settings contract with the LDIF namespace.
+
+        The ``Ldif`` branch mirrors the concrete ``FlextLdifSettings.Ldif``
+        field: settings branches carry their config namespace's capitalized
+        name (``settings.Ldif.*``), so the structural contract repeats it.
+        """
 
         @property
         def Ldif(self) -> FlextLdifProtocolsBase.LdifSettings:
