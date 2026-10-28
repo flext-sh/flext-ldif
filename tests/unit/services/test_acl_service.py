@@ -16,8 +16,8 @@ from tests import c, m, p, t, tm, u
 class TestsFlextLdifAclService:
     """Cover ACL behavior through the public ldif facade."""
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def svc(api: p.Ldif.LdifClient) -> p.Ldif.LdifClient:
         """Provide ``svc``.
 

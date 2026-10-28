@@ -23,8 +23,8 @@ class TestsFlextLdifFiltersService:
 
     # ── fixtures ──────────────────────────────────────────────────────────────
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def regular_entry() -> m.Ldif.Entry:
         """Build a person entry carrying objectClasses plus filterable attributes.
 
@@ -47,8 +47,8 @@ class TestsFlextLdifFiltersService:
             },
         )
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def entry_without_attributes() -> m.Ldif.Entry:
         """Build an entry whose ``attributes`` field is ``None``.
 

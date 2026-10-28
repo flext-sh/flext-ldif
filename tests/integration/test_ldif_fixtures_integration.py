@@ -37,8 +37,8 @@ class TestsFlextLdifLdifFixturesIntegration:
         ("openldap2", "openldap2_integration_fixtures.ldif", 45),
     )
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def ldif_client() -> p.Ldif.LdifClient:
         """Provide the public FlextLdif facade under test.
 

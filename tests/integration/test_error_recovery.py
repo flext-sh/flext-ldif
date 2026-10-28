@@ -21,8 +21,8 @@ from tests import p, tm
 class TestsFlextLdifErrorRecovery:
     """Observable-behavior tests for malformed and edge-case LDIF input."""
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def api() -> p.Ldif.LdifClient:
         """Return a configured LDIF facade instance (public DSL alias)."""
         return ldif()

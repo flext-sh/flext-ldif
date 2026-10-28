@@ -79,8 +79,8 @@ def _assert_definition_roundtrip(
 class TestsFlextLdifCrossDirectionConversion:
     """Cross-direction schema conversion observable behavior."""
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def server_registry() -> FlextLdifServer:
         """Real server registry (unit under test, no mocks).
 
@@ -90,8 +90,8 @@ class TestsFlextLdifCrossDirectionConversion:
         """
         return FlextLdifServer(registry=FlextLdif().registry)
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def conversion() -> FlextLdifConversion:
         """Real entry-level conversion service (unit under test).
 

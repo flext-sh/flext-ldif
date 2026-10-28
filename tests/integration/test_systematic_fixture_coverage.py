@@ -21,8 +21,8 @@ from tests import p, tm
 class TestsFlextLdifSystematicFixtureCoverage:
     """Public parse/write contract across the serverxfixture-type matrix."""
 
-    @staticmethod
-    @pytest.fixture(scope="class")
+    @pytest.fixture
+    @staticmethod(scope="class")
     def api() -> p.Ldif.LdifClient:
         """Public LDIF client under test.
 

@@ -87,8 +87,8 @@ class TestsFlextLdifRelaxed:
     - Error recovery and edge cases via public model state
     """
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def schema_server() -> FlextLdifServersRelaxedSchema:
         """Create relaxed schema server instance.
 
@@ -98,8 +98,8 @@ class TestsFlextLdifRelaxed:
         """
         return FlextLdifServersRelaxedSchema()
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def acl_server() -> FlextLdifServersRelaxed.Acl:
         """Create relaxed ACL server instance.
 
@@ -109,8 +109,8 @@ class TestsFlextLdifRelaxed:
         """
         return FlextLdifServersRelaxed.Acl()
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def entry_server(
         acl_server: FlextLdifServersRelaxed.Acl,
     ) -> FlextLdifServersRelaxedEntry:

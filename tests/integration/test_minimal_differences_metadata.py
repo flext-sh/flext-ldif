@@ -25,8 +25,8 @@ from tests import c, m, p, tm
 class TestsFlextLdifMinimalDifferencesMetadata:
     """Public-contract tests for minimal-differences metadata capture."""
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def parser() -> FlextLdifParser:
         """Provide a parser instance.
 
@@ -36,8 +36,8 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         """
         return FlextLdifParser(registry=FlextLdif().registry)
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def writer() -> p.Ldif.LdifClient:
         """Provide a writer client via the public ``ldif()`` entry point.
 
@@ -47,8 +47,8 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         """
         return ldif()
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def fixtures_dir() -> Path:
         """Locate the shared LDIF fixtures directory.
 

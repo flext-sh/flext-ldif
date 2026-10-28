@@ -32,8 +32,8 @@ from tests import p
 class TestsFlextLdifRealLdapConfig:
     """Public-contract tests for LDIF settings and railway composition."""
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def flext_api() -> p.Ldif.LdifClient:
         """Ldif API instance under test.
 
@@ -43,8 +43,8 @@ class TestsFlextLdifRealLdapConfig:
         """
         return ldif()
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def sample_entry() -> m.Ldif.Entry:
         """Build a valid inetOrgPerson entry through the public model API.
 

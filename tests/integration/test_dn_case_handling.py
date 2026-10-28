@@ -32,8 +32,8 @@ _RESOLUTION_LOOKUP_CASES: t.VariadicTuple[str] = (
 class TestsFlextLdifDnCaseHandling:
     """Public-contract behavior of the DN case registry."""
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def registry() -> m.Ldif.DnRegistry:
         """Provide a fresh, empty DN registry.
 

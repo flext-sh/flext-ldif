@@ -27,8 +27,8 @@ _ZERO_WIDTH = "zero" + "\u200b" + "width" + "\u200b" + "spaces"
 class TestsFlextLdifIntegrationEdgeCases:
     """Behavioral edge-case coverage for the public LDIF client contract."""
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def api() -> p.Ldif.LdifClient:
         """Public LDIF client instance.
 

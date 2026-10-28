@@ -21,8 +21,8 @@ from tests import c, m, tm, u
 class TestsFlextLdifNovellServers:
     """Public-behaviour tests for the Novell eDirectory server."""
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def novell_server() -> FlextLdifServersNovell:
         """Create a Novell eDirectory server instance.
 
@@ -32,8 +32,8 @@ class TestsFlextLdifNovellServers:
         """
         return FlextLdifServersNovell()
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def schema_server(
         novell_server: FlextLdifServersNovell,
     ) -> FlextLdifServersNovell.Schema:
@@ -46,8 +46,8 @@ class TestsFlextLdifNovellServers:
         server = novell_server.schema_server
         return tm.instance(server, FlextLdifServersNovell.Schema)
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def acl_server(
         novell_server: FlextLdifServersNovell,
     ) -> FlextLdifServersNovell.Acl:
@@ -60,8 +60,8 @@ class TestsFlextLdifNovellServers:
         server = novell_server.acl_server
         return tm.instance(server, FlextLdifServersNovell.Acl)
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def entry_server(
         novell_server: FlextLdifServersNovell,
     ) -> FlextLdifServersNovell.Entry:
