@@ -23,8 +23,6 @@ from tests import c, m, tm
 if TYPE_CHECKING:
     from pathlib import Path
 
-from tests import t
-
 
 class TestsFlextLdifMigrationPipelineServers:
     """Behavioral suite for server-to-server migration via the public pipeline."""

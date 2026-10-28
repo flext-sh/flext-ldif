@@ -18,8 +18,6 @@ from typing import TYPE_CHECKING, ClassVar
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from flext_core import t
-
 
 class FlextLdifConstantsBaseParts:
     """LDIF base constant family parts composed into ``c.Ldif``."""
