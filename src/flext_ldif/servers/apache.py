@@ -9,6 +9,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t
+from flext_ldif.servers._base.dialect_schema import (
+    FlextLdifServersDialectSchema,
+)
 from flext_ldif.servers import FlextLdifServersBase, FlextLdifServersRfc
 from flext_ldif.servers._rfc import (
     FlextLdifServersRfcAcl,
@@ -89,7 +92,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         DN_CONFIG_ENTRY_MARKER: ClassVar[str] = "ou=settings"
 
     class Schema(
-        FlextLdifServersBase,
+        FlextLdifServersDialectSchema,
     ):
         """Schema servers for Apache Directory Server (ApacheDS)."""
 

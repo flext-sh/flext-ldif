@@ -9,6 +9,9 @@ from __future__ import annotations
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers._base.dialect_schema import (
+    FlextLdifServersDialectSchema,
+)
 from flext_ldif.servers import FlextLdifServersBase, FlextLdifServersRfc
 from flext_ldif.servers._rfc import (
     FlextLdifServersRfcAcl,
@@ -130,7 +133,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         NOVELL_PERMISSION_ENTRY: ClassVar[str] = "entry"
 
     class Schema(
-        FlextLdifServersBase,
+        FlextLdifServersDialectSchema,
     ):
         """Novell eDirectory schema server."""
 

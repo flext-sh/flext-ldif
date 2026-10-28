@@ -12,6 +12,9 @@ import re
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers._base.dialect_schema import (
+    FlextLdifServersDialectSchema,
+)
 from flext_ldif.servers import FlextLdifServersBase, FlextLdifServersRfc
 from flext_ldif.servers._rfc import (
     FlextLdifServersRfcAcl,
@@ -173,7 +176,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         ACL_TARGET_WILDCARD: ClassVar[str] = "*"
 
     class Schema(
-        FlextLdifServersBase,
+        FlextLdifServersDialectSchema,
     ):
         """Active Directory schema server."""
 
