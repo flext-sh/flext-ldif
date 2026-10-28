@@ -6,22 +6,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar, Self, cast, overload, override
+from typing import Self, cast, overload, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers import FlextLdifServersBase
-from flext_ldif.servers._base import FlextLdifServerMethodsMixin
-from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
+from flext_ldif.servers._base import (
+    FlextLdifServerMethodsMixin,
+    FlextLdifServersBaseSchemaAcl,
+)
 
 
 class FlextLdifServersRfcAcl(
-    FlextLdifServersBase,
+    FlextLdifServersBaseSchemaAcl,
 ):
     """LDAP ACL Server - Base Implementation."""
-
-    Constants: ClassVar[type[FlextLdifServersRfcConstants]] = (
-        FlextLdifServersRfcConstants
-    )
 
     @overload
     def __call__(

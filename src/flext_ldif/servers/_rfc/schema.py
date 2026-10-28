@@ -9,7 +9,6 @@ from __future__ import annotations
 from typing import ClassVar, Self, cast, overload, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers import FlextLdifServersBase
 from flext_ldif.servers._base import (
     FlextLdifServerMethodsMixin,
     FlextLdifServersBaseSchema,
@@ -19,20 +18,15 @@ from flext_ldif.servers._rfc import (
     FlextLdifServersRfcSchemaValuesMixin,
     FlextLdifServersRfcSchemaWriteMixin,
 )
-from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
 
 
 class FlextLdifServersRfcSchema(
     FlextLdifServersRfcSchemaWriteMixin,
     FlextLdifServersRfcSchemaParseMixin,
     FlextLdifServersRfcSchemaValuesMixin,
-    FlextLdifServersBase,
+    FlextLdifServersBaseSchema,
 ):
     """RFC 4512 Compliant Schema Server - STRICT Implementation."""
-
-    Constants: ClassVar[type[FlextLdifServersRfcConstants]] = (
-        FlextLdifServersRfcConstants
-    )
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 

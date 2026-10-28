@@ -11,14 +11,13 @@ from collections.abc import MutableMapping
 from typing import ClassVar
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers import FlextLdifServersBase
 from flext_ldif.servers._base import FlextLdifServersBaseSchema
 from flext_ldif.servers._rfc import FlextLdifServersRfcSchemaValuesMixin
 
 
 class FlextLdifServersRfcSchemaParseMixin(
     FlextLdifServersRfcSchemaValuesMixin,
-    FlextLdifServersBase,
+    FlextLdifServersBaseSchema,
     ABC,
 ):
     """Parse RFC 4512 objectClass definitions and extract schema from LDIF."""
