@@ -12,6 +12,7 @@ from typing import ClassVar
 
 from flext_ldif import c, p, r, t, u
 from flext_ldif.servers import FlextLdifServersBase
+from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
 
 
 class FlextLdifServersRfcSchemaValuesMixin(
@@ -19,6 +20,10 @@ class FlextLdifServersRfcSchemaValuesMixin(
     ABC,
 ):
     """Coerce raw JSON payloads into typed RFC schema values."""
+
+    Constants: ClassVar[type[FlextLdifServersRfcConstants]] = (
+        FlextLdifServersRfcConstants
+    )
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 

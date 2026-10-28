@@ -11,6 +11,7 @@ from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers import FlextLdifServersBase
+from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
 
 
 class FlextLdifServersRfcSchemaWriteMixin(
@@ -18,6 +19,10 @@ class FlextLdifServersRfcSchemaWriteMixin(
     ABC,
 ):
     """Write schema attributes/objectClasses to RFC-compliant strings."""
+
+    Constants: ClassVar[type[FlextLdifServersRfcConstants]] = (
+        FlextLdifServersRfcConstants
+    )
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 

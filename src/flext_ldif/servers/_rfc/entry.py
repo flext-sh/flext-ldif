@@ -10,12 +10,17 @@ from typing import ClassVar, override
 
 from flext_ldif import m, p, r, t, u
 from flext_ldif.servers import FlextLdifServersBase
+from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
 
 
 class FlextLdifServersRfcEntry(
     FlextLdifServersBase,
 ):
     """RFC 2849 compliant LDIF entry processing."""
+
+    Constants: ClassVar[type[FlextLdifServersRfcConstants]] = (
+        FlextLdifServersRfcConstants
+    )
 
     __doc_inline__ = True
 

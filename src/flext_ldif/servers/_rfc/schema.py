@@ -19,6 +19,7 @@ from flext_ldif.servers._rfc import (
     FlextLdifServersRfcSchemaValuesMixin,
     FlextLdifServersRfcSchemaWriteMixin,
 )
+from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
 
 
 class FlextLdifServersRfcSchema(
@@ -28,6 +29,10 @@ class FlextLdifServersRfcSchema(
     FlextLdifServersBase,
 ):
     """RFC 4512 Compliant Schema Server - STRICT Implementation."""
+
+    Constants: ClassVar[type[FlextLdifServersRfcConstants]] = (
+        FlextLdifServersRfcConstants
+    )
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
