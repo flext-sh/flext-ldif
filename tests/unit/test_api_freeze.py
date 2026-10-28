@@ -17,10 +17,10 @@ import inspect
 import pytest
 
 import flext_ldif
-from tests import t, tm
+from tests import tm
 from tests.unit import TestsFlextLdifTypingsUnit
 
-REQUIRED_PUBLIC_API: t.VariadicTuple[TestsFlextLdifTypingsUnit.PublicSymbol] = (
+REQUIRED_PUBLIC_API: tuple[TestsFlextLdifTypingsUnit.PublicSymbol, ...] = (
     "FlextLdif",
     "FlextLdifConstants",
     "FlextLdifModels",
@@ -52,17 +52,17 @@ REQUIRED_PUBLIC_API: t.VariadicTuple[TestsFlextLdifTypingsUnit.PublicSymbol] = (
     "u",
     "x",
 )
-PUBLIC_API: t.VariadicTuple[TestsFlextLdifTypingsUnit.PublicSymbol] = tuple(
+PUBLIC_API: tuple[TestsFlextLdifTypingsUnit.PublicSymbol, ...] = tuple(
     flext_ldif.__all__
 )
 
 # Public symbols that consumers use as types (subclass / instantiate / isinstance).
-CLASS_SYMBOLS: t.VariadicTuple[TestsFlextLdifTypingsUnit.PublicSymbol] = tuple(
+CLASS_SYMBOLS: tuple[TestsFlextLdifTypingsUnit.PublicSymbol, ...] = tuple(
     name for name in PUBLIC_API if name.startswith("FlextLdif")
 )
 
 # Metadata strings exposed at the package root.
-METADATA_STRING_SYMBOLS: t.VariadicTuple[TestsFlextLdifTypingsUnit.PublicSymbol] = (
+METADATA_STRING_SYMBOLS: tuple[TestsFlextLdifTypingsUnit.PublicSymbol, ...] = (
     "__author__",
     "__author_email__",
     "__description__",
@@ -91,7 +91,7 @@ FACADE_ALIAS_OWNERS: tuple[
 
 # Implementation classes that live behind their canonical owner modules and must
 # never leak onto the package root.
-PRIVATE_ROOT_SYMBOLS: t.VariadicTuple[TestsFlextLdifTypingsUnit.PublicSymbol] = (
+PRIVATE_ROOT_SYMBOLS: tuple[TestsFlextLdifTypingsUnit.PublicSymbol, ...] = (
     "FlextLdifConstantsBase",
     "FlextLdifConstantsEnums",
     "FlextLdifModelsBases",

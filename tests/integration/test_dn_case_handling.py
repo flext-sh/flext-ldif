@@ -15,14 +15,14 @@ from __future__ import annotations
 
 import pytest
 
-from tests import m, t, tm
+from tests import m, tm
 
-_LATER_VARIANT_CASES: t.VariadicTuple[str] = (
+_LATER_VARIANT_CASES: tuple[str, ...] = (
     "cn=admin,dc=example,dc=com",
     "CN=ADMIN,DC=EXAMPLE,DC=COM",
     "Cn=Admin,Dc=Example,Dc=Com",
 )
-_RESOLUTION_LOOKUP_CASES: t.VariadicTuple[str] = (
+_RESOLUTION_LOOKUP_CASES: tuple[str, ...] = (
     "cn=test,dc=example,dc=com",
     "CN=Test,DC=Example,DC=Com",
     "cn=TEST,dc=EXAMPLE,dc=COM",
@@ -165,7 +165,7 @@ class TestsFlextLdifDnCaseHandling:
     )
     def test_multiple_cases_for_one_dn_is_inconsistent(
         registry: m.Ldif.DnRegistry,
-        variants: t.VariadicTuple[str],
+        variants: tuple[str, ...],
     ) -> None:
         """Two or more case variants of the same DN report inconsistency."""
         for variant in variants:

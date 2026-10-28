@@ -10,15 +10,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
+from collections.abc import MutableMapping
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 from flext_tests import FlextTestsFixturesDSL
 
 from tests import c, m, t
-
-if TYPE_CHECKING:
-    from collections.abc import MutableMapping
 
 
 class TestsFlextLdifEntryBuildersMixin(FlextTestsFixturesDSL):

@@ -21,7 +21,7 @@ from typing import ClassVar
 
 import pytest
 
-from tests import m, p, t, tm, u
+from tests import m, p, tm, u
 
 
 class TestsFlextLdifOudIntegration:
@@ -33,7 +33,7 @@ class TestsFlextLdifOudIntegration:
     """
 
     ORACLE_ENTERPRISE_OID_PREFIX: ClassVar[str] = "2.16.840.1.113894"
-    ORACLE_OBJECTCLASS_MARKERS: ClassVar[t.VariadicTuple[str]] = (
+    ORACLE_OBJECTCLASS_MARKERS: ClassVar[tuple[str], ...] = (
         "orclcontext",
         "orclcontainer",
         "orclprivilegegroup",

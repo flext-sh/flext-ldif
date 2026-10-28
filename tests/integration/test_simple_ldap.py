@@ -91,7 +91,7 @@ class TestsFlextLdifSimpleLdap:
         self,
         ldap_connection: p.Ldap3Connection,
         ldap_container: t.StrMapping,
-        make_test_username: Callable[[str], str],
+        make_test_username: Callable[[str], ...],
     ) -> None:
         """A model built from a live entry exposes dn and attributes publicly."""
         base_dn = ldap_container.get("base_dn", "dc=flext,dc=local")
@@ -113,7 +113,7 @@ class TestsFlextLdifSimpleLdap:
         self,
         ldap_connection: p.Ldap3Connection,
         ldap_container: t.StrMapping,
-        make_test_username: Callable[[str], str],
+        make_test_username: Callable[[str], ...],
     ) -> None:
         """write() returns success with LDIF content and matching statistics."""
         base_dn = ldap_container.get("base_dn", "dc=flext,dc=local")
@@ -137,7 +137,7 @@ class TestsFlextLdifSimpleLdap:
         self,
         ldap_connection: p.Ldap3Connection,
         ldap_container: t.StrMapping,
-        make_test_username: Callable[[str], str],
+        make_test_username: Callable[[str], ...],
     ) -> None:
         """Parsing the LDIF produced by write() recovers the original entry."""
         base_dn = ldap_container.get("base_dn", "dc=flext,dc=local")

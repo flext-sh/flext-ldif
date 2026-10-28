@@ -159,8 +159,7 @@ def ldap_connection(ldap_container: t.JsonMapping) -> Generator[p.Ldap3Connectio
 
 @pytest.fixture
 def clean_test_ou(
-    ldap_connection: p.Ldap3Connection,
-    make_test_base_dn: Callable[[str], str],
+    ldap_connection: p.Ldap3Connection, make_test_base_dn: Callable[[str], ...]
 ) -> Generator[str]:
     """Create and clean up an isolated OU for integration tests.
 

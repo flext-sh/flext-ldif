@@ -370,7 +370,7 @@ class FlextLdifConstantsBaseParts:
             "selfwrite",
         })
         # Canonical OUD permission ordering for deterministic aci assembly.
-        PERM_ORDERED: ClassVar[t.VariadicTuple[str]] = (
+        PERM_ORDERED: ClassVar[tuple[str, ...]] = (
             "all",
             "read",
             "search",
@@ -383,7 +383,7 @@ class FlextLdifConstantsBaseParts:
         )
         # DN suffixes (relative to base) treated as high-level containers
         #  (filter anyone).
-        HIGH_LEVEL_CONTAINER_SUFFIXES: ClassVar[t.VariadicTuple[str]] = (
+        HIGH_LEVEL_CONTAINER_SUFFIXES: ClassVar[tuple[str, ...]] = (
             "",
             "dc=network,",
             "cn=users,dc=network,",

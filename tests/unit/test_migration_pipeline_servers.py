@@ -36,7 +36,7 @@ class TestsFlextLdifMigrationPipelineServers:
         ldif_content: str,
         source_server: str,
         target_server: str,
-    ) -> tuple[str, int, t.VariadicTuple[str]]:
+    ) -> tuple[str, int, tuple[str, ...]]:
         """Drive ``execute`` through its public API and return observable state.
 
         Returns the produced output-file text, the model's ``entry_count`` and

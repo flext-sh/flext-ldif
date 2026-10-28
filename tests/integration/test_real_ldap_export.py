@@ -19,6 +19,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 import pytest
@@ -26,7 +27,7 @@ import pytest
 from tests import c, ldif, tm, u
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Sequence
+    from collections.abc import Callable
     from pathlib import Path
 
 from tests import m, p, t
@@ -92,7 +93,7 @@ class TestsFlextLdifRealLdapExport:
         ldap_connection: p.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
-        make_test_username: Callable[[str], str],
+        make_test_username: Callable[[str], ...],
     ) -> None:
         """A single exported entry round-trips its DN and every attribute value."""
         username = make_test_username("TestUser")
@@ -125,7 +126,7 @@ class TestsFlextLdifRealLdapExport:
         ldap_connection: p.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
-        make_test_username: Callable[[str], str],
+        make_test_username: Callable[[str], ...],
     ) -> None:
         """Batch export reproduces each source DN with its distinct attributes."""
         usernames = [make_test_username(f"User{i}") for i in range(5)]
@@ -157,7 +158,7 @@ class TestsFlextLdifRealLdapExport:
         ldap_connection: p.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
-        make_test_username: Callable[[str], str],
+        make_test_username: Callable[[str], ...],
     ) -> None:
         """Export a nested directory subtree.
 
@@ -201,7 +202,7 @@ class TestsFlextLdifRealLdapExport:
         ldap_connection: p.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
-        make_test_username: Callable[[str], str],
+        make_test_username: Callable[[str], ...],
     ) -> None:
         """Exporting the same entries twice yields identical LDIF content."""
         username = make_test_username("Idempotent")
@@ -227,7 +228,7 @@ class TestsFlextLdifRealLdapExport:
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
         tmp_path: Path,
-        make_test_username: Callable[[str], str],
+        make_test_username: Callable[[str], ...],
     ) -> None:
         """File export writes valid LDIF that round-trips the exported entry."""
         username = make_test_username("FileExport")

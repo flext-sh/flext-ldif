@@ -30,7 +30,7 @@ def _assert_cross_server_identity(
     target_schema: p.Ldif.SchemaServer,
     definition: str,
     parse_method: t.Tests.ParseMethod,
-    tokens: t.VariadicTuple[str],
+    tokens: tuple[str, ...],
 ) -> None:
     """Render via source, re-parse via target, and assert the identity tokens."""
     parse: Callable[

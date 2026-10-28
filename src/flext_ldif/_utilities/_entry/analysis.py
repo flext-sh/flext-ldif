@@ -48,8 +48,7 @@ class FlextLdifUtilitiesEntryAnalysis:
 
     @staticmethod
     def _collect_original_attribute_case(
-        entry_attrs: t.Ldif.MetadataInputMapping,
-        normalize: Callable[[str], str],
+        entry_attrs: t.Ldif.MetadataInputMapping, normalize: Callable[[str], ...]
     ) -> t.MutableStrMapping:
         """Map canonical names back to their original attribute casing.
 
@@ -95,7 +94,7 @@ class FlextLdifUtilitiesEntryAnalysis:
             str,
             t.MutableSequenceOf[t.Ldif.AttributeValue],
         ],
-        normalize: Callable[[str], str],
+        normalize: Callable[[str], ...],
     ) -> tuple[
         MutableMapping[str, t.Ldif.MutableMetadataMapping],
         t.Ldif.MutableMetadataMapping,

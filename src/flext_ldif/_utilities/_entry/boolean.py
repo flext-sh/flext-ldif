@@ -47,8 +47,7 @@ class FlextLdifUtilitiesEntryBoolean:
 
     @staticmethod
     def _convert_boolean_value(
-        normalized_value: str,
-        format_pair: tuple[str, str],
+        normalized_value: str, format_pair: tuple[str, ...]
     ) -> str:
         """Convert one value according to the source/target format pair.
 

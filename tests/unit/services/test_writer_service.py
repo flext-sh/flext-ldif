@@ -31,7 +31,7 @@ class TestsFlextLdifWriterService:
         ]
 
     @staticmethod
-    def _dns() -> t.VariadicTuple[str]:
+    def _dns() -> tuple[str, ...]:
         return tuple(sorted(c.Tests.WRITER_ENTRY_DNS))
 
     # ── write_to_string: success contract ────────────────────────────────

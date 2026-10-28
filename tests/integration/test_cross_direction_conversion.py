@@ -45,7 +45,7 @@ def _resolve_schema_server(
 
 def _assert_definition_roundtrip(
     registry: FlextLdifServer,
-    case: tuple[str, str, str, t.VariadicTuple[str], t.VariadicTuple[str]],
+    case: tuple[str, str, str, tuple[str], t.VariadicTuple[str], ...],
     parse_method: t.Tests.ParseMethod,
 ) -> None:
     """Parse the definition in the source server and write it in the target."""
@@ -163,7 +163,7 @@ class TestsFlextLdifCrossDirectionConversion:
     )
     def test_attribute_definition_conversion_normalizes_output(
         server_registry: FlextLdifServer,
-        case: tuple[str, str, str, t.VariadicTuple[str], t.VariadicTuple[str]],
+        case: tuple[str, str, str, tuple[str], t.VariadicTuple[str], ...],
     ) -> None:
         """Parsing in the source server and writing in the target normalizes text."""
         _assert_definition_roundtrip(server_registry, case, "parse_attribute")
@@ -218,7 +218,7 @@ class TestsFlextLdifCrossDirectionConversion:
     )
     def test_objectclass_definition_conversion_normalizes_output(
         server_registry: FlextLdifServer,
-        case: tuple[str, str, str, t.VariadicTuple[str], t.VariadicTuple[str]],
+        case: tuple[str, str, str, tuple[str], t.VariadicTuple[str], ...],
     ) -> None:
         """Parsing in source and writing in target preserves/normalizes semantics."""
         _assert_definition_roundtrip(server_registry, case, "parse_objectclass")
