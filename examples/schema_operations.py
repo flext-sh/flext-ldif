@@ -12,6 +12,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from examples.schema_batches import batch_schema_operations
 from examples.schema_building import intelligent_schema_building
 from examples.schema_migration import schema_migration_pipeline
