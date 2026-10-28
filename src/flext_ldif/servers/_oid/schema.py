@@ -11,7 +11,7 @@ from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oid import (
-    FlextLdifServersOidConstants,
+    FlextLdifConstantsServersOid,
     FlextLdifServersOidSchemaNormalize,
 )
 from flext_ldif.servers._rfc import FlextLdifServersRfcSchema
@@ -294,7 +294,7 @@ class FlextLdifServersOidSchema(
         original_substr = fixed_substr
         fixed_substr = u.Ldif.replace_invalid_substr_rule(
             fixed_substr,
-            FlextLdifServersOidConstants.INVALID_SUBSTR_RULES,
+            FlextLdifConstantsServersOid.INVALID_SUBSTR_RULES,
         )
         if fixed_substr != original_substr:
             FlextLdifServersOidSchema._module_logger.debug(
@@ -306,7 +306,7 @@ class FlextLdifServersOidSchema(
             )
         is_boolean = u.Ldif.boolean_attribute(
             fixed_name,
-            set(FlextLdifServersOidConstants.BOOLEAN_ATTRIBUTES),
+            set(FlextLdifConstantsServersOid.BOOLEAN_ATTRIBUTES),
         )
         if is_boolean:
             FlextLdifServersOidSchema._module_logger.debug(
@@ -341,12 +341,12 @@ class FlextLdifServersOidSchema(
         oid_equality, oid_substr = u.Ldif.normalize_matching_rules(
             attr_copy.equality,
             attr_copy.substr,
-            replacements=FlextLdifServersOidConstants.MATCHING_RULE_RFC_TO_OID,
-            normalized_substr_values=FlextLdifServersOidConstants.MATCHING_RULE_RFC_TO_OID,
+            replacements=FlextLdifConstantsServersOid.MATCHING_RULE_RFC_TO_OID,
+            normalized_substr_values=FlextLdifConstantsServersOid.MATCHING_RULE_RFC_TO_OID,
         )
         oid_ordering = attr_copy.ordering
         if attr_copy.ordering:
-            mapped = FlextLdifServersOidConstants.MATCHING_RULE_RFC_TO_OID.get(
+            mapped = FlextLdifConstantsServersOid.MATCHING_RULE_RFC_TO_OID.get(
                 attr_copy.ordering,
             )
             if mapped:

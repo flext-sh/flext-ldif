@@ -13,7 +13,7 @@ from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oud import (
-    FlextLdifServersOudConstants,
+    FlextLdifConstantsServersOud,
     FlextLdifServersOudEntryParse,
     FlextLdifServersOudHelpers,
 )
@@ -50,7 +50,7 @@ class FlextLdifServersOudEntry(
             The resulting ``bool``.
 
         """
-        oud_constants = FlextLdifServersOudConstants
+        oud_constants = FlextLdifConstantsServersOud
         patterns_config = m.Ldif.ServerPatternsConfig(
             dn_patterns=oud_constants.DN_DETECTION_PATTERNS,
             attr_prefixes=oud_constants.DETECTION_ATTRIBUTE_PREFIXES,
@@ -241,7 +241,7 @@ class FlextLdifServersOudEntry(
                 entry_data,
                 write_options,
             )
-        if FlextLdifServersOudConstants.ACL_NORMALIZE_DNS_IN_VALUES:
+        if FlextLdifConstantsServersOud.ACL_NORMALIZE_DNS_IN_VALUES:
             entry_data = FlextLdifServersOudHelpers.normalize_acl_dns(entry_data)
         return (
             super()

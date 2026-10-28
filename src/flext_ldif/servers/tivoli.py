@@ -13,8 +13,8 @@ from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers import FlextLdifServersRfc
 from flext_ldif.servers._base.dialect_schema import FlextLdifServersDialectSchema
 from flext_ldif.servers._rfc import (
+    FlextLdifConstantsServersRfc,
     FlextLdifServersRfcAcl,
-    FlextLdifServersRfcConstants,
     FlextLdifServersRfcEntry,
 )
 
@@ -22,7 +22,7 @@ from flext_ldif.servers._rfc import (
 class FlextLdifServersTivoli(FlextLdifServersRfc):
     """Schema servers for IBM Tivoli Directory Server."""
 
-    class Constants(FlextLdifServersRfcConstants):
+    class Constants(FlextLdifConstantsServersRfc):
         """Standardized constants for IBM Tivoli Directory Server server."""
 
         SERVER_TYPE: ClassVar[str] = "ibm_tivoli"

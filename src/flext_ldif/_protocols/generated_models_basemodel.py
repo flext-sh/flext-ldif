@@ -11,10 +11,10 @@ from __future__ import annotations
 from typing import Protocol, runtime_checkable
 
 
-class FlextLdifModelsProtocolsGeneratedBaseModel:
+class FlextLdifProtocolsModelsGeneratedBaseModel:
     @runtime_checkable
     class BaseModel(Protocol):
         pass
 
 
-__all__ = ["FlextLdifModelsProtocolsGeneratedBaseModel"]
+__all__ = ["FlextLdifProtocolsModelsGeneratedBaseModel"]

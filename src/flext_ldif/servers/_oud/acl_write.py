@@ -11,8 +11,8 @@ from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oud import (
+    FlextLdifConstantsServersOud,
     FlextLdifServersOudAclSubject,
-    FlextLdifServersOudConstants,
 )
 
 
@@ -36,11 +36,11 @@ class FlextLdifServersOudAclWrite(FlextLdifServersOudAclSubject):
             return r[str].fail(
                 f"ACL model has no OUD-supported permissions "
                 f"(all were unsupported vendor-specific permissions like "
-                f"{FlextLdifServersOudConstants.PERMISSION_SELF_WRITE}, "
+                f"{FlextLdifConstantsServersOud.PERMISSION_SELF_WRITE}, "
                 f"stored in metadata)",
             )
         ops_str = ",".join(filtered_ops)
-        return r[str].ok(f"{FlextLdifServersOudConstants.ACL_ALLOW_PREFIX}{ops_str})")
+        return r[str].ok(f"{FlextLdifConstantsServersOud.ACL_ALLOW_PREFIX}{ops_str})")
 
     def _permissions_from_extensions(
         self,
@@ -116,7 +116,7 @@ class FlextLdifServersOudAclWrite(FlextLdifServersOudAclSubject):
             The resulting ``t.MutableSequenceOf[str]``.
 
         """
-        sc = FlextLdifServersOudConstants
+        sc = FlextLdifConstantsServersOud
         ops: t.MutableSequenceOf[str] = [
             field_name
             for field_name in (
@@ -216,7 +216,7 @@ class FlextLdifServersOudAclWrite(FlextLdifServersOudAclSubject):
         if not acl_data.raw_acl:
             return False
         raw_acl_str: str = acl_data.raw_acl
-        acl_aci_prefix: str = FlextLdifServersOudConstants.ACL_ACI_PREFIX
+        acl_aci_prefix: str = FlextLdifConstantsServersOud.ACL_ACI_PREFIX
         return raw_acl_str.startswith(acl_aci_prefix)
 
     @override
@@ -245,7 +245,7 @@ class FlextLdifServersOudAclWrite(FlextLdifServersOudAclSubject):
             The resulting ``p.Result[str]``.
 
         """
-        sc = FlextLdifServersOudConstants
+        sc = FlextLdifConstantsServersOud
         extensions: t.Ldif.MutableMetadataMapping | None = (
             acl_data.metadata.extensions
             if acl_data.metadata and acl_data.metadata.extensions

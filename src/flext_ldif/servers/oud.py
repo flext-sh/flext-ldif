@@ -16,8 +16,8 @@ from flext_ldif.servers._base import (
     FlextLdifServersBaseSchemaAcl,
 )
 from flext_ldif.servers._oud import (
+    FlextLdifConstantsServersOud,
     FlextLdifServersOudAcl,
-    FlextLdifServersOudConstants,
     FlextLdifServersOudEntry,
     FlextLdifServersOudSchema,
 )
@@ -26,7 +26,7 @@ from flext_ldif.servers._oud import (
 class FlextLdifServersOud(FlextLdifServersRfc, m.Ldif.RegistryPortOptions):
     """Oracle Unified Directory (OUD) Server Implementation."""
 
-    Constants: ClassVar[type[p.Ldif.ServerConstants]] = FlextLdifServersOudConstants
+    Constants: ClassVar[type[p.Ldif.ServerConstants]] = FlextLdifConstantsServersOud
     Acl: ClassVar[type[FlextLdifServersBaseSchemaAcl]] = FlextLdifServersOudAcl
     Schema: ClassVar[type[FlextLdifServersBaseSchema]] = FlextLdifServersOudSchema
     Entry: ClassVar[type[FlextLdifServersBaseEntry]] = FlextLdifServersOudEntry

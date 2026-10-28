@@ -12,8 +12,8 @@ from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers import FlextLdifServersRfc
 from flext_ldif.servers._base.dialect_schema import FlextLdifServersDialectSchema
 from flext_ldif.servers._rfc import (
+    FlextLdifConstantsServersRfc,
     FlextLdifServersRfcAcl,
-    FlextLdifServersRfcConstants,
     FlextLdifServersRfcEntry,
 )
 
@@ -21,7 +21,7 @@ from flext_ldif.servers._rfc import (
 class FlextLdifServersNovell(FlextLdifServersRfc):
     """Novell eDirectory servers implementation."""
 
-    class Constants(FlextLdifServersRfcConstants):
+    class Constants(FlextLdifConstantsServersRfc):
         """Standardized constants for Novell eDirectory server."""
 
         SERVER_TYPE: ClassVar[str] = "novell"

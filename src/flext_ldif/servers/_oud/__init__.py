@@ -27,12 +27,13 @@ if TYPE_CHECKING:
     from flext_ldif.servers._oud.helpers import FlextLdifServersOudHelpers
     from flext_ldif.servers._oud.schema import FlextLdifServersOudSchema
     from flext_ldif.servers._oud.schema_write import FlextLdifServersOudSchemaWrite
-    from flext_ldif.servers._oud.server_constants import FlextLdifServersOudConstants
+    from flext_ldif.servers._oud.server_constants import FlextLdifConstantsServersOud
     from flext_ldif.servers._oud.server_utilities import FlextLdifUtilitiesServersOud
     from flext_ldif.servers._oud.transform import FlextLdifServersOudTransform
 
 
 __all__: tuple[str, ...] = (
+    "FlextLdifConstantsServersOud",
     "FlextLdifServersOudAci",
     "FlextLdifServersOudAciProcess",
     "FlextLdifServersOudAcl",
@@ -42,7 +43,6 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersOudAclWrite",
     "FlextLdifServersOudComments",
     "FlextLdifServersOudCommentsAcl",
-    "FlextLdifServersOudConstants",
     "FlextLdifServersOudEntry",
     "FlextLdifServersOudEntryParse",
     "FlextLdifServersOudHelpers",
@@ -65,7 +65,7 @@ install_lazy_exports(
         "FlextLdifServersOudAclWrite": ".acl_write",
         "FlextLdifServersOudCommentsAcl": ".comments_acl",
         "FlextLdifServersOudComments": ".comments",
-        "FlextLdifServersOudConstants": ".server_constants",
+        "FlextLdifConstantsServersOud": ".server_constants",
         "FlextLdifServersOudEntry": ".entry",
         "FlextLdifServersOudEntryParse": ".entry_parse",
         "FlextLdifServersOudHelpers": ".helpers",

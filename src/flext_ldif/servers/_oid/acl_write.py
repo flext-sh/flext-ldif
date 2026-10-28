@@ -11,9 +11,9 @@ from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oid import (
+    FlextLdifConstantsServersOid,
     FlextLdifServersOidAclFormat,
     FlextLdifServersOidAclSubject,
-    FlextLdifServersOidConstants,
 )
 
 
@@ -35,7 +35,7 @@ class FlextLdifServersOidAclWrite(
         """
         return [
             *c.Ldif.RFC_ACL_ATTRIBUTES,
-            *FlextLdifServersOidConstants.OID_ACL_ATTRIBUTES,
+            *FlextLdifConstantsServersOid.OID_ACL_ATTRIBUTES,
         ]
 
     def _authorize_write_permissions(
@@ -88,12 +88,12 @@ class FlextLdifServersOidAclWrite(
         """
         del _format_option
         if acl_data.raw_acl and acl_data.raw_acl.startswith(
-            FlextLdifServersOidConstants.ORCLACI + ":",
+            FlextLdifConstantsServersOid.ORCLACI + ":",
         ):
             return r[str].ok(acl_data.raw_acl)
         acl_parts = [
-            FlextLdifServersOidConstants.ORCLACI + ":",
-            FlextLdifServersOidConstants.ACL_ACCESS_TO,
+            FlextLdifConstantsServersOid.ORCLACI + ":",
+            FlextLdifConstantsServersOid.ACL_ACCESS_TO,
         ]
         if acl_data.target:
             target_public = m.Ldif.AclTarget.model_validate(
@@ -125,7 +125,7 @@ class FlextLdifServersOidAclWrite(
                 metadata_public,
             )
             acl_parts.extend([
-                FlextLdifServersOidConstants.ACL_BY,
+                FlextLdifConstantsServersOid.ACL_BY,
                 subject_clause,
                 permissions_clause,
             ])

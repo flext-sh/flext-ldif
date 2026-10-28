@@ -14,15 +14,15 @@ from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_ldif.servers._relaxed.server_constants import (
-        FlextLdifServersRelaxedConstants,
+        FlextLdifConstantsServersRelaxed,
     )
 
 
-__all__: tuple[str, ...] = ("FlextLdifServersRelaxedConstants",)
+__all__: tuple[str, ...] = ("FlextLdifConstantsServersRelaxed",)
 
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({"FlextLdifServersRelaxedConstants": ".server_constants"}),
+    MappingProxyType({"FlextLdifConstantsServersRelaxed": ".server_constants"}),
     public_exports=__all__,
 )

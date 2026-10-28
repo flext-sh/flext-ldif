@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping
 
 from flext_ldif import c, m, t, u
-from flext_ldif.servers._oid import FlextLdifServersOidConstants
+from flext_ldif.servers._oid import FlextLdifConstantsServersOid
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
@@ -24,31 +24,31 @@ class FlextLdifServersOidEntryMetadata(FlextLdifServersRfcEntry):
         """Extract OID-specific ACL metadata from ACL string."""
         bindmode = u.Ldif.extract_component(
             acl_value,
-            FlextLdifServersOidConstants.ACL_BINDMODE_PATTERN,
+            FlextLdifConstantsServersOid.ACL_BINDMODE_PATTERN,
             group=1,
         )
         if bindmode:
             current_extensions[c.Ldif.ACL_BINDMODE] = bindmode
         if u.Ldif.extract_component(
             acl_value,
-            FlextLdifServersOidConstants.ACL_DENY_GROUP_OVERRIDE_PATTERN,
+            FlextLdifConstantsServersOid.ACL_DENY_GROUP_OVERRIDE_PATTERN,
         ):
             current_extensions[c.Ldif.ACL_DENY_GROUP_OVERRIDE] = True
         if u.Ldif.extract_component(
             acl_value,
-            FlextLdifServersOidConstants.ACL_APPEND_TO_ALL_PATTERN,
+            FlextLdifConstantsServersOid.ACL_APPEND_TO_ALL_PATTERN,
         ):
             current_extensions[c.Ldif.ACL_APPEND_TO_ALL] = True
         bind_ip_filter = u.Ldif.extract_component(
             acl_value,
-            FlextLdifServersOidConstants.ACL_BIND_IP_FILTER_PATTERN,
+            FlextLdifConstantsServersOid.ACL_BIND_IP_FILTER_PATTERN,
             group=1,
         )
         if bind_ip_filter:
             current_extensions[c.Ldif.ACL_BIND_IP_FILTER] = bind_ip_filter
         constrain_to_added = u.Ldif.extract_component(
             acl_value,
-            FlextLdifServersOidConstants.ACL_CONSTRAIN_TO_ADDED_PATTERN,
+            FlextLdifConstantsServersOid.ACL_CONSTRAIN_TO_ADDED_PATTERN,
             group=1,
         )
         if constrain_to_added:

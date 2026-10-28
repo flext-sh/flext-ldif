@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import c, t
-from flext_ldif.servers._oid import FlextLdifServersOidConstants
+from flext_ldif.servers._oid import FlextLdifConstantsServersOid
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
@@ -98,12 +98,12 @@ class FlextLdifServersOidEntryNormalize(FlextLdifServersRfcEntry):
         )
         new_value, _ = mixin.apply_matching_rule_tokens(
             new_value,
-            FlextLdifServersOidConstants.MATCHING_RULE_TO_RFC,
+            FlextLdifConstantsServersOid.MATCHING_RULE_TO_RFC,
             "SUBSTR",
         )
         new_value, _ = mixin.apply_syntax_tokens(
             new_value,
-            FlextLdifServersOidConstants.SYNTAX_OID_TO_RFC,
+            FlextLdifConstantsServersOid.SYNTAX_OID_TO_RFC,
         )
         if attr_name_lower in {"objectclasses", "attributetypes"}:
             new_value, _ = mixin.unquote_sup_value(new_value)

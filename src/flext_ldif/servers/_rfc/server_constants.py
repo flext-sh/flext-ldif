@@ -10,11 +10,11 @@ from flext_ldif import FlextLdifConstants
 from flext_ldif._constants.servers_rfc import FlextLdifConstantsServersRfc
 
 
-class FlextLdifServersRfcConstants(
+class FlextLdifConstantsServersRfc(
     FlextLdifConstants,
     FlextLdifConstantsServersRfc,
 ):
     """Thin inheritor: declarations live in _constants parts."""
 
 
-__all__: list[str] = ["FlextLdifServersRfcConstants"]
+__all__: list[str] = ["FlextLdifConstantsServersRfc"]

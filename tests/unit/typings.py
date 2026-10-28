@@ -8,10 +8,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 
-class TestsFlextLdifUnitTypings:
+class TestsFlextLdifTypingsUnit:
     """Unit test typings namespace."""
 
     type PublicSymbol = str
 
 
-__all__: list[str] = ["TestsFlextLdifUnitTypings"]
+__all__: list[str] = ["TestsFlextLdifTypingsUnit"]

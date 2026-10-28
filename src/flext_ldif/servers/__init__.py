@@ -19,13 +19,13 @@ if TYPE_CHECKING:
     from flext_ldif.servers.ds389 import FlextLdifServersDs389
     from flext_ldif.servers.novell import FlextLdifServersNovell
     from flext_ldif.servers.oid import (
+        FlextLdifConstantsServersOid,
         FlextLdifServersOid,
         FlextLdifServersOidAclAssemble,
         FlextLdifServersOidAclConvert,
         FlextLdifServersOidAclPipeline,
         FlextLdifServersOidAclRender,
         FlextLdifServersOidAclToOud,
-        FlextLdifServersOidConstants,
         FlextLdifServersOidEntry,
         FlextLdifServersOidSchema,
     )
@@ -43,6 +43,7 @@ if TYPE_CHECKING:
 
 
 __all__: tuple[str, ...] = (
+    "FlextLdifConstantsServersOid",
     "FlextLdifServersAd",
     "FlextLdifServersApache",
     "FlextLdifServersBase",
@@ -54,7 +55,6 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersOidAclPipeline",
     "FlextLdifServersOidAclRender",
     "FlextLdifServersOidAclToOud",
-    "FlextLdifServersOidConstants",
     "FlextLdifServersOidEntry",
     "FlextLdifServersOidSchema",
     "FlextLdifServersOpenldap",
@@ -85,7 +85,7 @@ install_lazy_exports(
         "FlextLdifServersOidAclPipeline": ".oid",
         "FlextLdifServersOidAclRender": ".oid",
         "FlextLdifServersOidAclToOud": ".oid",
-        "FlextLdifServersOidConstants": ".oid",
+        "FlextLdifConstantsServersOid": ".oid",
         "FlextLdifServersOidEntry": ".oid",
         "FlextLdifServersOidSchema": ".oid",
         "FlextLdifServersOpenldap": ".openldap",

@@ -1,7 +1,7 @@
 """ldap3 wire constants consumed by the real-directory tests.
 
 Focused constants module split out of ``tests.constants``; the public surface
-is re-exported through ``tests.constants`` (see ``TestsFlextLdifLdapConstants``).
+is re-exported through ``tests.constants`` (see ``TestsFlextLdifConstantsLdap``).
 
 flext-ldif is the base library of the LDAP client, so the client cannot be a
 declared dependency here (see ``tests.utilities``). These are the ldap3
@@ -17,7 +17,7 @@ from __future__ import annotations
 from enum import StrEnum, unique
 
 
-class TestsFlextLdifLdapConstants:
+class TestsFlextLdifConstantsLdap:
     """ldap3 wire constants consumed by the real-directory tests."""
 
     @unique
@@ -38,4 +38,4 @@ class TestsFlextLdifLdapConstants:
         SCHEMA = "SCHEMA"
 
 
-__all__: list[str] = ["TestsFlextLdifLdapConstants"]
+__all__: list[str] = ["TestsFlextLdifConstantsLdap"]

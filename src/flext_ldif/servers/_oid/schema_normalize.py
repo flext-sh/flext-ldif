@@ -10,7 +10,7 @@ from collections.abc import MutableMapping
 from typing import ClassVar
 
 from flext_ldif import c, m, p, t, u
-from flext_ldif.servers._oid import FlextLdifServersOidConstants
+from flext_ldif.servers._oid import FlextLdifConstantsServersOid
 from flext_ldif.servers._rfc import FlextLdifServersRfcSchema
 
 
@@ -34,15 +34,15 @@ class FlextLdifServersOidSchemaNormalize(FlextLdifServersRfcSchema):
         normalized_equality, normalized_substr = u.Ldif.normalize_matching_rules(
             attr.equality,
             attr.substr,
-            replacements=FlextLdifServersOidConstants.MATCHING_RULE_TO_RFC,
-            normalized_substr_values=FlextLdifServersOidConstants.MATCHING_RULE_TO_RFC,
+            replacements=FlextLdifConstantsServersOid.MATCHING_RULE_TO_RFC,
+            normalized_substr_values=FlextLdifConstantsServersOid.MATCHING_RULE_TO_RFC,
         )
         if normalized_equality != attr.equality:
             attr.equality = normalized_equality
         if normalized_substr != attr.substr:
             attr.substr = normalized_substr
         if attr.ordering:
-            normalized_ordering = FlextLdifServersOidConstants.MATCHING_RULE_TO_RFC.get(
+            normalized_ordering = FlextLdifConstantsServersOid.MATCHING_RULE_TO_RFC.get(
                 attr.ordering,
             )
             if normalized_ordering:
@@ -50,7 +50,7 @@ class FlextLdifServersOidSchemaNormalize(FlextLdifServersRfcSchema):
         if attr.syntax:
             attr.syntax = u.Ldif.normalize_syntax_oid(
                 attr.syntax,
-                replacements=FlextLdifServersOidConstants.SYNTAX_OID_TO_RFC,
+                replacements=FlextLdifConstantsServersOid.SYNTAX_OID_TO_RFC,
             )
         return self._transform_case_ignore_substrings(attr)
 
@@ -107,7 +107,7 @@ class FlextLdifServersOidSchemaNormalize(FlextLdifServersRfcSchema):
         """
         if not attr_list:
             return attr_list
-        case_map = FlextLdifServersOidConstants.ATTR_NAME_CASE_MAP
+        case_map = FlextLdifConstantsServersOid.ATTR_NAME_CASE_MAP
         return [case_map.get(attr_name.lower(), attr_name) for attr_name in attr_list]
 
     @staticmethod
@@ -138,7 +138,7 @@ class FlextLdifServersOidSchemaNormalize(FlextLdifServersRfcSchema):
                     objectclass_name=oc_data.name,
                     objectclass_oid=oc_data.oid,
                     original_format_preview=fmt[
-                        : FlextLdifServersOidConstants.MAX_LOG_LINE_LENGTH
+                        : FlextLdifConstantsServersOid.MAX_LOG_LINE_LENGTH
                     ],
                 )
                 return "AUXILIARY"
@@ -196,7 +196,7 @@ class FlextLdifServersOidSchemaNormalize(FlextLdifServersRfcSchema):
                 FlextLdifServersOidSchemaNormalize._module_logger.debug(
                     "OID→RFC transform: SUP normalization (from original_format)",
                     original_format_preview=s[
-                        : FlextLdifServersOidConstants.MAX_LOG_LINE_LENGTH
+                        : FlextLdifConstantsServersOid.MAX_LOG_LINE_LENGTH
                     ],
                 )
                 return "top"

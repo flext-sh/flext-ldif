@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from flext_ldif._protocols import FlextLdifProtocolsBase
 
 
-class FlextLdifModelsProtocolsLdifGeneratedEntryStatistics:
+class FlextLdifProtocolsModelsLdifGeneratedEntryStatistics:
     @runtime_checkable
     class EntryStatistics(Protocol):
         was_parsed: bool
@@ -44,4 +44,4 @@ class FlextLdifModelsProtocolsLdifGeneratedEntryStatistics:
         category_confidence: float
 
 
-__all__ = ["FlextLdifModelsProtocolsLdifGeneratedEntryStatistics"]
+__all__ = ["FlextLdifProtocolsModelsLdifGeneratedEntryStatistics"]

@@ -13,8 +13,8 @@ from typing import ClassVar, override
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers import FlextLdifServersOpenldap1Entry, FlextLdifServersRfc
 from flext_ldif.servers._rfc import (
+    FlextLdifConstantsServersRfc,
     FlextLdifServersRfcAcl,
-    FlextLdifServersRfcConstants,
     FlextLdifServersRfcSchema,
 )
 
@@ -22,7 +22,7 @@ from flext_ldif.servers._rfc import (
 class FlextLdifServersOpenldap1(FlextLdifServersRfc):
     """OpenLDAP 1.x Legacy Servers - Complete Implementation."""
 
-    class Constants(FlextLdifServersRfcConstants):
+    class Constants(FlextLdifConstantsServersRfc):
         """Standardized constants for OpenLDAP 1.x server."""
 
         SERVER_TYPE: ClassVar[str] = c.Ldif.ServerTypes.OPENLDAP1
@@ -49,7 +49,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "access"
         ACL_PERMISSION_AUTH: ClassVar[str] = "auth"
         SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
-            FlextLdifServersRfcConstants.SUPPORTED_PERMISSIONS
+            FlextLdifConstantsServersRfc.SUPPORTED_PERMISSIONS
             | frozenset([ACL_PERMISSION_AUTH])
         )
         OPENLDAP_1_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
@@ -517,8 +517,8 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 Validated ACL permissions derived from the token.
 
             """
-            read_perm = FlextLdifServersRfcConstants.PERMISSION_READ
-            write_perm = FlextLdifServersRfcConstants.PERMISSION_WRITE
+            read_perm = FlextLdifConstantsServersRfc.PERMISSION_READ
+            write_perm = FlextLdifConstantsServersRfc.PERMISSION_WRITE
             auth_perm = FlextLdifServersOpenldap1.Constants.ACL_PERMISSION_AUTH
             return m.Ldif.AclPermissions(
                 read=read_perm in first_access or write_perm in first_access,

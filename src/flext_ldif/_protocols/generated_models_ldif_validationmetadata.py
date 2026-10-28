@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from flext_ldif import c as flext_ldif_c, t as flext_ldif_t
 
 
-class FlextLdifModelsProtocolsLdifGeneratedValidationMetadata:
+class FlextLdifProtocolsModelsLdifGeneratedValidationMetadata:
     @runtime_checkable
     class ValidationMetadata(Protocol):
         rfc_violations: flext_ldif_t.MutableSequenceOf[str]
@@ -27,4 +27,4 @@ class FlextLdifModelsProtocolsLdifGeneratedValidationMetadata:
         validation_server_type: flext_ldif_c.Ldif.ServerTypes | None
 
 
-__all__ = ["FlextLdifModelsProtocolsLdifGeneratedValidationMetadata"]
+__all__ = ["FlextLdifProtocolsModelsLdifGeneratedValidationMetadata"]

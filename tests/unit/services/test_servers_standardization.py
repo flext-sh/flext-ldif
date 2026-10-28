@@ -23,11 +23,11 @@ from flext_ldif.servers import (
     FlextLdifServersRfc,
 )
 from tests import c, t, tm
-from tests.unit.services import TestsFlextLdifServiceTypings
+from tests.unit.services import TestsFlextLdifTypingsService
 
 # (server class, canonical identity, priority) — the standardized identity table.
 _STANDARDIZED_SERVERS: tuple[
-    tuple[TestsFlextLdifServiceTypings.ServerClass, str, int], ...
+    tuple[TestsFlextLdifTypingsService.ServerClass, str, int], ...
 ] = (
     (FlextLdifServersRfc, "rfc", 100),
     (FlextLdifServersOid, "oid", 10),
@@ -72,7 +72,7 @@ class TestsFlextLdifServersStandardization:
         _STANDARDIZED_SERVERS,
     )
     def test_constants_expose_expected_canonical_identity(
-        server_cls: TestsFlextLdifServiceTypings.ServerClass,
+        server_cls: TestsFlextLdifTypingsService.ServerClass,
         canonical: str,
         priority: int,
     ) -> None:
@@ -89,7 +89,7 @@ class TestsFlextLdifServersStandardization:
         _STANDARDIZED_SERVERS,
     )
     def test_canonical_name_is_a_registered_alias(
-        server_cls: TestsFlextLdifServiceTypings.ServerClass,
+        server_cls: TestsFlextLdifTypingsService.ServerClass,
         canonical: str,
         priority: int,
     ) -> None:

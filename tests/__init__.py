@@ -44,9 +44,9 @@ if TYPE_CHECKING:
     from flext_ldif import ldif
     from tests.base import TestsFlextLdifServiceBase, s
     from tests.constants import TestsFlextLdifConstants, c
-    from tests.constants_ldap import TestsFlextLdifLdapConstants
+    from tests.constants_ldap import TestsFlextLdifConstantsLdap
     from tests.models import TestsFlextLdifModels, m
-    from tests.protocols import TestsFlextLdifLdapProtocols, TestsFlextLdifProtocols, p
+    from tests.protocols import TestsFlextLdifProtocols, TestsFlextLdifProtocolsLdap, p
     from tests.settings import TestsFlextLdifSettings
     from tests.typings import TestsFlextLdifTypes, t
     from tests.utilities import (
@@ -58,10 +58,10 @@ if TYPE_CHECKING:
 
 __all__: tuple[str, ...] = (
     "TestsFlextLdifConstants",
-    "TestsFlextLdifLdapConstants",
-    "TestsFlextLdifLdapProtocols",
+    "TestsFlextLdifConstantsLdap",
     "TestsFlextLdifModels",
     "TestsFlextLdifProtocols",
+    "TestsFlextLdifProtocolsLdap",
     "TestsFlextLdifSchemaExpectations",
     "TestsFlextLdifServiceBase",
     "TestsFlextLdifSettings",
@@ -106,8 +106,8 @@ install_lazy_exports(
     globals(),
     MappingProxyType({
         "TestsFlextLdifConstants": ".constants",
-        "TestsFlextLdifLdapConstants": ".constants_ldap",
-        "TestsFlextLdifLdapProtocols": ".protocols",
+        "TestsFlextLdifConstantsLdap": ".constants_ldap",
+        "TestsFlextLdifProtocolsLdap": ".protocols",
         "TestsFlextLdifModels": ".models",
         "TestsFlextLdifProtocols": ".protocols",
         "TestsFlextLdifSchemaExpectations": ".utilities",

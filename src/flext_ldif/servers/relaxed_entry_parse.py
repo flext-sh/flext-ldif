@@ -10,7 +10,7 @@ from collections.abc import MutableMapping
 from typing import override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._relaxed import FlextLdifServersRelaxedConstants
+from flext_ldif.servers._relaxed import FlextLdifConstantsServersRelaxed
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
@@ -301,8 +301,8 @@ class FlextLdifServersRelaxedEntryParse(FlextLdifServersRfcEntry):
                 else:
                     converted_list.append(
                         value.decode(
-                            FlextLdifServersRelaxedConstants.ENCODING_UTF8,
-                            errors=FlextLdifServersRelaxedConstants.ENCODING_ERROR_HANDLING,
+                            FlextLdifConstantsServersRelaxed.ENCODING_UTF8,
+                            errors=FlextLdifConstantsServersRelaxed.ENCODING_ERROR_HANDLING,
                         ),
                     )
             attr_dict[attr_key] = converted_list

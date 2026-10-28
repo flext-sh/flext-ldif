@@ -11,7 +11,7 @@ import pytest
 from tests import c, ldif, m, p, tm
 
 
-class TestsFlextLdifSchemaProtocols:
+class TestsFlextLdifProtocolsSchema:
     """Exercise schema payloads through the public facade and protocol types."""
 
     @staticmethod

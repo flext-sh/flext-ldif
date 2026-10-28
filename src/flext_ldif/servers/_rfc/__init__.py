@@ -19,12 +19,12 @@ if TYPE_CHECKING:
     from flext_ldif.servers._rfc.schema_parse import FlextLdifServersRfcSchemaParse
     from flext_ldif.servers._rfc.schema_values import FlextLdifServersRfcSchemaValues
     from flext_ldif.servers._rfc.schema_write import FlextLdifServersRfcSchemaWrite
-    from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
+    from flext_ldif.servers._rfc.server_constants import FlextLdifConstantsServersRfc
 
 
 __all__: tuple[str, ...] = (
+    "FlextLdifConstantsServersRfc",
     "FlextLdifServersRfcAcl",
-    "FlextLdifServersRfcConstants",
     "FlextLdifServersRfcEntry",
     "FlextLdifServersRfcSchema",
     "FlextLdifServersRfcSchemaParse",
@@ -37,7 +37,7 @@ install_lazy_exports(
     globals(),
     MappingProxyType({
         "FlextLdifServersRfcAcl": ".acl",
-        "FlextLdifServersRfcConstants": ".server_constants",
+        "FlextLdifConstantsServersRfc": ".server_constants",
         "FlextLdifServersRfcEntry": ".entry",
         "FlextLdifServersRfcSchema": ".schema",
         "FlextLdifServersRfcSchemaParse": ".schema_parse",

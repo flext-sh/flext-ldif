@@ -13,7 +13,7 @@ import pytest
 from tests import c, m, t, tm, u
 
 
-class TestsFlextLdifCollectionsModels:
+class TestsFlextLdifModelsCollections:
     """Cover DynamicCounts, SchemaContent, and FlexibleCategories behavior."""
 
     @staticmethod

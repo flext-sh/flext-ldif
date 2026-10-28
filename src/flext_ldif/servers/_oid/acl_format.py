@@ -10,7 +10,7 @@ from collections.abc import Mapping, MutableMapping
 from typing import ClassVar
 
 from flext_ldif import c, m, p, t, u
-from flext_ldif.servers._oid import FlextLdifServersOidConstants
+from flext_ldif.servers._oid import FlextLdifConstantsServersOid
 from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 
 
@@ -30,7 +30,7 @@ class FlextLdifServersOidAclFormat(FlextLdifServersRfcAcl):
         allowed_perms: t.MutableSequenceOf[str] = []
         for perm, allowed in permissions.items():
             if allowed:
-                oid_perm_name = FlextLdifServersOidConstants.ACL_PERMISSION_NAMES.get(
+                oid_perm_name = FlextLdifConstantsServersOid.ACL_PERMISSION_NAMES.get(
                     perm,
                     perm,
                 )
@@ -50,7 +50,7 @@ class FlextLdifServersOidAclFormat(FlextLdifServersRfcAcl):
         clean_value = FlextLdifServersOidAclFormat.clean_subject_value(
             subject_value,
         )
-        sc = FlextLdifServersOidConstants
+        sc = FlextLdifConstantsServersOid
         match subject_type.lower():
             case sc.OidAclSubjectType.SELF:
                 result = sc.OidAclSubjectType.SELF

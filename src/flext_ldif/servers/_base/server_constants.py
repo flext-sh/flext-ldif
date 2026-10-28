@@ -9,10 +9,10 @@ from __future__ import annotations
 from flext_ldif import FlextLdifConstants
 
 
-class FlextLdifServersBaseConstants(
+class FlextLdifConstantsServersBase(
     FlextLdifConstants,
 ):
     """Thin inheritor: declarations live in _constants parts."""
 
 
-__all__: list[str] = ["FlextLdifServersBaseConstants"]
+__all__: list[str] = ["FlextLdifConstantsServersBase"]

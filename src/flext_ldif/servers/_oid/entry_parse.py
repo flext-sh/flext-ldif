@@ -11,7 +11,7 @@ from typing import override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oid import (
-    FlextLdifServersOidConstants,
+    FlextLdifConstantsServersOid,
     FlextLdifServersOidEntryBoolean,
     FlextLdifServersOidEntryMetadata,
     FlextLdifServersOidEntryNormalize,
@@ -266,7 +266,7 @@ class FlextLdifServersOidEntryParse(
         """
         cleaned_dn, _ = u.Ldif.clean_dn_with_statistics(dn)
         normalized_dn = cleaned_dn
-        if cleaned_dn.lower() == FlextLdifServersOidConstants.SCHEMA_DN_SERVER.lower():
+        if cleaned_dn.lower() == FlextLdifConstantsServersOid.SCHEMA_DN_SERVER.lower():
             normalized_dn = c.Ldif.RFC_SCHEMA_DN
             FlextLdifServersOidEntryParse._module_logger.debug(
                 "OID→RFC transform: Normalizing schema DN",
@@ -297,7 +297,7 @@ class FlextLdifServersOidEntryParse(
         extensions = (
             acl_model.metadata.extensions if acl_model.metadata is not None else {}
         )
-        for key in FlextLdifServersOidConstants.ACL_ENTRY_EXTENSION_KEYS:
+        for key in FlextLdifConstantsServersOid.ACL_ENTRY_EXTENSION_KEYS:
             if key in extensions and not current_extensions.get(key):
                 current_extensions[key] = extensions[key]
         return r[t.Ldif.MutableMetadataMapping].ok(current_extensions)

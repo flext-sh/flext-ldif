@@ -14,11 +14,11 @@ if TYPE_CHECKING:
     from flext_ldif._protocols import FlextLdifProtocolsValues
 
 
-class FlextLdifModelsProtocolsLdifGeneratedAclEntryConversion:
+class FlextLdifProtocolsModelsLdifGeneratedAclEntryConversion:
     @runtime_checkable
     class AclEntryConversion(Protocol):
         rules: tuple[FlextLdifProtocolsValues.AciRule, ...]
         oracle_internal_skip: bool
 
 
-__all__ = ["FlextLdifModelsProtocolsLdifGeneratedAclEntryConversion"]
+__all__ = ["FlextLdifProtocolsModelsLdifGeneratedAclEntryConversion"]

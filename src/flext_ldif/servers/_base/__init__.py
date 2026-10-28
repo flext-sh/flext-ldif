@@ -33,14 +33,14 @@ if TYPE_CHECKING:
         FlextLdifServersBaseSchemaMetadata,
     )
     from flext_ldif.servers._base.schema_values import FlextLdifServersBaseSchemaValues
-    from flext_ldif.servers._base.server_constants import FlextLdifServersBaseConstants
+    from flext_ldif.servers._base.server_constants import FlextLdifConstantsServersBase
     from flext_ldif.servers._base.server_io import FlextLdifServersBaseIo
     from flext_ldif.servers._base.server_type import FlextLdifServersBaseMro
 
 
 __all__: tuple[str, ...] = (
+    "FlextLdifConstantsServersBase",
     "FlextLdifServerMethods",
-    "FlextLdifServersBaseConstants",
     "FlextLdifServersBaseEntry",
     "FlextLdifServersBaseExecuteParams",
     "FlextLdifServersBaseIo",
@@ -61,7 +61,7 @@ install_lazy_exports(
     globals(),
     MappingProxyType({
         "FlextLdifServerMethods": ".mixins",
-        "FlextLdifServersBaseConstants": ".server_constants",
+        "FlextLdifConstantsServersBase": ".server_constants",
         "FlextLdifServersBaseEntry": ".entry",
         "FlextLdifServersBaseExecuteParams": ".execute_params",
         "FlextLdifServersBaseIo": ".server_io",

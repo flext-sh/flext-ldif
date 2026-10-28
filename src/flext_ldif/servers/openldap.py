@@ -13,8 +13,8 @@ from typing import ClassVar, override
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers import FlextLdifServersRfc
 from flext_ldif.servers._rfc import (
+    FlextLdifConstantsServersRfc,
     FlextLdifServersRfcAcl,
-    FlextLdifServersRfcConstants,
     FlextLdifServersRfcEntry,
     FlextLdifServersRfcSchema,
 )
@@ -23,7 +23,7 @@ from flext_ldif.servers._rfc import (
 class FlextLdifServersOpenldap(FlextLdifServersRfc):
     """OpenLDAP 2.x Servers - Complete Implementation."""
 
-    class Constants(FlextLdifServersRfcConstants):
+    class Constants(FlextLdifConstantsServersRfc):
         """Standardized constants for OpenLDAP 2.x server."""
 
         SERVER_TYPE: ClassVar[str] = "openldap2"
@@ -82,11 +82,11 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             "olcSchemaConfig",
         ])
         OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = (
-            FlextLdifServersRfcConstants.OPERATIONAL_ATTRIBUTES
+            FlextLdifConstantsServersRfc.OPERATIONAL_ATTRIBUTES
             | frozenset(["entryUUID", "entryCSN", "contextCSN", "hasSubordinates"])
         )
         SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
-            FlextLdifServersRfcConstants.SUPPORTED_PERMISSIONS | frozenset(["auth"])
+            FlextLdifConstantsServersRfc.SUPPORTED_PERMISSIONS | frozenset(["auth"])
         )
         ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset(["x_origin", "ordering"])
         OBJECTCLASS_REQUIREMENTS: ClassVar[t.BoolMapping] = MappingProxyType({

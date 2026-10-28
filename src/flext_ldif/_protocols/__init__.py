@@ -17,42 +17,42 @@ if TYPE_CHECKING:
     from flext_ldif._protocols.client import FlextLdifProtocolsClient
     from flext_ldif._protocols.domain import FlextLdifProtocolsDomain
     from flext_ldif._protocols.generated_models_basemodel import (
-        FlextLdifModelsProtocolsGeneratedBaseModel,
+        FlextLdifProtocolsModelsGeneratedBaseModel,
     )
     from flext_ldif._protocols.generated_models_ldif_aclentryconversion import (
-        FlextLdifModelsProtocolsLdifGeneratedAclEntryConversion,
+        FlextLdifProtocolsModelsLdifGeneratedAclEntryConversion,
     )
     from flext_ldif._protocols.generated_models_ldif_entrydetectionmarkers import (
-        FlextLdifModelsProtocolsLdifGeneratedEntryDetectionMarkers,
+        FlextLdifProtocolsModelsLdifGeneratedEntryDetectionMarkers,
     )
     from flext_ldif._protocols.generated_models_ldif_entrystatistics import (
-        FlextLdifModelsProtocolsLdifGeneratedEntryStatistics,
+        FlextLdifProtocolsModelsLdifGeneratedEntryStatistics,
     )
     from flext_ldif._protocols.generated_models_ldif_schemaelement import (
-        FlextLdifModelsProtocolsLdifGeneratedSchemaElement,
+        FlextLdifProtocolsModelsLdifGeneratedSchemaElement,
     )
     from flext_ldif._protocols.generated_models_ldif_servermetadata import (
-        FlextLdifModelsProtocolsLdifGeneratedServerMetadata,
+        FlextLdifProtocolsModelsLdifGeneratedServerMetadata,
     )
     from flext_ldif._protocols.generated_models_ldif_validationmetadata import (
-        FlextLdifModelsProtocolsLdifGeneratedValidationMetadata,
+        FlextLdifProtocolsModelsLdifGeneratedValidationMetadata,
     )
     from flext_ldif._protocols.ldap3 import FlextLdifProtocolsLdap3
     from flext_ldif._protocols.values import FlextLdifProtocolsValues
 
 
 __all__: tuple[str, ...] = (
-    "FlextLdifModelsProtocolsGeneratedBaseModel",
-    "FlextLdifModelsProtocolsLdifGeneratedAclEntryConversion",
-    "FlextLdifModelsProtocolsLdifGeneratedEntryDetectionMarkers",
-    "FlextLdifModelsProtocolsLdifGeneratedEntryStatistics",
-    "FlextLdifModelsProtocolsLdifGeneratedSchemaElement",
-    "FlextLdifModelsProtocolsLdifGeneratedServerMetadata",
-    "FlextLdifModelsProtocolsLdifGeneratedValidationMetadata",
     "FlextLdifProtocolsBase",
     "FlextLdifProtocolsClient",
     "FlextLdifProtocolsDomain",
     "FlextLdifProtocolsLdap3",
+    "FlextLdifProtocolsModelsGeneratedBaseModel",
+    "FlextLdifProtocolsModelsLdifGeneratedAclEntryConversion",
+    "FlextLdifProtocolsModelsLdifGeneratedEntryDetectionMarkers",
+    "FlextLdifProtocolsModelsLdifGeneratedEntryStatistics",
+    "FlextLdifProtocolsModelsLdifGeneratedSchemaElement",
+    "FlextLdifProtocolsModelsLdifGeneratedServerMetadata",
+    "FlextLdifProtocolsModelsLdifGeneratedValidationMetadata",
     "FlextLdifProtocolsValues",
 )
 
@@ -60,28 +60,28 @@ install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "FlextLdifModelsProtocolsLdifGeneratedAclEntryConversion": (
+        "FlextLdifProtocolsModelsLdifGeneratedAclEntryConversion": (
             ".generated_models_ldif_aclentryconversion"
         ),
-        "FlextLdifModelsProtocolsLdifGeneratedEntryDetectionMarkers": (
+        "FlextLdifProtocolsModelsLdifGeneratedEntryDetectionMarkers": (
             ".generated_models_ldif_entrydetectionmarkers"
         ),
-        "FlextLdifModelsProtocolsLdifGeneratedEntryStatistics": (
+        "FlextLdifProtocolsModelsLdifGeneratedEntryStatistics": (
             ".generated_models_ldif_entrystatistics"
         ),
-        "FlextLdifModelsProtocolsLdifGeneratedSchemaElement": (
+        "FlextLdifProtocolsModelsLdifGeneratedSchemaElement": (
             ".generated_models_ldif_schemaelement"
         ),
-        "FlextLdifModelsProtocolsLdifGeneratedServerMetadata": (
+        "FlextLdifProtocolsModelsLdifGeneratedServerMetadata": (
             ".generated_models_ldif_servermetadata"
         ),
-        "FlextLdifModelsProtocolsLdifGeneratedValidationMetadata": (
+        "FlextLdifProtocolsModelsLdifGeneratedValidationMetadata": (
             ".generated_models_ldif_validationmetadata"
         ),
         "FlextLdifProtocolsBase": ".base",
         "FlextLdifProtocolsClient": ".client",
         "FlextLdifProtocolsDomain": ".domain",
-        "FlextLdifModelsProtocolsGeneratedBaseModel": ".generated_models_basemodel",
+        "FlextLdifProtocolsModelsGeneratedBaseModel": ".generated_models_basemodel",
         "FlextLdifProtocolsLdap3": ".ldap3",
         "FlextLdifProtocolsValues": ".values",
     }),

@@ -10,7 +10,7 @@ import re
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._oud import FlextLdifServersOudConstants
+from flext_ldif.servers._oud import FlextLdifConstantsServersOud
 from flext_ldif.servers._rfc import FlextLdifServersRfcSchema
 
 if TYPE_CHECKING:
@@ -224,7 +224,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
         original_substr = fixed_substr
         fixed_substr = u.Ldif.replace_invalid_substr_rule(
             fixed_substr,
-            FlextLdifServersOudConstants.INVALID_SUBSTR_RULES,
+            FlextLdifConstantsServersOud.INVALID_SUBSTR_RULES,
         )
         if fixed_substr != original_substr:
             FlextLdifServersOudSchema._module_logger.warning(
@@ -334,12 +334,12 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
         normalized_equality, normalized_substr = u.Ldif.normalize_matching_rules(
             attr.equality,
             attr.substr,
-            replacements=FlextLdifServersOudConstants.MATCHING_RULE_TO_RFC,
-            normalized_substr_values=FlextLdifServersOudConstants.MATCHING_RULE_TO_RFC,
+            replacements=FlextLdifConstantsServersOud.MATCHING_RULE_TO_RFC,
+            normalized_substr_values=FlextLdifConstantsServersOud.MATCHING_RULE_TO_RFC,
         )
         normalized_ordering = attr.ordering
         if attr.ordering:
-            normalized_ordering = FlextLdifServersOudConstants.MATCHING_RULE_TO_RFC.get(
+            normalized_ordering = FlextLdifConstantsServersOud.MATCHING_RULE_TO_RFC.get(
                 attr.ordering,
                 attr.ordering,
             )
@@ -468,7 +468,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
             fixed_name = stripped_name
         is_boolean = u.Ldif.boolean_attribute(
             fixed_name,
-            set(FlextLdifServersOudConstants.BOOLEAN_ATTRIBUTES),
+            set(FlextLdifConstantsServersOud.BOOLEAN_ATTRIBUTES),
         )
         if is_boolean:
             FlextLdifServersOudSchema._module_logger.debug(

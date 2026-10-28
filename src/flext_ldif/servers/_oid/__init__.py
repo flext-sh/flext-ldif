@@ -35,10 +35,11 @@ if TYPE_CHECKING:
     from flext_ldif.servers._oid.schema_normalize import (
         FlextLdifServersOidSchemaNormalize,
     )
-    from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
+    from flext_ldif.servers._oid.server_constants import FlextLdifConstantsServersOid
 
 
 __all__: tuple[str, ...] = (
+    "FlextLdifConstantsServersOid",
     "FlextLdifServersOidAcl",
     "FlextLdifServersOidAclAssemble",
     "FlextLdifServersOidAclConvert",
@@ -49,7 +50,6 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersOidAclSubject",
     "FlextLdifServersOidAclToOud",
     "FlextLdifServersOidAclWrite",
-    "FlextLdifServersOidConstants",
     "FlextLdifServersOidEntry",
     "FlextLdifServersOidEntryBoolean",
     "FlextLdifServersOidEntryMetadata",
@@ -74,7 +74,7 @@ install_lazy_exports(
         "FlextLdifServersOidAclSubject": ".acl_subjects",
         "FlextLdifServersOidAclToOud": ".acl_convert_oud",
         "FlextLdifServersOidAclWrite": ".acl_write",
-        "FlextLdifServersOidConstants": ".server_constants",
+        "FlextLdifConstantsServersOid": ".server_constants",
         "FlextLdifServersOidEntry": ".entry",
         "FlextLdifServersOidEntryBoolean": ".entry_boolean",
         "FlextLdifServersOidEntryMetadata": ".entry_metadata",

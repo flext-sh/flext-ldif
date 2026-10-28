@@ -10,7 +10,7 @@ from collections.abc import MutableMapping
 
 from flext_ldif import c, m, t, u
 from flext_ldif.servers._oid import (
-    FlextLdifServersOidConstants,
+    FlextLdifConstantsServersOid,
     FlextLdifServersOidEntryMetadata,
 )
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
@@ -37,7 +37,7 @@ class FlextLdifServersOidEntryBoolean(
                 MutableMapping[str, t.MutableAttributeMapping]]``.
 
         """
-        oid_constants = FlextLdifServersOidConstants
+        oid_constants = FlextLdifConstantsServersOid
         boolean_attributes = oid_constants.BOOLEAN_ATTRIBUTES
         boolean_attr_names = {attr.lower() for attr in boolean_attributes}
         converted_attrs_for_util: t.MutableStrSequenceMapping = dict(
@@ -85,7 +85,7 @@ class FlextLdifServersOidEntryBoolean(
             The resulting ``MutableMapping[str, str | t.MutableSequenceOf[str]]``.
 
         """
-        oid_constants = FlextLdifServersOidConstants
+        oid_constants = FlextLdifConstantsServersOid
         return {
             c.Ldif.CONVERSION_ORIGINAL_VALUE: original_values,
             c.Ldif.CONVERSION_CONVERTED_VALUE: converted_values,
@@ -122,9 +122,9 @@ class FlextLdifServersOidEntryBoolean(
 
         """
         if value == "TRUE":
-            return (FlextLdifServersOidConstants.ONE_OID, True)
+            return (FlextLdifConstantsServersOid.ONE_OID, True)
         if value == "FALSE":
-            return (FlextLdifServersOidConstants.ZERO_OID, True)
+            return (FlextLdifConstantsServersOid.ZERO_OID, True)
         return (value, False)
 
     @staticmethod
@@ -149,7 +149,7 @@ class FlextLdifServersOidEntryBoolean(
             case _:
                 return False
         rfc_value = converted_val_list[0]
-        oid_value = FlextLdifServersOidConstants.RFC_TO_OID.get(rfc_value, rfc_value)
+        oid_value = FlextLdifConstantsServersOid.RFC_TO_OID.get(rfc_value, rfc_value)
         restored_attrs[attr_name] = [oid_value]
         FlextLdifServersOidEntryBoolean._module_logger.debug(
             "Restored OID boolean format from metadata",
@@ -171,7 +171,7 @@ class FlextLdifServersOidEntryBoolean(
             return entry_data
         boolean_conversions = self._parse_metadata_boolean_flags(entry_data)
         boolean_attr_names = {
-            attr.lower() for attr in FlextLdifServersOidConstants.BOOLEAN_ATTRIBUTES
+            attr.lower() for attr in FlextLdifConstantsServersOid.BOOLEAN_ATTRIBUTES
         }
         restored_attrs = dict(entry_data.attributes.attributes)
         for attr_name in list(restored_attrs.keys()):

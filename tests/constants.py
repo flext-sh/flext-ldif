@@ -14,14 +14,14 @@ from typing import TYPE_CHECKING, ClassVar, Final, Literal
 from flext_tests import c as flext_tests_c
 
 from flext_ldif import c
-from tests import TestsFlextLdifLdapConstants
+from tests import TestsFlextLdifConstantsLdap
 
 if TYPE_CHECKING:
     from tests import t
 
 
 class TestsFlextLdifConstants(
-    TestsFlextLdifLdapConstants,
+    TestsFlextLdifConstantsLdap,
     flext_tests_c,
     c,
 ):
