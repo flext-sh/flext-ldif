@@ -19,10 +19,10 @@ class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
     class Tests(FlextTestsTypes.Tests):
         """flext-ldif-specific test type definitions namespace."""
 
-        type GenericFieldsDict = FlextLdifTypes.StrMapping
-        type DnRefData = FlextLdifTypes.MappingKV[
+        type GenericFieldsDict = FlextLdifTypes.Mapping[str, str]
+        type DnRefData = FlextLdifTypes.Mapping[
             str,
-            FlextLdifTypes.StrMapping | FlextLdifTypes.StrSequence | str,
+            FlextLdifTypes.Mapping[str, str] | FlextLdifTypes.Sequence[str] | str,
         ]
         type FixtureServer = str
         type FixtureKind = str
@@ -31,7 +31,7 @@ class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
             str, str, bool, str | None, str | None, str | None
         ]
         type EntryCaseRow = tuple[
-            str, str, FlextLdifTypes.MappingKV[str, FlextLdifTypes.StrSequence], bool
+            str, str, FlextLdifTypes.Mapping[str, FlextLdifTypes.Sequence[str]], bool
         ]
         type ParseMethod = Literal[
             "parse_server",

@@ -6,13 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, overload
+from collections.abc import MutableMapping, MutableSequence
+from typing import overload
 
-from flext_ldif import FlextLdifModels, c, t
+from flext_ldif import FlextLdifModels, c
 from flext_ldif._utilities._dn.parse import FlextLdifUtilitiesDNParse
-
-if TYPE_CHECKING:
-    from collections.abc import MutableMapping
 
 
 class FlextLdifUtilitiesDNClean:
@@ -23,20 +21,20 @@ class FlextLdifUtilitiesDNClean:
         original_dn: str,
     ) -> tuple[
         str,
-        t.MutableSequenceOf[str],
-        MutableMapping[str, bool | str | t.MutableSequenceOf[str]],
+        MutableSequence[str],
+        MutableMapping[str, bool | str | MutableSequence[str]],
     ]:
         """Apply DN transformations and collect flags.
 
         Returns:
-            The resulting ``tuple[str, t.MutableSequenceOf[str], MutableMapping[str,
-                bool | str | t.MutableSequenceOf[str]]]``.
+            The resulting ``tuple[str, MutableSequence[str], MutableMapping[str,
+                bool | str | MutableSequence[str]]]``.
 
         """
-        transformations: t.MutableSequenceOf[str] = []
-        empty_warnings: t.MutableSequenceOf[str] = []
-        empty_errors: t.MutableSequenceOf[str] = []
-        flags: MutableMapping[str, bool | str | t.MutableSequenceOf[str]] = {
+        transformations: MutableSequence[str] = []
+        empty_warnings: MutableSequence[str] = []
+        empty_errors: MutableSequence[str] = []
+        flags: MutableMapping[str, bool | str | MutableSequence[str]] = {
             "had_tab_chars": False,
             "had_trailing_spaces": False,
             "had_leading_spaces": False,
@@ -49,7 +47,7 @@ class FlextLdifUtilitiesDNClean:
             "validation_errors": empty_errors,
         }
         result = original_dn
-        transform_rules: t.MutableSequenceOf[tuple[str, str, str, str, str]] = [
+        transform_rules: MutableSequence[tuple[str, str, str, str, str]] = [
             (
                 "[\\t\\r\\n\\x0b\\x0c]",
                 "[\\t\\r\\n\\x0b\\x0c]",
@@ -121,8 +119,8 @@ class FlextLdifUtilitiesDNClean:
     def _statistics_from_flags(
         original_dn: str,
         result: str,
-        transformations: t.MutableSequenceOf[str],
-        flags: MutableMapping[str, bool | str | t.MutableSequenceOf[str]],
+        transformations: MutableSequence[str],
+        flags: MutableMapping[str, bool | str | MutableSequence[str]],
     ) -> FlextLdifModels.Ldif.DNStatistics:
         """Build the DNStatistics model from transformation flags.
 
@@ -135,13 +133,13 @@ class FlextLdifUtilitiesDNClean:
             validation_status_raw if isinstance(validation_status_raw, str) else ""
         )
         validation_warnings_raw = flags.get("validation_warnings", [])
-        validation_warnings: t.MutableSequenceOf[str] = (
+        validation_warnings: MutableSequence[str] = (
             list(validation_warnings_raw)
             if isinstance(validation_warnings_raw, list)
             else []
         )
         validation_errors_raw = flags.get("validation_errors", [])
-        validation_errors: t.MutableSequenceOf[str] = (
+        validation_errors: MutableSequence[str] = (
             list(validation_errors_raw)
             if isinstance(validation_errors_raw, list)
             else []

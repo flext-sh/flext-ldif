@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
@@ -26,11 +26,11 @@ class FlextLdifServersOidAclWrite(
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     @override
-    def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
+    def resolve_acl_attributes(self) -> MutableSequence[str]:
         """Get RFC + OID extensions.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         return [
@@ -45,14 +45,14 @@ class FlextLdifServersOidAclWrite(
         metadata: m.Ldif.ServerMetadata
         | MutableMapping[
             str,
-            t.Ldif.Scalar | t.MutableSequenceOf[str] | t.MutableAttributeMapping | None,
+            t.Ldif.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
         ]
         | None,
-    ) -> t.StrPair:
+    ) -> tuple[str, str]:
         """Prepare OID subject and permissions clauses for ACL write.
 
         Returns:
-            The resulting ``t.StrPair``.
+            The resulting ``tuple[str, str]``.
 
         """
         subject_dict = self._normalize_to_dict(acl_subject)

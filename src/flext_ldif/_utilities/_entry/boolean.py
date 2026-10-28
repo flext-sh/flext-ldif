@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableSequence, Sequence
 
 from flext_ldif import c, t
 
@@ -16,10 +16,7 @@ class FlextLdifUtilitiesEntryBoolean:
 
     @staticmethod
     def _raw_value_items(
-        attr_raw_values: t.MutableSequenceOf[str]
-        | t.MutableSequenceOf[bytes]
-        | str
-        | bytes,
+        attr_raw_values: MutableSequence[str] | MutableSequence[bytes] | str | bytes,
     ) -> Sequence[str | bytes]:
         """Normalize a scalar or sequence attribute payload into items.
 
@@ -73,7 +70,7 @@ class FlextLdifUtilitiesEntryBoolean:
     def convert_boolean_attributes(
         attributes: Mapping[
             str,
-            t.MutableSequenceOf[str] | t.MutableSequenceOf[bytes] | str | bytes,
+            MutableSequence[str] | MutableSequence[bytes] | str | bytes,
         ],
         boolean_attr_names: set[str],
         *,
@@ -92,7 +89,7 @@ class FlextLdifUtilitiesEntryBoolean:
             attr_name.lower() for attr_name in boolean_attr_names
         }
         for attr_name in attributes:
-            str_values: t.MutableSequenceOf[str] = []
+            str_values: MutableSequence[str] = []
             for raw_item in FlextLdifUtilitiesEntryBoolean._raw_value_items(
                 attributes[attr_name],
             ):

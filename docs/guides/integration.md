@@ -36,6 +36,15 @@ general FLEXT patterns, see
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_ldif import ldif, p
 
 
@@ -67,6 +76,15 @@ def process_directory_export(file_path: str) -> p.Result[dict]:
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from pathlib import Path
 
 from flext_ldif import ldif, m, p, r
@@ -95,6 +113,15 @@ def process_ldif_with_memory_check(file_path: Path) -> p.Result[m.Dict]:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from pathlib import Path
 
@@ -143,7 +170,7 @@ class FLEXTOUDMigrationService:
 
     def _categorize_ldif_entries(
         self,
-        entries: t.SequenceOf[p.Ldif.Entry],
+        entries: Sequence[p.Ldif.Entry],
     ) -> p.Result[m.Dict]:
         """Categorize LDIF entries for migration processing."""
         try:
@@ -156,7 +183,7 @@ class FLEXTOUDMigrationService:
 
     def _partition_entries(
         self,
-        entries: t.SequenceOf[p.Ldif.Entry],
+        entries: Sequence[p.Ldif.Entry],
     ) -> t.JsonMapping:
         """Partition LDIF entries into migration processing groups."""
         users = []
@@ -209,16 +236,16 @@ class FLEXTOUDMigrationService:
 
     def _transform_user_entries(
         self,
-        user_entries: t.SequenceOf[p.Ldif.Entry],
-    ) -> t.SequenceOf[p.Ldif.Entry]:
+        user_entries: Sequence[p.Ldif.Entry],
+    ) -> Sequence[p.Ldif.Entry]:
         """Transform user LDIF entries for FLEXT migration."""
         # LDIF-specific user entry transformations
         return user_entries
 
     def _transform_group_entries(
         self,
-        group_entries: t.SequenceOf[p.Ldif.Entry],
-    ) -> t.SequenceOf[p.Ldif.Entry]:
+        group_entries: Sequence[p.Ldif.Entry],
+    ) -> Sequence[p.Ldif.Entry]:
         """Transform group LDIF entries for FLEXT migration."""
         # LDIF-specific group entry transformations
         return group_entries
@@ -255,6 +282,15 @@ class FLEXTOUDMigrationService:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from flext_api import FlextAPIService
 
@@ -320,6 +356,15 @@ class LdifAPIService(FlextAPIService):
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 import json
 from pathlib import Path
 
@@ -363,7 +408,7 @@ class LdifCLIService(FlextCliService):
 
     def _output_ldif_results(
         self,
-        entries: t.SequenceOf[p.Ldif.Entry],
+        entries: Sequence[p.Ldif.Entry],
         format_type: str,
     ) -> p.Result[bool]:
         """Output LDIF parsing results in specified format."""
@@ -409,6 +454,15 @@ class LdifCLIService(FlextCliService):
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 import os
 from pathlib import Path
 
@@ -417,7 +471,7 @@ import psutil
 from flext_ldif import ldif, m, p, r, t
 
 
-def process_multiple_ldif_files(file_paths: t.SequenceOf[Path]) -> p.Result[m.Dict]:
+def process_multiple_ldif_files(file_paths: Sequence[Path]) -> p.Result[m.Dict]:
     """Process multiple LDIF files with memory monitoring."""
     api = ldif()
     all_entries = []
@@ -473,6 +527,15 @@ Always check file sizes before processing with current implementation:
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from pathlib import Path
 
 from flext_ldif import ldif, p, r
@@ -519,10 +582,19 @@ Use LDIF-specific entry type methods:
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_ldif import p, t
 
 
-def categorize_ldif_entries(entries: t.SequenceOf[p.Ldif.Entry]) -> t.JsonMapping:
+def categorize_ldif_entries(entries: Sequence[p.Ldif.Entry]) -> t.JsonMapping:
     """Categorize LDIF entries by type."""
     categories = {
         "persons": [e for e in entries if e.is_person()],
@@ -557,6 +629,15 @@ def categorize_ldif_entries(entries: t.SequenceOf[p.Ldif.Entry]) -> t.JsonMappin
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from pathlib import Path
 

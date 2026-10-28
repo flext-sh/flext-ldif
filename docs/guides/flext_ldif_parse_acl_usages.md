@@ -58,6 +58,15 @@ Extensive refactoring required
 ```{.python .notest}
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 class FlextLdifServersBase.Acl(ABC, ServerRegistrationMixin):
     """Base class for ACL servers."""
 
@@ -132,6 +141,15 @@ Each server servers class has:
 ```text
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 
 def parse(
     self, acl_line: str, server_type: str | None = None
@@ -159,10 +177,19 @@ def parse(
 ```text
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 
 def _transform_categories(
-    self, categorized: t.MappingKV[str, t.SequenceOf[m.Dict]]
-) -> p.Result[Mapping[str, t.SequenceOf[m.Dict]]]:
+    self, categorized: Mapping[str, Sequence[m.Dict]]
+) -> p.Result[Mapping[str, Sequence[m.Dict]]]:
     """Transform ACL entries using OID→OUD pipeline.
 
     Uses parse()

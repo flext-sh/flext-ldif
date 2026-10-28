@@ -6,7 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, m, t, u
+from collections.abc import MutableMapping, MutableSequence
+
+from flext_ldif import c, m, u
 
 
 class FlextLdifServersBaseExecuteParams:
@@ -15,15 +17,15 @@ class FlextLdifServersBaseExecuteParams:
     @classmethod
     def _extract_execute_params(
         cls,
-        kwargs: t.MutableMappingKV[
+        kwargs: MutableMapping[
             str,
-            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+            str | int | bool | MutableSequence[m.Ldif.Entry],
         ],
-    ) -> tuple[str | None, t.MutableSequenceOf[m.Ldif.Entry] | None, str | None]:
+    ) -> tuple[str | None, MutableSequence[m.Ldif.Entry] | None, str | None]:
         """Extract type-safe execution parameters from kwargs.
 
         Returns:
-            The resulting ``tuple[str | None, t.MutableSequenceOf[m.Ldif.Entry] | None,
+            The resulting ``tuple[str | None, MutableSequence[m.Ldif.Entry] | None,
                 str | None]``.
 
         """
@@ -35,18 +37,18 @@ class FlextLdifServersBaseExecuteParams:
 
     @staticmethod
     def _extract_entries(
-        kwargs: t.MutableMappingKV[
+        kwargs: MutableMapping[
             str,
-            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+            str | int | bool | MutableSequence[m.Ldif.Entry],
         ],
-    ) -> t.MutableSequenceOf[m.Ldif.Entry] | None:
+    ) -> MutableSequence[m.Ldif.Entry] | None:
         """Extract and validate entries parameter.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[m.Ldif.Entry] | None``.
+            The resulting ``MutableSequence[m.Ldif.Entry] | None``.
 
         Raises:
-            TypeError: If Expected t.MutableSequenceOf[Entry | None] for entries, got.
+            TypeError: If Expected MutableSequence[Entry | None] for entries, got.
 
         """
         if "entries" not in kwargs:
@@ -55,21 +57,18 @@ class FlextLdifServersBaseExecuteParams:
         if not raw:
             return []
         try:
-            entries: t.MutableSequenceOf[m.Ldif.Entry] = u.Ldif.as_entries(raw)
+            entries: MutableSequence[m.Ldif.Entry] = u.Ldif.as_entries(raw)
         except c.EXC_VALIDATION_TYPE as exc:
-            msg = (
-                f"Expected t.MutableSequenceOf[Entry | None] for entries, "
-                f"got {type(raw)}"
-            )
+            msg = f"Expected MutableSequence[Entry | None] for entries, got {type(raw)}"
             raise TypeError(msg) from exc
         else:
             return entries
 
     @staticmethod
     def _extract_ldif_text(
-        kwargs: t.MutableMappingKV[
+        kwargs: MutableMapping[
             str,
-            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+            str | int | bool | MutableSequence[m.Ldif.Entry],
         ],
     ) -> str | None:
         """Extract and validate ldif_text parameter.
@@ -94,9 +93,9 @@ class FlextLdifServersBaseExecuteParams:
 
     @staticmethod
     def _extract_operation(
-        kwargs: t.MutableMappingKV[
+        kwargs: MutableMapping[
             str,
-            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+            str | int | bool | MutableSequence[m.Ldif.Entry],
         ],
     ) -> str | None:
         """Extract and validate operation parameter.

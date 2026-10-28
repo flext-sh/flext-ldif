@@ -6,9 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import Self
 
-from flext_ldif import c, m, p, r, t, u
+from flext_ldif import c, m, p, r, u
 
 
 class FlextLdifServersBaseIo:
@@ -50,7 +51,7 @@ class FlextLdifServersBaseIo:
                 detected_server_type = None
 
         def build_parse_response(
-            parsed_entries: t.MutableSequenceOf[m.Ldif.Entry],
+            parsed_entries: MutableSequence[m.Ldif.Entry],
         ) -> m.Ldif.ParseResponse:
             for entry in parsed_entries:
                 if entry.metadata and detected_server_type is not None:
@@ -73,7 +74,7 @@ class FlextLdifServersBaseIo:
 
     def write(
         self: Self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry],
+        entries: MutableSequence[m.Ldif.Entry],
         write_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> p.Result[str]:
         """Write Entry models to LDIF text.

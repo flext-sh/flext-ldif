@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Annotated, Literal
 
 from flext_cli import m
@@ -32,12 +33,10 @@ class FlextLdifModelsProcessing:
                 ),
             )
         )
-        entries_input: t.SequenceOf[FlextLdifModelsDomainsEntries.Entry] | None = (
-            m.Field(
-                default=None,
-                exclude=True,
-                description="Entry batch supplied to the processing pipeline",
-            )
+        entries_input: Sequence[FlextLdifModelsDomainsEntries.Entry] | None = m.Field(
+            default=None,
+            exclude=True,
+            description="Entry batch supplied to the processing pipeline",
         )
 
     class ProcessingResult(m.StrictModel):

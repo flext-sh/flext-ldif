@@ -6,19 +6,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping, MutableSequence
 from pathlib import Path
-from typing import TYPE_CHECKING, overload
+from typing import overload
 
 from flext_cli import u
 
-from flext_ldif import FlextLdifModels, c, t
+from flext_ldif import FlextLdifModels, c
 from flext_ldif._utilities._dn import (
     FlextLdifUtilitiesDNNormalize,
     FlextLdifUtilitiesDNParse,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import MutableMapping
 
 
 class FlextLdifUtilitiesDNTransform:
@@ -89,7 +87,7 @@ class FlextLdifUtilitiesDNTransform:
         ldif_dir: str | Path,
         source_basedn: str,
         target_basedn: str,
-    ) -> MutableMapping[str, int | t.MutableSequenceOf[str]]:
+    ) -> MutableMapping[str, int | MutableSequence[str]]:
         """Transform base DN in all LDIF files in a directory.
 
         Reads each .ldif file, replaces source_basedn with target_basedn
@@ -98,11 +96,11 @@ class FlextLdifUtilitiesDNTransform:
         Returns dict with total_count (files transformed) and transformed_files list.
 
         Returns:
-            The resulting ``MutableMapping[str, int | t.MutableSequenceOf[str]]``.
+            The resulting ``MutableMapping[str, int | MutableSequence[str]]``.
 
         """
         directory = Path(str(ldif_dir))
-        transformed_files: t.MutableSequenceOf[str] = []
+        transformed_files: MutableSequence[str] = []
         for ldif_file in sorted(directory.glob("*.ldif")):
             content = ldif_file.read_text(encoding=c.Ldif.DEFAULT_ENCODING)
             new_content = FlextLdifUtilitiesDNTransform._transform_ldif_content(

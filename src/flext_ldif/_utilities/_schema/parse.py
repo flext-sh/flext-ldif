@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping, MutableSequence
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_cli import u
@@ -15,7 +16,7 @@ from flext_ldif._utilities import FlextLdifUtilitiesOID, FlextLdifUtilitiesParse
 from flext_ldif._utilities._schema import FlextLdifUtilitiesSchemaExtract
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, MutableMapping
+    from collections.abc import Callable
 
 
 class FlextLdifUtilitiesSchemaParse:
@@ -46,7 +47,7 @@ class FlextLdifUtilitiesSchemaParse:
             return None
         syntax_extensions: MutableMapping[
             str,
-            bool | t.MutableSequenceOf[str] | str | None,
+            bool | MutableSequence[str] | str | None,
         ] = {}
         validate_result = FlextLdifUtilitiesOID.validate_format(syntax)
         if validate_result.failure:
@@ -151,11 +152,11 @@ class FlextLdifUtilitiesSchemaParse:
     def extract_attributes_from_lines(
         ldif_content: str,
         parse_callback: Callable[[str], p.Result[FlextLdifModels.Ldif.SchemaAttribute]],
-    ) -> t.MutableSequenceOf[FlextLdifModels.Ldif.SchemaAttribute]:
+    ) -> MutableSequence[FlextLdifModels.Ldif.SchemaAttribute]:
         """Extract and parse all attributeTypes from LDIF content lines.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[FlextLdifModels.Ldif.SchemaAttribute]``.
+            The resulting ``MutableSequence[FlextLdifModels.Ldif.SchemaAttribute]``.
 
         """
         return FlextLdifUtilitiesSchemaExtract.extract_schema_items_from_lines(
@@ -172,12 +173,12 @@ class FlextLdifUtilitiesSchemaParse:
             [str],
             p.Result[FlextLdifModels.Ldif.SchemaObjectClass],
         ],
-    ) -> t.MutableSequenceOf[FlextLdifModels.Ldif.SchemaObjectClass]:
+    ) -> MutableSequence[FlextLdifModels.Ldif.SchemaObjectClass]:
         """Extract and parse all objectClasses from LDIF content lines.
 
         Returns:
             The resulting
-                ``t.MutableSequenceOf[FlextLdifModels.Ldif.SchemaObjectClass]``.
+                ``MutableSequence[FlextLdifModels.Ldif.SchemaObjectClass]``.
 
         """
         return FlextLdifUtilitiesSchemaExtract.extract_schema_items_from_lines(

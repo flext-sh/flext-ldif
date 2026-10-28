@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar, Self, cast, overload, override
 
 from flext_ldif import c, m, p, r, s, t, u
@@ -147,27 +148,27 @@ class FlextLdifServersBase(
     def __call__(
         self,
         ldif_text: str | None = None,
-        entries: t.MutableSequenceOf[m.Ldif.Entry] | None = None,
+        entries: MutableSequence[m.Ldif.Entry] | None = None,
         operation: str | None = None,
     ) -> m.Ldif.Entry | str: ...
 
     @overload
     def __call__(
         self,
-        *args: str | t.MutableSequenceOf[m.Ldif.Entry] | None,
+        *args: str | MutableSequence[m.Ldif.Entry] | None,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
         registry: p.Registry | None = None,
-        **fields: t.JsonValue | t.MutableSequenceOf[m.Ldif.Entry],
+        **fields: t.JsonValue | MutableSequence[m.Ldif.Entry],
     ) -> Self | m.Ldif.Entry | str: ...
 
     def __call__(
         self,
-        *args: str | t.MutableSequenceOf[m.Ldif.Entry] | None,
+        *args: str | MutableSequence[m.Ldif.Entry] | None,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
         registry: p.Registry | None = None,
-        **fields: t.JsonValue | t.MutableSequenceOf[m.Ldif.Entry],
+        **fields: t.JsonValue | MutableSequence[m.Ldif.Entry],
     ) -> Self | m.Ldif.Entry | str:
         """Callable interface - use as processor.
 
@@ -196,9 +197,9 @@ class FlextLdifServersBase(
         )
         if configured is not None:
             return cast("Self", configured)
-        execute_kwargs: t.MutableMappingKV[
+        execute_kwargs: MutableMapping[
             str,
-            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+            str | int | bool | MutableSequence[m.Ldif.Entry],
         ] = {}
         ldif_text_raw = fields.get("ldif_text")
         if ldif_text_raw is not None:
@@ -206,7 +207,7 @@ class FlextLdifServersBase(
             execute_kwargs["ldif_text"] = validated_ldif_text
         entries_raw = fields.get("entries")
         if entries_raw is not None:
-            validated_entries: t.MutableSequenceOf[m.Ldif.Entry] = u.Ldif.as_entries(
+            validated_entries: MutableSequence[m.Ldif.Entry] = u.Ldif.as_entries(
                 entries_raw,
             )
             execute_kwargs["entries"] = validated_entries
@@ -222,10 +223,10 @@ class FlextLdifServersBase(
 
     @staticmethod
     def _absorb_positional_args(
-        args: tuple[str | t.MutableSequenceOf[m.Ldif.Entry] | None, ...],
-        execute_kwargs: t.MutableMappingKV[
+        args: tuple[str | MutableSequence[m.Ldif.Entry] | None, ...],
+        execute_kwargs: MutableMapping[
             str,
-            str | int | bool | t.MutableSequenceOf[m.Ldif.Entry],
+            str | int | bool | MutableSequence[m.Ldif.Entry],
         ],
     ) -> None:
         """Absorb up to three positional arguments into the execute kwargs."""
@@ -249,7 +250,7 @@ class FlextLdifServersBase(
         self,
         *,
         ldif_text: str | None = None,
-        entries: t.MutableSequenceOf[m.Ldif.Entry] | None = None,
+        entries: MutableSequence[m.Ldif.Entry] | None = None,
         operation: str | None = None,
     ) -> p.Result[m.Ldif.Entry]:
         """Execute server operation with auto-detection.

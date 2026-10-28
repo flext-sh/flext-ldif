@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence, Sequence
 from typing import ClassVar
 
 from flext_cli import u
@@ -21,7 +22,7 @@ class FlextLdifUtilitiesACLExtensions:
 
     @staticmethod
     def _format_bind_rule_from_extension(
-        value_raw: t.JsonValue | t.StrPair,
+        value_raw: t.JsonValue | tuple[str, str],
         format_template: str,
         operator_default: str | None,
         tuple_length: int,
@@ -59,20 +60,20 @@ class FlextLdifUtilitiesACLExtensions:
     @staticmethod
     def extract_bind_rules_from_extensions(
         extensions: t.Ldif.MutableMetadataMapping | None,
-        rule_config: t.SequenceOf[tuple[str, str, str | None]],
+        rule_config: Sequence[tuple[str, str, str | None]],
         *,
         tuple_length: int = 2,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Extract and format bind rules from metadata extensions.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         if not extensions:
             return []
 
-        result: t.MutableSequenceOf[str] = []
+        result: MutableSequence[str] = []
         for ext_key, format_template, operator_default in rule_config:
             try:
                 value_raw = extensions.get(ext_key)
@@ -99,17 +100,17 @@ class FlextLdifUtilitiesACLExtensions:
     def extract_target_extensions(
         extensions: t.Ldif.MetadataInputMapping | None,
         target_config: t.StrPairSequence,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Extract and format target extensions from metadata extensions.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         if not extensions:
             return []
 
-        result: t.MutableSequenceOf[str] = []
+        result: MutableSequence[str] = []
         for ext_key, format_template in target_config:
             try:
                 value_raw = extensions.get(ext_key)
@@ -128,11 +129,11 @@ class FlextLdifUtilitiesACLExtensions:
         extensions: t.Ldif.MetadataInputMapping | None,
         converted_from_key: str,
         comments_key: str,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Extract conversion comments from metadata extensions.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         if not extensions:
@@ -147,7 +148,7 @@ class FlextLdifUtilitiesACLExtensions:
         )
         if comments_value is None:
             return []
-        normalized: t.MutableSequenceOf[str]
+        normalized: MutableSequence[str]
         if isinstance(comments_value, str):
             normalized = [comments_value]
         elif isinstance(comments_value, list):

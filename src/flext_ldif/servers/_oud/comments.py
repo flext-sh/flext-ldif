@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
+
 from flext_ldif import c, m, t, u
 from flext_ldif.servers._oud import (
     FlextLdifServersOudCommentsAcl,
@@ -21,7 +23,7 @@ class FlextLdifServersOudComments(FlextLdifServersOudCommentsAcl):
 
     @staticmethod
     def _add_attribute_transformation_comments(
-        comment_lines: t.MutableSequenceOf[str],
+        comment_lines: MutableSequence[str],
         attr_name: str,
         _transformation: m.Ldif.AttributeTransformation,
         comment_type: str,
@@ -34,11 +36,11 @@ class FlextLdifServersOudComments(FlextLdifServersOudCommentsAcl):
     def add_original_entry_comments(
         entry_data: m.Ldif.Entry,
         write_options: m.Ldif.WriteFormatOptions | None,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Add original entry as commented LDIF block.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         if not (write_options and write_options.write_original_entry_as_comment):
@@ -50,7 +52,7 @@ class FlextLdifServersOudComments(FlextLdifServersOudCommentsAcl):
         )
         if not original_ldif_raw:
             return []
-        ldif_parts: t.MutableSequenceOf[str] = []
+        ldif_parts: MutableSequence[str] = []
         ldif_parts.extend([
             "# " + "=" * 70,
             "# ORIGINAL Entry (alternative format) (commented)",
@@ -69,7 +71,7 @@ class FlextLdifServersOudComments(FlextLdifServersOudCommentsAcl):
 
     @staticmethod
     def add_oud_acl_comments(
-        comment_lines: t.MutableSequenceOf[str],
+        comment_lines: MutableSequence[str],
         entry: m.Ldif.Entry,
         format_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> set[str]:
@@ -106,7 +108,7 @@ class FlextLdifServersOudComments(FlextLdifServersOudCommentsAcl):
 
     @staticmethod
     def _add_rejection_reason_comments(
-        comment_lines: t.MutableSequenceOf[str],
+        comment_lines: MutableSequence[str],
         entry: m.Ldif.Entry,
     ) -> None:
         """Add comments with rejection reason if entry was rejected."""
@@ -122,11 +124,11 @@ class FlextLdifServersOudComments(FlextLdifServersOudCommentsAcl):
                 comment_lines.append(f"# [REJECTION] {rejection_reason_raw}")
 
     @staticmethod
-    def _removed_attribute_values(removed_raw: t.JsonValue) -> t.MutableSequenceOf[str]:
+    def _removed_attribute_values(removed_raw: t.JsonValue) -> MutableSequence[str]:
         """Render removed-attribute raw metadata as comment values.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         normalized = u.normalize_to_json_value(removed_raw)
@@ -138,7 +140,7 @@ class FlextLdifServersOudComments(FlextLdifServersOudCommentsAcl):
 
     @staticmethod
     def _add_transformation_comments(
-        comment_lines: t.MutableSequenceOf[str],
+        comment_lines: MutableSequence[str],
         entry: m.Ldif.Entry,
         format_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> None:
@@ -174,7 +176,7 @@ class FlextLdifServersOudComments(FlextLdifServersOudCommentsAcl):
 
     @staticmethod
     def _add_attribute_comments(
-        comment_lines: t.MutableSequenceOf[str],
+        comment_lines: MutableSequence[str],
         entry: m.Ldif.Entry,
         format_options: m.Ldif.WriteFormatOptions | None,
         acl_attr_names_to_skip: set[str],
@@ -218,7 +220,7 @@ class FlextLdifServersOudComments(FlextLdifServersOudCommentsAcl):
 
     @staticmethod
     def _add_removed_attribute_comments(
-        comment_lines: t.MutableSequenceOf[str],
+        comment_lines: MutableSequence[str],
         entry: m.Ldif.Entry,
         format_options: m.Ldif.WriteFormatOptions | None,
         acl_attr_names_to_skip: set[str],
@@ -233,7 +235,7 @@ class FlextLdifServersOudComments(FlextLdifServersOudCommentsAcl):
         ):
             return
         removed_attrs_dict = entry.metadata.removed_attributes
-        removed_attr_names: t.MutableSequenceOf[str] = [
+        removed_attr_names: MutableSequence[str] = [
             attr_name
             for attr_name in removed_attrs_dict
             if u.matches_type(attr_name, str)

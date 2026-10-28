@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 
 from flext_cli import p, t
@@ -42,7 +43,7 @@ class FlextLdifProtocolsDomain(Protocol):
 
         def write(
             self,
-            entries: t.MutableSequenceOf[m.Ldif.Entry],
+            entries: MutableSequence[m.Ldif.Entry],
             write_options: m.Ldif.WriteFormatOptions | None = None,
         ) -> p.Result[str]: ...
 
@@ -86,7 +87,7 @@ class FlextLdifProtocolsDomain(Protocol):
     class AclServer(Protocol):
         """ACL parsing, serialization, and attribute discovery contract."""
 
-        def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]: ...
+        def resolve_acl_attributes(self) -> MutableSequence[str]: ...
 
         def matches_acl_attribute(self, attribute_name: str) -> bool: ...
 
@@ -102,11 +103,11 @@ class FlextLdifProtocolsDomain(Protocol):
 
         def parse_server(
             self, value: str
-        ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]: ...
+        ) -> p.Result[MutableSequence[m.Ldif.Entry]]: ...
 
         def parse_input(
             self, ldif_text: str
-        ) -> t.MutableSequenceOf[m.Ldif.Entry] | None: ...
+        ) -> MutableSequence[m.Ldif.Entry] | None: ...
 
         def can_handle(
             self, entry_dn: str, attributes: t.MutableStrSequenceMapping
@@ -118,7 +119,7 @@ class FlextLdifProtocolsDomain(Protocol):
 
         def write(
             self,
-            entry_data: m.Ldif.Entry | t.MutableSequenceOf[m.Ldif.Entry],
+            entry_data: m.Ldif.Entry | MutableSequence[m.Ldif.Entry],
             write_options: m.Ldif.WriteFormatOptions | None = None,
         ) -> p.Result[str]: ...
 
@@ -128,7 +129,7 @@ class FlextLdifProtocolsDomain(Protocol):
 
         def categorize_entries(
             self,
-            entries: t.MutableSequenceOf[m.Ldif.Entry],
+            entries: MutableSequence[m.Ldif.Entry],
         ) -> p.Result[m.Ldif.FlexibleCategories]: ...
 
         def filter_by_base_dn(
@@ -138,13 +139,13 @@ class FlextLdifProtocolsDomain(Protocol):
 
         def validate_dns(
             self,
-            entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
-        ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]: ...
+            entries: MutableSequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
+        ) -> p.Result[MutableSequence[m.Ldif.Entry]]: ...
 
         def filter_schema_by_oids(
             self,
-            schema_entries: t.MutableSequenceOf[m.Ldif.Entry],
-        ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]: ...
+            schema_entries: MutableSequence[m.Ldif.Entry],
+        ) -> p.Result[MutableSequence[m.Ldif.Entry]]: ...
 
     @runtime_checkable
     class EntryStep(Protocol):

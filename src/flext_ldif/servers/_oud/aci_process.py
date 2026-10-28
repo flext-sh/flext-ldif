@@ -71,7 +71,7 @@ class FlextLdifServersOudAciProcess:
     @classmethod
     def process_aci_list_for_finalize(
         cls,
-        aci_values: t.MutableSequenceOf[str] | str,
+        aci_values: MutableSequence[str] | str,
         acl_server: p.Ldif.AclServer,
         current_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> p.Result[bool]:
@@ -81,7 +81,7 @@ class FlextLdifServersOudAciProcess:
             The resulting ``p.Result[bool]``.
 
         """
-        aci_list: t.MutableSequenceOf[str] = (
+        aci_list: MutableSequence[str] = (
             [*aci_values] if isinstance(aci_values, MutableSequence) else [aci_values]
         )
         for aci_value in aci_list:

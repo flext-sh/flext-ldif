@@ -27,19 +27,19 @@ class FlextLdifProtocolsModelsLdifGeneratedEntryStatistics:
         was_rejected: bool
         rejection_category: str | None
         rejection_reason: str | None
-        attributes_added: flext_ldif_t.MutableSequenceOf[str]
-        attributes_removed: flext_ldif_t.MutableSequenceOf[str]
-        attributes_modified: flext_ldif_t.MutableSequenceOf[str]
-        attributes_filtered: flext_ldif_t.MutableSequenceOf[str]
-        objectclasses_original: flext_ldif_t.MutableSequenceOf[str]
-        objectclasses_final: flext_ldif_t.MutableSequenceOf[str]
-        servers_applied: flext_ldif_t.MutableSequenceOf[str]
+        attributes_added: flext_ldif_t.MutableSequence[str]
+        attributes_removed: flext_ldif_t.MutableSequence[str]
+        attributes_modified: flext_ldif_t.MutableSequence[str]
+        attributes_filtered: flext_ldif_t.MutableSequence[str]
+        objectclasses_original: flext_ldif_t.MutableSequence[str]
+        objectclasses_final: flext_ldif_t.MutableSequence[str]
+        servers_applied: flext_ldif_t.MutableSequence[str]
         server_transformations: int
         dn_statistics: FlextLdifProtocolsBase.DNStatistics | None
-        filters_applied: flext_ldif_t.MutableSequenceOf[str]
+        filters_applied: flext_ldif_t.MutableSequence[str]
         filter_results: collections_abc_MutableMapping[str, bool]
-        errors: flext_ldif_t.MutableSequenceOf[str]
-        warnings: flext_ldif_t.MutableSequenceOf[str]
+        errors: flext_ldif_t.MutableSequence[str]
+        warnings: flext_ldif_t.MutableSequence[str]
         category_assigned: str | None
         category_confidence: float
 

@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from typing import ClassVar
 
 from flext_cli import u
@@ -40,14 +40,14 @@ class FlextLdifUtilitiesMetadataSchemaAnalysis:
     @staticmethod
     def _extract_field_order(
         definition: str,
-    ) -> tuple[t.MutableSequenceOf[str], t.MutableIntMapping]:
+    ) -> tuple[MutableSequence[str], t.MutableIntMapping]:
         """Extract field order and positions.
 
         Returns:
-            The resulting ``tuple[t.MutableSequenceOf[str], t.MutableIntMapping]``.
+            The resulting ``tuple[MutableSequence[str], t.MutableIntMapping]``.
 
         """
-        field_order: t.MutableSequenceOf[str] = []
+        field_order: MutableSequence[str] = []
         field_positions: t.MutableIntMapping = {}
         for (
             field_name,
@@ -62,7 +62,7 @@ class FlextLdifUtilitiesMetadataSchemaAnalysis:
     @staticmethod
     def _extract_spacing_between_fields(
         definition: str,
-        field_order: t.MutableSequenceOf[str],
+        field_order: MutableSequence[str],
         field_positions: t.MutableIntMapping,
         field_patterns: t.MutableStrMapping,
     ) -> t.MutableStrMapping:
@@ -100,10 +100,10 @@ class FlextLdifUtilitiesMetadataSchemaAnalysis:
 
         """
         combined: t.Ldif.MutableMetadataMapping = {}
-        extractors: t.SequenceOf[
+        extractors: Sequence[
             Callable[
                 [str],
-                t.MappingKV[str, str | bool | int | t.MutableSequenceOf[str] | None],
+                Mapping[str, str | bool | int | MutableSequence[str] | None],
             ]
         ] = [
             FlextLdifUtilitiesMetadataPrefix.extract_prefix_details,

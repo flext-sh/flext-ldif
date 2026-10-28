@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 from typing import ClassVar
 
 from flext_cli import u
@@ -48,7 +48,7 @@ class FlextLdifUtilitiesEntryAnalysis:
 
     @staticmethod
     def _collect_original_attribute_case(
-        entry_attrs: t.Ldif.MetadataInputMapping, normalize: Callable[[str], ...]
+        entry_attrs: t.Ldif.MetadataInputMapping, normalize: Callable[[str], str]
     ) -> t.MutableStrMapping:
         """Map canonical names back to their original attribute casing.
 
@@ -92,9 +92,9 @@ class FlextLdifUtilitiesEntryAnalysis:
         entry_attrs: t.Ldif.MetadataInputMapping,
         converted_attrs: MutableMapping[
             str,
-            t.MutableSequenceOf[t.Ldif.AttributeValue],
+            MutableSequence[t.Ldif.AttributeValue],
         ],
-        normalize: Callable[[str], ...],
+        normalize: Callable[[str], str],
     ) -> tuple[
         MutableMapping[str, t.Ldif.MutableMetadataMapping],
         t.Ldif.MutableMetadataMapping,
@@ -138,7 +138,7 @@ class FlextLdifUtilitiesEntryAnalysis:
         entry_attrs: t.Ldif.MetadataInputMapping,
         converted_attrs: MutableMapping[
             str,
-            t.MutableSequenceOf[t.Ldif.AttributeValue],
+            MutableSequence[t.Ldif.AttributeValue],
         ],
         original_dn: str,
         cleaned_dn: str,

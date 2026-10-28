@@ -6,9 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
 
-from flext_ldif import FlextLdifModels, c, p, t
+from flext_ldif import FlextLdifModels, c, p
 from flext_ldif._utilities import (
     FlextLdifUtilitiesOID,
     FlextLdifUtilitiesServer,
@@ -26,14 +27,14 @@ class FlextLdifUtilitiesSchemaBuild:
     @staticmethod
     def _build_attribute_parts_from_model(
         attr_data: FlextLdifModels.Ldif.SchemaAttribute,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Build RFC 4512 attribute definition parts (simple version).
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
-        parts: t.MutableSequenceOf[str] = [f"( {attr_data.oid}"]
+        parts: MutableSequence[str] = [f"( {attr_data.oid}"]
         if attr_data.name:
             parts.append(f"NAME '{attr_data.name}'")
         if attr_data.desc:
@@ -53,7 +54,7 @@ class FlextLdifUtilitiesSchemaBuild:
     @staticmethod
     def _append_objectclass_core_parts(
         oc_data: FlextLdifModels.Ldif.SchemaObjectClass,
-        parts: t.MutableSequenceOf[str],
+        parts: MutableSequence[str],
     ) -> None:
         """Append SUP, kind, MUST and MAY parts of an objectClass definition."""
         sup_part = FlextLdifUtilitiesSchemaFormat.format_sup_list(oc_data.sup)
@@ -75,14 +76,14 @@ class FlextLdifUtilitiesSchemaBuild:
     @staticmethod
     def _build_objectclass_parts_from_model(
         oc_data: FlextLdifModels.Ldif.SchemaObjectClass,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Build RFC 4512 objectClass definition parts (extracted to reduce complexity).
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
-        parts: t.MutableSequenceOf[str] = [f"( {oc_data.oid}"]
+        parts: MutableSequence[str] = [f"( {oc_data.oid}"]
         if oc_data.name:
             parts.append(f"NAME '{oc_data.name}'")
         if oc_data.desc:
@@ -105,7 +106,7 @@ class FlextLdifUtilitiesSchemaBuild:
             ]
         ),
         type_name: str,
-        parts_builder: Callable[..., t.MutableSequenceOf[str]],
+        parts_builder: Callable[..., MutableSequence[str]],
     ) -> str:
         """Write a schema element (DRY pattern).
 
@@ -132,11 +133,11 @@ class FlextLdifUtilitiesSchemaBuild:
         attr_data: FlextLdifModels.Ldif.SchemaAttribute,
         *,
         restore_original: bool = True,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Build RFC 4512 attribute parts with full metadata restoration.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         if restore_original:
@@ -145,7 +146,7 @@ class FlextLdifUtilitiesSchemaBuild:
             )
             if original_parts:
                 return original_parts
-        parts: t.MutableSequenceOf[str] = [f"( {attr_data.oid}"]
+        parts: MutableSequence[str] = [f"( {attr_data.oid}"]
         field_order = FlextLdifUtilitiesSchemaFormat.resolve_field_order(attr_data)
         name_part = FlextLdifUtilitiesSchemaFormat.build_name_part(
             attr_data, restore_format=True
@@ -178,11 +179,11 @@ class FlextLdifUtilitiesSchemaBuild:
         oc_data: FlextLdifModels.Ldif.SchemaObjectClass,
         *,
         restore_original: bool = True,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Build RFC 4512 objectClass parts with full metadata restoration.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         original_parts = (
@@ -193,7 +194,7 @@ class FlextLdifUtilitiesSchemaBuild:
         )
         if original_parts:
             return original_parts
-        parts: t.MutableSequenceOf[str] = [f"( {oc_data.oid}"]
+        parts: MutableSequence[str] = [f"( {oc_data.oid}"]
         name_part = FlextLdifUtilitiesSchemaFormat.build_name_part(
             oc_data, restore_format=True
         )

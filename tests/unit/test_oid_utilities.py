@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 import pytest
 
 from tests import c, t, tm, u
@@ -34,7 +36,7 @@ class TestsFlextLdifUtilitiesOid:
     def test_extract_from_definition_returns_leading_oid(
         definition: str,
         expected_oid: str,
-        patterns: t.SequenceOf[t.Ldif.RegexPattern],
+        patterns: Sequence[t.Ldif.RegexPattern],
     ) -> None:
         """Test extract from definition returns leading oid."""
         value = tm.ok(u.Ldif.extract_from_definition(definition, patterns=patterns))

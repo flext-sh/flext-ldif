@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_cli import c
@@ -34,7 +35,7 @@ class FlextLdifConstantsServersRelaxed:
     OID_PATTERN: ClassVar[t.Ldif.RegexPattern] = re.compile(
         r"\(\s*([0-9a-zA-Z._\-]+)",
     )
-    OID_EXTRACTION_PATTERNS: ClassVar[t.SequenceOf[t.Ldif.RegexPattern]] = (
+    OID_EXTRACTION_PATTERNS: ClassVar[Sequence[t.Ldif.RegexPattern]] = (
         FlextLdifConstantsBase.SCHEMA_OID_LEADING_RE,
         re.compile(r"\(\s*([0-9]+(?:\.[0-9]+)+)"),
         re.compile(r"([0-9]+\.[0-9]+(?:\.[0-9]+)*)"),

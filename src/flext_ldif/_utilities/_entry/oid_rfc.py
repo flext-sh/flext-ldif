@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, MutableSequence
+
 from flext_ldif import c, p, t
 
 
@@ -16,8 +18,8 @@ class FlextLdifUtilitiesEntryOidRfc:
     def remap_oid_rfc_attributes(
         attributes: t.MutableStrSequenceMapping,
         *,
-        attribute_mapping: t.StrMapping,
-        boolean_value_mapping: t.StrMapping,
+        attribute_mapping: Mapping[str, str],
+        boolean_value_mapping: Mapping[str, str],
     ) -> t.MutableStrSequenceMapping:
         """Remap attribute names and boolean values for OID/RFC compatibility.
 
@@ -28,7 +30,7 @@ class FlextLdifUtilitiesEntryOidRfc:
         remapped: t.MutableStrSequenceMapping = {}
         for attr_name, values in attributes.items():
             normalized_name = attr_name.lower()
-            normalized_values: t.MutableSequenceOf[str] = list(values)
+            normalized_values: MutableSequence[str] = list(values)
             converted_values = (
                 [boolean_value_mapping.get(value, value) for value in normalized_values]
                 if normalized_name in c.Ldif.OID_BOOLEAN_ATTRIBUTES

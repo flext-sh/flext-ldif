@@ -6,7 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import FlextLdifModels, c, p, r, t
+from collections.abc import MutableSequence
+
+from flext_ldif import FlextLdifModels, c, p, r
 from flext_ldif._utilities import FlextLdifUtilitiesDN
 
 
@@ -22,7 +24,7 @@ class FlextLdifUtilitiesTransformersDn:
 
         """
         components = FlextLdifUtilitiesDN.split(dn_str)
-        all_errors: t.MutableSequenceOf[str] = []
+        all_errors: MutableSequence[str] = []
         for comp in components:
             if "=" not in comp:
                 all_errors.append(f"Invalid RDN (missing '='): {comp}")

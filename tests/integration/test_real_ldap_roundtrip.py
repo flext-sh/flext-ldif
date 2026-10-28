@@ -106,7 +106,7 @@ class TestsFlextLdifRealLdapRoundtrip:
         ldap_connection: p.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
-        make_test_username: Callable[[str], ...],
+        make_test_username: Callable[[str], str],
     ) -> None:
         """LDAP -> LDIF -> LDAP yields an entry with identical public state."""
         # Arrange: create a source entry directly in LDAP.

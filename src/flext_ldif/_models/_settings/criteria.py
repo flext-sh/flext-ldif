@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence, Sequence
 from typing import Annotated
 
 from flext_core import m
@@ -26,14 +27,14 @@ class FlextLdifModelsSettingsCriteria:
         ] = ""
 
         dn_patterns: Annotated[
-            tuple[t.StrSequence, ...],
+            tuple[Sequence[str], ...],
             m.Field(
                 description="Tuple of DN pattern tuples - entry matches if ALL "
                 "patterns in ANY tuple match",
             ),
         ] = ()
         attr_prefixes: Annotated[
-            t.StrSequence | frozenset[str],
+            Sequence[str] | frozenset[str],
             m.Field(description="Attribute name prefixes to check"),
         ] = ()
         attr_names: Annotated[
@@ -41,7 +42,7 @@ class FlextLdifModelsSettingsCriteria:
             m.Field(description="Set of attribute names that indicate this server"),
         ] = frozenset()
         keyword_patterns: Annotated[
-            t.StrSequence,
+            Sequence[str],
             m.Field(description="Keywords to search in attribute names"),
         ] = ()
         detection_string: Annotated[
@@ -107,7 +108,7 @@ class FlextLdifModelsSettingsCriteria:
         """
 
         objectclasses: Annotated[
-            t.MutableSequenceOf[str] | None,
+            MutableSequence[str] | None,
             m.Field(description="Required objectClasses"),
         ] = None
         objectclass_mode: Annotated[
@@ -115,11 +116,11 @@ class FlextLdifModelsSettingsCriteria:
             m.Field(description='"any" (has any) or "all" (has all)'),
         ] = c.Ldif.EntryCriteriaMode.ANY
         required_attrs: Annotated[
-            t.MutableSequenceOf[str] | None,
+            MutableSequence[str] | None,
             m.Field(description="All of these attributes must exist"),
         ] = None
         any_attrs: Annotated[
-            t.MutableSequenceOf[str] | None,
+            MutableSequence[str] | None,
             m.Field(description="At least one of these attributes must exist"),
         ] = None
         dn_pattern: Annotated[
@@ -166,7 +167,7 @@ class FlextLdifModelsSettingsCriteria:
             m.Field(description="Original DN line from LDIF (with folding if present)"),
         ] = None
         original_attr_lines: Annotated[
-            t.MutableSequenceOf[str] | None,
+            MutableSequence[str] | None,
             m.Field(description="Original attribute lines from LDIF"),
         ] = None
         dn_was_base64: Annotated[

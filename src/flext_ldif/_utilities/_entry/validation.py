@@ -6,14 +6,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, p, t
+from collections.abc import MutableSequence, Sequence
+
+from flext_ldif import c, p
 
 
 class FlextLdifUtilitiesEntryValidation:
     """Validate entry DN, attributes, changetype, and naming per RFC 2849/4512."""
 
     @staticmethod
-    def validate_dn_format(dn_value: str) -> t.MutableSequenceOf[str]:
+    def validate_dn_format(dn_value: str) -> MutableSequence[str]:
         """Validate DN format per RFC 4514 section 2.3, 2.4.
 
         Args:
@@ -30,7 +32,7 @@ class FlextLdifUtilitiesEntryValidation:
         return FlextLdifUtilitiesEntryValidation.dn_component_violations(dn_value)
 
     @staticmethod
-    def dn_components(dn_value: str) -> t.StrSequence:
+    def dn_components(dn_value: str) -> Sequence[str]:
         r"""Split a DN into its RDN components per RFC 4514 section 2.
 
         A backslash escapes the next character (``\,`` is not a separator);
@@ -69,7 +71,7 @@ class FlextLdifUtilitiesEntryValidation:
         return components[0].split("=", maxsplit=1)[0].strip().lower()
 
     @staticmethod
-    def dn_component_violations(dn_value: str) -> t.MutableSequenceOf[str]:
+    def dn_component_violations(dn_value: str) -> MutableSequence[str]:
         """Return one RFC 4514 § 2.3 violation per malformed RDN component.
 
         Returns:
@@ -85,17 +87,17 @@ class FlextLdifUtilitiesEntryValidation:
     @staticmethod
     def validate_attributes_required(
         entry: p.Ldif.Entry,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Validate that entry has at least one attribute per RFC 2849 section 2.
 
         Note: entry.attributes may be None when using model_construct (bypasses
         validation).
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
-        violations: t.MutableSequenceOf[str] = []
+        violations: MutableSequence[str] = []
         if entry.changetype in {"delete", "moddn", "modrdn"}:
             return violations
         change_operations = getattr(entry, "change_operations", [])
@@ -115,14 +117,14 @@ class FlextLdifUtilitiesEntryValidation:
     @staticmethod
     def validate_changetype(
         entry: p.Ldif.Entry,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Validate changetype field per RFC 2849 section 5.7.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
-        violations: t.MutableSequenceOf[str] = []
+        violations: MutableSequence[str] = []
         if not entry.changetype:
             return violations
         valid_changetypes = {"add", "delete", "modify", "moddn", "modrdn"}
@@ -137,7 +139,7 @@ class FlextLdifUtilitiesEntryValidation:
         entry: p.Ldif.Entry,
         attribute_name: str,
         violation_message: str,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Require one case-insensitive attribute on a changeless entry.
 
         Note: entry.attributes may be None when using model_construct (bypasses
@@ -149,10 +151,10 @@ class FlextLdifUtilitiesEntryValidation:
             violation_message: RFC citation emitted when the attribute is absent.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
-        violations: t.MutableSequenceOf[str] = []
+        violations: MutableSequence[str] = []
         if entry.changetype:
             return violations
         if entry.attributes is None or (not entry.attributes):
@@ -168,14 +170,14 @@ class FlextLdifUtilitiesEntryValidation:
     def validate_naming_attribute(
         entry: p.Ldif.Entry,
         dn_value: str,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Validate naming attribute presence per RFC 4512 section 2.3.
 
         Note: entry.attributes may be None when using model_construct (bypasses
         validation).
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         naming_attr = FlextLdifUtilitiesEntryValidation.naming_attribute(dn_value)
@@ -191,14 +193,14 @@ class FlextLdifUtilitiesEntryValidation:
     def validate_objectclass(
         entry: p.Ldif.Entry,
         dn_value: str,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Validate objectClass presence per RFC 4512 section 2.4.1.
 
         Note: entry.attributes may be None when using model_construct (bypasses
         validation).
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         dn_value_lower = dn_value.lower()

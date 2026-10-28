@@ -17,6 +17,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar
 
 from flext_ldif import c, m, p, r, t, u
@@ -96,11 +97,11 @@ class FlextLdifServersOudSchemaWrite:
         entry: m.Ldif.Entry,
         *,
         registry: p.Registry,
-    ) -> p.Result[t.Pair[p.Ldif.SchemaServer, p.Ldif.SchemaServer]]:
+    ) -> p.Result[tuple[p.Ldif.SchemaServer, p.Ldif.SchemaServer]]:
         """Resolve (source, target) schema servers for the entry provenance.
 
         Returns:
-            The resulting ``p.Result[t.Pair[p.Ldif.SchemaServer,
+            The resulting ``p.Result[tuple[p.Ldif.SchemaServer,
                 p.Ldif.SchemaServer]]``.
 
         """
@@ -112,25 +113,25 @@ class FlextLdifServersOudSchemaWrite:
         try:
             source_type = u.Ldif.normalize_server_type(source_type).value
         except ValueError as exc:
-            return r[t.Pair[p.Ldif.SchemaServer, p.Ldif.SchemaServer]].fail_op(
+            return r[tuple[p.Ldif.SchemaServer, p.Ldif.SchemaServer]].fail_op(
                 "resolve source schema for OUD write",
                 exc,
             )
-        schemas: t.MutableSequenceOf[p.Ldif.SchemaServer] = []
+        schemas: MutableSequence[p.Ldif.SchemaServer] = []
         for name in (source_type, c.Ldif.ServerTypes.OUD.value):
             result = registry.fetch_plugin(c.Ldif.SERVERS, name)
             if result.failure:
-                return r[t.Pair[p.Ldif.SchemaServer, p.Ldif.SchemaServer]].from_failure(
+                return r[tuple[p.Ldif.SchemaServer, p.Ldif.SchemaServer]].from_failure(
                     result
                 )
             server = result.value
             if not isinstance(server, p.Ldif.ServerServer):
-                return r[t.Pair[p.Ldif.SchemaServer, p.Ldif.SchemaServer]].fail_op(
+                return r[tuple[p.Ldif.SchemaServer, p.Ldif.SchemaServer]].fail_op(
                     "resolve schema for OUD write",
                     "Stored dialect lacks server capability",
                 )
             schemas.append(server.schema_server)
-        return r[t.Pair[p.Ldif.SchemaServer, p.Ldif.SchemaServer]].ok((
+        return r[tuple[p.Ldif.SchemaServer, p.Ldif.SchemaServer]].ok((
             schemas[0],
             schemas[1],
         ))
@@ -173,7 +174,7 @@ class FlextLdifServersOudSchemaWrite:
             entry.attributes.attributes.items(),
         )
         merged_attributes.update(normalized_values)
-        pruned_metadata: t.MutableMappingKV[str, t.MutableAttributeMapping] = {
+        pruned_metadata: MutableMapping[str, t.MutableAttributeMapping] = {
             attr_name: attribute_metadata
             for attr_name, attribute_metadata in (
                 entry.attributes.attribute_metadata or {}
@@ -207,13 +208,13 @@ class FlextLdifServersOudSchemaWrite:
         """
         if not entry.change_operations:
             return r[m.Ldif.Entry].ok(entry)
-        normalized_operations: t.MutableSequenceOf[m.Ldif.ChangeOperation] = []
+        normalized_operations: MutableSequence[m.Ldif.ChangeOperation] = []
         changed = False
         for change_operation in entry.change_operations:
             if change_operation.attribute.lower() not in cls._SCHEMA_DEFINITION_ATTRS:
                 normalized_operations.append(change_operation)
                 continue
-            new_values: t.MutableSequenceOf[
+            new_values: MutableSequence[
                 FlextLdifModelsDomainEntryChangeOperationValue.ChangeOperationValue
             ] = []
             for value_data in change_operation.values:

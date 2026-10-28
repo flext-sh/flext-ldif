@@ -6,9 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence, Sequence
 from itertools import pairwise
 
-from flext_ldif import c, t
+from flext_ldif import c
 
 
 class FlextLdifUtilitiesWriterFold:
@@ -187,11 +188,11 @@ class FlextLdifUtilitiesWriterFold:
         cls,
         line: str,
         width: int = c.Ldif.LINE_FOLD_WIDTH,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Fold long LDIF line according to RFC 2849 §3.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         if not line:
@@ -199,7 +200,7 @@ class FlextLdifUtilitiesWriterFold:
         line_bytes = line.encode(c.Ldif.DEFAULT_ENCODING)
         if len(line_bytes) <= width:
             return [line]
-        folded: t.MutableSequenceOf[str] = []
+        folded: MutableSequence[str] = []
         fold = cls.Fold(line_bytes)
         while fold.pos < len(line_bytes):
             fold.chunk_end = cls._initial_chunk_end(fold, width)
@@ -213,7 +214,7 @@ class FlextLdifUtilitiesWriterFold:
         return folded
 
     @staticmethod
-    def _aci_layout_fold_points(line: str) -> t.SequenceOf[int]:
+    def _aci_layout_fold_points(line: str) -> Sequence[int]:
         """Locate the aligned-layout boundaries of a rendered ACI line.
 
         A boundary is the start of a whitespace run of at least
@@ -222,12 +223,12 @@ class FlextLdifUtilitiesWriterFold:
         the ``(version …)`` body. Single-space compact ACIs have none.
 
         Returns:
-            The resulting ``t.SequenceOf[int]``.
+            The resulting ``Sequence[int]``.
 
         """
         tokens = (c.Ldif.ACI_ALLOW, c.Ldif.BIND_OR)
         min_run = len(c.Ldif.ACI_PART_INDENT)
-        points: t.MutableSequenceOf[int] = []
+        points: MutableSequence[int] = []
         depth = 0
         quoted = False
         index = 0
@@ -253,14 +254,14 @@ class FlextLdifUtilitiesWriterFold:
         return points
 
     @classmethod
-    def fold_aci_layout(cls, line: str) -> t.MutableSequenceOf[str]:
+    def fold_aci_layout(cls, line: str) -> MutableSequence[str]:
         """Fold an ``aci:`` line at its aligned-layout boundaries.
 
         Each boundary starts a continuation line, so unfolding (RFC 2849 §3)
         restores the exact value. A compact ACI stays on one line.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         bounds = (0, *cls._aci_layout_fold_points(line), len(line))

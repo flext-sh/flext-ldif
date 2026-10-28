@@ -141,6 +141,15 @@ export FLEXT_LDIF_LOG_LEVEL=DEBUG
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_ldif import FlextLdifSettings, ldif
 
 # The settings read FLEXT_LDIF_* variables natively; nested fields use the
@@ -406,6 +415,15 @@ Validate configuration at application startup:
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_ldif import FlextLdifSettings, ldif
 
 # Construction validates the FLEXT_LDIF_* environment once and raises on an
@@ -419,6 +437,15 @@ Create profiles for different deployment environments:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 import os
 
@@ -448,6 +475,15 @@ Keep configuration changes documented and version controlled:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 # Configuration changelog
 CONFIGURATION_CHANGELOG = {

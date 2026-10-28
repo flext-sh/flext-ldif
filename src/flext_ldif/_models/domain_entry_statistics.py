@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import Annotated, Self
 
 from flext_cli import m
@@ -61,31 +62,31 @@ class FlextLdifModelsDomainEntryStatistics:
             m.Field(description="Human-readable rejection reason"),
         ] = None
         attributes_added: Annotated[
-            t.MutableSequenceOf[str],
+            MutableSequence[str],
             m.Field(description="Attribute names added during processing"),
         ]
         attributes_removed: Annotated[
-            t.MutableSequenceOf[str],
+            MutableSequence[str],
             m.Field(description="Attribute names removed during processing"),
         ]
         attributes_modified: Annotated[
-            t.MutableSequenceOf[str],
+            MutableSequence[str],
             m.Field(description="Attribute names modified during processing"),
         ]
         attributes_filtered: Annotated[
-            t.MutableSequenceOf[str],
+            MutableSequence[str],
             m.Field(description="Attribute names filtered by whitelist/blacklist"),
         ]
         objectclasses_original: Annotated[
-            t.MutableSequenceOf[str],
+            MutableSequence[str],
             m.Field(description="Original objectClass values"),
         ]
         objectclasses_final: Annotated[
-            t.MutableSequenceOf[str],
+            MutableSequence[str],
             m.Field(description="Final objectClass values after transformation"),
         ]
         servers_applied: Annotated[
-            t.MutableSequenceOf[str],
+            MutableSequence[str],
             m.Field(description="List of server types applied to this entry"),
         ]
         server_transformations: Annotated[
@@ -97,7 +98,7 @@ class FlextLdifModelsDomainEntryStatistics:
             m.Field(description="DN transformation statistics (if applicable)"),
         ] = None
         filters_applied: Annotated[
-            t.MutableSequenceOf[str],
+            MutableSequence[str],
             m.Field(description="List of filters applied (use FilterType constants)"),
         ]
         filter_results: Annotated[
@@ -105,13 +106,13 @@ class FlextLdifModelsDomainEntryStatistics:
             m.Field(description="Filter results: {filter_name: passed}"),
         ]
         errors: Annotated[
-            t.MutableSequenceOf[str],
+            MutableSequence[str],
             m.Field(
                 description="Error messages (use ErrorCategory constants for keys)",
             ),
         ]
         warnings: Annotated[
-            t.MutableSequenceOf[str],
+            MutableSequence[str],
             m.Field(description="Warning messages"),
         ]
         category_assigned: Annotated[
@@ -180,16 +181,16 @@ class FlextLdifModelsDomainEntryStatistics:
         @classmethod
         def deduplicate_filters(
             cls,
-            v: t.MutableSequenceOf[str],
-        ) -> t.MutableSequenceOf[str]:
+            v: MutableSequence[str],
+        ) -> MutableSequence[str]:
             """Remove duplicate filters while preserving order.
 
             Returns:
-                The resulting ``t.MutableSequenceOf[str]``.
+                The resulting ``MutableSequence[str]``.
 
             """
             seen: set[str] = set()
-            result: t.MutableSequenceOf[str] = []
+            result: MutableSequence[str] = []
             for item in v:
                 if item not in seen:
                     seen.add(item)
@@ -200,12 +201,12 @@ class FlextLdifModelsDomainEntryStatistics:
         @classmethod
         def deduplicate_servers(
             cls,
-            v: t.MutableSequenceOf[str],
-        ) -> t.MutableSequenceOf[str]:
+            v: MutableSequence[str],
+        ) -> MutableSequence[str]:
             """Remove duplicate servers while preserving order.
 
             Returns:
-                The resulting ``t.MutableSequenceOf[str]``.
+                The resulting ``MutableSequence[str]``.
 
             """
             return list(dict.fromkeys(v))

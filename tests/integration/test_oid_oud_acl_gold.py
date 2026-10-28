@@ -21,6 +21,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, ClassVar
 
 import pytest
@@ -32,8 +33,6 @@ from tests import c, m, tm
 if TYPE_CHECKING:
     from pathlib import Path
 
-from tests import t
-
 
 class TestsFlextLdifOidOudAclGold:
     """Gold parity of the public oid→oud migration for ACL entries."""
@@ -43,7 +42,7 @@ class TestsFlextLdifOidOudAclGold:
 
     @staticmethod
     def _outcome_rows(
-        entries: t.SequenceOf[m.Ldif.Entry],
+        entries: Sequence[m.Ldif.Entry],
     ) -> list[tuple[str, int, int, int, int]]:
         """Count outcome kinds for each emitted aci, first occurrence only.
 

@@ -41,7 +41,7 @@ class TestsFlextLdifMigrationPipelineServers:
         its ``output_files`` tuple -- all public contract surface.
 
         Returns:
-            The resulting ``tuple[str, int, t.VariadicTuple[str]]``.
+            The resulting ``tuple[str, int, tuple[str, ...]]``.
 
         """
         input_dir = tmp_path / "input"

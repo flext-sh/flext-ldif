@@ -156,7 +156,7 @@ def parse_string(self, content: str) -> p.Result[Sequence[FlextLdifModels.Entry]
 Validate LDIF entries against RFC 2849 and business rules.
 
 ```text
-def validate_entries(self, entries: t.SequenceOf[FlextLdifModels.Entry]) -> p.Result[bool]:
+def validate_entries(self, entries: Sequence[FlextLdifModels.Entry]) -> p.Result[bool]:
     """Validate LDIF entries.
 
     Args:
@@ -179,7 +179,7 @@ Write LDIF entries to file.
 
 ```text
 def write_file(
-    self, entries: t.SequenceOf[FlextLdifModels.Entry], file_path: Path | str
+    self, entries: Sequence[FlextLdifModels.Entry], file_path: Path | str
 ) -> p.Result[bool]:
     """Write LDIF entries to file.
 
@@ -203,7 +203,7 @@ def write_file(
 Convert entries to LDIF string format.
 
 ```text
-def write(self, entries: t.SequenceOf[FlextLdifModels.Entry]) -> p.Result[str]:
+def write(self, entries: Sequence[FlextLdifModels.Entry]) -> p.Result[str]:
     """Convert entries to LDIF string.
 
     Args:
@@ -228,7 +228,7 @@ Filter entries with person object class.
 
 ```text
 def filter_persons(
-    self, entries: t.SequenceOf[FlextLdifModels.Entry]
+    self, entries: Sequence[FlextLdifModels.Entry]
 ) -> p.Result[Sequence[FlextLdifModels.Entry]]:
     """Filter person entries from entry list.
 
@@ -252,7 +252,7 @@ Filter entries with group object classes.
 
 ```text
 def filter_groups(
-    self, entries: t.SequenceOf[FlextLdifModels.Entry]
+    self, entries: Sequence[FlextLdifModels.Entry]
 ) -> p.Result[Sequence[FlextLdifModels.Entry]]:
     """Filter group entries from entry list.
 
@@ -274,7 +274,7 @@ Filter entries by specific object class.
 
 ```text
 def filter_by_objectclass(
-    self, entries: t.SequenceOf[FlextLdifModels.Entry], object_class: str
+    self, entries: Sequence[FlextLdifModels.Entry], object_class: str
 ) -> p.Result[Sequence[FlextLdifModels.Entry]]:
     """Filter entries by object class.
 
@@ -299,7 +299,7 @@ Generate statistics about LDIF entries.
 
 ```text
 def get_entry_statistics(
-    self, entries: t.SequenceOf[FlextLdifModels.Entry]
+    self, entries: Sequence[FlextLdifModels.Entry]
 ) -> p.Result[t.IntMapping]:
     """Get statistics about LDIF entries.
 
@@ -322,7 +322,7 @@ def get_entry_statistics(
 Perform comprehensive analysis of LDIF entries.
 
 ```text
-def analyze_entries(self, entries: t.SequenceOf[FlextLdifModels.Entry]) -> p.Result[m.Dict]:
+def analyze_entries(self, entries: Sequence[FlextLdifModels.Entry]) -> p.Result[m.Dict]:
     """Perform comprehensive entry analysis.
 
     Args:
@@ -383,7 +383,7 @@ class ServersConversionMatrix:
         source,
         target,
         data_type: Literal["attribute", "objectclass", "acl", "entry"],
-        data_batch: t.SequenceOf[str | t.JsonMapping],
+        data_batch: Sequence[str | t.JsonMapping],
     ) -> p.Result[Sequence[str | t.JsonMapping]]:
         """Convert batch of data from source to target server format via RFC.
 
@@ -398,7 +398,7 @@ class ServersConversionMatrix:
 
         """
 
-    def get_supported_conversions(self) -> t.MappingKV[str, t.StringList]:
+    def get_supported_conversions(self) -> Mapping[str, t.StringList]:
         """Get matrix of supported source→target conversions.
 
         Returns:
@@ -407,7 +407,7 @@ class ServersConversionMatrix:
         """
 
     def validate_oud_conversion(
-        self, converted_data: t.SequenceOf[str | t.JsonMapping]
+        self, converted_data: Sequence[str | t.JsonMapping]
     ) -> p.Result[bool]:
         """Validate converted data for OUD compatibility.
 
@@ -509,7 +509,7 @@ class Entry(m.BaseModel):
     """LDIF entry domain model."""
 
     dn: str = u.Field(..., description="Distinguished Name")
-    attributes: t.MappingKV[str, t.StringList] = u.Field(
+    attributes: Mapping[str, t.StringList] = u.Field(
         default_factory=lambda: MappingProxyType({}),
         description="Entry attributes as key-value pairs",
     )
@@ -601,6 +601,15 @@ Factory methods for creating domain objects.
 ```text
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_ldif import m, t
 
 
@@ -609,7 +618,7 @@ class Factory:
 
     @staticmethod
     def create(
-        data: m.Dict | str, attributes: t.MappingKV[str, t.StringList] | None = None
+        data: m.Dict | str, attributes: Mapping[str, t.StringList] | None = None
     ) -> Entry:
         """Create LDIF entry with validation."""
 
@@ -819,7 +828,7 @@ def process_enterprise_directory(
 ### Batch Processing
 
 ```text
-def process_multiple_files(file_paths: t.SequenceOf[Path]) -> p.Result[m.Dict]:
+def process_multiple_files(file_paths: Sequence[Path]) -> p.Result[m.Dict]:
     """Process multiple LDIF files in batch."""
     api = ldif()
     all_entries = []
@@ -845,7 +854,7 @@ def process_multiple_files(file_paths: t.SequenceOf[Path]) -> p.Result[m.Dict]:
 
 ```text
 def filter_by_custom_criteria(
-    api: ldif, entries: t.SequenceOf[FlextLdifModels.Entry]
+    api: ldif, entries: Sequence[FlextLdifModels.Entry]
 ) -> p.Result[Sequence[FlextLdifModels.Entry]]:
     """Apply custom filtering logic."""
 
@@ -873,6 +882,15 @@ Parse LDAP schema definitions with RFC 4512 compliance and
 
 ```text
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 # ✅ v1.0+ Flat imports
 from flext_ldif import ServerRegistryService  # Unchanged - servers subdirectory
@@ -969,6 +987,15 @@ Generic LDIF migration between different LDAP servers.
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from pathlib import Path
 
 from flext_ldif import FlextLdifMigrationPipeline, m, p
@@ -989,6 +1016,15 @@ result: p.Result[m.Ldif.MigrationPipelineResult] = pipeline.execute()
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from pathlib import Path
 
@@ -1023,13 +1059,22 @@ Central registry for managing server-specific servers.
 ```text
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_ldif import ServerRegistryService
 
 
 class ServerRegistryService:
     """Registry for managing LDAP server servers."""
 
-    def get_schemas(self, server_type: str) -> t.SequenceOf[Schema]:
+    def get_schemas(self, server_type: str) -> Sequence[Schema]:
         """Get schema servers for server type.
 
         Args:
@@ -1040,7 +1085,7 @@ class ServerRegistryService:
 
         """
 
-    def get_entrys(self, server_type: str) -> t.SequenceOf[Entry]:
+    def get_entrys(self, server_type: str) -> Sequence[Entry]:
         """Get entry servers for server type.
 
         Args:
@@ -1051,7 +1096,7 @@ class ServerRegistryService:
 
         """
 
-    def get_acls(self, server_type: str) -> t.SequenceOf[Acl]:
+    def get_acls(self, server_type: str) -> Sequence[Acl]:
         """Get ACL servers for server type.
 
         Args:
@@ -1085,6 +1130,15 @@ acl_server = client.acl("openldap")
 
 ```text
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 
 class Result:
@@ -1137,6 +1191,15 @@ if api_result.success:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from flext_ldif import settings, u
 

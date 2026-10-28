@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import TypeIs
 
 from flext_ldif import c, t
@@ -49,7 +50,7 @@ class FlextLdifUtilitiesACLPermissions:
 
     @staticmethod
     def _process_permission_list(
-        perm_list: t.MutableSequenceOf[str],
+        perm_list: MutableSequence[str],
         permission_map: t.MutableStrMapping | None,
         *,
         is_allow: bool,
@@ -77,9 +78,9 @@ class FlextLdifUtilitiesACLPermissions:
 
     @staticmethod
     def build_permissions_dict(
-        allow_permissions: t.MutableSequenceOf[str],
+        allow_permissions: MutableSequence[str],
         permission_map: t.MutableStrMapping | None = None,
-        deny_permissions: t.MutableSequenceOf[str] | None = None,
+        deny_permissions: MutableSequence[str] | None = None,
     ) -> t.MutableBoolMapping:
         """Build a permission dictionary from allow and deny lists.
 
@@ -248,9 +249,9 @@ class FlextLdifUtilitiesACLPermissions:
 
     @staticmethod
     def filter_supported_permissions(
-        permissions: t.MutableSequenceOf[str],
+        permissions: MutableSequence[str],
         supported: set[str] | frozenset[str],
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Filter permissions to the supported set.
 
         Args:

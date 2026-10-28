@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
@@ -98,11 +98,11 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWrite):
         return starts_like_oud or is_non_legacy_acl
 
     @override
-    def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
+    def resolve_acl_attributes(self) -> MutableSequence[str]:
         """Get RFC + OUD extensions.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         return [
@@ -112,8 +112,8 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWrite):
 
     def _finalize_aci(
         self,
-        current_aci: t.MutableSequenceOf[str],
-        acls: t.MutableSequenceOf[m.Ldif.Acl],
+        current_aci: MutableSequence[str],
+        acls: MutableSequence[m.Ldif.Acl],
     ) -> None:
         """Parse and add accumulated ACI to ACL list."""
         if current_aci:

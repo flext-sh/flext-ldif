@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping, MutableSequence
 from typing import Annotated
 
 from flext_core import m
@@ -234,7 +235,7 @@ class FlextLdifModelsSettingsMigrate:
             ),
         ] = False
         rfc_order_priority_attributes: Annotated[
-            t.MutableSequenceOf[str],
+            MutableSequence[str],
             m.Field(
                 description="Attributes to write first after DN, in order. Default: "
                 "['objectClass']. Remaining attributes sorted alphabetically.",
@@ -325,7 +326,7 @@ class FlextLdifModelsSettingsMigrate:
         """
 
         migration_config: Annotated[
-            t.MutableScalarMapping | None,
+            MutableMapping[str, t.Scalar] | None,
             m.Field(
                 description="Structured migration settings with 6-file output and "
                 "tracking",
@@ -338,13 +339,13 @@ class FlextLdifModelsSettingsMigrate:
             ),
         ] = None
         input_files: Annotated[
-            t.MutableSequenceOf[str] | None,
+            MutableSequence[str] | None,
             m.Field(
                 description="Ordered list of LDIF files to process (categorized mode)",
             ),
         ] = None
         output_files: Annotated[
-            t.MutableMappingKV[c.Ldif.Categories, str] | None,
+            MutableMapping[c.Ldif.Categories, str] | None,
             m.Field(description="Category to filename mapping (categorized mode)"),
         ] = None
         schema_whitelist_rules: Annotated[
@@ -363,11 +364,11 @@ class FlextLdifModelsSettingsMigrate:
             ),
         ] = None
         forbidden_attributes: Annotated[
-            t.MutableSequenceOf[str] | None,
+            MutableSequence[str] | None,
             m.Field(description="Attributes to remove from entries"),
         ] = None
         forbidden_objectclasses: Annotated[
-            t.MutableSequenceOf[str] | None,
+            MutableSequence[str] | None,
             m.Field(description="ObjectClasses to remove from entries"),
         ] = None
         base_dn: Annotated[

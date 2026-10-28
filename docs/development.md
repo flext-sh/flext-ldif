@@ -88,7 +88,7 @@ class _ParserHelper:
         self._content = content
         self._lines = content.splitlines()  # Loads all lines into memory
 
-    def parse(self) -> Iterator[tuple[str, t.MappingKV[str, list[str]]]]:
+    def parse(self) -> Iterator[tuple[str, Mapping[str, list[str]]]]:
         """Parse LDIF content and yield (dn, attributes) tuples."""
         # Process all lines already in memory
 
@@ -136,7 +136,7 @@ from flext_ldif import FlextLdifModels, p, r, t
 # LDIF-specific validation
 
 def validate_ldif_structure(
-entries: t.SequenceOf[FlextLdifModels.Entry],
+entries: Sequence[FlextLdifModels.Entry],
 ) -> p.Result[bool]:
 """Validate LDIF entries for common issues."""
 for entry in entries: # Check DN format
@@ -203,6 +203,15 @@ tm.that(len(entries), eq=2)
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 import os
 import pathlib
 
@@ -242,6 +251,15 @@ def test_memory_usage() -> None:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 import pathlib
 

@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence, Sequence
+
 from flext_ldif import c, m, t
 from flext_ldif.servers._oud import FlextLdifServersOudAclMetadata
 
@@ -18,10 +20,10 @@ class FlextLdifServersOudCommentsAcl:
 
     @staticmethod
     def _add_acl_value_comments(
-        comments: t.MutableSequenceOf[str],
+        comments: MutableSequence[str],
         original_attr: str,
         attr_name: str,
-        acl_values: t.SequenceOf[str],
+        acl_values: Sequence[str],
     ) -> None:
         """Add TRANSFORMED and SKIP_TO_04 comments for ACL values."""
         for value in acl_values:

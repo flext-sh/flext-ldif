@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import ClassVar
 
 from flext_ldif import c, m, p, r, t, u
@@ -215,7 +216,7 @@ class FlextLdifServersOidAclSubject(FlextLdifServersRfcAcl):
             }
             and "#" not in subject_value
         ):
-            type_suffix: t.MappingKV[str, str] = {
+            type_suffix: Mapping[str, str] = {
                 sc.OidAclSubjectType.DN_ATTR: sc.OidAclSubjectSuffix.LDAPURL,
                 sc.OidAclSubjectType.GUID_ATTR: sc.OidAclSubjectSuffix.USERDN,
                 sc.OidAclSubjectType.GROUP_ATTR: sc.OidAclSubjectSuffix.GROUPDN,

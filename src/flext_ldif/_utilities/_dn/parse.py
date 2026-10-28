@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import overload
 
 from flext_ldif import FlextLdifModels, c, p, r, t
@@ -30,14 +31,14 @@ class FlextLdifUtilitiesDNParse:
 
     @overload
     @staticmethod
-    def split(dn: str) -> t.MutableSequenceOf[str]: ...
+    def split(dn: str) -> MutableSequence[str]: ...
 
     @overload
     @staticmethod
-    def split(dn: FlextLdifModels.Ldif.DN) -> t.MutableSequenceOf[str]: ...
+    def split(dn: FlextLdifModels.Ldif.DN) -> MutableSequence[str]: ...
 
     @staticmethod
-    def split(dn: str | FlextLdifModels.Ldif.DN) -> t.MutableSequenceOf[str]:
+    def split(dn: str | FlextLdifModels.Ldif.DN) -> MutableSequence[str]:
         r"""Split DN string into individual RDN components per RFC 4514.
 
         RFC 4514 Section 2 ABNF:
@@ -50,7 +51,7 @@ class FlextLdifUtilitiesDNParse:
         Does NOT treat escaped commas as component separators.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         return list(

@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, MutableSequence, Sequence
 from typing import Annotated, ClassVar, Self, override
 
 from flext_cli import m
@@ -33,7 +33,7 @@ class FlextLdifModelsDomainDN:
             m.Field(..., description="Final normalized DN (RFC 4514 compliant)"),
         ]
         transformations: Annotated[
-            t.StrSequence,
+            Sequence[str],
             m.Field(description="Ordered list of transformations applied"),
         ]
         had_tab_chars: Annotated[
@@ -69,11 +69,11 @@ class FlextLdifModelsDomainDN:
             m.Field(description="Validation status (use ValidationStatus constants)"),
         ] = "valid"
         validation_warnings: Annotated[
-            t.StrSequence,
+            Sequence[str],
             m.Field(description="Non-fatal validation warnings"),
         ]
         validation_errors: Annotated[
-            t.StrSequence,
+            Sequence[str],
             m.Field(description="Fatal validation errors"),
         ]
 
@@ -120,12 +120,12 @@ class FlextLdifModelsDomainDN:
         @classmethod
         def deduplicate_transformations(
             cls,
-            v: t.MutableSequenceOf[str],
-        ) -> t.MutableSequenceOf[str]:
+            v: MutableSequence[str],
+        ) -> MutableSequence[str]:
             """Remove duplicate transformations while preserving order.
 
             Returns:
-                The resulting ``t.MutableSequenceOf[str]``.
+                The resulting ``MutableSequence[str]``.
 
             """
             return list(dict.fromkeys(v))
@@ -233,7 +233,7 @@ class FlextLdifModelsDomainDN:
             super().__init__()
             # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed:
             # plain dict registry.
-            self._registry: t.MutableMappingKV[str, t.JsonValue] = {}
+            self._registry: MutableMapping[str, t.JsonValue] = {}
             self._case_variants: MutableMapping[str, set[str]] = {}
 
         @staticmethod
@@ -285,8 +285,8 @@ class FlextLdifModelsDomainDN:
                 The resulting ``p.Result[bool]``.
 
             """
-            inconsistencies: t.MutableSequenceOf[
-                MutableMapping[str, str | int | t.MutableSequenceOf[str]]
+            inconsistencies: MutableSequence[
+                MutableMapping[str, str | int | MutableSequence[str]]
             ] = []
             for normalized_dn, variants in self._case_variants.items():
                 if len(variants) > 1:

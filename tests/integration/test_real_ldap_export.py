@@ -19,7 +19,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
 import pytest
@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-from tests import m, p, t
+from tests import m, p
 
 
 @pytest.fixture
@@ -71,7 +71,7 @@ class TestsFlextLdifRealLdapExport:
     def _parse_back(
         flext_api: p.Ldif.LdifClient,
         content: str | None,
-    ) -> t.MappingKV[str, t.MappingKV[str, t.StrSequence]]:
+    ) -> Mapping[str, Mapping[str, Sequence[str]]]:
         """Parse exported LDIF and index attribute maps by DN string.
 
         Parsing the export through the public parser is the strongest available
@@ -79,7 +79,7 @@ class TestsFlextLdifRealLdapExport:
         faithfully round-trips every DN and attribute.
 
         Returns:
-            The resulting ``t.MappingKV[str, t.MappingKV[str, t.StrSequence]]``.
+            The resulting ``Mapping[str, Mapping[str, Sequence[str]]]``.
 
         """
         parsed = flext_api.parse_string(tm.not_none(content))
@@ -93,7 +93,7 @@ class TestsFlextLdifRealLdapExport:
         ldap_connection: p.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
-        make_test_username: Callable[[str], ...],
+        make_test_username: Callable[[str], str],
     ) -> None:
         """A single exported entry round-trips its DN and every attribute value."""
         username = make_test_username("TestUser")
@@ -126,7 +126,7 @@ class TestsFlextLdifRealLdapExport:
         ldap_connection: p.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
-        make_test_username: Callable[[str], ...],
+        make_test_username: Callable[[str], str],
     ) -> None:
         """Batch export reproduces each source DN with its distinct attributes."""
         usernames = [make_test_username(f"User{i}") for i in range(5)]
@@ -158,7 +158,7 @@ class TestsFlextLdifRealLdapExport:
         ldap_connection: p.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
-        make_test_username: Callable[[str], ...],
+        make_test_username: Callable[[str], str],
     ) -> None:
         """Export a nested directory subtree.
 
@@ -202,7 +202,7 @@ class TestsFlextLdifRealLdapExport:
         ldap_connection: p.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
-        make_test_username: Callable[[str], ...],
+        make_test_username: Callable[[str], str],
     ) -> None:
         """Exporting the same entries twice yields identical LDIF content."""
         username = make_test_username("Idempotent")
@@ -228,7 +228,7 @@ class TestsFlextLdifRealLdapExport:
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
         tmp_path: Path,
-        make_test_username: Callable[[str], ...],
+        make_test_username: Callable[[str], str],
     ) -> None:
         """File export writes valid LDIF that round-trips the exported entry."""
         username = make_test_username("FileExport")

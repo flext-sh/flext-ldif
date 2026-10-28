@@ -13,7 +13,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, m, t
+from collections.abc import Sequence
+
+from flext_ldif import c, m
 
 
 class FlextLdifServersOidAclRender:
@@ -39,7 +41,7 @@ class FlextLdifServersOidAclRender:
         return bind
 
     @staticmethod
-    def target_parts(aci: m.Ldif.AciRule) -> t.StrSequence:
+    def target_parts(aci: m.Ldif.AciRule) -> Sequence[str]:
         """Assemble the ACI target clauses (attr/filter/scope) in OUD order.
 
         Returns:

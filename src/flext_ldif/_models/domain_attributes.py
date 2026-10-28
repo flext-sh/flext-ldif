@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import KeysView, MutableMapping, ValuesView
+from collections.abc import KeysView, MutableMapping, MutableSequence, ValuesView
 from typing import Annotated, ClassVar, Self
 
 from flext_cli import m
@@ -42,7 +42,7 @@ class FlextLdifModelsDomainAttributes:
             m.Field(description="Metadata for preserving ordering and formats"),
         ] = None
 
-        def __getitem__(self, key: str) -> t.MutableSequenceOf[str]:
+        def __getitem__(self, key: str) -> MutableSequence[str]:
             """Get attribute values by name (case-sensitive LDAP).
 
             Args:
@@ -57,7 +57,7 @@ class FlextLdifModelsDomainAttributes:
             """
             return self.attributes[key]
 
-        def __setitem__(self, key: str, value: t.MutableSequenceOf[str]) -> None:
+        def __setitem__(self, key: str, value: MutableSequence[str]) -> None:
             """Set attribute values by name.
 
             Args:
@@ -80,7 +80,7 @@ class FlextLdifModelsDomainAttributes:
             """
             return key in self.attributes
 
-        def add_attribute(self, key: str, values: t.MutableSequenceOf[str]) -> Self:
+        def add_attribute(self, key: str, values: MutableSequence[str]) -> Self:
             """Add or update an attribute with values.
 
             Args:
@@ -97,8 +97,8 @@ class FlextLdifModelsDomainAttributes:
         def get(
             self,
             key: str,
-            default: t.MutableSequenceOf[str] | None = None,
-        ) -> t.MutableSequenceOf[str]:
+            default: MutableSequence[str] | None = None,
+        ) -> MutableSequence[str]:
             """Get attribute values with optional default.
 
             Args:
@@ -128,7 +128,7 @@ class FlextLdifModelsDomainAttributes:
             """
             return key in self.attributes
 
-        def items(self) -> t.MutableSequenceOf[tuple[str, t.MutableSequenceOf[str]]]:
+        def items(self) -> MutableSequence[tuple[str, MutableSequence[str]]]:
             """Get attribute name-values pairs.
 
             Returns:
@@ -137,7 +137,7 @@ class FlextLdifModelsDomainAttributes:
             """
             return list(self.attributes.items())
 
-        def iter_attributes(self) -> t.MutableSequenceOf[str]:
+        def iter_attributes(self) -> MutableSequence[str]:
             """Get list of all attribute names.
 
             Returns:
@@ -169,14 +169,14 @@ class FlextLdifModelsDomainAttributes:
             _ = self.attributes.pop(key, None)
             return self
 
-        def values(self) -> ValuesView[t.MutableSequenceOf[str]]:
+        def values(self) -> ValuesView[MutableSequence[str]]:
             """Get attribute values lists.
 
             Returns:
-                The resulting ``ValuesView[t.MutableSequenceOf[str]]``.
+                The resulting ``ValuesView[MutableSequence[str]]``.
 
             """
-            attribute_values: ValuesView[t.MutableSequenceOf[str]] = (
+            attribute_values: ValuesView[MutableSequence[str]] = (
                 self.attributes.values()
             )
             return attribute_values
@@ -217,11 +217,11 @@ class FlextLdifModelsDomainAttributes:
             m.Field(description="Transformed attribute name (None if removed)"),
         ] = None
         original_values: Annotated[
-            t.MutableSequenceOf[str],
+            MutableSequence[str],
             m.Field(description="Original attribute values from source"),
         ]
         target_values: Annotated[
-            t.MutableSequenceOf[str] | None,
+            MutableSequence[str] | None,
             m.Field(description="Transformed values (None if removed)"),
         ] = None
         transformation_type: Annotated[

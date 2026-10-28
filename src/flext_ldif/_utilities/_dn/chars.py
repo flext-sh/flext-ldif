@@ -6,7 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, t
+from collections.abc import MutableSequence
+
+from flext_ldif import c
 
 
 class FlextLdifUtilitiesDNChars:
@@ -63,14 +65,14 @@ class FlextLdifUtilitiesDNChars:
         value: str,
         *,
         strict: bool = True,
-    ) -> tuple[bool, t.MutableSequenceOf[str]]:
+    ) -> tuple[bool, MutableSequence[str]]:
         """Validate DN attribute value per RFC 4514 string production.
 
         Returns:
-            The resulting ``tuple[bool, t.MutableSequenceOf[str]]``.
+            The resulting ``tuple[bool, MutableSequence[str]]``.
 
         """
-        errors: t.MutableSequenceOf[str] = []
+        errors: MutableSequence[str] = []
         if not value:
             return (True, errors)
         if len(value) == 1:

@@ -7,9 +7,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableSequence
 
-from flext_ldif import c, m, t, u
+from flext_ldif import c, m, u
 
 
 class FlextLdifServersEntryLineEmitter:
@@ -124,7 +124,7 @@ class FlextLdifServersEntryLineEmitter:
 
     def append_attribute_line(
         self,
-        output_lines: t.MutableSequenceOf[str],
+        output_lines: MutableSequence[str],
         attr_name: str,
         line: str,
     ) -> None:

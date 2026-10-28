@@ -6,7 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import FlextLdifShared, c, m, t
+from collections.abc import MutableSequence
+
+from flext_ldif import FlextLdifShared, c, m
 
 
 class FlextLdifUtilitiesServerConfig:
@@ -23,11 +25,11 @@ class FlextLdifUtilitiesServerConfig:
         return FlextLdifShared.normalize_server_type(server_type)
 
     @staticmethod
-    def resolve_all_server_types() -> t.MutableSequenceOf[str]:
+    def resolve_all_server_types() -> MutableSequence[str]:
         """Get all supported server type values.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         return [s.value for s in c.Ldif.ServerTypes.__members__.values()]

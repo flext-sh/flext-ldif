@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableSequence, Sequence
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
@@ -133,12 +133,12 @@ class FlextLdifServersOudEntry(
 
     @staticmethod
     def _process_aci_attribute_values(
-        aci_attrs: t.StrSequence,
-    ) -> p.Result[t.Pair[bool, t.Ldif.MutableMetadataInputMapping]]:
+        aci_attrs: Sequence[str],
+    ) -> p.Result[tuple[bool, t.Ldif.MutableMetadataInputMapping]]:
         """Process each ACI value, accumulating metadata and the macro flag.
 
         Returns:
-            The resulting ``p.Result[t.Pair[bool,
+            The resulting ``p.Result[tuple[bool,
                 t.Ldif.MutableMetadataInputMapping]]``.
 
         """
@@ -152,12 +152,12 @@ class FlextLdifServersOudEntry(
                 acl_metadata_extensions,
             )
             if process_result.failure:
-                return r[t.Pair[bool, t.Ldif.MutableMetadataInputMapping]].from_failure(
+                return r[tuple[bool, t.Ldif.MutableMetadataInputMapping]].from_failure(
                     process_result,
                 )
             if process_result.value:
                 has_macros = True
-        return r[t.Pair[bool, t.Ldif.MutableMetadataInputMapping]].ok((
+        return r[tuple[bool, t.Ldif.MutableMetadataInputMapping]].ok((
             has_macros,
             acl_metadata_extensions,
         ))
@@ -165,7 +165,7 @@ class FlextLdifServersOudEntry(
     @staticmethod
     def _log_aci_macros_preserved(
         entry: m.Ldif.Entry,
-        aci_attrs: t.StrSequence,
+        aci_attrs: Sequence[str],
     ) -> None:
         """Log that an entry carries OUD ACI macros preserved for runtime expansion."""
         aci_list = (
@@ -217,7 +217,7 @@ class FlextLdifServersOudEntry(
             normalized_entry,
         )
         write_options = self._extract_write_format_options(entry_to_write.metadata)
-        ldif_parts: t.MutableSequenceOf[str] = []
+        ldif_parts: MutableSequence[str] = []
         ldif_parts.extend(
             FlextLdifServersOudHelpers.add_original_entry_comments(
                 entry_data,

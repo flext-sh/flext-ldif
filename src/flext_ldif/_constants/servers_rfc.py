@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
@@ -93,7 +94,7 @@ class FlextLdifConstantsServersRfc:
         "ldapsyntaxes",
     ])
 
-    ACL_PERMISSION_KEYS: ClassVar[t.StrSequence] = (
+    ACL_PERMISSION_KEYS: ClassVar[Sequence[str]] = (
         "read",
         "write",
         "add",
@@ -116,7 +117,7 @@ class FlextLdifConstantsServersRfc:
 
     OBJECTCLASS_REQUIREMENTS: ClassVar[t.BoolMapping] = MappingProxyType({})
 
-    CATEGORIZATION_PRIORITY: ClassVar[t.StrSequence] = ()
+    CATEGORIZATION_PRIORITY: ClassVar[Sequence[str]] = ()
 
     CATEGORY_OBJECTCLASSES: ClassVar[t.FrozensetMapping] = MappingProxyType({})
 
@@ -126,7 +127,7 @@ class FlextLdifConstantsServersRfc:
 
     MIME_OID_ENCODING: ClassVar[str] = "1.2.840.113556"
 
-    LDAP_SYNTAX_OID_LIST: ClassVar[t.StrSequence] = (
+    LDAP_SYNTAX_OID_LIST: ClassVar[Sequence[str]] = (
         "1.3.6.1.4.1.1466.115.121.1.12",
         "1.3.6.1.4.1.1466.115.121.1.15",
         "1.3.6.1.4.1.1466.115.121.1.27",
@@ -139,11 +140,11 @@ class FlextLdifConstantsServersRfc:
 
     LDIF_NEWLINE: ClassVar[str] = "\n"
 
-    MATCHING_RULE_TO_RFC: ClassVar[t.StrMapping] = MappingProxyType({})
+    MATCHING_RULE_TO_RFC: ClassVar[Mapping[str, str]] = MappingProxyType({})
 
-    SYNTAX_OID_TO_RFC: ClassVar[t.StrMapping] = MappingProxyType({})
+    SYNTAX_OID_TO_RFC: ClassVar[Mapping[str, str]] = MappingProxyType({})
 
-    ATTRIBUTE_CASE_MAP: ClassVar[t.StrMapping] = MappingProxyType({})
+    ATTRIBUTE_CASE_MAP: ClassVar[Mapping[str, str]] = MappingProxyType({})
 
     BOOLEAN_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset()
 

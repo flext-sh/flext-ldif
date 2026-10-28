@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, MutableSequence
+
 from flext_ldif import c, m, p, r, s, t, u
 
 
@@ -113,7 +115,7 @@ class FlextLdifServer(s[p.Ldif.Response], m.Ldif.RegistryPortOptions):
         self,
         server_type: str,
     ) -> p.Result[
-        t.MappingKV[str, p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer]
+        Mapping[str, p.Ldif.SchemaServer | p.Ldif.AclServer | p.Ldif.EntryServer]
     ]:
         """Resolve a coherent component bundle from one fetched dialect.
 
@@ -143,7 +145,7 @@ class FlextLdifServer(s[p.Ldif.Response], m.Ldif.RegistryPortOptions):
         """
         return self.server(server_type).map(lambda server: server.server_constants)
 
-    def list_registered_servers(self) -> p.Result[t.MutableSequenceOf[str]]:
+    def list_registered_servers(self) -> p.Result[MutableSequence[str]]:
         """List the authoritative registry without a mirror or class cache.
 
         Returns:

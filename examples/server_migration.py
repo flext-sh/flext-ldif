@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableMapping, MutableSequence, Sequence
 from pathlib import Path
 
 from examples import c, ldif, p, r, t, u
@@ -195,7 +195,7 @@ class ExamplesFlextLdifServerMigration:
             "entryUUID: 12345678-1234-1234-1234-123456789012\n"
             "entryCSN: 20240101000000.000000Z#000000#000#000000\n"
         )
-        servers: t.SequenceOf[str] = ("rfc", "oid", "oud", "openldap")
+        servers: Sequence[str] = ("rfc", "oid", "oud", "openldap")
         comparison_results: MutableMapping[str, t.JsonMapping] = {}
         for server in servers:
             server_type = server

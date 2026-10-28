@@ -6,9 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 import pytest
 
-from tests import c, m, p, t, tm, u
+from tests import c, m, p, tm, u
 
 
 class TestsFlextLdifAnalysisService:
@@ -17,7 +19,7 @@ class TestsFlextLdifAnalysisService:
     @staticmethod
     def _make_entry(
         dn: str | None,
-        attrs: t.MappingKV[str, t.StrSequence] | None,
+        attrs: Mapping[str, Sequence[str]] | None,
     ) -> m.Ldif.Entry:
         """Build a public ``m.Ldif.Entry`` for a validation case.
 

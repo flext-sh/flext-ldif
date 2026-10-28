@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence, Sequence
+
 from flext_ldif import c, m, p, r, s, t, u
 
 
@@ -16,7 +18,7 @@ class FlextLdifFilters(s[p.Ldif.Response]):
     def _check_schema_oid(
         cls,
         attrs: t.MutableStrSequenceMapping,
-        attr_keys: t.StrPair,
+        attr_keys: tuple[str, str],
         allowed_set: frozenset[str],
     ) -> tuple[bool, bool]:
         """Check if schema OID matches allowed set.
@@ -103,20 +105,20 @@ class FlextLdifFilters(s[p.Ldif.Response]):
     @classmethod
     def filter_schema_by_oids(
         cls,
-        entries: t.MutableSequenceOf[m.Ldif.Entry],
+        entries: MutableSequence[m.Ldif.Entry],
         allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
-    ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
+    ) -> p.Result[MutableSequence[m.Ldif.Entry]]:
         """Filter schema entries by allowed OIDs.
 
         Returns:
-            The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
+            The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
 
         """
         try:
             allowed_oid_map = cls._extract_allowed_oids(allowed_oids)
             if not any(allowed_oid_map.values()):
-                return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(entries)
-            filtered: t.MutableSequenceOf[m.Ldif.Entry] = [
+                return r[MutableSequence[m.Ldif.Entry]].ok(entries)
+            filtered: MutableSequence[m.Ldif.Entry] = [
                 entry
                 for entry in entries
                 if cls._should_include_entry(entry, allowed_oid_map)
@@ -126,19 +128,19 @@ class FlextLdifFilters(s[p.Ldif.Response]):
                 total_entries=len(entries),
                 filtered_count=len(filtered),
             )
-            return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(filtered)
+            return r[MutableSequence[m.Ldif.Entry]].ok(filtered)
         except c.Ldif.EXC_LDIF_PARSE as e:
             cls._get_or_create_logger().exception(
                 "Failed to filter schema entries by OIDs",
             )
-            return r[t.MutableSequenceOf[m.Ldif.Entry]].fail_op("Schema OID filter", e)
+            return r[MutableSequence[m.Ldif.Entry]].fail_op("Schema OID filter", e)
 
     @classmethod
     def filter_entry_attributes(
         cls,
         entry: m.Ldif.Entry | p.Ldif.Entry,
-        forbidden_attrs: t.StrSequence,
-        forbidden_ocs: t.StrSequence,
+        forbidden_attrs: Sequence[str],
+        forbidden_ocs: Sequence[str],
     ) -> m.Ldif.Entry:
         """Strip forbidden attributes and objectClasses from an entry.
 
@@ -150,7 +152,7 @@ class FlextLdifFilters(s[p.Ldif.Response]):
         if entry.attributes and forbidden_attrs:
             attrs_dict = entry.attributes.attributes
             forbidden_set = {attr.lower() for attr in forbidden_attrs}
-            attrs_to_remove: t.StrSequence = [
+            attrs_to_remove: Sequence[str] = [
                 k for k in attrs_dict if k.lower() in forbidden_set
             ]
             if attrs_to_remove:

@@ -12,7 +12,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, m, p, r, t
+from collections.abc import Sequence
+
+from flext_ldif import c, m, p, r
 from flext_ldif.servers._oid import (
     FlextLdifServersOidAclAssemble,
     FlextLdifServersOidAclConvert,
@@ -27,7 +29,7 @@ class FlextLdifServersOidAclPipeline:
     def build_aci_rules(
         cls,
         dn: str,
-        oid_acl_lines: t.StrSequence,
+        oid_acl_lines: Sequence[str],
         *,
         base_dn: str = "",
     ) -> p.Result[tuple[m.Ldif.AciRule, ...]]:
@@ -56,13 +58,13 @@ class FlextLdifServersOidAclPipeline:
         return r[tuple[m.Ldif.AciRule, ...]].ok(tuple(rules))
 
     @staticmethod
-    def render_aci_values(rules: tuple[m.Ldif.AciRule, ...]) -> t.StrSequence:
+    def render_aci_values(rules: tuple[m.Ldif.AciRule, ...]) -> Sequence[str]:
         """Render rules with allows to deduplicated raw ``aci`` attribute values.
 
         Duplicate values (whitespace- and case-normalized) keep first order.
 
         Returns:
-            The resulting ``t.StrSequence``.
+            The resulting ``Sequence[str]``.
 
         """
         values: list[str] = []
@@ -84,10 +86,10 @@ class FlextLdifServersOidAclPipeline:
     def convert_acl_values(
         cls,
         dn: str,
-        oid_acl_lines: t.StrSequence,
+        oid_acl_lines: Sequence[str],
         *,
         base_dn: str = "",
-    ) -> p.Result[t.StrSequence]:
+    ) -> p.Result[Sequence[str]]:
         """Convert an entry's OID ACL lines to deduplicated OUD ``aci`` values.
 
         Each ``orclaci:``/``orclentrylevelaci:`` line is parsed → built →
@@ -97,7 +99,7 @@ class FlextLdifServersOidAclPipeline:
         ``aci: `` prefix (they are raw ``aci`` attribute values).
 
         Returns:
-            The resulting ``p.Result[t.StrSequence]``.
+            The resulting ``p.Result[Sequence[str]]``.
 
         """
         return cls.build_aci_rules(dn, oid_acl_lines, base_dn=base_dn).map(

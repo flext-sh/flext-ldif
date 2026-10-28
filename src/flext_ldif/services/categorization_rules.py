@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import struct
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, MutableSequence
 from typing import Annotated
 
 from flext_ldif import c, m, p, r, t, u
@@ -24,12 +24,12 @@ class FlextLdifCategorizationRules(FlextLdifServer):
     @staticmethod
     def _build_rejection_tracker() -> MutableMapping[
         str,
-        t.MutableSequenceOf[m.Ldif.Entry],
+        MutableSequence[m.Ldif.Entry],
     ]:
         """Build the canonical rejection tracker structure for one categorization run.
 
         Returns:
-            The resulting ``MutableMapping[str, t.MutableSequenceOf[m.Ldif.Entry]]``.
+            The resulting ``MutableMapping[str, MutableSequence[m.Ldif.Entry]]``.
 
         """
         return {
@@ -40,7 +40,7 @@ class FlextLdifCategorizationRules(FlextLdifServer):
 
     categorization_rules: Annotated[
         m.Ldif.CategoryRules
-        | MutableMapping[str, str | t.MutableSequenceOf[str] | None]
+        | MutableMapping[str, str | MutableSequence[str] | None]
         | None,
         m.Field(
             default=None,
@@ -59,7 +59,7 @@ class FlextLdifCategorizationRules(FlextLdifServer):
         ),
     ] = None
     forbidden_attributes: Annotated[
-        t.MutableSequenceOf[str] | None,
+        MutableSequence[str] | None,
         m.Field(
             default=None,
             exclude=True,
@@ -69,7 +69,7 @@ class FlextLdifCategorizationRules(FlextLdifServer):
         ),
     ] = None
     forbidden_objectclasses: Annotated[
-        t.MutableSequenceOf[str] | None,
+        MutableSequence[str] | None,
         m.Field(
             default=None,
             exclude=True,
@@ -98,7 +98,7 @@ class FlextLdifCategorizationRules(FlextLdifServer):
         ),
     ] = c.Ldif.ServerTypes.RFC.value
     rejection_tracker: Annotated[
-        t.MutableMappingKV[str, t.MutableSequenceOf[m.Ldif.Entry]],
+        MutableMapping[str, MutableSequence[m.Ldif.Entry]],
         m.Field(
             default_factory=_build_rejection_tracker,
             exclude=True,
@@ -193,11 +193,11 @@ class FlextLdifCategorizationRules(FlextLdifServer):
     @staticmethod
     def _get_priority_order_from_constants(
         constants: type[p.Ldif.ServerConstants] | None,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Get priority order from constants or use default.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         if constants is None:
@@ -223,7 +223,7 @@ class FlextLdifCategorizationRules(FlextLdifServer):
     @staticmethod
     def _match_entry_to_category(
         entry: m.Ldif.Entry,
-        priority_order: t.MutableSequenceOf[str],
+        priority_order: MutableSequence[str],
         category_map: t.MutableFrozensetMapping,
     ) -> tuple[str, str | None]:
         """Match entry to category using priority order and category map.

@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping, MutableSequence
 from typing import Self, cast, overload, override
 
 from flext_ldif import c, m, p, r, t, u
@@ -74,8 +75,8 @@ class FlextLdifServersRfcAcl(
             return self.configure_runtime(
                 server=server, settings=settings, registry=registry, **fields
             )
-        processor_fields: t.MutableMappingKV[str, t.JsonValue | m.Ldif.Acl | None] = (
-            dict(fields)
+        processor_fields: MutableMapping[str, t.JsonValue | m.Ldif.Acl | None] = dict(
+            fields
         )
         processor_fields["data"] = data
         processor_fields[c.ContextScope.OPERATION] = operation
@@ -108,7 +109,7 @@ class FlextLdifServersRfcAcl(
         return acl
 
     @override
-    def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
+    def resolve_acl_attributes(self) -> MutableSequence[str]:
         """Return the RFC ACL attribute names.
 
         Returns:

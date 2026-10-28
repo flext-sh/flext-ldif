@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar
 
 from flext_ldif import FlextLdifModels, c, p, r, t
@@ -22,7 +23,7 @@ from flext_ldif._utilities._parser import (
 class FlextLdifUtilitiesParserRecord:
     """Parse a single unfolded LDIF record into an Entry model."""
 
-    _MODIFY_OPS: ClassVar[t.MutableMappingKV[str, c.Ldif.ChangeOperation]] = {
+    _MODIFY_OPS: ClassVar[MutableMapping[str, c.Ldif.ChangeOperation]] = {
         "add": c.Ldif.ChangeOperation.ADD,
         "delete": c.Ldif.ChangeOperation.DELETE,
         c.MergeStrategy.REPLACE: c.Ldif.ChangeOperation.REPLACE,
@@ -34,11 +35,11 @@ class FlextLdifUtilitiesParserRecord:
 
         dn: str
         attrs: t.MutableStrSequenceMapping
-        attribute_metadata: t.MutableMappingKV[str, t.MutableAttributeMapping]
-        comments: t.MutableSequenceOf[str]
-        raw_record_lines: t.MutableSequenceOf[str]
-        controls: t.MutableSequenceOf[FlextLdifModelsDomainEntryControl.Control]
-        change_operations: t.MutableSequenceOf[FlextLdifModels.Ldif.ChangeOperation]
+        attribute_metadata: MutableMapping[str, t.MutableAttributeMapping]
+        comments: MutableSequence[str]
+        raw_record_lines: MutableSequence[str]
+        controls: MutableSequence[FlextLdifModelsDomainEntryControl.Control]
+        change_operations: MutableSequence[FlextLdifModels.Ldif.ChangeOperation]
         current_change_operation: FlextLdifModels.Ldif.ChangeOperation | None
         changetype: c.Ldif.ChangeType | None
         record_kind: c.Ldif.RecordKind
@@ -51,16 +52,16 @@ class FlextLdifUtilitiesParserRecord:
             """Initialize an empty record state."""
             self.dn = ""
             self.attrs: t.MutableStrSequenceMapping = {}
-            self.attribute_metadata: t.MutableMappingKV[
+            self.attribute_metadata: MutableMapping[
                 str,
                 t.MutableAttributeMapping,
             ] = {}
-            self.comments: t.MutableSequenceOf[str] = []
-            self.raw_record_lines: t.MutableSequenceOf[str] = []
-            self.controls: t.MutableSequenceOf[
+            self.comments: MutableSequence[str] = []
+            self.raw_record_lines: MutableSequence[str] = []
+            self.controls: MutableSequence[
                 FlextLdifModelsDomainEntryControl.Control
             ] = []
-            self.change_operations: t.MutableSequenceOf[
+            self.change_operations: MutableSequence[
                 FlextLdifModels.Ldif.ChangeOperation
             ] = []
             self.current_change_operation: (
@@ -99,7 +100,7 @@ class FlextLdifUtilitiesParserRecord:
     @staticmethod
     def finalize_change_operation(
         current_op: FlextLdifModels.Ldif.ChangeOperation | None,
-        change_operations: t.MutableSequenceOf[FlextLdifModels.Ldif.ChangeOperation],
+        change_operations: MutableSequence[FlextLdifModels.Ldif.ChangeOperation],
     ) -> None:
         """Append a pending modify block when present."""
         if current_op is not None:
@@ -299,7 +300,7 @@ class FlextLdifUtilitiesParserRecord:
 
     @staticmethod
     def parse_ldif_record(
-        lines: t.MutableSequenceOf[str],
+        lines: MutableSequence[str],
     ) -> p.Result[FlextLdifModels.Ldif.Entry]:
         """Parse a single unfolded LDIF record into Entry.
 

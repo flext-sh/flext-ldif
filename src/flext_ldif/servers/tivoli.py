@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from collections.abc import MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
@@ -224,7 +225,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             acl_attribute = FlextLdifServersTivoli.Constants.ACL_PRIMARY_ATTRIBUTE_NAME
             if acl_data.raw_acl:
                 return r[str].ok(acl_data.raw_acl)
-            parts: t.MutableSequenceOf[str] = []
+            parts: MutableSequence[str] = []
             if acl_data.target and acl_data.target.target_dn:
                 parts.append(acl_data.target.target_dn)
             if acl_data.subject and acl_data.subject.subject_value:
@@ -245,7 +246,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         @staticmethod
         def _active_tivoli_permissions(
             permissions: m.Ldif.AclPermissions | None,
-        ) -> t.MutableSequenceOf[str]:
+        ) -> MutableSequence[str]:
             """Return active IBM Tivoli DS permission tokens."""
             permission_map = {
                 "read": FlextLdifServersTivoli.Constants.PERMISSION_READ,
@@ -255,7 +256,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 "search": FlextLdifServersTivoli.Constants.PERMISSION_SEARCH,
                 "compare": FlextLdifServersTivoli.Constants.PERMISSION_COMPARE,
             }
-            active_perms: t.MutableSequenceOf[str] = []
+            active_perms: MutableSequence[str] = []
             if not permissions:
                 return active_perms
             perms_dict = {
@@ -341,7 +342,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             object_classes = list(attributes.get(c.Ldif.DictKeys.OBJECTCLASS, []))
             processed_attributes: t.MutableStrSequenceMapping = {**attributes}
             for attr_name, attr_values in processed_attributes.items():
-                processed_values: t.MutableSequenceOf[str] = list(attr_values)
+                processed_values: MutableSequence[str] = list(attr_values)
                 processed_attributes[attr_name] = processed_values
             processed_attributes[c.Ldif.ServerMetadataKeys.SERVER_TYPE] = [
                 self._get_server_type(),

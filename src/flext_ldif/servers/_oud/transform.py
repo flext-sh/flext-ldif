@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence
 from typing import ClassVar
 
 from flext_ldif import c, m, p, r, t, u
@@ -26,9 +26,9 @@ class FlextLdifServersOudTransform:
 
     @staticmethod
     def determine_attribute_order(
-        attr_names: t.MutableSequenceOf[str],
+        attr_names: MutableSequence[str],
         format_options: m.Ldif.WriteFormatOptions | None,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Order attribute names according to the format options.
 
         Args:
@@ -121,7 +121,7 @@ class FlextLdifServersOudTransform:
         aci_values = attrs["aci"]
         if not aci_values:
             return entry_data
-        normalized_aci_values: t.MutableSequenceOf[str] = []
+        normalized_aci_values: MutableSequence[str] = []
         for aci in aci_values:
             aci_str: str = aci
             normalized_aci, was_filtered = FlextLdifServersOudAci.normalize_aci_value(
@@ -230,9 +230,9 @@ class FlextLdifServersOudTransform:
         entry: m.Ldif.Entry,
         corrected_data: MutableMapping[
             str,
-            t.Ldif.Scalar | t.MutableSequenceOf[str] | t.MutableAttributeMapping | None,
+            t.Ldif.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
         ],
-        syntax_corrections: t.MutableSequenceOf[str] | t.MutableStrMapping | None,
+        syntax_corrections: MutableSequence[str] | t.MutableStrMapping | None,
     ) -> p.Result[m.Ldif.Entry]:
         """Apply corrected attributes to the entry before writing.
 
@@ -293,12 +293,12 @@ class FlextLdifServersOudTransform:
         corrected_data = corrected_result.unwrap()
         corrected_data_typed: MutableMapping[
             str,
-            t.Ldif.Scalar | t.MutableSequenceOf[str] | t.MutableAttributeMapping | None,
+            t.Ldif.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
         ] = {k: list(v) for k, v in corrected_data.items()}
         syntax_corrections_raw = corrected_data_typed.get("syntax_corrections")
-        syntax_corrections_typed: (
-            t.MutableSequenceOf[str] | t.MutableStrMapping | None
-        ) = None
+        syntax_corrections_typed: MutableSequence[str] | t.MutableStrMapping | None = (
+            None
+        )
         if isinstance(syntax_corrections_raw, list):
             syntax_corrections_typed = list(syntax_corrections_raw)
         elif isinstance(syntax_corrections_raw, Mapping):

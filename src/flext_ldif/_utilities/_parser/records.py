@@ -6,21 +6,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, t
+from collections.abc import MutableSequence
+
+from flext_ldif import c
 
 
 class FlextLdifUtilitiesParserRecords:
     """Split unfolded LDIF content into record blocks."""
 
     @staticmethod
-    def unfold_lines(ldif_content: str) -> t.MutableSequenceOf[str]:
+    def unfold_lines(ldif_content: str) -> MutableSequence[str]:
         """Unfold LDIF lines folded across multiple lines per RFC 2849 §3.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
-        lines: t.MutableSequenceOf[str] = []
+        lines: MutableSequence[str] = []
         current_line: str | None = None
         for raw_line in ldif_content.split(c.Ldif.LINE_SEPARATOR):
             if (
@@ -42,16 +44,16 @@ class FlextLdifUtilitiesParserRecords:
     @staticmethod
     def split_ldif_records(
         ldif_content: str,
-    ) -> t.MutableSequenceOf[t.MutableSequenceOf[str]]:
+    ) -> MutableSequence[MutableSequence[str]]:
         """Split unfolded LDIF content into record blocks.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[t.MutableSequenceOf[str]]``.
+            The resulting ``MutableSequence[MutableSequence[str]]``.
 
         """
         unfolded_lines = FlextLdifUtilitiesParserRecords.unfold_lines(ldif_content)
-        records: t.MutableSequenceOf[t.MutableSequenceOf[str]] = []
-        current_record: t.MutableSequenceOf[str] = []
+        records: MutableSequence[MutableSequence[str]] = []
+        current_record: MutableSequence[str] = []
         for raw_line in unfolded_lines:
             line = raw_line.rstrip("\r")
             if not current_record and line.lower().startswith("version:"):

@@ -6,7 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import m, p, r, s, t, u
+from collections.abc import MutableSequence, Sequence
+
+from flext_ldif import m, p, r, s, u
 from flext_ldif.services import FlextLdifValidation
 
 
@@ -18,14 +20,14 @@ class FlextLdifAnalysis(s[p.Ldif.Response]):
         entry: m.Ldif.Entry,
         dn_str: str,
         validation_service: p.Ldif.ValidationService,
-    ) -> tuple[bool, t.MutableSequenceOf[str]]:
+    ) -> tuple[bool, MutableSequence[str]]:
         """Validate entry attributes.
 
         Returns:
-            The resulting ``tuple[bool, t.MutableSequenceOf[str]]``.
+            The resulting ``tuple[bool, MutableSequence[str]]``.
 
         """
-        errors: t.MutableSequenceOf[str] = []
+        errors: MutableSequence[str] = []
         valid = True
         if entry.attributes is None:
             errors.append(f"Entry {dn_str}: Attributes cannot be None")
@@ -40,14 +42,14 @@ class FlextLdifAnalysis(s[p.Ldif.Response]):
     @staticmethod
     def _validate_entry_dn(
         entry: m.Ldif.Entry,
-    ) -> tuple[bool, str, t.MutableSequenceOf[str]]:
+    ) -> tuple[bool, str, MutableSequence[str]]:
         """Validate entry DN.
 
         Returns:
-            The resulting ``tuple[bool, str, t.MutableSequenceOf[str]]``.
+            The resulting ``tuple[bool, str, MutableSequence[str]]``.
 
         """
-        errors: t.MutableSequenceOf[str] = []
+        errors: MutableSequence[str] = []
         if entry.dn is None:
             errors.append("Entry has None DN")
             return (False, "", errors)
@@ -62,16 +64,16 @@ class FlextLdifAnalysis(s[p.Ldif.Response]):
         entry: m.Ldif.Entry,
         dn_str: str,
         validation_service: p.Ldif.ValidationService,
-    ) -> tuple[bool, t.MutableSequenceOf[str]]:
+    ) -> tuple[bool, MutableSequence[str]]:
         """Validate entry objectClass values.
 
         Returns:
-            The resulting ``tuple[bool, t.MutableSequenceOf[str]]``.
+            The resulting ``tuple[bool, MutableSequence[str]]``.
 
         """
-        errors: t.MutableSequenceOf[str] = []
+        errors: MutableSequence[str] = []
         valid = True
-        oc_values: t.MutableSequenceOf[str] = u.Ldif.resolve_objectclass_names(entry)
+        oc_values: MutableSequence[str] = u.Ldif.resolve_objectclass_names(entry)
         for oc_item in oc_values:
             oc_result = validation_service.validate_objectclass_name(oc_item)
             if oc_result.failure or not oc_result.value:
@@ -83,14 +85,14 @@ class FlextLdifAnalysis(s[p.Ldif.Response]):
     def _validate_single_entry(
         entry: m.Ldif.Entry,
         validation_service: p.Ldif.ValidationService,
-    ) -> tuple[bool, t.MutableSequenceOf[str]]:
+    ) -> tuple[bool, MutableSequence[str]]:
         """Validate a single LDIF entry.
 
         Returns:
-            The resulting ``tuple[bool, t.MutableSequenceOf[str]]``.
+            The resulting ``tuple[bool, MutableSequence[str]]``.
 
         """
-        errors: t.MutableSequenceOf[str] = []
+        errors: MutableSequence[str] = []
         is_entry_valid = True
         dn_valid, dn_str, dn_errors = FlextLdifAnalysis._validate_entry_dn(entry)
         errors.extend(dn_errors)
@@ -117,7 +119,7 @@ class FlextLdifAnalysis(s[p.Ldif.Response]):
 
     def validate_entries(
         self,
-        entries: t.SequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse,
+        entries: Sequence[p.Ldif.Entry] | p.Ldif.ParseResponse,
         validation_service: p.Ldif.ValidationService | None = None,
     ) -> p.Result[p.Ldif.ValidationResult]:
         """Validate LDIF entries against RFC 2849/4512 standards.
@@ -133,7 +135,7 @@ class FlextLdifAnalysis(s[p.Ldif.Response]):
         # Why: mro-4p0t — accept ParseResponse like statistics/categorization services.
 
         normalized_entries = u.Ldif.as_entries(entries)
-        errors: t.MutableSequenceOf[str] = []
+        errors: MutableSequence[str] = []
         valid_count = 0
         svc: p.Ldif.ValidationService
         if validation_service is not None:

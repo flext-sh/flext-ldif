@@ -6,9 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import overload
 
-from flext_ldif import FlextLdifModels, c, p, r, t
+from flext_ldif import FlextLdifModels, c, p, r
 from flext_ldif._utilities._dn.parse import FlextLdifUtilitiesDNParse
 
 
@@ -46,7 +47,7 @@ class FlextLdifUtilitiesDNNormalize:
                 result = r[str].fail(error_msg)
             else:
                 try:
-                    normalized: t.MutableSequenceOf[str] = [
+                    normalized: MutableSequence[str] = [
                         f"{attr.strip().lower()}={value.strip()}"
                         for component in FlextLdifUtilitiesDNParse.split(dn_str)
                         if "=" in component
@@ -114,26 +115,29 @@ class FlextLdifUtilitiesDNNormalize:
         return dn
 
     @staticmethod
-    def _normalize_dns_for_comparison(dn1: str, dn2: str) -> p.Result[t.StrPair]:
+    def _normalize_dns_for_comparison(dn1: str, dn2: str) -> p.Result[tuple[str, str]]:
         """Normalize both DNs for comparison.
 
         Returns:
-            The resulting ``p.Result[t.StrPair]``.
+            The resulting ``p.Result[tuple[str, str]]``.
 
         """
         norm1_result = FlextLdifUtilitiesDNNormalize.norm(dn1)
         if not norm1_result.success:
-            return r[t.StrPair].fail(
+            return r[tuple[str, str]].fail(
                 f"Comparison failed (RFC 4514): "
                 f"Failed to normalize first DN: {norm1_result.error}",
             )
         norm2_result = FlextLdifUtilitiesDNNormalize.norm(dn2)
         if not norm2_result.success:
-            return r[t.StrPair].fail(
+            return r[tuple[str, str]].fail(
                 f"Comparison failed (RFC 4514): "
                 f"Failed to normalize second DN: {norm2_result.error}",
             )
-        return r[t.StrPair].ok((norm1_result.value.lower(), norm2_result.value.lower()))
+        return r[tuple[str, str]].ok((
+            norm1_result.value.lower(),
+            norm2_result.value.lower(),
+        ))
 
     @staticmethod
     def _compare_dns_core(dn1: str | None, dn2: str | None) -> p.Result[int]:

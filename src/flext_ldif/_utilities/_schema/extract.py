@@ -6,11 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_cli import u
 
-from flext_ldif import FlextLdifModels, c, p, r, t
+from flext_ldif import FlextLdifModels, c, p, r
 from flext_ldif._utilities import FlextLdifUtilitiesParser
 
 if TYPE_CHECKING:
@@ -122,12 +123,12 @@ class FlextLdifUtilitiesSchemaExtract:
         *,
         must_separator: str = c.Ldif.SCHEMA_VALUE_SEPARATOR,
         may_separator: str = c.Ldif.SCHEMA_VALUE_SEPARATOR,
-    ) -> tuple[t.MutableSequenceOf[str] | None, t.MutableSequenceOf[str] | None]:
+    ) -> tuple[MutableSequence[str] | None, MutableSequence[str] | None]:
         """Extract MUST and MAY attributes from objectClass definition.
 
         Returns:
-            The resulting ``tuple[t.MutableSequenceOf[str] | None,
-                t.MutableSequenceOf[str] | None]``.
+            The resulting ``tuple[MutableSequence[str] | None,
+                MutableSequence[str] | None]``.
 
         """
         must, may = (
@@ -193,14 +194,14 @@ class FlextLdifUtilitiesSchemaExtract:
         parse_callback: Callable[[str], p.Result[SchemaModelT]],
         line_prefix: str,
         model_type: type[SchemaModelT],
-    ) -> t.MutableSequenceOf[SchemaModelT]:
+    ) -> MutableSequence[SchemaModelT]:
         """Extract schema items from LDIF content lines.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[SchemaModelT]``.
+            The resulting ``MutableSequence[SchemaModelT]``.
 
         """
-        items: t.MutableSequenceOf[SchemaModelT] = []
+        items: MutableSequence[SchemaModelT] = []
         for raw_line in ldif_content.split("\n"):
             line = raw_line.strip()
             if line.lower().startswith(line_prefix.lower()):
@@ -221,7 +222,7 @@ class FlextLdifUtilitiesSchemaExtract:
         value: str,
         *,
         separator: str = c.Ldif.SCHEMA_VALUE_SEPARATOR,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         return [item.strip() for item in value.strip().split(separator)]
 
 

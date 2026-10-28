@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from types import MappingProxyType
 from typing import Annotated, Self
 
@@ -95,15 +96,13 @@ class FlextLdifModelsSettingsRules:
         @classmethod
         def normalize_mapping_input(
             cls: type[Self],
-            data: t.MappingKV[
-                str, FlextLdifTypesBase.ValueType | frozenset[str] | set[str]
-            ]
+            data: Mapping[str, FlextLdifTypesBase.ValueType | frozenset[str] | set[str]]
             | Self,
-        ) -> t.MappingKV[str, FlextLdifTypesBase.ValueType | frozenset[str] | set[str]]:
+        ) -> Mapping[str, FlextLdifTypesBase.ValueType | frozenset[str] | set[str]]:
             """Accept immutable mapping inputs such as MappingProxyType.
 
             Returns:
-                The resulting ``t.MappingKV[str, FlextLdifTypesBase.ValueType |
+                The resulting ``Mapping[str, FlextLdifTypesBase.ValueType |
                 frozenset[str] | set[str]]``.
 
             """

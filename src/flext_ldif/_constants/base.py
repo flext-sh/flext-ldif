@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import re
 import struct
+from collections.abc import Mapping, Sequence
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
@@ -26,8 +27,6 @@ FlextLdifConstantsAclConvertOud = (
 FlextLdifConstantsEnums = FlextLdifConstantsBaseParts.FlextLdifConstantsEnums
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
-
     from flext_ldif import t
 
 
@@ -478,7 +477,7 @@ class FlextLdifConstantsBase:
     SERVERS: ClassVar[str] = "ldif_servers"
     """Registry name for the LDIF server registry DSL."""
 
-    RFC_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = (
+    RFC_ACL_ATTRIBUTES: ClassVar[Sequence[str]] = (
         "aci",
         "acl",
         "olcAccess",
@@ -531,32 +530,36 @@ class FlextLdifConstantsBase:
         "pwdallowuserchange",
     })
 
-    OID_TO_RFC_BOOL: ClassVar[t.StrMapping] = MappingProxyType({
+    OID_TO_RFC_BOOL: ClassVar[Mapping[str, str]] = MappingProxyType({
         OID_TRUE: TRUE_RFC,
         OID_FALSE: FALSE_RFC,
         c.ParserBooleanToken.TRUE: TRUE_RFC,
         c.ParserBooleanToken.FALSE: FALSE_RFC,
     })
 
-    RFC_TO_OID_BOOL: ClassVar[t.StrMapping] = MappingProxyType({
+    RFC_TO_OID_BOOL: ClassVar[Mapping[str, str]] = MappingProxyType({
         TRUE_RFC: OID_TRUE,
         FALSE_RFC: OID_FALSE,
         c.ParserBooleanToken.TRUE: OID_TRUE,
         c.ParserBooleanToken.FALSE: OID_FALSE,
     })
 
-    ATTRIBUTE_TRANSFORMATION_OID_TO_RFC: ClassVar[t.StrMapping] = MappingProxyType({
-        "orclguid": "entryUUID",
-        "orclaci": "aci",
-        "orclentrylevelaci": "aci",
-    })
+    ATTRIBUTE_TRANSFORMATION_OID_TO_RFC: ClassVar[Mapping[str, str]] = (
+        MappingProxyType({
+            "orclguid": "entryUUID",
+            "orclaci": "aci",
+            "orclentrylevelaci": "aci",
+        })
+    )
 
-    ATTRIBUTE_TRANSFORMATION_RFC_TO_OID: ClassVar[t.StrMapping] = MappingProxyType({
-        "entryUUID": "orclguid",
-        "aci": "orclaci",
-    })
+    ATTRIBUTE_TRANSFORMATION_RFC_TO_OID: ClassVar[Mapping[str, str]] = (
+        MappingProxyType({
+            "entryUUID": "orclguid",
+            "aci": "orclaci",
+        })
+    )
 
-    ACL_PERMISSION_KEYS: ClassVar[t.StrSequence] = (
+    ACL_PERMISSION_KEYS: ClassVar[Sequence[str]] = (
         "read",
         "write",
         "add",
@@ -691,15 +694,13 @@ class FlextLdifConstantsBase:
         FlextLdifConstantsEnums.Category.ACL,
     )
 
-    CATEGORY_RULE_OBJECTCLASS_FIELDS: ClassVar[t.MappingKV[str, str]] = (
-        MappingProxyType({
-            FlextLdifConstantsEnums.Category.HIERARCHY: ("hierarchy_objectclasses"),
-            FlextLdifConstantsEnums.Category.USERS: "user_objectclasses",
-            FlextLdifConstantsEnums.Category.GROUPS: "group_objectclasses",
-        })
-    )
+    CATEGORY_RULE_OBJECTCLASS_FIELDS: ClassVar[Mapping[str, str]] = MappingProxyType({
+        FlextLdifConstantsEnums.Category.HIERARCHY: ("hierarchy_objectclasses"),
+        FlextLdifConstantsEnums.Category.USERS: "user_objectclasses",
+        FlextLdifConstantsEnums.Category.GROUPS: "group_objectclasses",
+    })
 
-    CATEGORY_RULE_ATTRIBUTE_FIELDS: ClassVar[t.MappingKV[str, str]] = MappingProxyType({
+    CATEGORY_RULE_ATTRIBUTE_FIELDS: ClassVar[Mapping[str, str]] = MappingProxyType({
         FlextLdifConstantsEnums.Category.ACL: "acl_attributes",
     })
 
@@ -715,7 +716,7 @@ class FlextLdifConstantsBase:
 
     LDAP_SYNTAXES: ClassVar[str] = "ldapSyntaxes"
 
-    SCHEMA_OID_ATTRIBUTE_KEYS: ClassVar[t.StrPairTuple] = (
+    SCHEMA_OID_ATTRIBUTE_KEYS: ClassVar[tuple[str, str]] = (
         (ATTRIBUTE_TYPES, "attributetypes"),
         (OBJECT_CLASSES, "objectclasses"),
         (MATCHING_RULES, "matchingrules"),
@@ -742,7 +743,7 @@ class FlextLdifConstantsBase:
         "subentry",
     })
 
-    WHITELIST_RULE_OID_FIELDS: ClassVar[t.StrSequence] = (
+    WHITELIST_RULE_OID_FIELDS: ClassVar[Sequence[str]] = (
         "allowed_attribute_oids",
         "allowed_objectclass_oids",
         "allowed_matchingrule_oids",
@@ -771,7 +772,7 @@ class FlextLdifConstantsBase:
 
     BINARY_SYNTAX = "binary"
 
-    OID_TO_NAME: ClassVar[t.StrMapping] = MappingProxyType({
+    OID_TO_NAME: ClassVar[Mapping[str, str]] = MappingProxyType({
         "2.5.5.5": "integer",
         "1.3.6.1.4.1.1466.115.121.1.1": "aci",
         "1.3.6.1.4.1.1466.115.121.1.2": "access_point",
@@ -828,7 +829,7 @@ class FlextLdifConstantsBase:
         "1.3.6.1.4.1.1466.115.121.1.58": "substring_assertion",
     })
 
-    NAME_TO_TYPE_CATEGORY: ClassVar[t.StrMapping] = MappingProxyType({
+    NAME_TO_TYPE_CATEGORY: ClassVar[Mapping[str, str]] = MappingProxyType({
         "integer": "integer",
         "boolean": "boolean",
         "distinguished_name": "dn",

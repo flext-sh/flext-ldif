@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, MutableSequence, Sequence
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.services import FlextLdifServer
@@ -28,7 +28,7 @@ class FlextLdifAcl(FlextLdifServer):
 
     @staticmethod
     def evaluate_acl_context(
-        acls: t.SequenceOf[t.Ldif.AclLike],
+        acls: Sequence[t.Ldif.AclLike],
         required_permissions: p.Ldif.AclPermissions | t.MutableBoolMapping,
     ) -> p.Result[p.Ldif.AclEvaluationResult]:
         """Evaluate if ACLs grant required permissions.
@@ -126,7 +126,7 @@ class FlextLdifAcl(FlextLdifServer):
         if resolved.failure:
             return r[p.Ldif.AclResponse].from_failure(resolved)
         acl_server = resolved.value
-        acls: t.MutableSequenceOf[p.Ldif.Acl] = []
+        acls: MutableSequence[p.Ldif.Acl] = []
         for attribute_name in acl_server.resolve_acl_attributes():
             for acl_value in u.Ldif.resolve_attribute_values(entry, attribute_name):
                 parse_result = acl_server.parse_server(acl_value)

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence
+from collections.abc import MutableSequence, Sequence
 
 from examples import m, p, r, t
 
@@ -34,7 +34,7 @@ class ExamplesFlextLdifSchemaBuilding:
 
     @staticmethod
     def object_class_entries(
-        definitions: t.SequenceOf[tuple[str, str, str, list[str], list[str]]],
+        definitions: Sequence[tuple[str, str, str, list[str], list[str]]],
     ) -> list[m.Ldif.Entry]:
         """Build objectClass schema entries from ``(name, desc, sup, must, may)`` rows.
 
@@ -81,7 +81,7 @@ class ExamplesFlextLdifSchemaBuilding:
         )
         if schema_root is not None:
             schema_entries.append(schema_root)
-        attribute_types: t.SequenceOf[tuple[str, str, str, bool]] = [
+        attribute_types: Sequence[tuple[str, str, str, bool]] = [
             ("cn", "Common Name", "1.3.6.1.4.1.1466.115.121.1.15", False),
             ("sn", "Surname", "1.3.6.1.4.1.1466.115.121.1.15", False),
             ("mail", "Email Address", "1.3.6.1.4.1.1466.115.121.1.26", False),
@@ -101,7 +101,7 @@ class ExamplesFlextLdifSchemaBuilding:
             )
             if entry is not None:
                 schema_entries.append(entry)
-        object_classes: t.SequenceOf[tuple[str, str, str, list[str], list[str]]] = [
+        object_classes: Sequence[tuple[str, str, str, list[str], list[str]]] = [
             (
                 "person",
                 "Person object class",

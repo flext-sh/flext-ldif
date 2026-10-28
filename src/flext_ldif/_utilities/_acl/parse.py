@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
+
 from flext_ldif import c, m, p, r, t
 from flext_ldif._utilities import FlextLdifUtilitiesMetadata
 from flext_ldif._utilities._acl import (
@@ -22,7 +24,7 @@ class FlextLdifUtilitiesACLParse:
     def _check_special_value(
         rule_value: str,
         special_values: t.MutableStrPairMapping,
-    ) -> t.StrPair | None:
+    ) -> tuple[str, str] | None:
         """Match a rule value against the special-value table.
 
         Args:
@@ -43,10 +45,10 @@ class FlextLdifUtilitiesACLParse:
 
     @staticmethod
     def build_aci_subject(
-        bind_rules_data: t.MutableSequenceOf[t.MutableStrMapping],
+        bind_rules_data: MutableSequence[t.MutableStrMapping],
         subject_type_map: t.MutableStrMapping,
         special_values: t.MutableStrPairMapping,
-    ) -> t.StrPair:
+    ) -> tuple[str, str]:
         """Build an ACL subject from bind rules using configurable maps.
 
         Args:
@@ -88,7 +90,7 @@ class FlextLdifUtilitiesACLParse:
     def parse_targetattr(
         targetattr_str: str | None,
         separator: str = "||",
-    ) -> tuple[t.MutableSequenceOf[str], str]:
+    ) -> tuple[MutableSequence[str], str]:
         """Split a targetattr specification into attributes and target DN.
 
         Args:
@@ -112,7 +114,7 @@ class FlextLdifUtilitiesACLParse:
     def _extract_target_info(
         aci_content: str,
         settings: m.Ldif.AciParserConfig,
-    ) -> tuple[t.MutableSequenceOf[str], str]:
+    ) -> tuple[MutableSequence[str], str]:
         """Extract target attributes and DN from ACI content.
 
         Args:
@@ -139,7 +141,7 @@ class FlextLdifUtilitiesACLParse:
         aci_content: str,
         version_pattern: str,
         default_name: str,
-    ) -> t.StrPair:
+    ) -> tuple[str, str]:
         """Extract the ACI version and ACL name from content.
 
         Args:

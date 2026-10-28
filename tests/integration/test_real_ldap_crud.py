@@ -89,7 +89,7 @@ class TestsFlextLdifRealLdapCrud:
         self,
         ldap_connection: p.Ldap3Connection,
         clean_test_ou: str,
-        make_test_username: Callable[[str], ...],
+        make_test_username: Callable[[str], str],
     ) -> None:
         """Create, update, and delete are each observable in the directory."""
         username = make_test_username("CRUDTestUser")
@@ -137,7 +137,7 @@ class TestsFlextLdifRealLdapCrud:
         ldap_connection: p.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
-        make_test_username: Callable[[str], ...],
+        make_test_username: Callable[[str], str],
     ) -> None:
         """A batch built via the API validates and stores as valid entries."""
         entries: list[m.Ldif.Entry] = []
@@ -168,7 +168,7 @@ class TestsFlextLdifRealLdapCrud:
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
         tmp_path: Path,
-        make_test_username: Callable[[str], ...],
+        make_test_username: Callable[[str], str],
     ) -> None:
         """LDAP → LDIF file → parse round-trip preserves the entry set."""
         usernames = [make_test_username(f"ExportBatch{i}") for i in range(10)]

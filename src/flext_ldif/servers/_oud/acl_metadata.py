@@ -139,7 +139,7 @@ class FlextLdifServersOudAclMetadata:
         return updated_entry
 
     @staticmethod
-    def _extension_target_key(key: str, key_map: t.MappingKV[str, str]) -> str:
+    def _extension_target_key(key: str, key_map: Mapping[str, str]) -> str:
         """Resolve the canonical destination key for one ACL extension key.
 
         Returns:

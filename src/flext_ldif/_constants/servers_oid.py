@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping, Sequence
 from enum import StrEnum
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
@@ -33,7 +34,7 @@ class FlextLdifConstantsServersOid:
 
     ORCL_CONTAINER_LEVEL_ACL: ClassVar[str] = "orclContainerLevelACL"
 
-    OID_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = (
+    OID_ACL_ATTRIBUTES: ClassVar[Sequence[str]] = (
         ORCLACI,
         ORCLENTRYLEVELACI,
         ORCL_CONTAINER_LEVEL_ACL,
@@ -41,7 +42,7 @@ class FlextLdifConstantsServersOid:
 
     ACL_ATTRIBUTE_NAME: ClassVar[str] = ORCLACI
 
-    MATCHING_RULE_TO_RFC: ClassVar[t.StrMapping] = MappingProxyType({
+    MATCHING_RULE_TO_RFC: ClassVar[Mapping[str, str]] = MappingProxyType({
         "caseIgnoreSubStringsMatch": "caseIgnoreSubstringsMatch",
         "accessDirectiveMatch": "caseIgnoreMatch",
         "distinguishedNAMEMatch": "distinguishedNameMatch",
@@ -51,15 +52,15 @@ class FlextLdifConstantsServersOid:
         "CaseExactMatch": "caseExactMatch",
     })
 
-    MATCHING_RULE_RFC_TO_OID: ClassVar[t.StrMapping] = MappingProxyType({
+    MATCHING_RULE_RFC_TO_OID: ClassVar[Mapping[str, str]] = MappingProxyType({
         "caseIgnoreSubstringsMatch": "caseIgnoreSubStringsMatch",
     })
 
-    SYNTAX_OID_TO_RFC: ClassVar[t.StrMapping] = MappingProxyType({
+    SYNTAX_OID_TO_RFC: ClassVar[Mapping[str, str]] = MappingProxyType({
         "1.3.6.1.4.1.1466.115.121.1.1": "1.3.6.1.4.1.1466.115.121.1.15",
     })
 
-    ATTR_NAME_CASE_MAP: ClassVar[t.StrMapping] = MappingProxyType({
+    ATTR_NAME_CASE_MAP: ClassVar[Mapping[str, str]] = MappingProxyType({
         "middlename": "middleName",
     })
 
@@ -166,7 +167,7 @@ class FlextLdifConstantsServersOid:
 
     OID_ACL_SOURCE_TARGET: ClassVar[str] = "acl_source_target"
 
-    CATEGORIZATION_PRIORITY: ClassVar[t.StrSequence] = (
+    CATEGORIZATION_PRIORITY: ClassVar[Sequence[str]] = (
         FlextLdifConstantsEnums.Category.ACL,
         FlextLdifConstantsEnums.Category.USERS,
         FlextLdifConstantsEnums.Category.HIERARCHY,
@@ -297,7 +298,7 @@ class FlextLdifConstantsServersOid:
 
     ZERO_OID: ClassVar[str] = FlextLdifConstantsBase.OID_FALSE
 
-    RFC_TO_OID: ClassVar[t.StrMapping] = FlextLdifConstantsBase.RFC_TO_OID_BOOL
+    RFC_TO_OID: ClassVar[Mapping[str, str]] = FlextLdifConstantsBase.RFC_TO_OID_BOOL
 
     INVALID_SUBSTR_RULES: ClassVar[t.OptionalStrMapping] = MappingProxyType({
         "caseIgnoreMatch": "caseIgnoreSubstringsMatch",
@@ -311,7 +312,7 @@ class FlextLdifConstantsServersOid:
 
     ACL_BY: ClassVar[str] = "by"
 
-    ACL_SUBJECT_PATTERNS: ClassVar[t.MappingKV[str, tuple[str | None, str, str]]] = (
+    ACL_SUBJECT_PATTERNS: ClassVar[Mapping[str, tuple[str | None, str, str]]] = (
         MappingProxyType({
             " by self ": (None, OidAclSubjectType.SELF, "ldap:///self"),
             " by self)": (None, OidAclSubjectType.SELF, "ldap:///self"),
@@ -360,7 +361,7 @@ class FlextLdifConstantsServersOid:
         "noselfwrite": ("no_self_write",),
     })
 
-    ACL_PERMISSION_NAMES: ClassVar[t.StrMapping] = MappingProxyType({
+    ACL_PERMISSION_NAMES: ClassVar[Mapping[str, str]] = MappingProxyType({
         "read": "read",
         "write": "write",
         "add": "add",
@@ -389,11 +390,11 @@ class FlextLdifConstantsServersOid:
         "no_self_write",
     })
 
-    ATTRIBUTE_TRANSFORMATION_OID_TO_RFC: ClassVar[t.StrMapping] = (
+    ATTRIBUTE_TRANSFORMATION_OID_TO_RFC: ClassVar[Mapping[str, str]] = (
         FlextLdifConstantsBase.ATTRIBUTE_TRANSFORMATION_OID_TO_RFC
     )
 
-    ATTRIBUTE_TRANSFORMATION_RFC_TO_OID: ClassVar[t.StrMapping] = (
+    ATTRIBUTE_TRANSFORMATION_RFC_TO_OID: ClassVar[Mapping[str, str]] = (
         FlextLdifConstantsBase.ATTRIBUTE_TRANSFORMATION_RFC_TO_OID
     )
 

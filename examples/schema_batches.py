@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping, Sequence
 from typing import TYPE_CHECKING
 
 from examples import c, ldif, m, object_class_entries, p, r, t, u
@@ -30,7 +31,7 @@ class ExamplesFlextLdifSchemaBatches:
 
         """
         core_attrs: list[m.Ldif.Entry] = []
-        core_attribute_definitions: t.SequenceOf[tuple[str, str, str, bool]] = [
+        core_attribute_definitions: Sequence[tuple[str, str, str, bool]] = [
             ("cn", "Common Name", "1.3.6.1.4.1.1466.115.121.1.15", False),
             ("sn", "Surname", "1.3.6.1.4.1.1466.115.121.1.15", False),
             ("mail", "Email Address", "1.3.6.1.4.1.1466.115.121.1.26", False),
@@ -68,7 +69,7 @@ class ExamplesFlextLdifSchemaBatches:
             The resulting ``list[m.Ldif.Entry]``.
 
         """
-        oc_definitions: t.SequenceOf[tuple[str, str, str, list[str], list[str]]] = [
+        oc_definitions: Sequence[tuple[str, str, str, list[str], list[str]]] = [
             ("person", "Person", "top", ["cn", "sn"], ["mail", "telephoneNumber"]),
             (
                 "inetOrgPerson",
@@ -98,14 +99,14 @@ class ExamplesFlextLdifSchemaBatches:
     def _validated_batch_results(
         api: FlextLdif,
         schema_batches: list[tuple[str, list[m.Ldif.Entry]]],
-    ) -> tuple[t.MutableMappingKV[str, t.JsonValue], int]:
+    ) -> tuple[MutableMapping[str, t.JsonValue], int]:
         """Validate each non-empty batch and collect per-batch results.
 
         Returns:
-            The resulting ``tuple[t.MutableMappingKV[str, t.JsonValue], int]``.
+            The resulting ``tuple[MutableMapping[str, t.JsonValue], int]``.
 
         """
-        batch_results: t.MutableMappingKV[str, t.JsonValue] = {}
+        batch_results: MutableMapping[str, t.JsonValue] = {}
         total_schema_entries = 0
         for batch_name, entries in schema_batches:
             if not entries:

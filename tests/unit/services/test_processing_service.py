@@ -6,13 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence, Sequence
 from typing import Literal
 
 import pytest
 
 from flext_ldif import FlextLdif
 from flext_ldif.services import FlextLdifProcessingPipeline
-from tests import c, m, p, t, tm, u
+from tests import c, m, p, tm, u
 
 
 class TestsFlextLdifProcessingService:
@@ -50,8 +51,8 @@ class TestsFlextLdifProcessingService:
         )
 
         result = api.process_entries(entries, options=options)
-        processed: t.MutableSequenceOf[p.Ldif.ProcessingResult] = (
-            u.Tests.assert_success(result)
+        processed: MutableSequence[p.Ldif.ProcessingResult] = u.Tests.assert_success(
+            result
         )
         tm.that(len(processed), eq=len(entries))
         processed_dns = {item.dn for item in processed}
@@ -71,8 +72,8 @@ class TestsFlextLdifProcessingService:
             batch_size=1,
             max_workers=1,
         )
-        processed: t.MutableSequenceOf[p.Ldif.ProcessingResult] = (
-            u.Tests.assert_success(result)
+        processed: MutableSequence[p.Ldif.ProcessingResult] = u.Tests.assert_success(
+            result
         )
         tm.that(len(processed), eq=1)
         tm.that(processed[0].dn, eq=c.Tests.PROCESSING_VALID_DNS[0])
@@ -144,7 +145,7 @@ class TestsFlextLdifProcessingService:
             transform_config=config,
             entries_input=[entry],
         ).execute()
-        converted: t.SequenceOf[p.Ldif.Entry] = u.Tests.assert_success(result)
+        converted: Sequence[p.Ldif.Entry] = u.Tests.assert_success(result)
         attrs = tm.not_none(converted[0].attributes).attributes
 
         tm.that(

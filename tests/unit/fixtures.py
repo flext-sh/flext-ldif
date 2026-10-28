@@ -6,12 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 import pytest
 
 from flext_ldif import FlextLdif, services
-from tests import c, ldif, m, p, t, u
+from tests import c, ldif, m, p, u
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -21,7 +22,7 @@ def _parse_fixture_entries(
     api: p.Ldif.LdifClient,
     fixture_content: str,
     error_msg: str,
-) -> t.SequenceOf[m.Ldif.Entry]:
+) -> Sequence[m.Ldif.Entry]:
     """Parse one fixture's LDIF text into Entry models.
 
     Args:
@@ -37,7 +38,7 @@ def _parse_fixture_entries(
         api.parse_ldif(fixture_content),
         error_msg=error_msg,
     )
-    entries: t.SequenceOf[m.Ldif.Entry] = parse_response.entries
+    entries: Sequence[m.Ldif.Entry] = parse_response.entries
     return entries
 
 
@@ -126,7 +127,7 @@ def oid_integration_fixture() -> str:
 def oid_entries(
     api: p.Ldif.LdifClient,
     oid_entries_fixture: str,
-) -> t.SequenceOf[m.Ldif.Entry]:
+) -> Sequence[m.Ldif.Entry]:
     """Parse the OID entries fixture into Entry models.
 
     Args:
@@ -196,7 +197,7 @@ def oud_integration_fixture() -> str:
 def oud_entries(
     api: p.Ldif.LdifClient,
     oud_entries_fixture: str,
-) -> t.SequenceOf[m.Ldif.Entry]:
+) -> Sequence[m.Ldif.Entry]:
     """Parse the OUD entries fixture into Entry models.
 
     Args:
@@ -344,7 +345,7 @@ def oud_acl_server(oud_server: p.Ldif.ServerServer) -> p.Ldif.AclServer:
 
 
 @pytest.fixture
-def migration_dirs(tmp_path: Path) -> t.Pair[Path, Path]:
+def migration_dirs(tmp_path: Path) -> tuple[Path, Path]:
     """Provide canonical (input_dir, output_dir) pair for migration tests.
 
     Both directories are created under ``tmp_path`` so tests get clean
@@ -366,7 +367,7 @@ def migration_dirs(tmp_path: Path) -> t.Pair[Path, Path]:
 
 @pytest.fixture
 def migration_pipeline(
-    migration_dirs: t.Pair[Path, Path],
+    migration_dirs: tuple[Path, Path],
     server: p.Ldif.ServerRegistry,
 ) -> p.Ldif.MigrationPipeline:
     """Provide the real registry-bound pipeline with model-owned defaults.

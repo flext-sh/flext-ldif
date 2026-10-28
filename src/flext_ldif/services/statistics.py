@@ -7,8 +7,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import Counter
+from collections.abc import Sequence
 
-from flext_ldif import m, p, r, s, t, u
+from flext_ldif import m, p, r, s, u
 
 
 class FlextLdifStatistics(s[p.Ldif.Response]):
@@ -16,7 +17,7 @@ class FlextLdifStatistics(s[p.Ldif.Response]):
 
     @staticmethod
     def calculate_for_entries(
-        entries: t.SequenceOf[p.Ldif.Entry] | p.Ldif.ParseResponse,
+        entries: Sequence[p.Ldif.Entry] | p.Ldif.ParseResponse,
     ) -> p.Result[p.Ldif.EntriesStatistics]:
         """Calculate general-purpose statistics for a list of Entry models.
 

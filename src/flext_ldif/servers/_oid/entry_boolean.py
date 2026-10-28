@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, MutableSequence, Sequence
 
 from flext_ldif import c, m, t, u
 from flext_ldif.servers._oid import (
@@ -55,8 +55,8 @@ class FlextLdifServersOidEntryBoolean(
         boolean_conversions: MutableMapping[str, t.MutableAttributeMapping] = {}
         for attr_name, attr_values in entry_attributes.items():
             if attr_name.lower() in boolean_attr_names:
-                original_values: t.MutableSequenceOf[str] = list(attr_values)
-                converted_values: t.MutableSequenceOf[str] = converted_attributes.get(
+                original_values: MutableSequence[str] = list(attr_values)
+                converted_values: MutableSequence[str] = converted_attributes.get(
                     attr_name,
                     original_values,
                 )
@@ -76,13 +76,13 @@ class FlextLdifServersOidEntryBoolean(
 
     @staticmethod
     def _boolean_conversion_record(
-        original_values: t.MutableSequenceOf[str],
-        converted_values: t.MutableSequenceOf[str],
-    ) -> MutableMapping[str, str | t.MutableSequenceOf[str]]:
+        original_values: MutableSequence[str],
+        converted_values: MutableSequence[str],
+    ) -> MutableMapping[str, str | MutableSequence[str]]:
         """Build one OID→RFC boolean conversion metadata record.
 
         Returns:
-            The resulting ``MutableMapping[str, str | t.MutableSequenceOf[str]]``.
+            The resulting ``MutableMapping[str, str | MutableSequence[str]]``.
 
         """
         oid_constants = FlextLdifConstantsServersOid
@@ -99,11 +99,11 @@ class FlextLdifServersOidEntryBoolean(
     def _convert_boolean_values_to_oid(
         self,
         attr_name: str,
-        current_values: t.MutableSequenceOf[str],
+        current_values: MutableSequence[str],
         restored_attrs: t.MutableStrSequenceMapping,
     ) -> None:
         """Convert RFC boolean values to OID format for an attribute."""
-        new_values: t.MutableSequenceOf[str] = []
+        new_values: MutableSequence[str] = []
         changed = False
         for val in current_values:
             converted, was_converted = self._convert_rfc_boolean_to_oid(val)
@@ -143,7 +143,7 @@ class FlextLdifServersOidEntryBoolean(
         converted_val = conv_data.get(mk.CONVERSION_CONVERTED_VALUE)
         match converted_val:
             case str() as s:
-                converted_val_list: t.StrSequence = [s]
+                converted_val_list: Sequence[str] = [s]
             case list() as items:
                 converted_val_list = list(items)
             case _:

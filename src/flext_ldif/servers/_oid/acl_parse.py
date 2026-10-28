@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
@@ -74,7 +75,7 @@ class FlextLdifServersOidAclParse(FlextLdifServersOidAclSubject):
     @staticmethod
     def _extract_oid_target(
         content: str,
-    ) -> tuple[str | None, t.MutableSequenceOf[str]]:
+    ) -> tuple[str | None, MutableSequence[str]]:
         """Extract the target DN and attributes from an OID ACL.
 
         Args:
@@ -85,7 +86,7 @@ class FlextLdifServersOidAclParse(FlextLdifServersOidAclSubject):
 
         """
         target_dn: str | None = None
-        attributes: t.MutableSequenceOf[str] = []
+        attributes: MutableSequence[str] = []
         patterns = FlextLdifConstantsServersOid
         target_match = patterns.ACL_TARGET_DN_EXTRACT_RE.search(content)
         if target_match:
@@ -310,7 +311,7 @@ class FlextLdifServersOidAclParse(FlextLdifServersOidAclSubject):
         )
 
     @staticmethod
-    def _extract_oid_acl_options(acl_line: str) -> t.MutableMappingKV[str, str | bool]:
+    def _extract_oid_acl_options(acl_line: str) -> MutableMapping[str, str | bool]:
         """Extract the optional ACL components of one OID ACL line.
 
         Args:

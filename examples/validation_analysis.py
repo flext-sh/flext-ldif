@@ -102,11 +102,11 @@ class ExamplesFlextLdifValidationAnalysis:
         )
 
     @staticmethod
-    def statistical_analysis() -> p.Result[t.MappingKV[str, t.Numeric]]:
+    def statistical_analysis() -> p.Result[Mapping[str, t.Numeric]]:
         """DRY statistical analysis: comprehensive metrics in one pipeline.
 
         Returns:
-            The resulting ``p.Result[t.MappingKV[str, t.Numeric]]``.
+            The resulting ``p.Result[Mapping[str, t.Numeric]]``.
 
         """
         api = ldif()
@@ -115,12 +115,12 @@ class ExamplesFlextLdifValidationAnalysis:
         )
         validate_result = api.validate_entries(entries)
         if validate_result.failure:
-            return r[t.MappingKV[str, t.Numeric]].fail(validate_result.error)
+            return r[Mapping[str, t.Numeric]].fail(validate_result.error)
         total_entries = len(entries)
         valid_result = validate_result.unwrap()
         valid_entries = valid_result.valid_entries
         invalid_entries = valid_result.invalid_entries
-        return r[t.MappingKV[str, t.Numeric]].ok({
+        return r[Mapping[str, t.Numeric]].ok({
             "total_entries": total_entries,
             "valid_entries": valid_entries,
             "invalid_entries": invalid_entries,

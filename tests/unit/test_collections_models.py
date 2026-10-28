@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, MutableSequence
 
 import pytest
 
@@ -105,7 +105,7 @@ class TestsFlextLdifModelsCollections:
     def test_flexible_categories_setitem_copies_entries(self) -> None:
         """Test flexible categories setitem copies entries."""
         categories = m.Ldif.FlexibleCategories()
-        original_entries: t.MutableSequenceOf[m.Ldif.Entry] = [self._entry("alpha")]
+        original_entries: MutableSequence[m.Ldif.Entry] = [self._entry("alpha")]
 
         categories[c.Ldif.Category.USERS.value] = original_entries
         original_entries.append(self._entry("beta"))

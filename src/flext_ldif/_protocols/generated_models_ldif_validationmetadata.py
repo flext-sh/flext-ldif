@@ -19,11 +19,11 @@ if TYPE_CHECKING:
 class FlextLdifProtocolsModelsLdifGeneratedValidationMetadata:
     @runtime_checkable
     class ValidationMetadata(Protocol):
-        rfc_violations: flext_ldif_t.MutableSequenceOf[str]
-        errors: flext_ldif_t.MutableSequenceOf[str]
-        warnings: flext_ldif_t.MutableSequenceOf[str]
+        rfc_violations: flext_ldif_t.MutableSequence[str]
+        errors: flext_ldif_t.MutableSequence[str]
+        warnings: flext_ldif_t.MutableSequence[str]
         context: collections_abc_MutableMapping[str, str]
-        server_specific_violations: flext_ldif_t.MutableSequenceOf[str]
+        server_specific_violations: flext_ldif_t.MutableSequence[str]
         validation_server_type: flext_ldif_c.Ldif.ServerTypes | None
 
 

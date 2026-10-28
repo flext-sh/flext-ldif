@@ -6,17 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import MutableMapping, MutableSequence
 
-from flext_ldif import FlextLdifModels, c, t
+from flext_ldif import FlextLdifModels, c
 from flext_ldif._utilities._dn import (
     FlextLdifUtilitiesDNEscape,
     FlextLdifUtilitiesDNParse,
     FlextLdifUtilitiesDNTransform,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import MutableMapping
 
 
 class FlextLdifUtilitiesDNRebase:
@@ -88,10 +85,7 @@ class FlextLdifUtilitiesDNRebase:
     def _modrdn_naming_delta(
         old_dn: str,
         new_dn: str,
-    ) -> (
-        MutableMapping[str, tuple[t.MutableSequenceOf[str], t.MutableSequenceOf[str]]]
-        | None
-    ):
+    ) -> MutableMapping[str, tuple[MutableSequence[str], MutableSequence[str]]] | None:
         """Compute deleteoldrdn attribute changes when the entry's own RDN changes.
 
         Returns ``None`` when the leftmost RDN is unchanged (case-insensitive);
@@ -99,8 +93,8 @@ class FlextLdifUtilitiesDNRebase:
         so the caller removes the old pairs and adds the new ones.
 
         Returns:
-            The resulting ``MutableMapping[str, tuple[t.MutableSequenceOf[str],
-                t.MutableSequenceOf[str]]] | None``.
+            The resulting ``MutableMapping[str, tuple[MutableSequence[str],
+                MutableSequence[str]]] | None``.
 
         """
         old_rdn = FlextLdifUtilitiesDNRebase._first_rdn_component(old_dn)
@@ -111,7 +105,7 @@ class FlextLdifUtilitiesDNRebase:
         new_pairs = FlextLdifUtilitiesDNRebase._rdn_attribute_pairs(new_rdn)
         delta: MutableMapping[
             str,
-            tuple[t.MutableSequenceOf[str], t.MutableSequenceOf[str]],
+            tuple[MutableSequence[str], MutableSequence[str]],
         ] = {}
         for attribute, value in old_pairs:
             removes, _ = delta.setdefault(attribute.lower(), ([], []))
@@ -130,15 +124,12 @@ class FlextLdifUtilitiesDNRebase:
             str,
             FlextLdifModels.Ldif.DN | FlextLdifModels.Ldif.Attributes,
         ],
-    ) -> (
-        MutableMapping[str, tuple[t.MutableSequenceOf[str], t.MutableSequenceOf[str]]]
-        | None
-    ):
+    ) -> MutableMapping[str, tuple[MutableSequence[str], MutableSequence[str]]] | None:
         """Rewrite the entry DN onto the target base and record the update.
 
         Returns:
-            The resulting ``MutableMapping[str, tuple[t.MutableSequenceOf[str],
-                t.MutableSequenceOf[str]]] | None``.
+            The resulting ``MutableMapping[str, tuple[MutableSequence[str],
+                MutableSequence[str]]] | None``.
 
         """
         entry_dn = entry.dn
@@ -159,17 +150,17 @@ class FlextLdifUtilitiesDNRebase:
 
     @staticmethod
     def _transform_dn_valued_values(
-        values: t.MutableSequenceOf[str],
+        values: MutableSequence[str],
         source_dn: str,
         target_dn: str,
-    ) -> tuple[t.MutableSequenceOf[str], bool]:
+    ) -> tuple[MutableSequence[str], bool]:
         """Transform one attribute's DN values, reporting whether any changed.
 
         Returns:
-            The resulting ``tuple[t.MutableSequenceOf[str], bool]``.
+            The resulting ``tuple[MutableSequence[str], bool]``.
 
         """
-        new_values: t.MutableSequenceOf[str] = []
+        new_values: MutableSequence[str] = []
         attr_changed = False
         for val in values:
             new_val = FlextLdifUtilitiesDNTransform.transform_dn_attribute(
@@ -185,19 +176,19 @@ class FlextLdifUtilitiesDNRebase:
     @staticmethod
     def _collect_changed_dn_attrs(
         entry_attrs: FlextLdifModels.Ldif.Attributes,
-        attrs_to_transform: frozenset[str] | t.MutableSequenceOf[str],
+        attrs_to_transform: frozenset[str] | MutableSequence[str],
         source_dn: str,
         target_dn: str,
-    ) -> MutableMapping[str, t.MutableSequenceOf[str]]:
+    ) -> MutableMapping[str, MutableSequence[str]]:
         """Transform DN-valued attributes and collect the changed entries.
 
         Returns:
-            The resulting ``MutableMapping[str, t.MutableSequenceOf[str]]``.
+            The resulting ``MutableMapping[str, MutableSequence[str]]``.
 
         """
         attr_dict = entry_attrs.attributes
         transform_lowers = {a.lower() for a in attrs_to_transform}
-        changed_attrs: MutableMapping[str, t.MutableSequenceOf[str]] = {}
+        changed_attrs: MutableMapping[str, MutableSequence[str]] = {}
         for attr_name, values in attr_dict.items():
             if attr_name.lower() not in transform_lowers:
                 continue
@@ -214,14 +205,14 @@ class FlextLdifUtilitiesDNRebase:
 
     @staticmethod
     def _merge_rdn_delta_values(
-        merged_values: t.MutableSequenceOf[str],
-        old_values: t.MutableSequenceOf[str],
-        new_values_rdn: t.MutableSequenceOf[str],
-    ) -> t.MutableSequenceOf[str]:
+        merged_values: MutableSequence[str],
+        old_values: MutableSequence[str],
+        new_values_rdn: MutableSequence[str],
+    ) -> MutableSequence[str]:
         """Drop old naming values then append missing new naming values.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         old_lowers = {value.lower() for value in old_values}
@@ -237,9 +228,9 @@ class FlextLdifUtilitiesDNRebase:
         entry_attrs: FlextLdifModels.Ldif.Attributes,
         rdn_delta: MutableMapping[
             str,
-            tuple[t.MutableSequenceOf[str], t.MutableSequenceOf[str]],
+            tuple[MutableSequence[str], MutableSequence[str]],
         ],
-        changed_attrs: MutableMapping[str, t.MutableSequenceOf[str]],
+        changed_attrs: MutableMapping[str, MutableSequence[str]],
     ) -> None:
         """Apply deleteoldrdn naming-attribute changes to the changed set."""
         attr_dict = entry_attrs.attributes
@@ -248,7 +239,7 @@ class FlextLdifUtilitiesDNRebase:
                 (key for key in attr_dict if key.lower() == rdn_attr.lower()),
                 rdn_attr,
             )
-            merged_values: t.MutableSequenceOf[str] = list(
+            merged_values: MutableSequence[str] = list(
                 changed_attrs.get(
                     existing_key,
                     attr_dict.get(existing_key, []),
@@ -265,7 +256,7 @@ class FlextLdifUtilitiesDNRebase:
     @staticmethod
     def _apply_changed_attributes(
         entry_attrs: FlextLdifModels.Ldif.Attributes,
-        changed_attrs: MutableMapping[str, t.MutableSequenceOf[str]],
+        changed_attrs: MutableMapping[str, MutableSequence[str]],
         updates: MutableMapping[
             str,
             FlextLdifModels.Ldif.DN | FlextLdifModels.Ldif.Attributes,

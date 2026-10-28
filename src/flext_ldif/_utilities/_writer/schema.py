@@ -6,9 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
 
-from flext_ldif import c, t
+from flext_ldif import c
 
 if TYPE_CHECKING:
     from flext_ldif import FlextLdifModels
@@ -20,7 +21,7 @@ class FlextLdifUtilitiesWriterSchema:
     @staticmethod
     def add_attribute_flags(
         attr_data: FlextLdifModels.Ldif.SchemaAttribute,
-        parts: t.MutableSequenceOf[str],
+        parts: MutableSequence[str],
     ) -> None:
         """Add flags to attribute parts list."""
         if attr_data.single_value:
@@ -38,7 +39,7 @@ class FlextLdifUtilitiesWriterSchema:
     @staticmethod
     def add_attribute_matching_rules(
         attr_data: FlextLdifModels.Ldif.SchemaAttribute,
-        parts: t.MutableSequenceOf[str],
+        parts: MutableSequence[str],
     ) -> None:
         """Add matching rules to attribute parts list."""
         if attr_data.equality:
@@ -51,7 +52,7 @@ class FlextLdifUtilitiesWriterSchema:
     @staticmethod
     def add_attribute_syntax(
         attr_data: FlextLdifModels.Ldif.SchemaAttribute,
-        parts: t.MutableSequenceOf[str],
+        parts: MutableSequence[str],
     ) -> None:
         """Add syntax and length to attribute parts list."""
         if attr_data.syntax:
@@ -61,7 +62,7 @@ class FlextLdifUtilitiesWriterSchema:
             parts.append(f"SYNTAX {syntax_str}")
 
     @staticmethod
-    def finalize_ldif_text(ldif_lines: t.MutableSequenceOf[str]) -> str:
+    def finalize_ldif_text(ldif_lines: MutableSequence[str]) -> str:
         """Join LDIF lines and ensure proper trailing newline.
 
         Returns:

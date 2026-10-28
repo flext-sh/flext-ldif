@@ -6,9 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, MutableSequence
 
-from flext_ldif import c, p, t
+from flext_ldif import c, p
 
 
 class FlextLdifUtilitiesEntryAccess:
@@ -18,7 +18,7 @@ class FlextLdifUtilitiesEntryAccess:
     def resolve_attribute_values(
         entry: p.Ldif.Entry,
         attribute_name: str,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Get all values for a specific attribute (case-insensitive).
 
         Args:
@@ -41,11 +41,11 @@ class FlextLdifUtilitiesEntryAccess:
         return []
 
     @staticmethod
-    def resolve_objectclass_names(entry: p.Ldif.Entry) -> t.MutableSequenceOf[str]:
+    def resolve_objectclass_names(entry: p.Ldif.Entry) -> MutableSequence[str]:
         """Get list of objectClass attribute values from entry.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         return FlextLdifUtilitiesEntryAccess.resolve_attribute_values(

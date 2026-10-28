@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
+
 from flext_ldif import c, p, r, t
 
 
@@ -66,7 +68,7 @@ class FlextLdifUtilitiesACLExtract:
         allow_deny_pattern: str,
         ops_separator: str = ",",
         action_filter: str | None = None,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Extract permissions from ACL content using configurable patterns.
 
         Args:
@@ -81,7 +83,7 @@ class FlextLdifUtilitiesACLExtract:
         """
         if not content or not allow_deny_pattern:
             return []
-        permissions: t.MutableSequenceOf[str] = []
+        permissions: MutableSequence[str] = []
         matches = c.Ldif.compile_pattern(allow_deny_pattern, ignorecase=True).finditer(
             content,
         )
@@ -109,7 +111,7 @@ class FlextLdifUtilitiesACLExtract:
     def extract_bind_rules(
         content: str,
         bind_patterns: t.MutableStrMapping | None = None,
-    ) -> t.MutableSequenceOf[t.MutableStrMapping]:
+    ) -> MutableSequence[t.MutableStrMapping]:
         """Extract bind rules from ACL content.
 
         Finds userdn, groupdn, or other bind rule specifications.
@@ -132,7 +134,7 @@ class FlextLdifUtilitiesACLExtract:
             "roledn": 'roledn\\s*=\\s*"([^"]*)"',
         }
         patterns = bind_patterns or default_patterns
-        all_bind_rules: t.MutableSequenceOf[t.MutableStrMapping] = []
+        all_bind_rules: MutableSequence[t.MutableStrMapping] = []
         for bind_type, pattern in dict(patterns).items():
             matches = c.Ldif.compile_pattern(pattern, ignorecase=True).findall(content)
             all_bind_rules.extend([

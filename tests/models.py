@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Annotated, ClassVar
 
@@ -155,7 +156,7 @@ class TestsFlextLdifModels(flext_tests_m, m):
                 m.Field(description="Schema class"),
             ]
             fixture_servers: Annotated[
-                t.SequenceOf[t.Tests.FixtureServer],
+                Sequence[t.Tests.FixtureServer],
                 m.Field(
                     description="Servers covered by the implementation",
                 ),

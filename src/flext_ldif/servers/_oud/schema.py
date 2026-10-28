@@ -7,14 +7,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, ClassVar, override
+from collections.abc import MutableMapping, MutableSequence
+from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oud import FlextLdifConstantsServersOud
 from flext_ldif.servers._rfc import FlextLdifServersRfcSchema
-
-if TYPE_CHECKING:
-    from collections.abc import MutableMapping
 
 
 class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
@@ -24,8 +22,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
 
     def _sanitize_schema_carriers(
         self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry],
-    ) -> t.MutableSequenceOf[m.Ldif.Entry]:
+        entries: MutableSequence[m.Ldif.Entry],
+    ) -> MutableSequence[m.Ldif.Entry]:
         """Rewrite schema carrier values into the OUD-acceptable dialect.
 
         OUD's schema parser refuses LDAP transfer options inside names,
@@ -39,7 +37,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
             OUD-acceptable dialect.
 
         """
-        sanitized: t.MutableSequenceOf[m.Ldif.Entry] = []
+        sanitized: MutableSequence[m.Ldif.Entry] = []
         declared: set[str] = set()
         prepass: list[tuple[m.Ldif.Entry, list[m.Ldif.ChangeOperation]]] = []
         for entry in entries:
@@ -83,7 +81,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
 
     @staticmethod
     def _declared_names(
-        values: t.MutableSequenceOf[m.Ldif.ChangeOperationValue],
+        values: MutableSequence[m.Ldif.ChangeOperationValue],
     ) -> set[str]:
         """Collect the attribute names declared by schema change values.
 
@@ -103,8 +101,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
 
     @staticmethod
     def _strip_names_for_registry(
-        values: t.MutableSequenceOf[m.Ldif.ChangeOperationValue],
-    ) -> t.MutableSequenceOf[m.Ldif.ChangeOperationValue]:
+        values: MutableSequence[m.Ldif.ChangeOperationValue],
+    ) -> MutableSequence[m.Ldif.ChangeOperationValue]:
         """Strip NAME declarations from schema values for registry processing.
 
         Args:
@@ -125,8 +123,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
 
     @staticmethod
     def _sanitize_schema_values(
-        values: t.MutableSequenceOf[m.Ldif.ChangeOperationValue],
-    ) -> t.MutableSequenceOf[m.Ldif.ChangeOperationValue]:
+        values: MutableSequence[m.Ldif.ChangeOperationValue],
+    ) -> MutableSequence[m.Ldif.ChangeOperationValue]:
         """Rewrite schema values into the OUD-acceptable dialect.
 
         Applies the deterministic string surgery described by
@@ -175,8 +173,8 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
     ) -> p.Result[
         MutableMapping[
             str,
-            t.MutableSequenceOf[m.Ldif.SchemaAttribute]
-            | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
+            MutableSequence[m.Ldif.SchemaAttribute]
+            | MutableSequence[m.Ldif.SchemaObjectClass],
         ]
     ]:
         """Extract and parse all schema definitions from LDIF content.
@@ -277,7 +275,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
     @staticmethod
     def _collect_attribute_extensions(
         attr: m.Ldif.SchemaAttribute,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Collect the OUD X-* extensions present on the attribute.
 
         Args:
@@ -287,7 +285,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
             Names of the OUD extension fields that are set.
 
         """
-        extensions: t.MutableSequenceOf[str] = []
+        extensions: MutableSequence[str] = []
         if attr.x_origin:
             extensions.append("X-ORIGIN")
         if attr.x_file_ref:
@@ -399,7 +397,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
 
         """
         sanitized_oc = oc
-        updates: t.MutableMappingKV[str, t.Ldif.Scalar | t.MutableSequenceOf[str]] = {}
+        updates: MutableMapping[str, t.Ldif.Scalar | MutableSequence[str]] = {}
         if oc.name and "_" in oc.name:
             updates["name"] = oc.name.replace("_", "-")
         if oc.must:
@@ -533,7 +531,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
             The objectClass with every MUST/MAY reference retained for validation.
 
         """
-        updates: t.MutableMappingKV[str, str | t.MutableSequenceOf[str]] = {}
+        updates: MutableMapping[str, str | MutableSequence[str]] = {}
         if oc_data.name and "_" in oc_data.name:
             updates["name"] = oc_data.name.replace("_", "-")
         for role in ("must", "may"):

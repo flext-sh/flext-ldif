@@ -23,7 +23,7 @@ class ExamplesFlextLdifAclProcessing:
     @staticmethod
     def _parse_first_entry_with_acls(
         ldif_content: str,
-    ) -> t.Pair[p.Ldif.Entry, p.Ldif.AclResponse] | None:
+    ) -> tuple[p.Ldif.Entry, p.Ldif.AclResponse] | None:
         """Parse LDIF text and extract ACLs from its first entry.
 
         Returns:

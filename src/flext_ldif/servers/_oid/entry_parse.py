@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, MutableSequence
 from typing import override
 
 from flext_ldif import c, m, p, r, t, u
@@ -31,18 +31,18 @@ class FlextLdifServersOidEntryParse(
     def _detect_rfc_violations(
         converted_attributes: t.MutableStrSequenceMapping,
     ) -> tuple[
-        t.MutableSequenceOf[str],
-        t.MutableSequenceOf[t.MutableAttributeMapping],
+        MutableSequence[str],
+        MutableSequence[t.MutableAttributeMapping],
     ]:
         """Detect RFC compliance violations in entry.
 
         Returns:
-            The resulting ``tuple[t.MutableSequenceOf[str],
-                t.MutableSequenceOf[t.MutableAttributeMapping]]``.
+            The resulting ``tuple[MutableSequence[str],
+                MutableSequence[t.MutableAttributeMapping]]``.
 
         """
         object_classes_raw = converted_attributes.get("objectClass", [])
-        object_classes: t.MutableSequenceOf[str] = list(object_classes_raw)
+        object_classes: MutableSequence[str] = list(object_classes_raw)
         object_classes_lower = {oc.lower() for oc in object_classes}
         structural_classes = {
             "domain",
@@ -58,7 +58,7 @@ class FlextLdifServersOidEntryParse(
         }
         found_structural = object_classes_lower & structural_classes
         structural_str = ", ".join(sorted(found_structural))
-        rfc_violations: t.MutableSequenceOf[str] = (
+        rfc_violations: MutableSequence[str] = (
             [f"Multiple structural objectClasses: {structural_str}"]
             if len(found_structural) > 1
             else []
@@ -71,7 +71,7 @@ class FlextLdifServersOidEntryParse(
             "orclversion",
             "orclgroupcreatedate",
         }
-        attribute_conflicts: t.MutableSequenceOf[t.MutableAttributeMapping] = [
+        attribute_conflicts: MutableSequence[t.MutableAttributeMapping] = [
             {
                 "attribute": attr_name,
                 "values": converted_attributes[attr_name],
@@ -86,7 +86,7 @@ class FlextLdifServersOidEntryParse(
 
     def _process_orclaci_values(
         self,
-        orclaci_values: t.MutableSequenceOf[str] | str | None,
+        orclaci_values: MutableSequence[str] | str | None,
         current_extensions: t.Ldif.MutableMetadataMapping,
     ) -> p.Result[t.Ldif.MutableMetadataMapping]:
         """Extract ACL metadata from orclaci values through the injected ACL server.
@@ -140,7 +140,7 @@ class FlextLdifServersOidEntryParse(
         mk = c.Ldif
         current_extensions[mk.ORIGINAL_DN_COMPLETE] = original_dn
         orclaci_raw = normalized_attrs.get("orclaci")
-        orclaci_values: t.MutableSequenceOf[str] | str | None = None
+        orclaci_values: MutableSequence[str] | str | None = None
         if isinstance(orclaci_raw, list):
             orclaci_values = list(orclaci_raw)
         processed = self._process_orclaci_values(orclaci_values, current_extensions)
@@ -212,7 +212,7 @@ class FlextLdifServersOidEntryParse(
         if entry.metadata:
             if not entry.metadata.extensions:
                 entry.metadata.extensions = {}
-            converted_attrs_list: t.MutableSequenceOf[t.JsonValue] = list(
+            converted_attrs_list: MutableSequence[t.JsonValue] = list(
                 converted_attrs,
             )
             converted_attrs_json: t.JsonValueList = list(
@@ -255,13 +255,13 @@ class FlextLdifServersOidEntryParse(
     @staticmethod
     def _hook_transform_entry_raw(
         dn: str,
-        attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
-    ) -> p.Result[tuple[str, MutableMapping[str, t.MutableSequenceOf[str | bytes]]]]:
+        attrs: MutableMapping[str, MutableSequence[str | bytes]],
+    ) -> p.Result[tuple[str, MutableMapping[str, MutableSequence[str | bytes]]]]:
         """Transform OID-specific DN and attributes before RFC parsing.
 
         Returns:
             The resulting ``p.Result[tuple[str, MutableMapping[str,
-                t.MutableSequenceOf[str | bytes]]]]``.
+                MutableSequence[str | bytes]]]]``.
 
         """
         cleaned_dn, _ = u.Ldif.clean_dn_with_statistics(dn)
@@ -273,7 +273,7 @@ class FlextLdifServersOidEntryParse(
                 original_dn=cleaned_dn,
                 normalized_dn=normalized_dn,
             )
-        return r[tuple[str, MutableMapping[str, t.MutableSequenceOf[str | bytes]]]].ok((
+        return r[tuple[str, MutableMapping[str, MutableSequence[str | bytes]]]].ok((
             normalized_dn,
             attrs,
         ))

@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
+
 from flext_ldif import c, m, t
 
 
@@ -14,7 +16,7 @@ class FlextLdifUtilitiesACLFormat:
 
     @staticmethod
     def build_aci_target_clause(
-        target_attributes: t.MutableSequenceOf[str] | None,
+        target_attributes: MutableSequence[str] | None,
         target_dn: str | None = None,
         separator: str = " || ",
     ) -> str:
@@ -79,12 +81,10 @@ class FlextLdifUtilitiesACLFormat:
                 return " "
             return char
 
-        sanitized_chars: t.MutableSequenceOf[str] = [
-            sanitize_char(ch) for ch in raw_name
-        ]
-        sanitized_chars_list: t.MutableSequenceOf[str] = sanitized_chars
+        sanitized_chars: MutableSequence[str] = [sanitize_char(ch) for ch in raw_name]
+        sanitized_chars_list: MutableSequence[str] = sanitized_chars
         was_sanitized = sanitized_chars_list != list(raw_name)
-        result_chars: t.MutableSequenceOf[str] = []
+        result_chars: MutableSequence[str] = []
         prev_char = ""
         for char in sanitized_chars_list:
             if not (char == " " and prev_char == " "):
@@ -149,7 +149,7 @@ class FlextLdifUtilitiesACLFormat:
         return result
 
     @staticmethod
-    def split_acl_line(acl_line: str) -> t.StrPair:
+    def split_acl_line(acl_line: str) -> tuple[str, str]:
         r"""Split an ACL line into attribute name and payload.
 
         Generic utility for splitting ACL lines at the colon separator,

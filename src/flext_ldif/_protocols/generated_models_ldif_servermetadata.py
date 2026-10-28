@@ -29,8 +29,8 @@ class FlextLdifProtocolsModelsLdifGeneratedServerMetadata:
     class ServerMetadata(Protocol):
         server_type: flext_ldif_c.Ldif.ServerTypes
         extensions: collections_abc_MutableMapping[str, pydantic.JsonValue]
-        rfc_violations: flext_ldif_t.MutableSequenceOf[str]
-        rfc_warnings: flext_ldif_t.MutableSequenceOf[str]
+        rfc_violations: flext_ldif_t.MutableSequence[str]
+        rfc_warnings: flext_ldif_t.MutableSequence[str]
         conversion_notes: collections_abc_MutableMapping[str, pydantic.JsonValue]
         attribute_transformations: collections_abc_MutableMapping[
             str,
@@ -39,8 +39,8 @@ class FlextLdifProtocolsModelsLdifGeneratedServerMetadata:
         server_specific_data: collections_abc_MutableMapping[str, pydantic.JsonValue]
         original_server_type: flext_ldif_c.Ldif.ServerTypes | None
         target_server_type: flext_ldif_c.Ldif.ServerTypes | None
-        acls: flext_ldif_t.MutableSequenceOf[str]
-        objectclasses: flext_ldif_t.MutableSequenceOf[str]
+        acls: flext_ldif_t.MutableSequence[str]
+        objectclasses: flext_ldif_t.MutableSequence[str]
         validation_results: (
             FlextLdifProtocolsModelsLdifGeneratedValidationMetadata.ValidationMetadata
             | None
@@ -56,13 +56,13 @@ class FlextLdifProtocolsModelsLdifGeneratedServerMetadata:
             FlextLdifProtocolsModelsLdifGeneratedAclEntryConversion.AclEntryConversion
             | None
         )
-        soft_delete_markers: flext_ldif_t.MutableSequenceOf[str]
+        soft_delete_markers: flext_ldif_t.MutableSequence[str]
         original_attribute_case: collections_abc_MutableMapping[str, pydantic.JsonValue]
-        schema_servers_applied: flext_ldif_t.MutableSequenceOf[str]
+        schema_servers_applied: flext_ldif_t.MutableSequence[str]
         boolean_conversions: collections_abc_MutableMapping[str, pydantic.JsonValue]
         minimal_differences: collections_abc_MutableMapping[str, pydantic.JsonValue]
         original_strings: collections_abc_MutableMapping[str, pydantic.JsonValue]
-        conversion_history: flext_ldif_t.MutableSequenceOf[
+        conversion_history: flext_ldif_t.MutableSequence[
             collections_abc_MutableMapping[str, str]
         ]
 

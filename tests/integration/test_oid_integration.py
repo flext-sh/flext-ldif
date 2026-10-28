@@ -15,6 +15,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 import pytest
 
 from tests import m, p, t, tm, u
@@ -30,11 +32,11 @@ class TestsFlextLdifOidIntegration:
     """
 
     @staticmethod
-    def _entries(api: p.Ldif.LdifClient, content: str) -> t.SequenceOf[m.Ldif.Entry]:
+    def _entries(api: p.Ldif.LdifClient, content: str) -> Sequence[m.Ldif.Entry]:
         """Parse ``content`` through the public client and return its entries.
 
         Returns:
-            The resulting ``t.SequenceOf[m.Ldif.Entry]``.
+            The resulting ``Sequence[m.Ldif.Entry]``.
 
         """
         response: m.Ldif.ParseResponse = u.Tests.assert_success(
@@ -47,7 +49,7 @@ class TestsFlextLdifOidIntegration:
     def _schema_definitions(
         entry: m.Ldif.Entry,
         attribute_name: str,
-    ) -> t.SequenceOf[str]:
+    ) -> Sequence[str]:
         """Return the raw schema definition strings for ``attribute_name``.
 
         Reads through the public ``attributes_dict`` protocol accessor, which
@@ -70,12 +72,12 @@ class TestsFlextLdifOidIntegration:
     def _roundtrip(
         cls,
         api: p.Ldif.LdifClient,
-        entries: t.SequenceOf[m.Ldif.Entry],
-    ) -> t.SequenceOf[m.Ldif.Entry]:
+        entries: Sequence[m.Ldif.Entry],
+    ) -> Sequence[m.Ldif.Entry]:
         """Write ``entries`` and re-parse the produced LDIF text.
 
         Returns:
-            The resulting ``t.SequenceOf[m.Ldif.Entry]``.
+            The resulting ``Sequence[m.Ldif.Entry]``.
 
         """
         written: m.Ldif.WriteResponse = u.Tests.assert_success(

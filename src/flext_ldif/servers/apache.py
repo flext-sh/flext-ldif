@@ -6,7 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, override
+from collections.abc import MutableMapping, MutableSequence
+from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t
 from flext_ldif.servers import FlextLdifServersRfc
@@ -16,9 +17,6 @@ from flext_ldif.servers._rfc import (
     FlextLdifServersRfcAcl,
     FlextLdifServersRfcEntry,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import MutableMapping
 
 
 class FlextLdifServersApache(FlextLdifServersRfc):
@@ -159,7 +157,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         def _parse_entry(
             self,
             entry_dn: str,
-            entry_attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
+            entry_attrs: MutableMapping[str, MutableSequence[str | bytes]],
         ) -> p.Result[m.Ldif.Entry]:
             """Parse raw LDIF entry data into Entry model.
 

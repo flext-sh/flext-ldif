@@ -6,10 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar
 
-from flext_ldif import c, m, p, t, u
+from flext_ldif import c, m, p, u
 from flext_ldif.servers._oid import FlextLdifConstantsServersOid
 from flext_ldif.servers._rfc import FlextLdifServersRfcSchema
 
@@ -80,7 +80,7 @@ class FlextLdifServersOidSchemaNormalize(FlextLdifServersRfcSchema):
         updated_kind = self._normalize_auxiliary_typo(oc, original_format_str)
         normalized_must = self._normalize_attribute_names(oc.must)
         normalized_may = self._normalize_attribute_names(oc.may)
-        update_dict: MutableMapping[str, str | t.MutableSequenceOf[str] | None] = {
+        update_dict: MutableMapping[str, str | MutableSequence[str] | None] = {
             k: v
             for k, v in {
                 "sup": updated_sup,
@@ -97,12 +97,12 @@ class FlextLdifServersOidSchemaNormalize(FlextLdifServersRfcSchema):
 
     @staticmethod
     def _normalize_attribute_names(
-        attr_list: t.MutableSequenceOf[str] | None,
-    ) -> t.MutableSequenceOf[str] | None:
+        attr_list: MutableSequence[str] | None,
+    ) -> MutableSequence[str] | None:
         """Normalize attribute names using OID case mappings.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str] | None``.
+            The resulting ``MutableSequence[str] | None``.
 
         """
         if not attr_list:
@@ -147,12 +147,12 @@ class FlextLdifServersOidSchemaNormalize(FlextLdifServersRfcSchema):
 
     @staticmethod
     def _normalize_sup_from_model(oc_data: m.Ldif.SchemaObjectClass) -> str | (
-        t.MutableSequenceOf[str] | None
+        MutableSequence[str] | None
     ):
         """Normalize SUP from objectClass model.
 
         Returns:
-            The resulting ``str | (t.MutableSequenceOf[str] | None)``.
+            The resulting ``str | (MutableSequence[str] | None)``.
 
         """
         if not oc_data.sup:

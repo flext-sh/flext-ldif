@@ -6,7 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import ItemsView, KeysView, ValuesView
+from collections.abc import (
+    ItemsView,
+    KeysView,
+    Mapping,
+    MutableSequence,
+    Sequence,
+    ValuesView,
+)
 from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 
 from flext_cli import p, t
@@ -99,7 +106,7 @@ class FlextLdifProtocolsBase:
         def target_dn(self) -> str: ...
 
         @property
-        def attributes(self) -> t.MutableSequenceOf[str]: ...
+        def attributes(self) -> MutableSequence[str]: ...
 
     @runtime_checkable
     class AclSubject(Protocol):
@@ -138,7 +145,7 @@ class FlextLdifProtocolsBase:
         """ACL extraction response payload."""
 
         @property
-        def acls(self) -> t.SequenceOf[FlextLdifProtocolsBase.Acl]: ...
+        def acls(self) -> Sequence[FlextLdifProtocolsBase.Acl]: ...
 
         @property
         def statistics(self) -> FlextLdifProtocolsBase.Statistics: ...
@@ -197,7 +204,7 @@ class FlextLdifProtocolsBase:
         def resolve_server_bundle(
             self, server_type: str
         ) -> p.Result[
-            t.MappingKV[
+            Mapping[
                 str,
                 FlextLdifProtocolsDomain.SchemaServer
                 | FlextLdifProtocolsDomain.AclServer
@@ -209,7 +216,7 @@ class FlextLdifProtocolsBase:
             self, server_type: str
         ) -> p.Result[type[FlextLdifProtocolsBase.ServerConstants]]: ...
 
-        def list_registered_servers(self) -> p.Result[t.MutableSequenceOf[str]]: ...
+        def list_registered_servers(self) -> p.Result[MutableSequence[str]]: ...
 
         def summarize_registry(
             self,
@@ -244,7 +251,7 @@ class FlextLdifProtocolsBase:
         DETECTION_DN_MARKERS: ClassVar[frozenset[str]]
         SCHEMA_FILTERABLE_FIELDS: ClassVar[frozenset[str]]
         ACL_ATTRIBUTE_NAME: ClassVar[str]
-        CATEGORIZATION_PRIORITY: ClassVar[t.StrSequence]
+        CATEGORIZATION_PRIORITY: ClassVar[Sequence[str]]
         CATEGORY_OBJECTCLASSES: ClassVar[t.FrozensetMapping]
         HIERARCHY_PRIORITY_OBJECTCLASSES: ClassVar[frozenset[str]]
         CATEGORIZATION_ACL_ATTRIBUTES: ClassVar[frozenset[str]]
@@ -270,13 +277,13 @@ class FlextLdifProtocolsBase:
         def name(self) -> str: ...
 
         @property
-        def sup(self) -> str | t.SequenceOf[str] | None: ...
+        def sup(self) -> str | Sequence[str] | None: ...
 
         @property
-        def must(self) -> t.SequenceOf[str] | None: ...
+        def must(self) -> Sequence[str] | None: ...
 
         @property
-        def may(self) -> t.SequenceOf[str] | None: ...
+        def may(self) -> Sequence[str] | None: ...
 
     @runtime_checkable
     class SchemaItemKind(Protocol):
@@ -322,7 +329,7 @@ class FlextLdifProtocolsBase:
         @property
         def events(
             self,
-        ) -> t.SequenceOf[
+        ) -> Sequence[
             FlextLdifProtocolsBase.ConversionEvent | FlextLdifProtocolsBase.DnEvent
         ]: ...
 
@@ -360,7 +367,7 @@ class FlextLdifProtocolsBase:
         def invalid_entries(self) -> int: ...
 
         @property
-        def errors(self) -> t.StrSequence: ...
+        def errors(self) -> Sequence[str]: ...
 
     @runtime_checkable
     class MigrationOutputOptions(Protocol):
@@ -382,14 +389,14 @@ class FlextLdifProtocolsBase:
         @property
         def categorized(
             self,
-        ) -> t.MappingKV[str, t.MutableSequenceOf[FlextLdifProtocolsValues.Entry]]:
+        ) -> Mapping[str, MutableSequence[FlextLdifProtocolsValues.Entry]]:
             """Grouped categories mapping."""
             ...
 
         @property
         def uncategorized(
             self,
-        ) -> t.MutableSequenceOf[FlextLdifProtocolsValues.Entry]:
+        ) -> MutableSequence[FlextLdifProtocolsValues.Entry]:
             """Uncategorized entries list."""
             ...
 
@@ -521,7 +528,7 @@ class FlextLdifProtocolsBase:
             self,
             server_type: str,
         ) -> p.Result[
-            t.MappingKV[
+            Mapping[
                 str,
                 FlextLdifProtocolsDomain.SchemaServer
                 | FlextLdifProtocolsDomain.AclServer
@@ -538,7 +545,7 @@ class FlextLdifProtocolsBase:
             """Resolve the registered constants class without copying its namespace."""
             ...
 
-        def list_registered_servers(self) -> p.Result[t.MutableSequenceOf[str]]:
+        def list_registered_servers(self) -> p.Result[MutableSequence[str]]:
             """List registered server types via the facade DSL."""
             ...
 
@@ -549,7 +556,7 @@ class FlextLdifProtocolsBase:
         def resolve_supported_conversions(
             self,
             server: FlextLdifProtocolsBase.ServerReference | str,
-        ) -> t.MappingKV[str, bool]:
+        ) -> Mapping[str, bool]:
             """Return supported conversion categories for a server server."""
             ...
 
@@ -584,9 +591,9 @@ class FlextLdifProtocolsBase:
         original_dn: str
         cleaned_dn: str
         normalized_dn: str
-        transformations: t.StrSequence
-        validation_warnings: t.StrSequence
-        validation_errors: t.StrSequence
+        transformations: Sequence[str]
+        validation_warnings: Sequence[str]
+        validation_errors: Sequence[str]
         was_transformed: bool
 
     @runtime_checkable
@@ -610,12 +617,12 @@ class FlextLdifProtocolsBase:
         def get(
             self,
             key: str,
-            default: t.MutableSequenceOf[str] | None = None,
-        ) -> t.MutableSequenceOf[str]:
+            default: MutableSequence[str] | None = None,
+        ) -> MutableSequence[str]:
             """Return attribute values with optional default."""
             ...
 
-        def items(self) -> t.MutableSequenceOf[tuple[str, t.MutableSequenceOf[str]]]:
+        def items(self) -> MutableSequence[tuple[str, MutableSequence[str]]]:
             """Return attribute items as a list of tuples."""
             ...
 
@@ -623,7 +630,7 @@ class FlextLdifProtocolsBase:
             """Return attribute names view."""
             ...
 
-        def values(self) -> ValuesView[t.MutableSequenceOf[str]]:
+        def values(self) -> ValuesView[MutableSequence[str]]:
             """Return attribute value lists view."""
             ...
 
@@ -633,8 +640,8 @@ class FlextLdifProtocolsBase:
 
         original_name: str
         target_name: str | None
-        original_values: t.MutableSequenceOf[str]
-        target_values: t.MutableSequenceOf[str] | None
+        original_values: MutableSequence[str]
+        target_values: MutableSequence[str] | None
         transformation_type: str
         reason: str
 
@@ -668,7 +675,7 @@ class FlextLdifProtocolsBase:
             ...
 
         @property
-        def error_details(self) -> t.StrSequence | None:
+        def error_details(self) -> Sequence[str] | None:
             """The conversion error details."""
             ...
 
@@ -737,7 +744,7 @@ class FlextLdifProtocolsBase:
             ...
 
         @property
-        def field_order(self) -> t.MutableSequenceOf[str]:
+        def field_order(self) -> MutableSequence[str]:
             """The original field order."""
             ...
 

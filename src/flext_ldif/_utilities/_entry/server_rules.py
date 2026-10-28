@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
+
 from flext_ldif import c, p, t
 from flext_ldif._models import FlextLdifModelsSettings
 from flext_ldif._utilities._entry import FlextLdifUtilitiesEntryValidation
@@ -18,14 +20,14 @@ class FlextLdifUtilitiesEntryServerRules:
     def check_binary_option_rule(
         entry: p.Ldif.Entry,
         rules: FlextLdifModelsSettings.ServerValidationRules,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Check binary attribute option requirement from server rules.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
-        violations: t.MutableSequenceOf[str] = []
+        violations: MutableSequence[str] = []
         if not rules.requires_binary_option or not entry.attributes:
             return violations
         for attr_name, attr_values in entry.attributes.items():
@@ -48,14 +50,14 @@ class FlextLdifUtilitiesEntryServerRules:
         entry: p.Ldif.Entry,
         rules: FlextLdifModelsSettings.ServerValidationRules,
         dn_value: str,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Check naming attribute requirement from server rules.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
-        violations: t.MutableSequenceOf[str] = []
+        violations: MutableSequence[str] = []
         if not rules.requires_naming_attr or not dn_value or (not entry.attributes):
             return violations
         naming_attr = FlextLdifUtilitiesEntryValidation.naming_attribute(dn_value)
@@ -74,14 +76,14 @@ class FlextLdifUtilitiesEntryServerRules:
         entry: p.Ldif.Entry,
         rules: FlextLdifModelsSettings.ServerValidationRules,
         dn_value: str,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Check objectClass requirement from server rules.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
-        violations: t.MutableSequenceOf[str] = []
+        violations: MutableSequence[str] = []
         if not rules.requires_objectclass:
             return violations
         has_objectclass = (

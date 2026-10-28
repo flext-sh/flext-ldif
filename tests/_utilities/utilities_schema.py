@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Annotated, ClassVar, Final, cast
 
 from flext_ldif import FlextLdifModels
@@ -62,16 +63,16 @@ class TestsFlextLdifSchemaExpectations(FlextLdifModels.BaseModel):
         FlextLdifModels.Field(description="Expected objectClass SUP"),
     ] = None
     must: Annotated[
-        t.StrSequence | None,
+        Sequence[str] | None,
         FlextLdifModels.Field(description="Expected objectClass MUST attributes"),
     ] = None
     may: Annotated[
-        t.StrSequence | None,
+        Sequence[str] | None,
         FlextLdifModels.Field(description="Expected objectClass MAY attributes"),
     ] = None
 
 
-PARSE_DISPATCH: Final[t.MappingKV[t.Tests.ParseMethod, str]] = {
+PARSE_DISPATCH: Final[Mapping[t.Tests.ParseMethod, str]] = {
     "parse_attribute": "parse_attribute",
     "parse_objectclass": "parse_objectclass",
     "parse_input": "parse_input",
@@ -107,7 +108,7 @@ def assert_field_eq(
         tm.reject(msg)
 
 
-def assert_must_contain(serialized: str, must_contain: t.StrSequence) -> None:
+def assert_must_contain(serialized: str, must_contain: Sequence[str]) -> None:
     """Assert every fragment in ``must_contain`` appears in ``serialized``.
 
     Args:
@@ -348,7 +349,7 @@ class TestsSchemaAclAssertionsMixin:
         | p.Tests.WriteAclServer,
         data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl,
         write_method: t.Tests.WriteMethod = "write",
-        must_contain: t.StrSequence | None = None,
+        must_contain: Sequence[str] | None = None,
         message: str | None = None,
     ) -> str:
         """Write content with a server and unwrap the serialized output.
@@ -368,7 +369,7 @@ class TestsSchemaAclAssertionsMixin:
                 method's contract.
 
         """
-        dispatch: t.MappingKV[
+        dispatch: Mapping[
             t.Tests.WriteMethod,
             tuple[type, type[m.BaseModel]],
         ] = {
@@ -416,7 +417,7 @@ class TestsSchemaAclAssertionsMixin:
     def acl_write_and_unwrap(
         server: p.Tests.WriteAclContentServer,
         data: m.Ldif.Acl,
-        must_contain: t.StrSequence | None = None,
+        must_contain: Sequence[str] | None = None,
         message: str | None = None,
     ) -> str:
         """Write ACL content and unwrap the serialized output.

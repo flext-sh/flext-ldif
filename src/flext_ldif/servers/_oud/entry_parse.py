@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import override
 
 from flext_ldif import m, p, r, t, u
@@ -23,21 +24,21 @@ class FlextLdifServersOudEntryParse(FlextLdifServersRfcEntry):
     def parse_server(
         self,
         value: str,
-    ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
+    ) -> p.Result[MutableSequence[m.Ldif.Entry]]:
         """Parse LDIF content and apply OUD post-processing hooks.
 
         Returns:
-            The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
+            The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
 
         """
         parsed_result = super().parse_server(value)
         if parsed_result.failure:
             return parsed_result
-        processed_entries: t.MutableSequenceOf[m.Ldif.Entry] = []
+        processed_entries: MutableSequence[m.Ldif.Entry] = []
         for parsed_entry in parsed_result.value:
             post_parse_result = self._hook_post_parse_entry(parsed_entry)
             if post_parse_result.failure:
-                return r[t.MutableSequenceOf[m.Ldif.Entry]].from_failure(
+                return r[MutableSequence[m.Ldif.Entry]].from_failure(
                     post_parse_result,
                 )
             entry_after_post: m.Ldif.Entry = post_parse_result.value
@@ -52,11 +53,11 @@ class FlextLdifServersOudEntryParse(FlextLdifServersRfcEntry):
                 original_attrs,
             )
             if finalize_result.failure:
-                return r[t.MutableSequenceOf[m.Ldif.Entry]].from_failure(
+                return r[MutableSequence[m.Ldif.Entry]].from_failure(
                     finalize_result,
                 )
             processed_entries.append(finalize_result.value)
-        return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(processed_entries)
+        return r[MutableSequence[m.Ldif.Entry]].ok(processed_entries)
 
     def _hook_finalize_entry_parse(
         self,

@@ -6,7 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, p, t
+from collections.abc import MutableSequence
+
+from flext_ldif import c, p
 
 
 class FlextLdifUtilitiesEntryAttrValidation:
@@ -46,14 +48,14 @@ class FlextLdifUtilitiesEntryAttrValidation:
     @staticmethod
     def _iter_attribute_parts(
         entry: p.Ldif.Entry,
-    ) -> t.MutableSequenceOf[t.MutableSequenceOf[str]]:
+    ) -> MutableSequence[MutableSequence[str]]:
         """Split each attribute description into base name and options.
 
         ``entry.attributes`` may be ``None`` when the entry is built with
         ``model_construct`` (bypasses validation).
 
         Returns:
-            The resulting ``t.MutableSequenceOf[t.MutableSequenceOf[str]]``.
+            The resulting ``MutableSequence[MutableSequence[str]]``.
 
         """
         if entry.attributes is None or not entry.attributes:
@@ -63,14 +65,14 @@ class FlextLdifUtilitiesEntryAttrValidation:
     @staticmethod
     def validate_attribute_descriptions(
         entry: p.Ldif.Entry,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Validate attribute descriptions per RFC 4512 section 2.5.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
-        violations: t.MutableSequenceOf[str] = []
+        violations: MutableSequence[str] = []
         for parts in FlextLdifUtilitiesEntryAttrValidation._iter_attribute_parts(entry):
             base_violation = FlextLdifUtilitiesEntryAttrValidation._base_name_violation(
                 parts[0],
@@ -90,14 +92,14 @@ class FlextLdifUtilitiesEntryAttrValidation:
     @staticmethod
     def validate_attribute_syntax(
         entry: p.Ldif.Entry,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Validate attribute name/option syntax per RFC 4512 section 2.5.1-2.5.2.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
-        violations: t.MutableSequenceOf[str] = []
+        violations: MutableSequence[str] = []
         for parts in FlextLdifUtilitiesEntryAttrValidation._iter_attribute_parts(entry):
             base_name = parts[0]
             if not c.Ldif.ATTRIBUTE_NAME_RE.match(base_name):
@@ -114,7 +116,7 @@ class FlextLdifUtilitiesEntryAttrValidation:
     @staticmethod
     def validate_binary_options(
         entry: p.Ldif.Entry,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Validate binary attribute options per RFC 2849 section 5.2.
 
         Uses compiled regex for O(1)-per-match detection instead of
@@ -124,10 +126,10 @@ class FlextLdifUtilitiesEntryAttrValidation:
         validation).
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
-        violations: t.MutableSequenceOf[str] = []
+        violations: MutableSequence[str] = []
         if entry.attributes is None or not entry.attributes:
             return violations
         for attr_name, attr_values in entry.attributes.items():

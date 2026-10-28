@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
+
 from flext_ldif import c, m, t, u
 from flext_ldif.servers._oud import (
     FlextLdifServersOudAciProcess,
@@ -22,11 +24,11 @@ class FlextLdifServersOudAci(FlextLdifServersOudAciProcess):
     @staticmethod
     def _find_aci_in_dict(
         attrs: t.AttributeMapping | None,
-    ) -> t.MutableSequenceOf[str] | str | None:
+    ) -> MutableSequence[str] | str | None:
         """Find ACI value in dictionary (case-insensitive).
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str] | str | None``.
+            The resulting ``MutableSequence[str] | str | None``.
 
         """
         if not attrs:
@@ -40,11 +42,11 @@ class FlextLdifServersOudAci(FlextLdifServersOudAciProcess):
     def _aci_from_attr_sources(
         original_attrs: t.AttributeMapping | None,
         entry_attrs: t.AttributeMapping | None,
-    ) -> t.MutableSequenceOf[str] | str | None:
+    ) -> MutableSequence[str] | str | None:
         """Find ACI values under the literal or case-insensitive ``aci`` keys.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str] | str | None``.
+            The resulting ``MutableSequence[str] | str | None``.
 
         """
         normalize = FlextLdifServersOudAci.normalize_aci_value_simple
@@ -64,11 +66,11 @@ class FlextLdifServersOudAci(FlextLdifServersOudAciProcess):
     @staticmethod
     def _aci_from_commented_extensions(
         entry: m.Ldif.Entry,
-    ) -> t.MutableSequenceOf[str] | str | None:
+    ) -> MutableSequence[str] | str | None:
         """Find ACI values stored as commented values in entry metadata.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str] | str | None``.
+            The resulting ``MutableSequence[str] | str | None``.
 
         """
         extensions = entry.metadata.extensions if entry.metadata is not None else None
@@ -95,11 +97,11 @@ class FlextLdifServersOudAci(FlextLdifServersOudAciProcess):
     def find_aci_values(
         entry: m.Ldif.Entry,
         original_attrs: t.AttributeMapping,
-    ) -> t.MutableSequenceOf[str] | str | None:
+    ) -> MutableSequence[str] | str | None:
         """Find ACI values from entry attributes, original_attrs, or commented metadata.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str] | str | None``.
+            The resulting ``MutableSequence[str] | str | None``.
 
         """
         entry_attrs = (
@@ -133,11 +135,11 @@ class FlextLdifServersOudAci(FlextLdifServersOudAciProcess):
     @staticmethod
     def normalize_aci_value_simple(
         value: t.Ldif.ValueType | t.Ldif.MetadataInputMapping | None,
-    ) -> t.MutableSequenceOf[str] | str | None:
-        """Normalize ACI value to t.MutableSequenceOf[str] | str | None.
+    ) -> MutableSequence[str] | str | None:
+        """Normalize ACI value to MutableSequence[str] | str | None.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str] | str | None``.
+            The resulting ``MutableSequence[str] | str | None``.
 
         """
         if value is None:

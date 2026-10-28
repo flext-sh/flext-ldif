@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Mapping, MutableMapping, MutableSequence
 
 from flext_ldif import c, m, r, t, u
 
@@ -72,11 +72,11 @@ class FlextLdifServersBaseSchemaMetadata:
     @staticmethod
     def _attribute_oid_fields(
         parsed_definition: t.Ldif.MutableMetadataMapping,
-    ) -> t.MappingKV[str, str | None]:
+    ) -> Mapping[str, str | None]:
         """Collect the OID slots declared by one parsed attribute definition.
 
         Returns:
-            The resulting ``t.MappingKV[str, str | None]``.
+            The resulting ``Mapping[str, str | None]``.
 
         """
 
@@ -153,7 +153,7 @@ class FlextLdifServersBaseSchemaMetadata:
     def validate_and_track_oid(
         metadata_extensions: MutableMapping[
             str,
-            t.MutableSequenceOf[str] | str | bool | None,
+            MutableSequence[str] | str | bool | None,
         ],
         oid_value: str | None,
         oid_name: str,

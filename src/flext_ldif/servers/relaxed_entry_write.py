@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import override
 
 from flext_ldif import c, m, p, r, t
@@ -92,7 +93,7 @@ class FlextLdifServersRelaxedEntryWrite(FlextLdifServersRfcEntry):
             The resulting ``p.Result[str]``.
 
         """
-        ldif_lines: t.MutableSequenceOf[str] = []
+        ldif_lines: MutableSequence[str] = []
         if not entry_data.dn or not entry_data.dn.value:
             return r[str].fail("Entry DN is required for LDIF output")
         ldif_lines.append(

@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
+
 from flext_ldif import FlextLdifModels, c, p, t
 
 
@@ -88,7 +90,7 @@ class FlextLdifUtilitiesEvents:
     @staticmethod
     def _to_error_details_list(
         error_details: t.JsonValueList | tuple[t.JsonValue, ...] | None,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         if error_details is None:
             return []
         return [str(detail) for detail in error_details]

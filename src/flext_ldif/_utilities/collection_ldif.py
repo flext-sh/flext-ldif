@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence, Sequence
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -39,16 +40,16 @@ class FlextLdifUtilitiesCollectionLdif:
 
     @staticmethod
     def deduplicate_preserve_order(
-        items: t.MutableSequenceOf[str],
-    ) -> t.MutableSequenceOf[str]:
+        items: MutableSequence[str],
+    ) -> MutableSequence[str]:
         """Remove duplicate items while preserving first-occurrence order.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         seen: set[str] = set()
-        result: t.MutableSequenceOf[str] = []
+        result: MutableSequence[str] = []
         for item in items:
             if item not in seen:
                 seen.add(item)
@@ -58,24 +59,20 @@ class FlextLdifUtilitiesCollectionLdif:
     @classmethod
     def normalize_ldif(
         cls,
-        value: str
-        | t.MutableSequenceOf[str]
-        | t.StrSequence
-        | set[str]
-        | frozenset[str],
+        value: str | MutableSequence[str] | Sequence[str] | set[str] | frozenset[str],
         other: str
-        | t.MutableSequenceOf[str]
-        | t.StrSequence
+        | MutableSequence[str]
+        | Sequence[str]
         | set[str]
         | frozenset[str]
         | None = None,
         *,
         case: str = "lower",
-    ) -> str | t.MutableSequenceOf[str] | set[str] | bool:
+    ) -> str | MutableSequence[str] | set[str] | bool:
         """Normalize for LDIF comparison (mnemonic: nz).
 
         Returns:
-            The resulting ``str | t.MutableSequenceOf[str] | set[str] | bool``.
+            The resulting ``str | MutableSequence[str] | set[str] | bool``.
 
         """
 

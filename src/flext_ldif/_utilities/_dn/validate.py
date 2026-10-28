@@ -6,11 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
 
 from flext_cli import u
 
-from flext_ldif import FlextLdifModels, c, t
+from flext_ldif import FlextLdifModels, c
 from flext_ldif._utilities._dn import FlextLdifUtilitiesDNParse
 
 if TYPE_CHECKING:
@@ -103,7 +104,7 @@ class FlextLdifUtilitiesDNValidate:
         return bool(dn_str and "=" in dn_str)
 
     @staticmethod
-    def _validate_components(components: t.MutableSequenceOf[str]) -> bool:
+    def _validate_components(components: MutableSequence[str]) -> bool:
         """Validate each DN component has attr=value format (helper method).
 
         Returns:
@@ -134,7 +135,7 @@ class FlextLdifUtilitiesDNValidate:
             The resulting ``bool``.
 
         """
-        checks: t.MutableSequenceOf[Callable[[], bool]] = [
+        checks: MutableSequence[Callable[[], bool]] = [
             lambda: FlextLdifUtilitiesDNValidate._validate_escape_sequences(dn_str),
             lambda: (
                 not FlextLdifUtilitiesDNValidate._has_double_unescaped_commas(dn_str)

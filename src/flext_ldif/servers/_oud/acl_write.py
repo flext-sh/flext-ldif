@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
@@ -84,7 +84,7 @@ class FlextLdifServersOudAclWrite(FlextLdifServersOudAclSubject):
 
     @staticmethod
     def _permission_dict_from_extensions(
-        target_perms_dict: t.MappingKV[str, t.JsonPayload],
+        target_perms_dict: Mapping[str, t.JsonPayload],
     ) -> t.Ldif.MutableMetadataInputMapping:
         """Collect scalar/list permission values from an extensions mapping.
 
@@ -109,15 +109,15 @@ class FlextLdifServersOudAclWrite(FlextLdifServersOudAclSubject):
     def _supported_oud_permissions(
         perms: m.Ldif.AclPermissions,
         acl_data: m.Ldif.Acl,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """List OUD-supported permission tokens active on the ACL model.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         sc = FlextLdifConstantsServersOud
-        ops: t.MutableSequenceOf[str] = [
+        ops: MutableSequence[str] = [
             field_name
             for field_name in (
                 "read",
@@ -194,7 +194,7 @@ class FlextLdifServersOudAclWrite(FlextLdifServersOudAclSubject):
             return None
         attrs_raw = target_data.get("attributes")
         dn_raw = target_data.get("target_dn")
-        attrs: t.MutableSequenceOf[str] = (
+        attrs: MutableSequence[str] = (
             [item for item in attrs_raw if isinstance(item, str)]
             if isinstance(attrs_raw, list)
             else []

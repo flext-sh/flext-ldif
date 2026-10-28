@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence, Sequence
 from typing import TYPE_CHECKING
 
 from tests import c, m, tm
@@ -280,14 +281,14 @@ class TestsFlextLdifCrossServerConversion:
 
         Each distinct attribute name is preserved.
         """
-        oud_attr_strings: t.SequenceOf[str] = [
+        oud_attr_strings: Sequence[str] = [
             c.Tests.CROSS_SERVER_OUD_ATTRIBUTE_ORCLGUID,
             (
                 "( 2.16.840.1.113894.1.1.2 NAME 'orclDBName' "
                 "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
             ),
         ]
-        oid_rendered: t.MutableSequenceOf[str] = []
+        oid_rendered: MutableSequence[str] = []
         for attr_string in oud_attr_strings:
             oud_parsed = oud_server.schema_server.parse_attribute(attr_string)
             tm.ok(oud_parsed)

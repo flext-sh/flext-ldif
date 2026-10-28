@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, MutableSequence
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_cli import u
@@ -28,7 +29,7 @@ class FlextLdifUtilitiesEntryRfcViolations:
     @classmethod
     def collect_rfc_violations(
         cls, entry: p.Ldif.Entry
-    ) -> tuple[str, t.MutableSequenceOf[str]]:
+    ) -> tuple[str, MutableSequence[str]]:
         """Collect an entry's RFC 2849/4512/4514 violations without rejecting it.
 
         Returns:
@@ -63,7 +64,7 @@ class FlextLdifUtilitiesEntryRfcViolations:
         entry: p.Ldif.Entry,
         dn_value: str,
         total_violations: int,
-        previous: t.StrMapping,
+        previous: Mapping[str, str],
     ) -> t.MutableStrMapping:
         """Return the validation context recorded with an entry's RFC findings.
 

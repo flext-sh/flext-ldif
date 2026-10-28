@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableSequence, Sequence
 
 from flext_cli import u
 
@@ -91,10 +91,10 @@ class FlextLdifUtilitiesMetadataJsonCore:
 
     @staticmethod
     def _normalize_dict_list(
-        values: t.SequenceOf[t.JsonValue],
-    ) -> t.MutableSequenceOf[t.JsonValue]:
+        values: Sequence[t.JsonValue],
+    ) -> MutableSequence[t.JsonValue]:
 
-        normalized: t.MutableSequenceOf[t.JsonValue] = []
+        normalized: MutableSequence[t.JsonValue] = []
         for item in values:
             normalized.append(u.normalize_to_json_value(item))
         return normalized

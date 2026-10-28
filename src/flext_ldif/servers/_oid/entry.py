@@ -6,9 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import ClassVar, override
 
-from flext_ldif import m, p, t, u
+from flext_ldif import m, p, u
 from flext_ldif.servers._oid import (
     FlextLdifServersOidEntryNormalize,
     FlextLdifServersOidEntryParse,
@@ -38,7 +39,7 @@ class FlextLdifServersOidEntry(
     @override
     def _parse_entry_from_lines(
         self,
-        lines: t.MutableSequenceOf[str],
+        lines: MutableSequence[str],
     ) -> p.Result[m.Ldif.Entry]:
         """Parse entry from LDIF lines, apply OID→RFC normalization, finalize metadata.
 

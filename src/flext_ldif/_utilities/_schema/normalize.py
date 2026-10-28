@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, MutableSequence
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -17,7 +18,7 @@ class FlextLdifUtilitiesSchemaNormalize:
 
     @staticmethod
     def build_available_attributes_set(
-        attributes: t.MutableSequenceOf[FlextLdifModels.Ldif.SchemaAttribute],
+        attributes: MutableSequence[FlextLdifModels.Ldif.SchemaAttribute],
     ) -> set[str]:
         """Build set of available attribute names (lowercase) for dependency validation.
 
@@ -73,7 +74,7 @@ class FlextLdifUtilitiesSchemaNormalize:
     def normalize_matching_rules(
         equality: str | None,
         substr: str | None = None,
-        **kwargs: t.StrMapping | None,
+        **kwargs: Mapping[str, str] | None,
     ) -> tuple[str | None, str | None]:
         """Normalize EQUALITY and SUBSTR matching rules.
 
@@ -106,7 +107,7 @@ class FlextLdifUtilitiesSchemaNormalize:
     @staticmethod
     def normalize_name(
         name_value: str | None,
-        suffixes_to_remove: t.MutableSequenceOf[str] | None = None,
+        suffixes_to_remove: MutableSequence[str] | None = None,
         char_replacements: t.MutableStrMapping | None = None,
     ) -> str | None:
         """Normalize attribute NAME field.
@@ -136,7 +137,7 @@ class FlextLdifUtilitiesSchemaNormalize:
     def normalize_syntax_oid(
         syntax: str | None,
         *,
-        replacements: t.StrMapping | None = None,
+        replacements: Mapping[str, str] | None = None,
     ) -> str | None:
         """Normalize SYNTAX OID field.
 

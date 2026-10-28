@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
 from typing import Annotated, ClassVar, Self, override
 
@@ -42,7 +42,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             validate_assignment=True,
             extra="allow",
         )
-        _DATETIME_FIELDS: ClassVar[t.StrPair] = ("created_at", "updated_at")
+        _DATETIME_FIELDS: ClassVar[tuple[str, str]] = ("created_at", "updated_at")
         _VALIDATION_RULES_KEY: ClassVar[str] = "validation_rules"
         _VALIDATION_SERVER_TYPE_KEY: ClassVar[str] = "validation_server_type"
         dn: Annotated[
@@ -76,13 +76,11 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             ),
         ] = c.Ldif.RecordKind.CONTENT
         controls: Annotated[
-            t.SequenceOf[FlextLdifModelsDomainEntryControl.Control],
+            Sequence[FlextLdifModelsDomainEntryControl.Control],
             m.Field(description="RFC 2849 control lines associated with the record"),
         ] = m.Field(default_factory=tuple)
         change_operations: Annotated[
-            t.MutableSequenceOf[
-                FlextLdifModelsDomainEntryChangeOperation.ChangeOperation
-            ],
+            MutableSequence[FlextLdifModelsDomainEntryChangeOperation.ChangeOperation],
             m.Field(
                 description="Structured modify operation blocks for changetype=modify",
             ),
@@ -185,7 +183,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             m.Field(description="RFC 2849 newsuperior field for moddn/modrdn records"),
         ] = None
         raw_record_lines: Annotated[
-            t.MutableSequenceOf[str],
+            MutableSequence[str],
             m.Field(
                 description="Original unfolded LDIF lines for loss-aware round-trip",
             ),
@@ -341,7 +339,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             return c.Ldif.ServerTypes.RFC
 
         @override
-        def model_post_init(self, context: t.ScalarMapping | None, /) -> None:
+        def model_post_init(self, context: Mapping[str, t.Scalar] | None, /) -> None:
             """Post-init hook to ensure metadata is always initialized.
 
             Properly initialized before any code tries to access it.
@@ -455,7 +453,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             attrs_dict: t.MutableStrSequenceMapping = {}
             for attr_name, attr_values in attributes.items():
                 if isinstance(attr_values, str):
-                    values_list: t.MutableSequenceOf[str] = [attr_values]
+                    values_list: MutableSequence[str] = [attr_values]
                 else:
                     values_list = list(attr_values)
                 attrs_dict[attr_name] = values_list

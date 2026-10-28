@@ -10,16 +10,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, Sequence
 from pathlib import Path
 from typing import ClassVar
 
-from flext_tests import FlextTestsFixturesDSL
+from flext_tests import FlextTestsUtilitiesFixturesDSL
 
 from tests import c, m, t
 
 
-class TestsFlextLdifEntryBuildersMixin(FlextTestsFixturesDSL):
+class TestsFlextLdifEntryBuildersMixin(FlextTestsUtilitiesFixturesDSL):
     """Builders for real entry models, LDIF content, and fixture metadata."""
 
     _FIXTURES_ROOT: ClassVar[Path | None] = c.Tests.FIXTURES_DIR
@@ -31,7 +31,7 @@ class TestsFlextLdifEntryBuildersMixin(FlextTestsFixturesDSL):
     @staticmethod
     def create_real_entry(
         dn: str | None = None,
-        attributes: t.MappingKV[str, t.StrSequence] | None = None,
+        attributes: Mapping[str, Sequence[str]] | None = None,
         server_type: str = "generic",
     ) -> m.Ldif.Entry:
         """Create a real Entry model with valid data.
@@ -116,11 +116,11 @@ class TestsFlextLdifEntryBuildersMixin(FlextTestsFixturesDSL):
         return "\n".join(blocks)
 
     @staticmethod
-    def parametrize_real_data() -> t.SequenceOf[m.Tests.LdifTestData]:
+    def parametrize_real_data() -> Sequence[m.Tests.LdifTestData]:
         """Generate parametrized test data for comprehensive coverage.
 
         Returns:
-            The resulting ``t.SequenceOf[m.Tests.LdifTestData]``.
+            The resulting ``Sequence[m.Tests.LdifTestData]``.
 
         """
         return [

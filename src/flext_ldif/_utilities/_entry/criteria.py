@@ -6,9 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, MutableSequence, Sequence
 
-from flext_ldif import c, p, t
+from flext_ldif import c, p
 from flext_ldif._models import FlextLdifModelsSettings
 from flext_ldif._utilities._entry import (
     FlextLdifUtilitiesEntryAccess,
@@ -21,7 +21,7 @@ class FlextLdifUtilitiesEntryCriteria:
 
     @staticmethod
     def _membership_criterion(
-        configured: t.StrSequence | None,
+        configured: Sequence[str] | None,
         present: Iterable[str],
         aggregate: Callable[[Iterable[bool]], bool],
     ) -> bool | None:
@@ -72,7 +72,7 @@ class FlextLdifUtilitiesEntryCriteria:
         """
         if not resolved_config.objectclasses:
             return None
-        entry_ocs: t.StrSequence = (
+        entry_ocs: Sequence[str] = (
             FlextLdifUtilitiesEntryAccess.resolve_objectclass_names(entry)
         )
         matched = cls._membership_criterion(
@@ -85,7 +85,7 @@ class FlextLdifUtilitiesEntryCriteria:
     @classmethod
     def _attrs_criterion(
         cls,
-        configured_attrs: t.StrSequence | None,
+        configured_attrs: Sequence[str] | None,
         entry: p.Ldif.Entry,
         aggregate: Callable[[Iterable[bool]], bool],
     ) -> bool | None:
@@ -182,7 +182,7 @@ class FlextLdifUtilitiesEntryCriteria:
             if settings is not None
             else FlextLdifModelsSettings.EntryCriteriaConfig.model_validate(kwargs)
         )
-        checks: t.MutableSequenceOf[bool] = []
+        checks: MutableSequence[bool] = []
         for criterion in (
             FlextLdifUtilitiesEntryCriteria._schema_criterion(entry, resolved_config),
             FlextLdifUtilitiesEntryCriteria._objectclass_criterion(

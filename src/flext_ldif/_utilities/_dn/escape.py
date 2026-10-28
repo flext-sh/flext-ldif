@@ -7,10 +7,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import string
+from collections.abc import MutableSequence
 
 from flext_cli import u
 
-from flext_ldif import c, t
+from flext_ldif import c
 
 
 class FlextLdifUtilitiesDNEscape:
@@ -76,7 +77,7 @@ class FlextLdifUtilitiesDNEscape:
         """
         if not value or "\\" not in value:
             return value
-        result: t.MutableSequenceOf[str] = []
+        result: MutableSequence[str] = []
         i = 0
         while i < len(value):
             if value[i] == "\\" and i + 1 < len(value):

@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 from flext_ldif import c, p, r
@@ -21,7 +22,7 @@ class FlextLdifUtilitiesOIDOperations:
     def extract_from_definition(
         definition: str,
         *,
-        patterns: t.SequenceOf[t.Ldif.RegexPattern] = (c.Ldif.SCHEMA_OID_CAPTURE_RE,),
+        patterns: Sequence[t.Ldif.RegexPattern] = (c.Ldif.SCHEMA_OID_CAPTURE_RE,),
         empty_error: str = "",
     ) -> p.Result[str]:
         """Extract OID from schema definition string.

@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from flext_ldif import c, p, r, t, u
@@ -38,7 +39,7 @@ class FlextLdifServerMethods:
 
     @staticmethod
     def project_processor_fields[T](
-        fields: t.MappingKV[str, T],
+        fields: Mapping[str, T],
         processor_keys: frozenset[str],
         *,
         force_dispatch: bool = False,
@@ -105,7 +106,7 @@ class FlextLdifServerMethods:
     @classmethod
     def builder_fields_or_none[T](
         cls,
-        fields: t.MappingKV[str, T],
+        fields: Mapping[str, T],
         processor_keys: frozenset[str],
         server: p.Ldif.ServerRegistry | None,
         settings: p.Ldif.Settings | None,
@@ -121,7 +122,7 @@ class FlextLdifServerMethods:
     def dispatch_builder[T, V](
         cls,
         builder: Callable[..., T],
-        fields: t.MappingKV[str, V],
+        fields: Mapping[str, V],
         processor_keys: frozenset[str],
         server: p.Ldif.ServerRegistry | None,
         settings: p.Ldif.Settings | None,

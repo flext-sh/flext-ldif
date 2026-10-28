@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableSequence
 
 from flext_cli import u
 
@@ -20,16 +20,16 @@ class FlextLdifUtilitiesParserMetadata:
 
     @staticmethod
     def _as_str_list(
-        value: t.MutableSequenceOf[t.JsonValue] | t.JsonValue | None,
-    ) -> t.MutableSequenceOf[str] | None:
+        value: MutableSequence[t.JsonValue] | t.JsonValue | None,
+    ) -> MutableSequence[str] | None:
         """Normalize a JSON list of strings, rejecting mixed payloads.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str] | None``.
+            The resulting ``MutableSequence[str] | None``.
 
         """
         if isinstance(value, list):
-            normalized: t.MutableSequenceOf[str] = []
+            normalized: MutableSequence[str] = []
             for item in value:
                 if not isinstance(item, str):
                     return None
@@ -77,8 +77,8 @@ class FlextLdifUtilitiesParserMetadata:
     @staticmethod
     def build_rfc_entry_metadata(
         dn: str,
-        raw_record_lines: t.MutableSequenceOf[str],
-        comments: t.MutableSequenceOf[str],
+        raw_record_lines: MutableSequence[str],
+        comments: MutableSequence[str],
         *,
         dn_was_base64: bool = False,
     ) -> FlextLdifModels.Ldif.ServerMetadata:

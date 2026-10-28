@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 from flext_ldif import c, t
 from flext_ldif.servers._oid import FlextLdifConstantsServersOid
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
@@ -17,7 +19,7 @@ class FlextLdifServersOidEntryNormalize(FlextLdifServersRfcEntry):
     @staticmethod
     def apply_matching_rule_tokens(
         value: str,
-        token_map: t.MappingKV[str, str],
+        token_map: Mapping[str, str],
         prefix: str,
     ) -> tuple[str, bool]:
         """Replace ``<PREFIX> <oid>`` tokens with their RFC rule names.
@@ -38,7 +40,7 @@ class FlextLdifServersOidEntryNormalize(FlextLdifServersRfcEntry):
     @staticmethod
     def apply_syntax_tokens(
         value: str,
-        syntax_map: t.MappingKV[str, str],
+        syntax_map: Mapping[str, str],
     ) -> tuple[str, bool]:
         """Replace quoted or space-delimited syntax OIDs with RFC names.
 
@@ -86,7 +88,7 @@ class FlextLdifServersOidEntryNormalize(FlextLdifServersRfcEntry):
             The resulting ``str``.
 
         """
-        equality_map: t.MappingKV[str, str] = {
+        equality_map: Mapping[str, str] = {
             "caseIgnoreSubStringsMatch": "caseIgnoreMatch",
             "caseIgnoreSubstringsMatch": "caseIgnoreMatch",
         }

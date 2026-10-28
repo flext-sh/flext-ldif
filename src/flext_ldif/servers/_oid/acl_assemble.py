@@ -10,7 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, m, p, r, t
+from collections.abc import Sequence
+
+from flext_ldif import c, m, p, r
 from flext_ldif.servers._oid import FlextLdifServersOidAclToOud
 
 
@@ -218,7 +220,7 @@ class FlextLdifServersOidAclAssemble:
             )
 
     @staticmethod
-    def deny_none(permissions: t.StrSequence) -> bool:
+    def deny_none(permissions: Sequence[str]) -> bool:
         """Report whether the permission list is exactly the ``none`` deny token.
 
         Returns:

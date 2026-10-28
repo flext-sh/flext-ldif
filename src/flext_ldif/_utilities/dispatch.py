@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, MutableSequence, Sequence
 from typing import ClassVar, TypeGuard, overload
 
 from flext_cli import u
@@ -47,21 +47,21 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def as_entries(
-        values: t.ModelInput[t.SequenceOf[t.Ldif.EntryLike]]
+        values: t.ModelInput[Sequence[t.Ldif.EntryLike]]
         | FlextLdifModels.Ldif.ParseResponse
         | p.Ldif.ParseResponse,
-    ) -> t.MutableSequenceOf[FlextLdifModels.Ldif.Entry]:
+    ) -> MutableSequence[FlextLdifModels.Ldif.Entry]:
         """Coerce an entry sequence into canonical LDIF entry models.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[FlextLdifModels.Ldif.Entry]``.
+            The resulting ``MutableSequence[FlextLdifModels.Ldif.Entry]``.
 
         """
         if isinstance(
             values, (FlextLdifModels.Ldif.ParseResponse, p.Ldif.ParseResponse)
         ):
             return list(values.entries)
-        validated: t.MutableSequenceOf[FlextLdifModels.Ldif.Entry] = (
+        validated: MutableSequence[FlextLdifModels.Ldif.Entry] = (
             FlextLdifUtilitiesDispatch._ENTRY_LIST_ADAPTER.validate_python(values)
         )
         return validated
@@ -81,15 +81,15 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def as_acls(
-        values: t.ModelInput[t.SequenceOf[t.Ldif.AclLike]],
-    ) -> t.MutableSequenceOf[FlextLdifModels.Ldif.Acl]:
+        values: t.ModelInput[Sequence[t.Ldif.AclLike]],
+    ) -> MutableSequence[FlextLdifModels.Ldif.Acl]:
         """Coerce an ACL sequence into canonical LDIF ACL models.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[FlextLdifModels.Ldif.Acl]``.
+            The resulting ``MutableSequence[FlextLdifModels.Ldif.Acl]``.
 
         """
-        validated: t.MutableSequenceOf[FlextLdifModels.Ldif.Acl] = (
+        validated: MutableSequence[FlextLdifModels.Ldif.Acl] = (
             FlextLdifUtilitiesDispatch._ACL_LIST_ADAPTER.validate_python(values)
         )
         return validated
@@ -144,14 +144,14 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def validate(
-        value_or_entries: t.MutableSequenceOf[FlextLdifModels.Ldif.Entry]
+        value_or_entries: MutableSequence[FlextLdifModels.Ldif.Entry]
         | t.JsonValue
         | str
         | FlextLdifModels.Ldif.DN,
         *validators: p.ValidatorSpec,
         pipeline: FlextLdifUtilitiesPipeline.ValidationPipeline | None = None,
     ) -> (
-        p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]
+        p.Result[MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]]
         | p.Result[t.JsonValue]
         | bool
     ):
@@ -159,7 +159,7 @@ class FlextLdifUtilitiesDispatch:
 
         Returns:
             The resulting
-                ``p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]
+                ``p.Result[MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]]
                 | p.Result[t.JsonValue] | bool``.
 
         """
@@ -170,7 +170,7 @@ class FlextLdifUtilitiesDispatch:
             ):
                 result: (
                     p.Result[
-                        t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]
+                        MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]
                     ]
                     | p.Result[t.JsonValue]
                     | bool
@@ -206,15 +206,15 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def _validate_entries(
-        entries: t.MutableSequenceOf[FlextLdifModels.Ldif.Entry],
+        entries: MutableSequence[FlextLdifModels.Ldif.Entry],
         *,
         pipeline: FlextLdifUtilitiesPipeline.ValidationPipeline | None = None,
-    ) -> p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]:
+    ) -> p.Result[MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]]:
         """Validate LDIF entries.
 
         Returns:
             The resulting
-                ``p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]``.
+                ``p.Result[MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]]``.
 
         """
         validation_pipeline = (
@@ -224,16 +224,16 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def _is_entry_sequence(
-        obj: t.MutableSequenceOf[FlextLdifModels.Ldif.Entry]
+        obj: MutableSequence[FlextLdifModels.Ldif.Entry]
         | t.JsonValue
         | str
         | FlextLdifModels.Ldif.DN,
-    ) -> TypeGuard[t.MutableSequenceOf[FlextLdifModels.Ldif.Entry]]:
+    ) -> TypeGuard[MutableSequence[FlextLdifModels.Ldif.Entry]]:
         """Check if value is a Sequence of Entry objects (dispatch helper).
 
         Returns:
             The resulting
-                ``TypeGuard[t.MutableSequenceOf[FlextLdifModels.Ldif.Entry]]``.
+                ``TypeGuard[MutableSequence[FlextLdifModels.Ldif.Entry]]``.
 
         """
         if isinstance(obj, (str, bytes, FlextLdifModels.Ldif.DN)):

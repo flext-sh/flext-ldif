@@ -10,11 +10,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import Annotated
 
 from flext_cli import m
 
-from flext_ldif import c, t
+from flext_ldif import c
 from flext_ldif._models import FlextLdifModelsBases, FlextLdifModelsDomainMetadata
 
 
@@ -251,7 +252,7 @@ class FlextLdifModelsDomainSchema:
             m.Field(description="Object class description (RFC 4512 DESC)"),
         ] = None
         sup: Annotated[
-            str | t.MutableSequenceOf[str] | None,
+            str | MutableSequence[str] | None,
             m.Field(description="Superior object class(es) (RFC 4512 SUP)"),
         ] = None
         kind: Annotated[
@@ -262,11 +263,11 @@ class FlextLdifModelsDomainSchema:
             ),
         ] = "STRUCTURAL"
         must: Annotated[
-            t.MutableSequenceOf[str] | None,
+            MutableSequence[str] | None,
             m.Field(description="Required attributes (RFC 4512 MUST)"),
         ] = None
         may: Annotated[
-            t.MutableSequenceOf[str] | None,
+            MutableSequence[str] | None,
             m.Field(description="Optional attributes (RFC 4512 MAY)"),
         ] = None
         metadata: Annotated[

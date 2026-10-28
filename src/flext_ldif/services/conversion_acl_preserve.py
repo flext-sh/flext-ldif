@@ -140,7 +140,7 @@ class FlextLdifConversionAclPreserve(s[p.Ldif.Response]):
             deep=True,
         )
         self.logger.debug(
-            "ACL t.MappingKV decision",
+            "ACL Mapping decision",
             mapping_type=mapping_type,
             normalized_source=str(permission_settings.source_server_type),
             normalized_target=str(permission_settings.target_server_type),

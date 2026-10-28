@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, MutableSequence
 
 from flext_ldif import FlextLdifModels, c, t
 
@@ -114,7 +114,7 @@ class FlextLdifUtilitiesMetadataBuilders:
             The resulting ``str``.
 
         """
-        original_ldif_parts: t.MutableSequenceOf[str] = []
+        original_ldif_parts: MutableSequence[str] = []
         if settings.original_dn_line:
             original_ldif_parts.append(settings.original_dn_line)
         if settings.original_attr_lines:
@@ -175,18 +175,18 @@ class FlextLdifUtilitiesMetadataBuilders:
         **extra: t.Ldif.Scalar,
     ) -> MutableMapping[
         str,
-        str | bool | t.MutableSequenceOf[str] | t.MutableAttributeMapping,
+        str | bool | MutableSequence[str] | t.MutableAttributeMapping,
     ]:
         """Build RFC compliance metadata as a dictionary.
 
         Returns:
-            The resulting ``MutableMapping[str, str | bool | t.MutableSequenceOf[str] |
+            The resulting ``MutableMapping[str, str | bool | MutableSequence[str] |
                 t.MutableAttributeMapping]``.
 
         """
         result: MutableMapping[
             str,
-            str | bool | t.MutableSequenceOf[str] | t.MutableAttributeMapping,
+            str | bool | MutableSequence[str] | t.MutableAttributeMapping,
         ] = {"server_type": server_type, "source_server": server_type}
         if "rfc_violations" in extra:
             violations_val = extra["rfc_violations"]

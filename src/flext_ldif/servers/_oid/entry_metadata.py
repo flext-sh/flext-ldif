@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Mapping, MutableMapping, MutableSequence
 
 from flext_ldif import c, m, t, u
 from flext_ldif.servers._oid import FlextLdifConstantsServersOid
@@ -103,7 +103,7 @@ class FlextLdifServersOidEntryMetadata(FlextLdifServersRfcEntry):
             if isinstance(raw_value, str):
                 typed_dict[key_str] = raw_value
             elif isinstance(raw_value, list):
-                typed_items: t.MutableSequenceOf[str] = [
+                typed_items: MutableSequence[str] = [
                     str(item) for item in raw_value if u.primitive(item)
                 ]
                 typed_dict[key_str] = typed_items

@@ -6,7 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, m, p, r, t, u
+from collections.abc import MutableSequence
+
+from flext_ldif import c, m, p, r, u
 from flext_ldif._models import FlextLdifModelsDomainEntryStatistics
 from flext_ldif.servers._base import (
     FlextLdifServersEntryLineEmitter,
@@ -82,7 +84,7 @@ class FlextLdifServersEntryWriteContext(FlextLdifServersEntryWriteBodyEmitter):
 
     def emit_entry_header(
         self,
-        output_lines: t.MutableSequenceOf[str],
+        output_lines: MutableSequence[str],
     ) -> p.Result[str] | None:
         """Emit rejection/metadata comments, DN line, and controls.
 
@@ -128,7 +130,7 @@ class FlextLdifServersEntryWriteContext(FlextLdifServersEntryWriteBodyEmitter):
 
     def _emit_rejection_comments(
         self,
-        output_lines: t.MutableSequenceOf[str],
+        output_lines: MutableSequence[str],
     ) -> None:
         """Emit rejection reason comments when the entry was rejected."""
         entry = self._entry

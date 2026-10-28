@@ -54,6 +54,15 @@ result = registry.validate_oud_consistency()
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 
 class DnCaseRegistry:
     def register_dn(self, dn: str) -> str:

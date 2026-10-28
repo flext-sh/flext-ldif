@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence, Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from flext_ldif import m, p, r, s, t, u
@@ -32,14 +33,14 @@ class FlextLdifProcessing(s[p.Ldif.Response]):
 
     def process_entries(
         self,
-        entries: t.SequenceOf[p.Ldif.Entry],
+        entries: Sequence[p.Ldif.Entry],
         options: p.Ldif.ProcessEntriesOptions | None = None,
         **kwargs: t.JsonValue,
-    ) -> p.Result[t.MutableSequenceOf[p.Ldif.ProcessingResult]]:
+    ) -> p.Result[MutableSequence[p.Ldif.ProcessingResult]]:
         """Unified processing method supporting batch and parallel modes.
 
         Returns:
-            The resulting ``p.Result[t.MutableSequenceOf[p.Ldif.ProcessingResult]]``.
+            The resulting ``p.Result[MutableSequence[p.Ldif.ProcessingResult]]``.
 
         """
         payload: t.MutableJsonMapping = (
@@ -54,10 +55,10 @@ class FlextLdifProcessing(s[p.Ldif.Response]):
                     executor.submit(self._process_entry, entry) for entry in entries
                 ]
                 results = [future.result() for future in as_completed(futures)]
-            return r[t.MutableSequenceOf[p.Ldif.ProcessingResult]].ok(results)
+            return r[MutableSequence[p.Ldif.ProcessingResult]].ok(results)
         _ = validated_options.batch_size
         return (
-            r[t.MutableSequenceOf[p.Ldif.ProcessingResult]]
+            r[MutableSequence[p.Ldif.ProcessingResult]]
             .from_result(u.process(entries, self._process_entry))
             .map(list)
         )

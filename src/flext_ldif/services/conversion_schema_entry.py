@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC
+from collections.abc import Mapping, MutableSequence, Sequence
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.services import FlextLdifConversionSchema
@@ -182,14 +183,14 @@ class FlextLdifConversionSchemaEntry(
     @staticmethod
     def _schema_fields_to_convert(
         entry: m.Ldif.Entry,
-    ) -> list[tuple[str, c.Ldif.SchemaItemKind, t.MutableSequenceOf[str]]]:
+    ) -> list[tuple[str, c.Ldif.SchemaItemKind, MutableSequence[str]]]:
         """Collect the schema-definition fields present in one entry.
 
         Returns:
             The resulting list of (field name, item kind, values) triples.
 
         """
-        schema_field_kinds: t.MappingKV[str, c.Ldif.SchemaItemKind] = {
+        schema_field_kinds: Mapping[str, c.Ldif.SchemaItemKind] = {
             c.Ldif.ATTRIBUTE_TYPES.lower(): c.Ldif.SchemaItemKind.ATTRIBUTE,
             c.Ldif.OBJECT_CLASSES.lower(): c.Ldif.SchemaItemKind.OBJECTCLASS,
         }
@@ -206,7 +207,7 @@ class FlextLdifConversionSchemaEntry(
         self,
         source_schema: p.Ldif.SchemaServer,
         target_schema: p.Ldif.SchemaServer,
-        field: tuple[str, c.Ldif.SchemaItemKind, t.MutableSequenceOf[str]],
+        field: tuple[str, c.Ldif.SchemaItemKind, MutableSequence[str]],
     ) -> p.Result[tuple[str, list[str]]]:
         """Convert every definition value of one schema field.
 
@@ -233,7 +234,7 @@ class FlextLdifConversionSchemaEntry(
     @staticmethod
     def _entry_with_converted_fields(
         entry: m.Ldif.Entry,
-        converted_fields: t.SequenceOf[tuple[str, list[str]]],
+        converted_fields: Sequence[tuple[str, list[str]]],
     ) -> m.Ldif.Entry:
         """Rebuild the entry with converted schema fields applied.
 
