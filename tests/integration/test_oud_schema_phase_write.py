@@ -15,15 +15,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
-
 from tests import c, m, p, tm
 
 _QUOTED_SCHEMA_SOURCE = (

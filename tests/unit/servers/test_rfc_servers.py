@@ -10,15 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
-
 from flext_ldif import FlextLdif
 from flext_ldif.servers import FlextLdifServersRfc
 from tests import c, m, tm
