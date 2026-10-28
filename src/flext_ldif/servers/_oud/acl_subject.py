@@ -13,7 +13,7 @@ from flext_ldif.servers._oud import FlextLdifServersOudConstants
 from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 
 
-class FlextLdifServersOudAclSubjectMixin(FlextLdifServersRfcAcl):
+class FlextLdifServersOudAclSubject(FlextLdifServersRfcAcl):
     """OUD ACI subject/bind-rule clause helpers."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -143,4 +143,4 @@ class FlextLdifServersOudAclSubjectMixin(FlextLdifServersRfcAcl):
                 return FlextLdifServersOudConstants.ACL_SUBJECT_TYPE_BIND_RULES
 
 
-__all__: list[str] = ["FlextLdifServersOudAclSubjectMixin"]
+__all__: list[str] = ["FlextLdifServersOudAclSubject"]

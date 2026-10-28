@@ -11,7 +11,7 @@ from collections.abc import Mapping, MutableMapping
 from flext_ldif import c, m, r, t, u
 
 
-class FlextLdifServersBaseSchemaMetadataMixin:
+class FlextLdifServersBaseSchemaMetadata:
     """Build attribute/objectClass metadata extensions with OID tracking."""
 
     @staticmethod
@@ -107,7 +107,7 @@ class FlextLdifServersBaseSchemaMetadataMixin:
 
         """
         metadata_extensions = (
-            FlextLdifServersBaseSchemaMetadataMixin._extract_metadata_extensions(
+            FlextLdifServersBaseSchemaMetadata._extract_metadata_extensions(
                 attr_definition,
             )
         )
@@ -115,11 +115,11 @@ class FlextLdifServersBaseSchemaMetadataMixin:
             metadata_extensions["syntax_oid_valid"] = syntax_validation_error is None
             if syntax_validation_error:
                 metadata_extensions["syntax_validation_error"] = syntax_validation_error
-        oid_fields = FlextLdifServersBaseSchemaMetadataMixin._attribute_oid_fields(
+        oid_fields = FlextLdifServersBaseSchemaMetadata._attribute_oid_fields(
             parsed_definition,
         )
         for rule_name, rule_oid in oid_fields.items():
-            FlextLdifServersBaseSchemaMetadataMixin.validate_and_track_oid(
+            FlextLdifServersBaseSchemaMetadata.validate_and_track_oid(
                 metadata_extensions,
                 rule_oid,
                 rule_name,
@@ -127,7 +127,7 @@ class FlextLdifServersBaseSchemaMetadataMixin:
         metadata_extensions["original_format"] = attr_definition.strip()
         metadata_extensions["schema_original_string_complete"] = attr_definition
         resolved_server_type: c.Ldif.ServerTypes = (
-            FlextLdifServersBaseSchemaMetadataMixin._resolve_server_type(server_type)
+            FlextLdifServersBaseSchemaMetadata._resolve_server_type(server_type)
         )
         schema_source_server: str = resolved_server_type.value
         metadata_extensions[c.Ldif.SCHEMA_SOURCE_SERVER] = schema_source_server
@@ -141,7 +141,7 @@ class FlextLdifServersBaseSchemaMetadataMixin:
             original_server_type=resolved_server_type,
             target_server_type=resolved_server_type,
         )
-        FlextLdifServersBaseSchemaMetadataMixin._preserve_formatting(
+        FlextLdifServersBaseSchemaMetadata._preserve_formatting(
             metadata,
             attr_definition,
         )
@@ -186,4 +186,4 @@ class FlextLdifServersBaseSchemaMetadataMixin:
             metadata_extensions["syntax_oid_valid"] = True
 
 
-__all__: list[str] = ["FlextLdifServersBaseSchemaMetadataMixin"]
+__all__: list[str] = ["FlextLdifServersBaseSchemaMetadata"]

@@ -11,7 +11,7 @@ from flext_ldif.servers._oid import FlextLdifServersOidConstants
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
-class FlextLdifServersOidEntryNormalizeMixin(FlextLdifServersRfcEntry):
+class FlextLdifServersOidEntryNormalize(FlextLdifServersRfcEntry):
     """OID entry schema value normalization helpers."""
 
     @staticmethod
@@ -90,7 +90,7 @@ class FlextLdifServersOidEntryNormalizeMixin(FlextLdifServersRfcEntry):
             "caseIgnoreSubStringsMatch": "caseIgnoreMatch",
             "caseIgnoreSubstringsMatch": "caseIgnoreMatch",
         }
-        mixin = FlextLdifServersOidEntryNormalizeMixin
+        mixin = FlextLdifServersOidEntryNormalize
         new_value, _ = mixin.apply_matching_rule_tokens(
             value,
             equality_map,
@@ -125,7 +125,7 @@ class FlextLdifServersOidEntryNormalizeMixin(FlextLdifServersRfcEntry):
                 continue
             values = attrs[attr_name]
             updated: list[str] = [
-                FlextLdifServersOidEntryNormalizeMixin._normalize_schema_value(
+                FlextLdifServersOidEntryNormalize._normalize_schema_value(
                     value,
                     attr_name.lower(),
                 )
@@ -135,4 +135,4 @@ class FlextLdifServersOidEntryNormalizeMixin(FlextLdifServersRfcEntry):
                 attrs[attr_name] = updated
 
 
-__all__: list[str] = ["FlextLdifServersOidEntryNormalizeMixin"]
+__all__: list[str] = ["FlextLdifServersOidEntryNormalize"]

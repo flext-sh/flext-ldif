@@ -148,14 +148,7 @@ class TestsFlextLdifZeroDataLossOidOud:
     def test_boolean_conversions_record_original_converted_and_format(
         api: p.Ldif.LdifClient,
     ) -> None:
-        """Tracked boolean conversions expose original, converted and format.
-
-        Raises:
-            TypeError: If converted attributes are not a mapping; or if boolean
-                conversions are not a mapping; or if tracked conversion is not a
-                mapping.
-
-        """
+        """Tracked boolean conversions expose original, converted and format."""
         oid_boolean_entry = """
 version: 1
 
@@ -177,13 +170,9 @@ orclIsEnabled: 1
             converted = metadata.extensions[c.Ldif.CONVERTED_ATTRIBUTES]
             if not isinstance(converted, Mapping):
                 tm.reject()
-                msg = "converted attributes are not a mapping"
-                raise TypeError(msg)
             boolean_conversions = converted[c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS]
             if not isinstance(boolean_conversions, Mapping):
                 tm.reject()
-                msg = "boolean conversions are not a mapping"
-                raise TypeError(msg)
             tracked_conversions.append(boolean_conversions)
 
         tm.ok(
@@ -196,8 +185,6 @@ orclIsEnabled: 1
                 conversion = raw
                 if not isinstance(conversion, Mapping):
                     tm.reject()
-                    msg = "tracked conversion is not a mapping"
-                    raise TypeError(msg)
                 tm.that(conversion, has="original")
                 tm.that(conversion, has="converted")
                 tm.that(conversion.get(c.Ldif.ORIGINAL_FORMAT), eq="1/0")

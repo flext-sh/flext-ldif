@@ -1,7 +1,7 @@
 """OUD entry — Schema definition write normalization.
 
 Per AGENTS.md §2.3 (MRO Composition) + §3.1 (200-LOC cap): one of the
-domain-specific Mixins composed into ``FlextLdifServersOudHelpersMixin``.
+domain-specific Mixins composed into ``FlextLdifServersOudHelpers``.
 
 RFC 4512 § 2.5.1 defines the ``SYNTAX`` property of a schema definition as an
 unquoted ``noidlen``. Source dialects that quote the numeric OID (e.g. OID
@@ -23,7 +23,7 @@ from flext_ldif import c, m, p, r, t, u
 from flext_ldif._models import FlextLdifModelsDomainEntryChangeOperationValue
 
 
-class FlextLdifServersOudSchemaWriteMixin:
+class FlextLdifServersOudSchemaWrite:
     """OUD Schema write normalization for phase-aware OUD writes."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -283,4 +283,4 @@ class FlextLdifServersOudSchemaWriteMixin:
         return write_result
 
 
-__all__: list[str] = ["FlextLdifServersOudSchemaWriteMixin"]
+__all__: list[str] = ["FlextLdifServersOudSchemaWrite"]

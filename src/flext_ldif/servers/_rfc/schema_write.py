@@ -13,7 +13,7 @@ from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base import FlextLdifServersBaseSchema
 
 
-class FlextLdifServersRfcSchemaWriteMixin(
+class FlextLdifServersRfcSchemaWrite(
     FlextLdifServersBaseSchema,
     ABC,
 ):
@@ -249,4 +249,4 @@ class FlextLdifServersRfcSchemaWriteMixin(
         )
 
 
-__all__: list[str] = ["FlextLdifServersRfcSchemaWriteMixin"]
+__all__: list[str] = ["FlextLdifServersRfcSchemaWrite"]

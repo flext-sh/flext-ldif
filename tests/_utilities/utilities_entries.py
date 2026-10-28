@@ -13,7 +13,7 @@ import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_tests import FlextTestsFixturesDSLMixin
+from flext_tests import FlextTestsFixturesDSL
 
 from tests import c, m, t
 
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from collections.abc import MutableMapping
 
 
-class TestsFlextLdifEntryBuildersMixin(FlextTestsFixturesDSLMixin):
+class TestsFlextLdifEntryBuildersMixin(FlextTestsFixturesDSL):
     """Builders for real entry models, LDIF content, and fixture metadata."""
 
     _FIXTURES_ROOT: ClassVar[Path | None] = c.Tests.FIXTURES_DIR

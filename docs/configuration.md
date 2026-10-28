@@ -4,7 +4,7 @@
 
 - [Configuration Overview](#configuration-overview)
 - [Configuration Models](#configuration-models)
-  - [FlextLdifModels.Config](#flextldifmodelsconfig)
+  - [FlextLdifModels.Config](#Flextmodelsldifconfig)
   - [Configuration Usage](#configuration-usage)
 - [Global Configuration](#global-configuration)
   - [Initialization](#initialization)

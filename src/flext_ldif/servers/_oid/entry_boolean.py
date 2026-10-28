@@ -11,13 +11,13 @@ from collections.abc import MutableMapping
 from flext_ldif import c, m, t, u
 from flext_ldif.servers._oid import (
     FlextLdifServersOidConstants,
-    FlextLdifServersOidEntryMetadataMixin,
+    FlextLdifServersOidEntryMetadata,
 )
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
-class FlextLdifServersOidEntryBooleanMixin(
-    FlextLdifServersOidEntryMetadataMixin,
+class FlextLdifServersOidEntryBoolean(
+    FlextLdifServersOidEntryMetadata,
     FlextLdifServersRfcEntry,
 ):
     """OID entry boolean value conversion helpers."""
@@ -63,12 +63,12 @@ class FlextLdifServersOidEntryBooleanMixin(
                 if converted_values != original_values:
                     converted_attrs.add(attr_name)
                     boolean_conversions[attr_name] = (
-                        FlextLdifServersOidEntryBooleanMixin._boolean_conversion_record(
+                        FlextLdifServersOidEntryBoolean._boolean_conversion_record(
                             original_values,
                             converted_values,
                         )
                     )
-                    FlextLdifServersOidEntryBooleanMixin._module_logger.debug(
+                    FlextLdifServersOidEntryBoolean._module_logger.debug(
                         "Converted boolean attribute OID→RFC",
                         attribute_name=attr_name,
                     )
@@ -151,7 +151,7 @@ class FlextLdifServersOidEntryBooleanMixin(
         rfc_value = converted_val_list[0]
         oid_value = FlextLdifServersOidConstants.RFC_TO_OID.get(rfc_value, rfc_value)
         restored_attrs[attr_name] = [oid_value]
-        FlextLdifServersOidEntryBooleanMixin._module_logger.debug(
+        FlextLdifServersOidEntryBoolean._module_logger.debug(
             "Restored OID boolean format from metadata",
             attribute_name=attr_name,
             rfc_value=rfc_value,
@@ -209,4 +209,4 @@ class FlextLdifServersOidEntryBooleanMixin(
         return copied
 
 
-__all__: list[str] = ["FlextLdifServersOidEntryBooleanMixin"]
+__all__: list[str] = ["FlextLdifServersOidEntryBoolean"]

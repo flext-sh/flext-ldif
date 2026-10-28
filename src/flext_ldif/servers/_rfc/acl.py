@@ -10,7 +10,7 @@ from typing import Self, cast, overload, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base import (
-    FlextLdifServerMethodsMixin,
+    FlextLdifServerMethods,
     FlextLdifServersBaseSchemaAcl,
 )
 
@@ -79,7 +79,7 @@ class FlextLdifServersRfcAcl(
         )
         processor_fields["data"] = data
         processor_fields[c.ContextScope.OPERATION] = operation
-        configured = FlextLdifServerMethodsMixin.dispatch_builder(
+        configured = FlextLdifServerMethods.dispatch_builder(
             super().__call__,
             processor_fields,
             frozenset({"data", c.ContextScope.OPERATION}),

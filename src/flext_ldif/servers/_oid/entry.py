@@ -10,17 +10,17 @@ from typing import ClassVar, override
 
 from flext_ldif import m, p, t, u
 from flext_ldif.servers._oid import (
-    FlextLdifServersOidEntryNormalizeMixin,
-    FlextLdifServersOidEntryParseMixin,
-    FlextLdifServersOidEntryRestoreMixin,
+    FlextLdifServersOidEntryNormalize,
+    FlextLdifServersOidEntryParse,
+    FlextLdifServersOidEntryRestore,
 )
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
 class FlextLdifServersOidEntry(
-    FlextLdifServersOidEntryParseMixin,
-    FlextLdifServersOidEntryRestoreMixin,
-    FlextLdifServersOidEntryNormalizeMixin,
+    FlextLdifServersOidEntryParse,
+    FlextLdifServersOidEntryRestore,
+    FlextLdifServersOidEntryNormalize,
     FlextLdifServersRfcEntry,
 ):
     """Oracle Internet Directory (OID) Entry implementation.

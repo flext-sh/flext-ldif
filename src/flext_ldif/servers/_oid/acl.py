@@ -10,19 +10,19 @@ from typing import ClassVar
 
 from flext_ldif import p, u
 from flext_ldif.servers._oid import (
-    FlextLdifServersOidAclFormatMixin,
-    FlextLdifServersOidAclParseMixin,
-    FlextLdifServersOidAclSubjectMixin,
-    FlextLdifServersOidAclWriteMixin,
+    FlextLdifServersOidAclFormat,
+    FlextLdifServersOidAclParse,
+    FlextLdifServersOidAclSubject,
+    FlextLdifServersOidAclWrite,
 )
 from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 
 
 class FlextLdifServersOidAcl(
-    FlextLdifServersOidAclWriteMixin,
-    FlextLdifServersOidAclParseMixin,
-    FlextLdifServersOidAclSubjectMixin,
-    FlextLdifServersOidAclFormatMixin,
+    FlextLdifServersOidAclWrite,
+    FlextLdifServersOidAclParse,
+    FlextLdifServersOidAclSubject,
+    FlextLdifServersOidAclFormat,
     FlextLdifServersRfcAcl,
 ):
     """Oracle Internet Directory (OID) ACL implementation."""

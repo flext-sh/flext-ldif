@@ -11,12 +11,12 @@ from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oud import (
-    FlextLdifServersOudAclSubjectMixin,
+    FlextLdifServersOudAclSubject,
     FlextLdifServersOudConstants,
 )
 
 
-class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
+class FlextLdifServersOudAclWrite(FlextLdifServersOudAclSubject):
     """OUD ACI write-side helpers (target/permissions clauses + serialization)."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -230,7 +230,7 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
         try:
             return self._write_oud_aci(acl_data)
         except c.Ldif.EXC_LDIF_PARSE as e:
-            FlextLdifServersOudAclWriteMixin._module_logger.exception(
+            FlextLdifServersOudAclWrite._module_logger.exception(
                 "Failed to write ACL to OUD ACI format",
             )
             return r[str].fail(
@@ -288,4 +288,4 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
         return r[str].ok("\n".join(aci_output_lines))
 
 
-__all__: list[str] = ["FlextLdifServersOudAclWriteMixin"]
+__all__: list[str] = ["FlextLdifServersOudAclWrite"]

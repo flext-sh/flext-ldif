@@ -11,15 +11,15 @@ from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oid import (
-    FlextLdifServersOidAclFormatMixin,
-    FlextLdifServersOidAclSubjectMixin,
+    FlextLdifServersOidAclFormat,
+    FlextLdifServersOidAclSubject,
     FlextLdifServersOidConstants,
 )
 
 
-class FlextLdifServersOidAclWriteMixin(
-    FlextLdifServersOidAclSubjectMixin,
-    FlextLdifServersOidAclFormatMixin,
+class FlextLdifServersOidAclWrite(
+    FlextLdifServersOidAclSubject,
+    FlextLdifServersOidAclFormat,
 ):
     """OID ACL OID ACL write assembly."""
 
@@ -138,4 +138,4 @@ class FlextLdifServersOidAclWriteMixin(
         return r[str].ok(orclaci_str)
 
 
-__all__: list[str] = ["FlextLdifServersOidAclWriteMixin"]
+__all__: list[str] = ["FlextLdifServersOidAclWrite"]

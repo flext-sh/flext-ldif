@@ -14,7 +14,7 @@ from flext_ldif.servers._relaxed import FlextLdifServersRelaxedConstants
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
-class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
+class FlextLdifServersRelaxedEntryParse(FlextLdifServersRfcEntry):
     """Relaxed entry parse side for lenient LDIF processing."""
 
     def normalize_dn(self, dn: str) -> p.Result[str]:
@@ -346,4 +346,4 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
         return metadata
 
 
-__all__: list[str] = ["FlextLdifServersRelaxedEntryParseMixin"]
+__all__: list[str] = ["FlextLdifServersRelaxedEntryParse"]

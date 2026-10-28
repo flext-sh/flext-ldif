@@ -10,13 +10,13 @@ from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oid import (
-    FlextLdifServersOidAclSubjectMixin,
+    FlextLdifServersOidAclSubject,
     FlextLdifServersOidConstants,
 )
 from flext_ldif.servers._rfc import FlextLdifServersRfcConstants
 
 
-class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
+class FlextLdifServersOidAclParse(FlextLdifServersOidAclSubject):
     """OID ACL parsing."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -204,7 +204,7 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
         except c.Ldif.EXC_LDIF_PARSE as e:
             max_len = FlextLdifServersOidConstants.MAX_LOG_LINE_LENGTH
             acl_preview = acl_line[:max_len] if len(acl_line) > max_len else acl_line
-            FlextLdifServersOidAclParseMixin._module_logger.debug(
+            FlextLdifServersOidAclParse._module_logger.debug(
                 "OID ACL parse failed",
                 error=e,
                 error_type=type(e).__name__,
@@ -383,4 +383,4 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
         return updated_acl
 
 
-__all__: list[str] = ["FlextLdifServersOidAclParseMixin"]
+__all__: list[str] = ["FlextLdifServersOidAclParse"]

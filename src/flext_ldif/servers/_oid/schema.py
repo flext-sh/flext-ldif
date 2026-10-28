@@ -12,13 +12,13 @@ from typing import ClassVar, override
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oid import (
     FlextLdifServersOidConstants,
-    FlextLdifServersOidSchemaNormalizeMixin,
+    FlextLdifServersOidSchemaNormalize,
 )
 from flext_ldif.servers._rfc import FlextLdifServersRfcSchema
 
 
 class FlextLdifServersOidSchema(
-    FlextLdifServersOidSchemaNormalizeMixin,
+    FlextLdifServersOidSchemaNormalize,
     FlextLdifServersRfcSchema,
 ):
     """Oracle Internet Directory (OID) schema servers implementation."""

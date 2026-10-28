@@ -11,7 +11,7 @@ from flext_ldif import c, m
 from flext_ldif._constants.servers_oud import FlextLdifConstantsServersOud
 
 
-class FlextLdifServersOudUtilities:
+class FlextLdifUtilitiesServersOud:
     """Oracle Unified Directory-specific utilities."""
 
     @staticmethod
@@ -48,4 +48,4 @@ class FlextLdifServersOudUtilities:
         return config
 
 
-__all__: list[str] = ["FlextLdifServersOudUtilities"]
+__all__: list[str] = ["FlextLdifUtilitiesServersOud"]

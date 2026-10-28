@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import Protocol, runtime_checkable
 
 
-class FlextLdifLdifProtocolsGeneratedModelsEntryDetectionMarkers:
+class FlextLdifModelsProtocolsLdifGeneratedEntryDetectionMarkers:
     @runtime_checkable
     class EntryDetectionMarkers(Protocol):
         dn_markers: frozenset[str]
@@ -20,4 +20,4 @@ class FlextLdifLdifProtocolsGeneratedModelsEntryDetectionMarkers:
         attribute_prefixes: frozenset[str]
 
 
-__all__ = ["FlextLdifLdifProtocolsGeneratedModelsEntryDetectionMarkers"]
+__all__ = ["FlextLdifModelsProtocolsLdifGeneratedEntryDetectionMarkers"]

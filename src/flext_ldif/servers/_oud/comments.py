@@ -1,7 +1,7 @@
 """OUD entry — Comments helpers.
 
 Per AGENTS.md §2.3 (MRO Composition) + §3.1 (200-LOC cap): one of the
-domain-specific Mixins composed into ``FlextLdifServersOudHelpersMixin``.
+domain-specific Mixins composed into ``FlextLdifServersOudHelpers``.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,12 +11,12 @@ from __future__ import annotations
 
 from flext_ldif import c, m, t, u
 from flext_ldif.servers._oud import (
-    FlextLdifServersOudCommentsAclMixin,
-    FlextLdifServersOudTransformMixin,
+    FlextLdifServersOudCommentsAcl,
+    FlextLdifServersOudTransform,
 )
 
 
-class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
+class FlextLdifServersOudComments(FlextLdifServersOudCommentsAcl):
     """OUD Comments helpers."""
 
     @staticmethod
@@ -83,23 +83,21 @@ class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
         if not entry.metadata:
             return acl_attr_names_to_skip
         acl_comments_dict: t.MutableStrSequenceMapping = {}
-        FlextLdifServersOudCommentsMixin._collect_acl_from_transformations(
+        FlextLdifServersOudComments._collect_acl_from_transformations(
             entry,
             acl_comments_dict,
             acl_attr_names_to_skip,
         )
-        FlextLdifServersOudCommentsMixin._collect_acl_from_extensions(
+        FlextLdifServersOudComments._collect_acl_from_extensions(
             entry,
             acl_comments_dict,
             acl_attr_names_to_skip,
         )
         if acl_comments_dict:
             acl_attr_names = list(acl_comments_dict.keys())
-            ordered_acl_attrs = (
-                FlextLdifServersOudTransformMixin.determine_attribute_order(
-                    acl_attr_names,
-                    format_options,
-                )
+            ordered_acl_attrs = FlextLdifServersOudTransform.determine_attribute_order(
+                acl_attr_names,
+                format_options,
             )
             for attr_name in ordered_acl_attrs:
                 if attr_name in acl_comments_dict:
@@ -153,18 +151,18 @@ class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
         """
         if not entry.metadata:
             return
-        acl_attr_names_to_skip = FlextLdifServersOudCommentsMixin.add_oud_acl_comments(
+        acl_attr_names_to_skip = FlextLdifServersOudComments.add_oud_acl_comments(
             comment_lines,
             entry,
             format_options,
         )
-        processed_attrs = FlextLdifServersOudCommentsMixin._add_attribute_comments(
+        processed_attrs = FlextLdifServersOudComments._add_attribute_comments(
             comment_lines,
             entry,
             format_options,
             acl_attr_names_to_skip,
         )
-        FlextLdifServersOudCommentsMixin._add_removed_attribute_comments(
+        FlextLdifServersOudComments._add_removed_attribute_comments(
             comment_lines,
             entry,
             format_options,
@@ -197,11 +195,9 @@ class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
             for attr_name in transformations
             if attr_name.lower() not in acl_attr_names_to_skip
         ]
-        ordered_attr_names = (
-            FlextLdifServersOudTransformMixin.determine_attribute_order(
-                attr_names,
-                format_options,
-            )
+        ordered_attr_names = FlextLdifServersOudTransform.determine_attribute_order(
+            attr_names,
+            format_options,
         )
         for attr_name in ordered_attr_names:
             transformation = transformations[attr_name]
@@ -211,7 +207,7 @@ class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
                 if transformation_type in {"MODIFIED", "TRANSFORMED"}
                 else transformation_type
             )
-            FlextLdifServersOudCommentsMixin._add_attribute_transformation_comments(
+            FlextLdifServersOudComments._add_attribute_transformation_comments(
                 comment_lines,
                 attr_name,
                 transformation,
@@ -243,16 +239,14 @@ class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
             if u.matches_type(attr_name, str)
             and attr_name.lower() not in acl_attr_names_to_skip
         ]
-        ordered_removed_attrs = (
-            FlextLdifServersOudTransformMixin.determine_attribute_order(
-                removed_attr_names,
-                format_options,
-            )
+        ordered_removed_attrs = FlextLdifServersOudTransform.determine_attribute_order(
+            removed_attr_names,
+            format_options,
         )
         for attr_name in ordered_removed_attrs:
             if attr_name.lower() in processed_attrs:
                 continue
-            removed_values = FlextLdifServersOudCommentsMixin._removed_attribute_values(
+            removed_values = FlextLdifServersOudComments._removed_attribute_values(
                 removed_attrs_dict[attr_name],
             )
             comment_lines.extend(
@@ -260,4 +254,4 @@ class FlextLdifServersOudCommentsMixin(FlextLdifServersOudCommentsAclMixin):
             )
 
 
-__all__: list[str] = ["FlextLdifServersOudCommentsMixin"]
+__all__: list[str] = ["FlextLdifServersOudComments"]

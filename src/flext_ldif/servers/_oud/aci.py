@@ -1,7 +1,7 @@
 """OUD entry — Aci helpers.
 
 Per AGENTS.md §2.3 (MRO Composition) + §3.1 (200-LOC cap): one of the
-domain-specific Mixins composed into ``FlextLdifServersOudHelpersMixin``.
+domain-specific Mixins composed into ``FlextLdifServersOudHelpers``.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,12 +11,12 @@ from __future__ import annotations
 
 from flext_ldif import c, m, t, u
 from flext_ldif.servers._oud import (
-    FlextLdifServersOudAciProcessMixin,
-    FlextLdifServersOudAclExtractMixin,
+    FlextLdifServersOudAciProcess,
+    FlextLdifServersOudAclExtract,
 )
 
 
-class FlextLdifServersOudAciMixin(FlextLdifServersOudAciProcessMixin):
+class FlextLdifServersOudAci(FlextLdifServersOudAciProcess):
     """OUD Aci helpers."""
 
     @staticmethod
@@ -47,8 +47,8 @@ class FlextLdifServersOudAciMixin(FlextLdifServersOudAciProcessMixin):
             The resulting ``t.MutableSequenceOf[str] | str | None``.
 
         """
-        normalize = FlextLdifServersOudAciMixin.normalize_aci_value_simple
-        find_in_dict = FlextLdifServersOudAciMixin._find_aci_in_dict
+        normalize = FlextLdifServersOudAci.normalize_aci_value_simple
+        find_in_dict = FlextLdifServersOudAci._find_aci_in_dict
         for source in (original_attrs, entry_attrs):
             if source:
                 raw = source.get("aci")
@@ -74,7 +74,7 @@ class FlextLdifServersOudAciMixin(FlextLdifServersOudAciProcessMixin):
         extensions = entry.metadata.extensions if entry.metadata is not None else None
         if extensions is None:
             return None
-        commented = FlextLdifServersOudAclExtractMixin.parse_commented_values(
+        commented = FlextLdifServersOudAclExtract.parse_commented_values(
             extensions.get(c.Ldif.COMMENTED_ATTRIBUTE_VALUES),
         )
         if commented is None:
@@ -85,7 +85,7 @@ class FlextLdifServersOudAciMixin(FlextLdifServersOudAciProcessMixin):
             normalized_value = (
                 [u.to_str(item) for item in value] if isinstance(value, list) else value
             )
-            if values := FlextLdifServersOudAciMixin.normalize_aci_value_simple(
+            if values := FlextLdifServersOudAci.normalize_aci_value_simple(
                 normalized_value,
             ):
                 return values
@@ -107,13 +107,13 @@ class FlextLdifServersOudAciMixin(FlextLdifServersOudAciProcessMixin):
             if entry.attributes and entry.attributes.attributes
             else None
         )
-        direct = FlextLdifServersOudAciMixin._aci_from_attr_sources(
+        direct = FlextLdifServersOudAci._aci_from_attr_sources(
             original_attrs,
             entry_attrs,
         )
         if direct is not None:
             return direct
-        return FlextLdifServersOudAciMixin._aci_from_commented_extensions(entry)
+        return FlextLdifServersOudAci._aci_from_commented_extensions(entry)
 
     @staticmethod
     def normalize_aci_value(
@@ -147,4 +147,4 @@ class FlextLdifServersOudAciMixin(FlextLdifServersOudAciProcessMixin):
         return u.to_str(value)
 
 
-__all__: list[str] = ["FlextLdifServersOudAciMixin"]
+__all__: list[str] = ["FlextLdifServersOudAci"]

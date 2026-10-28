@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-class FlextLdifServerMethodsMixin:
+class FlextLdifServerMethods:
     """Common server methods shared by schema, ACL, and entry servers."""
 
     @staticmethod
@@ -87,9 +87,7 @@ class FlextLdifServerMethodsMixin:
             The resolved server type.
 
         """
-        return FlextLdifServerMethodsMixin.resolve_server_type_from_utilities(
-            type(self)
-        )
+        return FlextLdifServerMethods.resolve_server_type_from_utilities(type(self))
 
     @staticmethod
     def _narrow_operation(operation: t.JsonValue | None) -> str | None:
@@ -153,4 +151,4 @@ class FlextLdifServerMethodsMixin:
         return builder(server=server, settings=settings, **builder_fields)
 
 
-__all__: list[str] = ["FlextLdifServerMethodsMixin"]
+__all__: list[str] = ["FlextLdifServerMethods"]

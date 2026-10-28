@@ -9,10 +9,10 @@ from __future__ import annotations
 import struct
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._base import FlextLdifServerMethodsMixin
+from flext_ldif.servers._base import FlextLdifServerMethods
 
 
-class FlextLdifServersBaseSchemaValuesMixin:
+class FlextLdifServersBaseSchemaValues:
     """Coerce raw schema payloads and operation tokens to canonical values."""
 
     @staticmethod
@@ -151,7 +151,7 @@ class FlextLdifServersBaseSchemaValuesMixin:
         """
         if operation is not None:
             return self._coerce_operation(operation)
-        return FlextLdifServerMethodsMixin.parse_operation_kwarg(kwargs).unwrap()
+        return FlextLdifServerMethods.parse_operation_kwarg(kwargs).unwrap()
 
 
-__all__: list[str] = ["FlextLdifServersBaseSchemaValuesMixin"]
+__all__: list[str] = ["FlextLdifServersBaseSchemaValues"]

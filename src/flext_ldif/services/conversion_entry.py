@@ -17,16 +17,16 @@ from typing import override
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oid import FlextLdifServersOidAclPipeline
 from flext_ldif.services import (
-    FlextLdifConversionMetadataMixin,
-    FlextLdifConversionSchemaEntryMixin,
-    FlextLdifConversionSupportMixin,
+    FlextLdifConversionMetadata,
+    FlextLdifConversionSchemaEntry,
+    FlextLdifConversionSupport,
 )
 
 
-class FlextLdifConversionEntryMixin(
-    FlextLdifConversionMetadataMixin,
-    FlextLdifConversionSupportMixin,
-    FlextLdifConversionSchemaEntryMixin,
+class FlextLdifConversionEntry(
+    FlextLdifConversionMetadata,
+    FlextLdifConversionSupport,
+    FlextLdifConversionSchemaEntry,
 ):
     """Concrete Entry-model conversion (state lives on the support mixin)."""
 
@@ -204,4 +204,4 @@ class FlextLdifConversionEntryMixin(
         return updated_entry
 
 
-__all__: list[str] = ["FlextLdifConversionEntryMixin"]
+__all__: list[str] = ["FlextLdifConversionEntry"]

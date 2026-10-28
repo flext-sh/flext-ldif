@@ -11,12 +11,12 @@ from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oud import (
-    FlextLdifServersOudAclWriteMixin,
+    FlextLdifServersOudAclWrite,
     FlextLdifServersOudConstants,
 )
 
 
-class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
+class FlextLdifServersOudAcl(FlextLdifServersOudAclWrite):
     """Oracle OUD ACL Implementation (RFC 4876 ACI Format)."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)

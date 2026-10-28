@@ -13,7 +13,7 @@ from flext_ldif.servers._oid import FlextLdifServersOidConstants
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
-class FlextLdifServersOidEntryMetadataMixin(FlextLdifServersRfcEntry):
+class FlextLdifServersOidEntryMetadata(FlextLdifServersRfcEntry):
     """OID entry metadata extraction helpers."""
 
     @staticmethod
@@ -121,14 +121,14 @@ class FlextLdifServersOidEntryMetadataMixin(FlextLdifServersRfcEntry):
         """
         boolean_conversions: MutableMapping[str, t.MutableAttributeMapping] = {}
         conversions_obj = (
-            FlextLdifServersOidEntryMetadataMixin._boolean_conversions_container(
+            FlextLdifServersOidEntryMetadata._boolean_conversions_container(
                 entry_data,
             )
         )
         if conversions_obj is None:
             return boolean_conversions
         for key, value in conversions_obj.items():
-            typed_dict = FlextLdifServersOidEntryMetadataMixin._typed_conversion_entry(
+            typed_dict = FlextLdifServersOidEntryMetadata._typed_conversion_entry(
                 value,
             )
             if typed_dict is not None:
@@ -161,4 +161,4 @@ class FlextLdifServersOidEntryMetadataMixin(FlextLdifServersRfcEntry):
         return original_extensions
 
 
-__all__: list[str] = ["FlextLdifServersOidEntryMetadataMixin"]
+__all__: list[str] = ["FlextLdifServersOidEntryMetadata"]

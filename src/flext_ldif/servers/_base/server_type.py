@@ -9,7 +9,7 @@ from __future__ import annotations
 from flext_ldif import u
 
 
-class FlextLdifServersBaseMroMixin:
+class FlextLdifServersBaseMro:
     """Resolve server type/priority from family Constants through the MRO."""
 
     def _get_server_type(self) -> str:
@@ -77,4 +77,4 @@ class FlextLdifServersBaseMroMixin:
         raise AttributeError(msg)
 
 
-__all__: list[str] = ["FlextLdifServersBaseMroMixin"]
+__all__: list[str] = ["FlextLdifServersBaseMro"]

@@ -121,12 +121,7 @@ class TestsFlextLdifLdifFixturesIntegration:
         filename: str,
         _min_entries: int,
     ) -> None:
-        """Writing parsed entries and reparsing the output round-trips the count.
-
-        Raises:
-            TypeError: If write produced empty content for.
-
-        """
+        """Writing parsed entries and reparsing the output round-trips the count."""
         parsed = ldif_client.parse_ldif(self._fixture_path(subdir, filename))
         tm.ok(parsed)
         original = parsed.value.entries
@@ -137,7 +132,6 @@ class TestsFlextLdifLdifFixturesIntegration:
         if not content:
             message = f"write produced empty content for {filename}"
             tm.reject(message)
-            raise TypeError(message)
 
         reparsed = ldif_client.parse_string(content)
         tm.ok(reparsed)

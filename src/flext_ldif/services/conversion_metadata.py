@@ -11,7 +11,7 @@ from collections.abc import Mapping
 from flext_ldif import c, m, p, s, t, u
 
 
-class FlextLdifConversionMetadataMixin(s[p.Ldif.Response]):
+class FlextLdifConversionMetadata(s[p.Ldif.Response]):
     """Metadata-analysis helpers shared by the conversion facade."""
 
     @staticmethod
@@ -120,17 +120,15 @@ class FlextLdifConversionMetadataMixin(s[p.Ldif.Response]):
             format_val = u.Cli.json_as_mapping(
                 source_metadata.get("original_format_details"),
             )
-        boolean_analysis = (
-            FlextLdifConversionMetadataMixin._analyze_boolean_conversions(
-                boolean_conversions,
-                target_server_type,
-            )
+        boolean_analysis = FlextLdifConversionMetadata._analyze_boolean_conversions(
+            boolean_conversions,
+            target_server_type,
         )
-        attr_case_analysis = FlextLdifConversionMetadataMixin._analyze_attribute_case(
+        attr_case_analysis = FlextLdifConversionMetadata._analyze_attribute_case(
             attr_case_val,
             target_server_type,
         )
-        dn_format_analysis = FlextLdifConversionMetadataMixin._analyze_dn_format(
+        dn_format_analysis = FlextLdifConversionMetadata._analyze_dn_format(
             format_val,
             target_server_type,
         )
@@ -210,4 +208,4 @@ class FlextLdifConversionMetadataMixin(s[p.Ldif.Response]):
         return current_entry
 
 
-__all__: list[str] = ["FlextLdifConversionMetadataMixin"]
+__all__: list[str] = ["FlextLdifConversionMetadata"]

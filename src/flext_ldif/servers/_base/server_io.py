@@ -11,7 +11,7 @@ from typing import Self
 from flext_ldif import c, m, p, r, t, u
 
 
-class FlextLdifServersBaseIoMixin:
+class FlextLdifServersBaseIo:
     """Parse/write I/O operations shared by every LDIF server."""
 
     @staticmethod
@@ -86,7 +86,7 @@ class FlextLdifServersBaseIoMixin:
         if not entry_server:
             return r[str].fail("Entry server not available")
         write_result: p.Result[str] = entry_server.write(entries, write_options).map(
-            FlextLdifServersBaseIoMixin._ensure_trailing_newline,
+            FlextLdifServersBaseIo._ensure_trailing_newline,
         )
         return write_result
 
@@ -112,4 +112,4 @@ class FlextLdifServersBaseIoMixin:
         return r[m.Ldif.Entry].ok(first_entry)
 
 
-__all__: list[str] = ["FlextLdifServersBaseIoMixin"]
+__all__: list[str] = ["FlextLdifServersBaseIo"]

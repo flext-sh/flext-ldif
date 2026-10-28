@@ -10,24 +10,24 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif.servers._oud import (
-    FlextLdifServersOudAciMixin,
-    FlextLdifServersOudAclExtractMixin,
-    FlextLdifServersOudAclMetadataMixin,
-    FlextLdifServersOudCommentsMixin,
-    FlextLdifServersOudSchemaWriteMixin,
-    FlextLdifServersOudTransformMixin,
+    FlextLdifServersOudAci,
+    FlextLdifServersOudAclExtract,
+    FlextLdifServersOudAclMetadata,
+    FlextLdifServersOudComments,
+    FlextLdifServersOudSchemaWrite,
+    FlextLdifServersOudTransform,
 )
 
 
-class FlextLdifServersOudHelpersMixin(
-    FlextLdifServersOudAciMixin,
-    FlextLdifServersOudAclExtractMixin,
-    FlextLdifServersOudAclMetadataMixin,
-    FlextLdifServersOudCommentsMixin,
-    FlextLdifServersOudSchemaWriteMixin,
-    FlextLdifServersOudTransformMixin,
+class FlextLdifServersOudHelpers(
+    FlextLdifServersOudAci,
+    FlextLdifServersOudAclExtract,
+    FlextLdifServersOudAclMetadata,
+    FlextLdifServersOudComments,
+    FlextLdifServersOudSchemaWrite,
+    FlextLdifServersOudTransform,
 ):
     """Composed Mixin facade for OUD entry helpers."""
 
 
-__all__: list[str] = ["FlextLdifServersOudHelpersMixin"]
+__all__: list[str] = ["FlextLdifServersOudHelpers"]

@@ -14,7 +14,7 @@ from flext_ldif.servers._oid import FlextLdifServersOidConstants
 from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 
 
-class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfcAcl):
+class FlextLdifServersOidAclFormat(FlextLdifServersRfcAcl):
     """OID ACL OID ACL clause formatting helpers."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -47,7 +47,7 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfcAcl):
             The resulting ``str``.
 
         """
-        clean_value = FlextLdifServersOidAclFormatMixin.clean_subject_value(
+        clean_value = FlextLdifServersOidAclFormat.clean_subject_value(
             subject_value,
         )
         sc = FlextLdifServersOidConstants
@@ -252,4 +252,4 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfcAcl):
         return extensions
 
 
-__all__: list[str] = ["FlextLdifServersOidAclFormatMixin"]
+__all__: list[str] = ["FlextLdifServersOidAclFormat"]

@@ -12,11 +12,11 @@ from __future__ import annotations
 from typing import override
 
 from flext_ldif import m, p, r, t, u
-from flext_ldif.servers._oud import FlextLdifServersOudHelpersMixin
+from flext_ldif.servers._oud import FlextLdifServersOudHelpers
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
-class FlextLdifServersOudEntryParseMixin(FlextLdifServersRfcEntry):
+class FlextLdifServersOudEntryParse(FlextLdifServersRfcEntry):
     """OUD entry parse orchestration (server parse loop + ACL finalize hook)."""
 
     @override
@@ -69,7 +69,7 @@ class FlextLdifServersOudEntryParseMixin(FlextLdifServersRfcEntry):
             The resulting ``p.Result[m.Ldif.Entry]``.
 
         """
-        aci_values = FlextLdifServersOudHelpersMixin.find_aci_values(
+        aci_values = FlextLdifServersOudHelpers.find_aci_values(
             entry,
             original_attrs,
         )
@@ -80,7 +80,7 @@ class FlextLdifServersOudEntryParseMixin(FlextLdifServersRfcEntry):
         existing: t.Ldif.MutableMetadataInputMapping = (
             dict(entry.metadata.extensions) if entry.metadata.extensions else {}
         )
-        finalize_result = FlextLdifServersOudHelpersMixin.process_aci_list_for_finalize(
+        finalize_result = FlextLdifServersOudHelpers.process_aci_list_for_finalize(
             aci_values,
             self.acl_server,
             existing,
@@ -92,4 +92,4 @@ class FlextLdifServersOudEntryParseMixin(FlextLdifServersRfcEntry):
         return r[m.Ldif.Entry].ok(entry)
 
 
-__all__: list[str] = ["FlextLdifServersOudEntryParseMixin"]
+__all__: list[str] = ["FlextLdifServersOudEntryParse"]

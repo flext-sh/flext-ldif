@@ -17,14 +17,14 @@ if TYPE_CHECKING:
 
     from flext_ldif import c as flext_ldif_c, t as flext_ldif_t
     from flext_ldif._protocols import (
-        FlextLdifLdifProtocolsGeneratedModelsAclEntryConversion,
-        FlextLdifLdifProtocolsGeneratedModelsEntryStatistics,
-        FlextLdifLdifProtocolsGeneratedModelsValidationMetadata,
+        FlextLdifModelsProtocolsLdifGeneratedAclEntryConversion,
+        FlextLdifModelsProtocolsLdifGeneratedEntryStatistics,
+        FlextLdifModelsProtocolsLdifGeneratedValidationMetadata,
         FlextLdifProtocolsBase,
     )
 
 
-class FlextLdifLdifProtocolsGeneratedModelsServerMetadata:
+class FlextLdifModelsProtocolsLdifGeneratedServerMetadata:
     @runtime_checkable
     class ServerMetadata(Protocol):
         server_type: flext_ldif_c.Ldif.ServerTypes
@@ -42,18 +42,18 @@ class FlextLdifLdifProtocolsGeneratedModelsServerMetadata:
         acls: flext_ldif_t.MutableSequenceOf[str]
         objectclasses: flext_ldif_t.MutableSequenceOf[str]
         validation_results: (
-            FlextLdifLdifProtocolsGeneratedModelsValidationMetadata.ValidationMetadata
+            FlextLdifModelsProtocolsLdifGeneratedValidationMetadata.ValidationMetadata
             | None
         )
         processing_stats: (
-            FlextLdifLdifProtocolsGeneratedModelsEntryStatistics.EntryStatistics | None
+            FlextLdifModelsProtocolsLdifGeneratedEntryStatistics.EntryStatistics | None
         )
         write_options: FlextLdifProtocolsBase.WriteOptions | None
         removed_attributes: collections_abc_MutableMapping[str, pydantic.JsonValue]
         original_format_details: FlextLdifProtocolsBase.FormatDetails | None
         schema_format_details: FlextLdifProtocolsBase.SchemaFormatDetails | None
         acl_conversion: (
-            FlextLdifLdifProtocolsGeneratedModelsAclEntryConversion.AclEntryConversion
+            FlextLdifModelsProtocolsLdifGeneratedAclEntryConversion.AclEntryConversion
             | None
         )
         soft_delete_markers: flext_ldif_t.MutableSequenceOf[str]
@@ -67,4 +67,4 @@ class FlextLdifLdifProtocolsGeneratedModelsServerMetadata:
         ]
 
 
-__all__ = ["FlextLdifLdifProtocolsGeneratedModelsServerMetadata"]
+__all__ = ["FlextLdifModelsProtocolsLdifGeneratedServerMetadata"]

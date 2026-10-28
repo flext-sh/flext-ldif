@@ -10,20 +10,20 @@ from typing import ClassVar, Self, cast, overload, override
 
 from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.servers._base import (
-    FlextLdifServerMethodsMixin,
+    FlextLdifServerMethods,
     FlextLdifServersBaseEntry,
-    FlextLdifServersBaseExecuteParamsMixin,
-    FlextLdifServersBaseIoMixin,
-    FlextLdifServersBaseMroMixin,
+    FlextLdifServersBaseExecuteParams,
+    FlextLdifServersBaseIo,
+    FlextLdifServersBaseMro,
     FlextLdifServersBaseSchema,
     FlextLdifServersBaseSchemaAcl,
 )
 
 
 class FlextLdifServersBase(
-    FlextLdifServersBaseMroMixin,
-    FlextLdifServersBaseExecuteParamsMixin,
-    FlextLdifServersBaseIoMixin,
+    FlextLdifServersBaseMro,
+    FlextLdifServersBaseExecuteParams,
+    FlextLdifServersBaseIo,
     s[m.Ldif.Entry],
 ):
     """Base class for LDIF/LDAP server servers built on `s`."""
@@ -187,7 +187,7 @@ class FlextLdifServersBase(
                 "registry": registry,
                 "runtime_settings": self.settings if settings is None else settings,
             })
-        configured = FlextLdifServerMethodsMixin.dispatch_builder(
+        configured = FlextLdifServerMethods.dispatch_builder(
             super().__call__,
             fields,
             frozenset({"ldif_text", "entries", c.ContextScope.OPERATION}),

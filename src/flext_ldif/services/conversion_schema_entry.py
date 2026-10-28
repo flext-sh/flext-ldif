@@ -3,7 +3,7 @@
 Holds the embedded-schema-definition conversion (``_convert_schema_entry_value``
 and ``_convert_schema_entry_attributes``) used by the entry mixin. Inherits the
 shared schema helpers (``_validate_parsed_schema``, the ``_resolve_schema_server``
-stub) from :class:`FlextLdifConversionSchemaMixin`; the concrete resolver wins via
+stub) from :class:`FlextLdifConversionSchema`; the concrete resolver wins via
 the facade MRO (Support precedes this mixin).
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
@@ -15,11 +15,11 @@ from __future__ import annotations
 from abc import ABC
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.services import FlextLdifConversionSchemaMixin
+from flext_ldif.services import FlextLdifConversionSchema
 
 
-class FlextLdifConversionSchemaEntryMixin(
-    FlextLdifConversionSchemaMixin,
+class FlextLdifConversionSchemaEntry(
+    FlextLdifConversionSchema,
     ABC,
 ):
     """Conversion of schema definitions embedded inside a schema entry."""
@@ -257,4 +257,4 @@ class FlextLdifConversionSchemaEntryMixin(
         )
 
 
-__all__: list[str] = ["FlextLdifConversionSchemaEntryMixin"]
+__all__: list[str] = ["FlextLdifConversionSchemaEntry"]

@@ -1,7 +1,7 @@
 """OUD entry — AclExtract helpers.
 
 Per AGENTS.md §2.3 (MRO Composition) + §3.1 (200-LOC cap): one of the
-domain-specific Mixins composed into ``FlextLdifServersOudHelpersMixin``.
+domain-specific Mixins composed into ``FlextLdifServersOudHelpers``.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -12,7 +12,7 @@ from __future__ import annotations
 from flext_ldif import c, m, t, u
 
 
-class FlextLdifServersOudAclExtractMixin:
+class FlextLdifServersOudAclExtract:
     """OUD AclExtract helpers."""
 
     @staticmethod
@@ -31,7 +31,7 @@ class FlextLdifServersOudAclExtractMixin:
         if not entry_data.attributes or not acl_attribute_names:
             return entry_data
         new_attributes_dict, commented_acl_values, hidden_attrs = (
-            FlextLdifServersOudAclExtractMixin.extract_and_remove_acl_attributes(
+            FlextLdifServersOudAclExtract.extract_and_remove_acl_attributes(
                 entry_data.attributes.attributes,
                 acl_attribute_names,
             )
@@ -44,7 +44,7 @@ class FlextLdifServersOudAclExtractMixin:
                 server_type=c.Ldif.ServerTypes.OUD,
             )
         updated_metadata = (
-            FlextLdifServersOudAclExtractMixin.update_metadata_with_commented_acls(
+            FlextLdifServersOudAclExtract.update_metadata_with_commented_acls(
                 existing_metadata,
                 acl_attribute_names,
                 commented_acl_values,
@@ -185,4 +185,4 @@ class FlextLdifServersOudAclExtractMixin:
         return metadata_typed.model_copy(update={"extensions": current_extensions})
 
 
-__all__: list[str] = ["FlextLdifServersOudAclExtractMixin"]
+__all__: list[str] = ["FlextLdifServersOudAclExtract"]

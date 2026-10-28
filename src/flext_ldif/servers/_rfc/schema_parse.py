@@ -12,11 +12,11 @@ from typing import ClassVar
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base import FlextLdifServersBaseSchema
-from flext_ldif.servers._rfc import FlextLdifServersRfcSchemaValuesMixin
+from flext_ldif.servers._rfc import FlextLdifServersRfcSchemaValues
 
 
-class FlextLdifServersRfcSchemaParseMixin(
-    FlextLdifServersRfcSchemaValuesMixin,
+class FlextLdifServersRfcSchemaParse(
+    FlextLdifServersRfcSchemaValues,
     FlextLdifServersBaseSchema,
     ABC,
 ):
@@ -286,4 +286,4 @@ class FlextLdifServersRfcSchemaParseMixin(
                     pass
 
 
-__all__: list[str] = ["FlextLdifServersRfcSchemaParseMixin"]
+__all__: list[str] = ["FlextLdifServersRfcSchemaParse"]

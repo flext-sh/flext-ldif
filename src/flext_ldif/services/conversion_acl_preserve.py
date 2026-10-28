@@ -2,7 +2,7 @@
 
 Holds ``_preserve_acl_metadata`` (permission remap by server pair + extension
 merge) and ``_get_extensions_dict``, the preservation half of ACL conversion;
-``FlextLdifConversionAclMixin`` inherits it. Self-contained (only ``self.logger``).
+``FlextLdifConversionAcl`` inherits it. Self-contained (only ``self.logger``).
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,7 +13,7 @@ from __future__ import annotations
 from flext_ldif import c, m, p, s, t, u
 
 
-class FlextLdifConversionAclPreserveMixin(s[p.Ldif.Response]):
+class FlextLdifConversionAclPreserve(s[p.Ldif.Response]):
     """ACL permission + metadata preservation helpers."""
 
     @staticmethod
@@ -202,4 +202,4 @@ class FlextLdifConversionAclPreserveMixin(s[p.Ldif.Response]):
         return preserved_acl
 
 
-__all__: list[str] = ["FlextLdifConversionAclPreserveMixin"]
+__all__: list[str] = ["FlextLdifConversionAclPreserve"]

@@ -1,7 +1,7 @@
 """OUD entry — Aci process helpers.
 
 Per AGENTS.md §2.3 (MRO Composition) + §3.1 (200-LOC cap): one of the
-domain-specific Mixins composed into ``FlextLdifServersOudAciMixin``.
+domain-specific Mixins composed into ``FlextLdifServersOudAci``.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,11 +14,11 @@ from collections.abc import Callable, MutableSequence
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oud import (
     FlextLdifServersOudAcl,
-    FlextLdifServersOudAclMetadataMixin,
+    FlextLdifServersOudAclMetadata,
 )
 
 
-class FlextLdifServersOudAciProcessMixin:
+class FlextLdifServersOudAciProcess:
     """OUD Aci metadata extraction and macro validation helpers."""
 
     @staticmethod
@@ -47,7 +47,7 @@ class FlextLdifServersOudAciProcessMixin:
 
         """
         acl_result = acl_server.parse_server(
-            FlextLdifServersOudAciProcessMixin._normalized_aci(aci_value),
+            FlextLdifServersOudAciProcess._normalized_aci(aci_value),
         )
         if acl_result.failure:
             return r[t.Ldif.MutableMetadataInputMapping].from_failure(acl_result)
@@ -90,7 +90,7 @@ class FlextLdifServersOudAciProcessMixin:
                 return r[bool].from_failure(acl_extensions_result)
             acl_extensions = acl_extensions_result.value
             if acl_extensions:
-                FlextLdifServersOudAclMetadataMixin.process_parsed_acl_extensions(
+                FlextLdifServersOudAclMetadata.process_parsed_acl_extensions(
                     acl_extensions,
                     current_extensions,
                 )
@@ -108,7 +108,7 @@ class FlextLdifServersOudAciProcessMixin:
 
         """
         has_macros = bool(c.Ldif.ACI_MACRO_RE.search(aci_value))
-        validation_result = FlextLdifServersOudAciProcessMixin._validate_aci_macros(
+        validation_result = FlextLdifServersOudAciProcess._validate_aci_macros(
             aci_value,
         )
         if validation_result.failure:
@@ -123,7 +123,7 @@ class FlextLdifServersOudAciProcessMixin:
             if parsed_acl.metadata and parsed_acl.metadata.extensions:
                 acl_extensions = parsed_acl.metadata.extensions
                 if isinstance(acl_extensions, dict):
-                    FlextLdifServersOudAclMetadataMixin.extract_acl_metadata_from_dict(
+                    FlextLdifServersOudAclMetadata.extract_acl_metadata_from_dict(
                         acl_extensions,
                         acl_metadata_extensions,
                     )
@@ -161,4 +161,4 @@ class FlextLdifServersOudAciProcessMixin:
         return None
 
 
-__all__: list[str] = ["FlextLdifServersOudAciProcessMixin"]
+__all__: list[str] = ["FlextLdifServersOudAciProcess"]

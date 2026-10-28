@@ -13,7 +13,7 @@ from flext_ldif.servers._relaxed import FlextLdifServersRelaxedConstants
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
-class FlextLdifServersRelaxedEntryWriteMixin(FlextLdifServersRfcEntry):
+class FlextLdifServersRelaxedEntryWrite(FlextLdifServersRfcEntry):
     """Relaxed entry write side and predicate hooks for lenient processing."""
 
     @override
@@ -114,4 +114,4 @@ class FlextLdifServersRelaxedEntryWriteMixin(FlextLdifServersRfcEntry):
         return r[str].ok(ldif_text)
 
 
-__all__: list[str] = ["FlextLdifServersRelaxedEntryWriteMixin"]
+__all__: list[str] = ["FlextLdifServersRelaxedEntryWrite"]

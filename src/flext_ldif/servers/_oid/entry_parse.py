@@ -12,17 +12,17 @@ from typing import override
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oid import (
     FlextLdifServersOidConstants,
-    FlextLdifServersOidEntryBooleanMixin,
-    FlextLdifServersOidEntryMetadataMixin,
-    FlextLdifServersOidEntryNormalizeMixin,
+    FlextLdifServersOidEntryBoolean,
+    FlextLdifServersOidEntryMetadata,
+    FlextLdifServersOidEntryNormalize,
 )
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
-class FlextLdifServersOidEntryParseMixin(
-    FlextLdifServersOidEntryBooleanMixin,
-    FlextLdifServersOidEntryMetadataMixin,
-    FlextLdifServersOidEntryNormalizeMixin,
+class FlextLdifServersOidEntryParse(
+    FlextLdifServersOidEntryBoolean,
+    FlextLdifServersOidEntryMetadata,
+    FlextLdifServersOidEntryNormalize,
     FlextLdifServersRfcEntry,
 ):
     """OID entry parse hook helpers."""
@@ -182,7 +182,7 @@ class FlextLdifServersOidEntryParseMixin(
         try:
             return self._post_parse_oid_entry(entry)
         except c.Ldif.EXC_LDIF_PARSE as e:
-            FlextLdifServersOidEntryParseMixin._module_logger.exception(
+            FlextLdifServersOidEntryParse._module_logger.exception(
                 "OID post-parse entry hook failed",
             )
             return r[m.Ldif.Entry].fail_op("OID post-parse entry hook", e)
@@ -268,7 +268,7 @@ class FlextLdifServersOidEntryParseMixin(
         normalized_dn = cleaned_dn
         if cleaned_dn.lower() == FlextLdifServersOidConstants.SCHEMA_DN_SERVER.lower():
             normalized_dn = c.Ldif.RFC_SCHEMA_DN
-            FlextLdifServersOidEntryParseMixin._module_logger.debug(
+            FlextLdifServersOidEntryParse._module_logger.debug(
                 "OID→RFC transform: Normalizing schema DN",
                 original_dn=cleaned_dn,
                 normalized_dn=normalized_dn,
@@ -303,4 +303,4 @@ class FlextLdifServersOidEntryParseMixin(
         return r[t.Ldif.MutableMetadataMapping].ok(current_extensions)
 
 
-__all__: list[str] = ["FlextLdifServersOidEntryParseMixin"]
+__all__: list[str] = ["FlextLdifServersOidEntryParse"]

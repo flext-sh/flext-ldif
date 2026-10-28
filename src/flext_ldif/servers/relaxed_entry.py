@@ -7,15 +7,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif.servers import (
-    FlextLdifServersRelaxedEntryParseMixin,
-    FlextLdifServersRelaxedEntryWriteMixin,
+    FlextLdifServersRelaxedEntryParse,
+    FlextLdifServersRelaxedEntryWrite,
 )
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
 class FlextLdifServersRelaxedEntry(
-    FlextLdifServersRelaxedEntryWriteMixin,
-    FlextLdifServersRelaxedEntryParseMixin,
+    FlextLdifServersRelaxedEntryWrite,
+    FlextLdifServersRelaxedEntryParse,
     FlextLdifServersRfcEntry,
 ):
     """Relaxed entry server for lenient LDIF processing.

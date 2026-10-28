@@ -16,7 +16,7 @@ from flext_ldif.servers._oid import FlextLdifServersOidConstants
 from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 
 
-class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
+class FlextLdifServersOidAclSubject(FlextLdifServersRfcAcl):
     """OID ACL subject detection and OID/RFC subject mapping."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -224,4 +224,4 @@ class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
         return subject_value
 
 
-__all__: list[str] = ["FlextLdifServersOidAclSubjectMixin"]
+__all__: list[str] = ["FlextLdifServersOidAclSubject"]

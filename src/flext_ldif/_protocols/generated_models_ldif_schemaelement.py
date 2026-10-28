@@ -14,10 +14,10 @@ if TYPE_CHECKING:
     from flext_cli import m as flext_cli_m
 
 
-class FlextLdifLdifProtocolsGeneratedModelsSchemaElement:
+class FlextLdifModelsProtocolsLdifGeneratedSchemaElement:
     @runtime_checkable
     class SchemaElement(Protocol):
         validation_metadata: flext_cli_m.ConfigMap | None
 
 
-__all__ = ["FlextLdifLdifProtocolsGeneratedModelsSchemaElement"]
+__all__ = ["FlextLdifModelsProtocolsLdifGeneratedSchemaElement"]

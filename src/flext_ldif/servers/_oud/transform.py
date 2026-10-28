@@ -1,7 +1,7 @@
 """OUD entry — Transform helpers.
 
 Per AGENTS.md §2.3 (MRO Composition) + §3.1 (200-LOC cap): one of the
-domain-specific Mixins composed into ``FlextLdifServersOudHelpersMixin``.
+domain-specific Mixins composed into ``FlextLdifServersOudHelpers``.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,12 +14,12 @@ from typing import ClassVar
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oud import (
-    FlextLdifServersOudAciMixin,
-    FlextLdifServersOudAclMetadataMixin,
+    FlextLdifServersOudAci,
+    FlextLdifServersOudAclMetadata,
 )
 
 
-class FlextLdifServersOudTransformMixin:
+class FlextLdifServersOudTransform:
     """OUD Transform helpers."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -70,13 +70,13 @@ class FlextLdifServersOudTransformMixin:
         attrs_dict: t.Ldif.AttributeDict = {
             k: list(v) for k, v in attrs_dict_raw.items()
         }
-        aci_validation_error = FlextLdifServersOudAciMixin.validate_aci_macros_in_entry(
+        aci_validation_error = FlextLdifServersOudAci.validate_aci_macros_in_entry(
             attrs_dict,
             validate_aci_macros,
         )
         if aci_validation_error:
             return r[m.Ldif.Entry].fail(aci_validation_error)
-        return FlextLdifServersOudTransformMixin.correct_syntax_and_return_entry(
+        return FlextLdifServersOudTransform.correct_syntax_and_return_entry(
             entry,
             attrs_dict,
             correct_rfc_syntax_in_attributes,
@@ -112,7 +112,7 @@ class FlextLdifServersOudTransformMixin:
         """
         if not entry_data.attributes or not entry_data.attributes.attributes:
             return entry_data
-        base_dn, dn_registry = FlextLdifServersOudAclMetadataMixin.extract_acl_metadata(
+        base_dn, dn_registry = FlextLdifServersOudAclMetadata.extract_acl_metadata(
             entry_data,
         )
         attrs = entry_data.attributes.attributes
@@ -124,12 +124,10 @@ class FlextLdifServersOudTransformMixin:
         normalized_aci_values: t.MutableSequenceOf[str] = []
         for aci in aci_values:
             aci_str: str = aci
-            normalized_aci, was_filtered = (
-                FlextLdifServersOudAciMixin.normalize_aci_value(
-                    aci_str,
-                    base_dn,
-                    dn_registry,
-                )
+            normalized_aci, was_filtered = FlextLdifServersOudAci.normalize_aci_value(
+                aci_str,
+                base_dn,
+                dn_registry,
             )
             if not was_filtered and normalized_aci:
                 normalized_aci_values.append(normalized_aci)
@@ -153,8 +151,8 @@ class FlextLdifServersOudTransformMixin:
         metadata = entry_data.metadata
         if metadata is None or not metadata.extensions:
             return entry_data
-        dn_restored = FlextLdifServersOudTransformMixin._dn_restored_entry(entry_data)
-        return FlextLdifServersOudTransformMixin._attributes_restored_entry(
+        dn_restored = FlextLdifServersOudTransform._dn_restored_entry(entry_data)
+        return FlextLdifServersOudTransform._attributes_restored_entry(
             dn_restored,
             metadata,
         )
@@ -261,7 +259,7 @@ class FlextLdifServersOudTransformMixin:
             "attributes": attrs_for_model,
         })
         corrected_entry = entry.model_copy(update={"attributes": corrected_ldif_attrs})
-        FlextLdifServersOudTransformMixin._module_logger.debug(
+        FlextLdifServersOudTransform._module_logger.debug(
             "OUD servers: Applied syntax corrections before writing (structure "
             "preserved)",
             entry_dn=str(entry.dn) if entry.dn else "",
@@ -309,7 +307,7 @@ class FlextLdifServersOudTransformMixin:
                 syntax_corrections_dict[k] = str(v)
             syntax_corrections_typed = syntax_corrections_dict
         if syntax_corrections_typed is not None:
-            return FlextLdifServersOudTransformMixin.apply_syntax_corrections(
+            return FlextLdifServersOudTransform.apply_syntax_corrections(
                 entry,
                 corrected_data_typed,
                 syntax_corrections_typed,
@@ -317,4 +315,4 @@ class FlextLdifServersOudTransformMixin:
         return r[m.Ldif.Entry].ok(entry)
 
 
-__all__: list[str] = ["FlextLdifServersOudTransformMixin"]
+__all__: list[str] = ["FlextLdifServersOudTransform"]

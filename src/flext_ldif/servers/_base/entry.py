@@ -13,14 +13,14 @@ from typing import Annotated, ClassVar, override
 
 from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.servers._base import (
-    FlextLdifServerMethodsMixin,
+    FlextLdifServerMethods,
     FlextLdifServersEntryWriteContext,
 )
 
 
 class FlextLdifServersBaseEntry(
     s[t.Ldif.EntryPayload],
-    FlextLdifServerMethodsMixin,
+    FlextLdifServerMethods,
     ABC,
 ):
     """Base class for entry processing servers - satisfies Entry (structural typing)."""

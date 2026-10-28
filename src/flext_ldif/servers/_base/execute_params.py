@@ -9,7 +9,7 @@ from __future__ import annotations
 from flext_ldif import c, m, t, u
 
 
-class FlextLdifServersBaseExecuteParamsMixin:
+class FlextLdifServersBaseExecuteParams:
     """Extract validated execute parameters without registry side effects."""
 
     @classmethod
@@ -131,4 +131,4 @@ class FlextLdifServersBaseExecuteParamsMixin:
                 raise TypeError(msg)
 
 
-__all__: list[str] = ["FlextLdifServersBaseExecuteParamsMixin"]
+__all__: list[str] = ["FlextLdifServersBaseExecuteParams"]

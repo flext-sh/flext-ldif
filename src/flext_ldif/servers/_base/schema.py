@@ -11,17 +11,17 @@ from typing import Annotated, ClassVar, override
 
 from flext_ldif import m, p, r, s, t, u
 from flext_ldif.servers._base import (
-    FlextLdifServerMethodsMixin,
-    FlextLdifServersBaseSchemaMetadataMixin,
-    FlextLdifServersBaseSchemaValuesMixin,
+    FlextLdifServerMethods,
+    FlextLdifServersBaseSchemaMetadata,
+    FlextLdifServersBaseSchemaValues,
 )
 
 
 class FlextLdifServersBaseSchema(
-    FlextLdifServersBaseSchemaMetadataMixin,
-    FlextLdifServersBaseSchemaValuesMixin,
+    FlextLdifServersBaseSchemaMetadata,
+    FlextLdifServersBaseSchemaValues,
     s[t.Ldif.SchemaConversionValue],
-    FlextLdifServerMethodsMixin,
+    FlextLdifServerMethods,
     ABC,
 ):
     """Base class for schema servers using `s` with enhanced usability."""

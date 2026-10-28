@@ -31,7 +31,7 @@ from flext_ldif._utilities import (
     FlextLdifUtilitiesWriter,
 )
 from flext_ldif._utilities.flext_ldif_servers_oud_utilities import (
-    FlextLdifServersOudUtilities,
+    FlextLdifUtilitiesServersOud,
 )
 
 
@@ -44,7 +44,7 @@ class FlextLdifUtilities(
     FlextLdifUtilitiesDN,
     FlextLdifUtilitiesEntry,
     FlextLdifUtilitiesEvents,
-    FlextLdifServersOudUtilities,
+    FlextLdifUtilitiesServersOud,
     FlextLdifUtilitiesMetadata,
     FlextLdifUtilitiesObjectClass,
     FlextLdifUtilitiesOID,

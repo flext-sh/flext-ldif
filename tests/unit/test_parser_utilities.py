@@ -15,7 +15,7 @@ import pytest
 from tests import c, p, t, tm, u
 
 
-class TestsFlextLdifParserUtilities:
+class TestsFlextLdifUtilitiesParser:
     """Public-contract behavior of the LDIF parser utilities."""
 
     @staticmethod

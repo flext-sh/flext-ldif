@@ -14,7 +14,7 @@ from flext_ldif import c, p, r, t, u
 from flext_ldif.servers._base import FlextLdifServersBaseSchema
 
 
-class FlextLdifServersRfcSchemaValuesMixin(
+class FlextLdifServersRfcSchemaValues(
     FlextLdifServersBaseSchema,
     ABC,
 ):
@@ -84,7 +84,7 @@ class FlextLdifServersRfcSchemaValuesMixin(
             isinstance(json_value, Sequence) and not isinstance(json_value, str | bytes)
         ):
             return None
-        parsed = FlextLdifServersRfcSchemaValuesMixin._parse_int(json_value)
+        parsed = FlextLdifServersRfcSchemaValues._parse_int(json_value)
         if parsed.success:
             parsed_value: int = parsed.value
             return parsed_value
@@ -139,4 +139,4 @@ class FlextLdifServersRfcSchemaValuesMixin(
         return None
 
 
-__all__: list[str] = ["FlextLdifServersRfcSchemaValuesMixin"]
+__all__: list[str] = ["FlextLdifServersRfcSchemaValues"]

@@ -11,7 +11,7 @@ import pytest
 from tests import c, t, tm, u
 
 
-class TestsFlextLdifOidUtilities:
+class TestsFlextLdifUtilitiesOid:
     """Behavioral contract for the OID schema-definition utilities."""
 
     @staticmethod
