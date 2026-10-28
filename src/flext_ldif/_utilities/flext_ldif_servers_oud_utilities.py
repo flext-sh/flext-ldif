@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import c, m
-from flext_ldif.servers._oud import FlextLdifServersOudConstants
+from flext_ldif._constants.servers_oud import FlextLdifConstantsServersOud
 
 
 class FlextLdifServersOudUtilities:
@@ -22,7 +22,7 @@ class FlextLdifServersOudUtilities:
             The resulting ``m.Ldif.AciParserConfig``.
 
         """
-        constants = FlextLdifServersOudConstants
+        constants = FlextLdifConstantsServersOud
         config: m.Ldif.AciParserConfig = m.Ldif.AciParserConfig.model_validate({
             "server_type": c.Ldif.ServerTypes.OUD,
             "aci_prefix": "aci:",
