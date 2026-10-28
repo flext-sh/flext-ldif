@@ -33,7 +33,6 @@ class TestsFlextLdifDnCaseHandling:
     """Public-contract behavior of the DN case registry."""
 
     @pytest.fixture
-    @staticmethod
     def registry() -> m.Ldif.DnRegistry:
         """Provide a fresh, empty DN registry.
 

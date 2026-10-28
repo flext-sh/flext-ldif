@@ -26,8 +26,7 @@ from typing import Final
 
 from flext_core import FlextContext
 
-from examples import c, m, p, r
-from flext_ldif import ldif
+from examples import c, ldif, m, p, r
 
 
 class ExamplesFlextLdifBasicUsage:

@@ -18,8 +18,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import ldif
-from tests import p, tm
+from tests import ldif, p, tm
 
 _ZERO_WIDTH = "zero" + "\u200b" + "width" + "\u200b" + "spaces"
 
@@ -28,7 +27,6 @@ class TestsFlextLdifIntegrationEdgeCases:
     """Behavioral edge-case coverage for the public LDIF client contract."""
 
     @pytest.fixture
-    @staticmethod
     def api() -> p.Ldif.LdifClient:
         """Public LDIF client instance.
 

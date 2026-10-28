@@ -13,8 +13,8 @@ from flext_cli import m
 
 from flext_ldif import p, r, t
 from flext_ldif._utilities import (
-    FlextLdifEntryValidation,
     FlextLdifUtilitiesCollectionLdif,
+    FlextLdifUtilitiesEntry,
 )
 
 
@@ -177,7 +177,7 @@ class FlextLdifModelsDomainDN:
                 ValueError: If RFC 4514 § 2.3.
 
             """
-            violations = FlextLdifEntryValidation.dn_component_violations(value)
+            violations = FlextLdifUtilitiesEntry.dn_component_violations(value)
             if violations:
                 raise ValueError(violations[0])
             return value

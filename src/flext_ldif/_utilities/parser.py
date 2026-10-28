@@ -1,4 +1,4 @@
-"""Extracted nested class from FlextLdifUtilities.
+"""Extracted facade class from FlextLdifUtilities.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,23 +6,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif._utilities import (
-    FlextLdifParserMetadataBuilders,
-    FlextLdifParserRecord,
-    FlextLdifParserRecordSplitter,
-    FlextLdifParserSchemaFields,
-    FlextLdifParserValues,
+from flext_ldif._utilities._parser import (
+    FlextLdifUtilitiesParserMetadata,
+    FlextLdifUtilitiesParserRecord,
+    FlextLdifUtilitiesParserRecords,
+    FlextLdifUtilitiesParserSchemaFields,
+    FlextLdifUtilitiesParserValues,
 )
 
 
 class FlextLdifUtilitiesParser(
-    FlextLdifParserRecord,
-    FlextLdifParserRecordSplitter,
-    FlextLdifParserValues,
-    FlextLdifParserSchemaFields,
-    FlextLdifParserMetadataBuilders,
+    FlextLdifUtilitiesParserMetadata,
+    FlextLdifUtilitiesParserRecord,
+    FlextLdifUtilitiesParserRecords,
+    FlextLdifUtilitiesParserSchemaFields,
+    FlextLdifUtilitiesParserValues,
 ):
-    """Generic LDIF parsing utilities - simple helper functions."""
+    """Facade for parser utilities."""
 
 
 __all__: list[str] = ["FlextLdifUtilitiesParser"]

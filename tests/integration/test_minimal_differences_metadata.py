@@ -17,16 +17,15 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldif import FlextLdif, ldif
+from flext_ldif import FlextLdif
 from flext_ldif.services import FlextLdifParser
-from tests import c, m, p, tm
+from tests import c, ldif, m, p, tm
 
 
 class TestsFlextLdifMinimalDifferencesMetadata:
     """Public-contract tests for minimal-differences metadata capture."""
 
     @pytest.fixture
-    @staticmethod
     def parser() -> FlextLdifParser:
         """Provide a parser instance.
 
@@ -37,7 +36,6 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         return FlextLdifParser(registry=FlextLdif().registry)
 
     @pytest.fixture
-    @staticmethod
     def writer() -> p.Ldif.LdifClient:
         """Provide a writer client via the public ``ldif()`` entry point.
 
@@ -48,7 +46,6 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         return ldif()
 
     @pytest.fixture
-    @staticmethod
     def fixtures_dir() -> Path:
         """Locate the shared LDIF fixtures directory.
 

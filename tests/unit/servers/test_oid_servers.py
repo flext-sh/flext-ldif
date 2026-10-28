@@ -60,7 +60,6 @@ class TestsFlextLdifOidServers:
     """Public-contract behavior of the OID schema server."""
 
     @pytest.fixture
-    @staticmethod
     def schema() -> p.Ldif.SchemaServer:
         """Resolve the OID schema server through the public registry.
 

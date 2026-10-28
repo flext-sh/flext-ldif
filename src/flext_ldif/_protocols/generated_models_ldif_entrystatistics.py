@@ -1,0 +1,40 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
+
+if TYPE_CHECKING:
+    from collections.abc import MutableMapping as collections_abc_MutableMapping
+
+    from flext_ldif import t as flext_ldif_t
+    from flext_ldif._protocols import FlextLdifProtocolsBase
+
+
+class FlextLdifLdifProtocolsGeneratedModelsEntryStatistics:
+    @runtime_checkable
+    class EntryStatistics(Protocol):
+        was_parsed: bool
+        was_validated: bool
+        was_filtered: bool
+        was_written: bool
+        was_rejected: bool
+        rejection_category: str | None
+        rejection_reason: str | None
+        attributes_added: flext_ldif_t.MutableSequenceOf[str]
+        attributes_removed: flext_ldif_t.MutableSequenceOf[str]
+        attributes_modified: flext_ldif_t.MutableSequenceOf[str]
+        attributes_filtered: flext_ldif_t.MutableSequenceOf[str]
+        objectclasses_original: flext_ldif_t.MutableSequenceOf[str]
+        objectclasses_final: flext_ldif_t.MutableSequenceOf[str]
+        servers_applied: flext_ldif_t.MutableSequenceOf[str]
+        server_transformations: int
+        dn_statistics: FlextLdifProtocolsBase.DNStatistics | None
+        filters_applied: flext_ldif_t.MutableSequenceOf[str]
+        filter_results: collections_abc_MutableMapping[str, bool]
+        errors: flext_ldif_t.MutableSequenceOf[str]
+        warnings: flext_ldif_t.MutableSequenceOf[str]
+        category_assigned: str | None
+        category_confidence: float
+
+
+__all__ = ["FlextLdifLdifProtocolsGeneratedModelsEntryStatistics"]

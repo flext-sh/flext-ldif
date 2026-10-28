@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from flext_cli import c
 
-from flext_ldif._constants.base import FlextLdifConstantsBase, FlextLdifConstantsEnums
+from flext_ldif._constants import FlextLdifConstantsBase, FlextLdifConstantsEnums
 
 if TYPE_CHECKING:
     from flext_ldif import t

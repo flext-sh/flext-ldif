@@ -8,8 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import ldif
-from tests import c, m, p, tm, u
+from tests import c, ldif, m, p, tm, u
 
 
 class TestsFlextLdifProtocolsValues:

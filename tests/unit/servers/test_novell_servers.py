@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.servers.novell import FlextLdifServersNovell
+from flext_ldif.servers import FlextLdifServersNovell
 from tests import c, m, tm, u
 
 
@@ -22,7 +22,6 @@ class TestsFlextLdifNovellServers:
     """Public-behaviour tests for the Novell eDirectory server."""
 
     @pytest.fixture
-    @staticmethod
     def novell_server() -> FlextLdifServersNovell:
         """Create a Novell eDirectory server instance.
 
@@ -33,9 +32,8 @@ class TestsFlextLdifNovellServers:
         return FlextLdifServersNovell()
 
     @pytest.fixture
-    @staticmethod
     def schema_server(
-        novell_server: FlextLdifServersNovell,
+        self: FlextLdifServersNovell,
     ) -> FlextLdifServersNovell.Schema:
         """Expose the schema sub-server through the public facade property.
 
@@ -43,13 +41,12 @@ class TestsFlextLdifNovellServers:
             The resulting ``FlextLdifServersNovell.Schema``.
 
         """
-        server = novell_server.schema_server
+        server = self.schema_server
         return tm.instance(server, FlextLdifServersNovell.Schema)
 
     @pytest.fixture
-    @staticmethod
     def acl_server(
-        novell_server: FlextLdifServersNovell,
+        self: FlextLdifServersNovell,
     ) -> FlextLdifServersNovell.Acl:
         """Expose the ACL sub-server through the public facade property.
 
@@ -57,13 +54,12 @@ class TestsFlextLdifNovellServers:
             The resulting ``FlextLdifServersNovell.Acl``.
 
         """
-        server = novell_server.acl_server
+        server = self.acl_server
         return tm.instance(server, FlextLdifServersNovell.Acl)
 
     @pytest.fixture
-    @staticmethod
     def entry_server(
-        novell_server: FlextLdifServersNovell,
+        self: FlextLdifServersNovell,
     ) -> FlextLdifServersNovell.Entry:
         """Expose the entry sub-server through the public facade property.
 
@@ -71,7 +67,7 @@ class TestsFlextLdifNovellServers:
             The resulting ``FlextLdifServersNovell.Entry``.
 
         """
-        server = novell_server.entry_server
+        server = self.entry_server
         return tm.instance(server, FlextLdifServersNovell.Entry)
 
     # ── Schema: attribute detection ─────────────────────────────────────

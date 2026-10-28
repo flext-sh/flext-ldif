@@ -9,8 +9,7 @@ from collections.abc import MutableSequence
 from datetime import UTC, datetime
 from pathlib import Path
 
-from examples import ExamplesFlextLdifUtilities, c, m, p
-from flext_ldif import ldif
+from examples import ExamplesFlextLdifUtilities, c, ldif, m, p
 
 
 def complete_ldif_processing_workflow() -> None:

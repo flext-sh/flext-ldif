@@ -13,9 +13,8 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import ldif
 from flext_ldif.services import FlextLdifFilters
-from tests import c, m, p, t, tm, u
+from tests import c, ldif, m, p, t, tm, u
 
 
 class TestsFlextLdifFiltersService:
@@ -24,7 +23,6 @@ class TestsFlextLdifFiltersService:
     # ── fixtures ──────────────────────────────────────────────────────────────
 
     @pytest.fixture
-    @staticmethod
     def regular_entry() -> m.Ldif.Entry:
         """Build a person entry carrying objectClasses plus filterable attributes.
 
@@ -48,7 +46,6 @@ class TestsFlextLdifFiltersService:
         )
 
     @pytest.fixture
-    @staticmethod
     def entry_without_attributes() -> m.Ldif.Entry:
         """Build an entry whose ``attributes`` field is ``None``.
 

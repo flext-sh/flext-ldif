@@ -20,12 +20,10 @@ import pytest
 
 from flext_ldif import FlextLdif
 from flext_ldif.services import FlextLdifConversion, FlextLdifServer
-from tests import m, tm
+from tests import m, p, t, tm
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-from tests import p, t
 
 pytestmark = [pytest.mark.integration]
 
@@ -80,7 +78,6 @@ class TestsFlextLdifCrossDirectionConversion:
     """Cross-direction schema conversion observable behavior."""
 
     @pytest.fixture
-    @staticmethod
     def server_registry() -> FlextLdifServer:
         """Real server registry (unit under test, no mocks).
 
@@ -91,7 +88,6 @@ class TestsFlextLdifCrossDirectionConversion:
         return FlextLdifServer(registry=FlextLdif().registry)
 
     @pytest.fixture
-    @staticmethod
     def conversion() -> FlextLdifConversion:
         """Real entry-level conversion service (unit under test).
 

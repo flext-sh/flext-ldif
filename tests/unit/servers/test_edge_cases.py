@@ -13,8 +13,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif import ldif
-from tests import c, tm
+from tests import c, ldif, tm
 
 if TYPE_CHECKING:
     from pathlib import Path

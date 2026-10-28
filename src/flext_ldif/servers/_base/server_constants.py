@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif._constants.servers_base import FlextLdifConstantsServersBase
+from flext_ldif._constants import FlextLdifConstantsServersBase
 
 
 class FlextLdifServersBaseConstants(FlextLdifConstantsServersBase):

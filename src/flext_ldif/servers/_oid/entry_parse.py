@@ -11,13 +11,15 @@ from typing import override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oid import (
+    FlextLdifServersOidConstants,
     FlextLdifServersOidEntryBooleanMixin,
     FlextLdifServersOidEntryMetadataMixin,
     FlextLdifServersOidEntryNormalizeMixin,
 )
-from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
-from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
-from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
+from flext_ldif.servers._rfc import (
+    FlextLdifServersRfcConstants,
+    FlextLdifServersRfcEntry,
+)
 
 
 class FlextLdifServersOidEntryParseMixin(

@@ -20,8 +20,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif import ldif
-from tests import m, tm, u
+from tests import ldif, m, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable

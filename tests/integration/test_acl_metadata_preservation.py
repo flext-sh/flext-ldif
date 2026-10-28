@@ -14,15 +14,13 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import ldif
-from tests import c, m, p, t, tm
+from tests import c, ldif, m, p, t, tm
 
 
 class TestsFlextLdifAclMetadataPreservation:
     """Behavioral tests for OID/OUD ACL metadata preservation and round-trips."""
 
     @pytest.fixture
-    @staticmethod
     def api() -> p.Ldif.LdifClient:
         """Provide a real LDIF client (public facade, no mocked internals).
 

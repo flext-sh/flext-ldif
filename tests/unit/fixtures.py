@@ -10,13 +10,11 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif import FlextLdif, ldif, services
-from tests import c, u
+from flext_ldif import FlextLdif, services
+from tests import c, ldif, m, p, t, u
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-from tests import m, p, t
 
 
 def _parse_fixture_entries(

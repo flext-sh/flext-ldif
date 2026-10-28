@@ -5,40 +5,6 @@
 
 config_version = "0"
 
-exclude_patterns = [
-  "**/protos/**",
-  "**/conftest.py",
-  "**/examples/__init__.py",
-  "**/examples/utilities.py",
-  "**/src/flext_ldif/__init__.py",
-  "**/src/flext_ldif/__version__.py",
-  "**/src/flext_ldif/_constants/__init__.py",
-  "**/src/flext_ldif/_models/__init__.py",
-  "**/src/flext_ldif/_protocols/__init__.py",
-  "**/src/flext_ldif/_typings/__init__.py",
-  "**/src/flext_ldif/_utilities/__init__.py",
-  "**/src/flext_ldif/constants.py",
-  "**/src/flext_ldif/models.py",
-  "**/src/flext_ldif/protocols.py",
-  "**/src/flext_ldif/servers/__init__.py",
-  "**/src/flext_ldif/servers/_base/__init__.py",
-  "**/src/flext_ldif/servers/_oid/__init__.py",
-  "**/src/flext_ldif/servers/_oud/__init__.py",
-  "**/src/flext_ldif/servers/_relaxed/__init__.py",
-  "**/src/flext_ldif/servers/_rfc/__init__.py",
-  "**/src/flext_ldif/services/__init__.py",
-  "**/src/flext_ldif/typings.py",
-  "**/src/flext_ldif/utilities.py",
-  "**/tests/__init__.py",
-  "**/tests/_utilities/__init__.py",
-  "**/tests/integration/__init__.py",
-  "**/tests/unit/__init__.py",
-  "**/tests/unit/servers/__init__.py",
-  "**/tests/unit/services/__init__.py",
-  "**/tests/unit/utilities/__init__.py",
-  "**/tests/utilities.py",
-]
-
 [smells]
 mode = "block"
 

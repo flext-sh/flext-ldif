@@ -23,7 +23,7 @@ from flext_ldif.servers import (
     FlextLdifServersRfc,
 )
 from tests import c, t, tm
-from tests.unit.services.typings import TestsFlextLdifServiceTypings
+from tests.unit.services import TestsFlextLdifServiceTypings
 
 # (server class, canonical identity, priority) — the standardized identity table.
 _STANDARDIZED_SERVERS: tuple[
@@ -42,13 +42,11 @@ class TestsFlextLdifServersStandardization:
     """Verify the public server-standardization contract behaviourally."""
 
     @pytest.fixture
-    @staticmethod
     def valid_ldif() -> str:
         """Return a single well-formed RFC 2849 entry every server must accept."""
         return f"dn: {_EXPECTED_DN}\nobjectClass: person\ncn: test\nsn: user\n"
 
     @pytest.fixture
-    @staticmethod
     def multi_ldif() -> str:
         """Two independent entries in one LDIF stream.
 

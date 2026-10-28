@@ -1,4 +1,4 @@
-"""LDIF Metadata Utilities - Helpers for Validation Metadata Management.
+"""Extracted facade class from FlextLdifUtilities.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,31 +6,33 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif._utilities import (
-    FlextLdifMetadataBuilders,
-    FlextLdifMetadataEntryStats,
-    FlextLdifMetadataJsonCore,
-    FlextLdifMetadataMatchDetails,
-    FlextLdifMetadataNameDescDetails,
-    FlextLdifMetadataPrefixDetails,
-    FlextLdifMetadataSchemaAnalysis,
-    FlextLdifMetadataSyntaxOriginDetails,
-    FlextLdifMetadataTracking,
+from flext_ldif._utilities._metadata import (
+    FlextLdifUtilitiesMetadataBuilders,
+    FlextLdifUtilitiesMetadataEntryStats,
+    FlextLdifUtilitiesMetadataJsonCore,
+    FlextLdifUtilitiesMetadataMatch,
+    FlextLdifUtilitiesMetadataNameDesc,
+    FlextLdifUtilitiesMetadataPrefix,
+    FlextLdifUtilitiesMetadataSchemaAnalysis,
+    FlextLdifUtilitiesMetadataSpacing,
+    FlextLdifUtilitiesMetadataSyntaxOrigin,
+    FlextLdifUtilitiesMetadataTracking,
 )
 
 
 class FlextLdifUtilitiesMetadata(
-    FlextLdifMetadataJsonCore,
-    FlextLdifMetadataEntryStats,
-    FlextLdifMetadataBuilders,
-    FlextLdifMetadataTracking,
-    FlextLdifMetadataPrefixDetails,
-    FlextLdifMetadataNameDescDetails,
-    FlextLdifMetadataSyntaxOriginDetails,
-    FlextLdifMetadataMatchDetails,
-    FlextLdifMetadataSchemaAnalysis,
+    FlextLdifUtilitiesMetadataBuilders,
+    FlextLdifUtilitiesMetadataEntryStats,
+    FlextLdifUtilitiesMetadataJsonCore,
+    FlextLdifUtilitiesMetadataMatch,
+    FlextLdifUtilitiesMetadataNameDesc,
+    FlextLdifUtilitiesMetadataPrefix,
+    FlextLdifUtilitiesMetadataSchemaAnalysis,
+    FlextLdifUtilitiesMetadataSpacing,
+    FlextLdifUtilitiesMetadataSyntaxOrigin,
+    FlextLdifUtilitiesMetadataTracking,
 ):
-    """Metadata utilities for LDIF validation metadata management."""
+    """Facade for metadata utilities."""
 
 
 __all__: list[str] = ["FlextLdifUtilitiesMetadata"]

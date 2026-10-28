@@ -11,9 +11,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from examples import create_entry_or_none, m, p, r, t, u
-from flext_ldif import FlextLdif, ldif
+from examples import create_entry_or_none, ldif, m, p, r, t, u
+
+if TYPE_CHECKING:
+    from flext_ldif import FlextLdif
 
 _LEGACY_LDIF_FIXTURES: tuple[str, ...] = (
     (

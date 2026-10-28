@@ -379,10 +379,19 @@ class FlextLdifProtocolsBase:
     class FlexibleCategories(Protocol):
         """Flexible entry categorization result."""
 
-        categorized: t.MappingKV[
-            str, t.MutableSequenceOf[FlextLdifProtocolsValues.Entry]
-        ]
-        uncategorized: t.MutableSequenceOf[FlextLdifProtocolsValues.Entry]
+        @property
+        def categorized(
+            self,
+        ) -> t.MappingKV[str, t.MutableSequenceOf[FlextLdifProtocolsValues.Entry]]:
+            """Grouped categories mapping."""
+            ...
+
+        @property
+        def uncategorized(
+            self,
+        ) -> t.MutableSequenceOf[FlextLdifProtocolsValues.Entry]:
+            """Uncategorized entries list."""
+            ...
 
     @runtime_checkable
     class ProcessEntriesOptions(p.Model, Protocol):

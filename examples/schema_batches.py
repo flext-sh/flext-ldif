@@ -10,8 +10,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from examples import c, m, object_class_entries, p, r, t, u
-from flext_ldif import FlextLdif, ldif
+from typing import TYPE_CHECKING
+
+from examples import c, ldif, m, object_class_entries, p, r, t, u
+
+if TYPE_CHECKING:
+    from flext_ldif import FlextLdif
 
 
 class ExamplesFlextLdifSchemaBatches:

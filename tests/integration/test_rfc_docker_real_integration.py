@@ -25,7 +25,6 @@ class TestsFlextLdifRfcDockerRealIntegration:
     """Behavioral contract of parser/writer against real LDIF fixtures."""
 
     @pytest.fixture
-    @staticmethod
     def server() -> FlextLdifServer:
         """Real server registry used as writer collaborator.
 
@@ -36,7 +35,6 @@ class TestsFlextLdifRfcDockerRealIntegration:
         return FlextLdifServer(registry=FlextLdif().registry)
 
     @pytest.fixture
-    @staticmethod
     def parser() -> FlextLdifParser:
         """Parser under test.
 

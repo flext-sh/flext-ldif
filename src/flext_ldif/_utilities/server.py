@@ -1,4 +1,4 @@
-"""LDIF Server Utilities - Helpers for Server Type Resolution and Detection.
+"""Extracted facade class from FlextLdifUtilities.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,19 +6,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif._utilities import (
-    FlextLdifServerConfig,
-    FlextLdifServerDetection,
-    FlextLdifServerTypeResolution,
+from flext_ldif._utilities._server import (
+    FlextLdifUtilitiesServerConfig,
+    FlextLdifUtilitiesServerDetect,
+    FlextLdifUtilitiesServerServerType,
 )
 
 
 class FlextLdifUtilitiesServer(
-    FlextLdifServerConfig,
-    FlextLdifServerDetection,
-    FlextLdifServerTypeResolution,
+    FlextLdifUtilitiesServerConfig,
+    FlextLdifUtilitiesServerDetect,
+    FlextLdifUtilitiesServerServerType,
 ):
-    """Server utilities for LDIF server type resolution."""
+    """Facade for server utilities."""
 
 
 __all__: list[str] = ["FlextLdifUtilitiesServer"]

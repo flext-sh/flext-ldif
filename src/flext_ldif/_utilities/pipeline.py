@@ -8,10 +8,8 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_core import r
-
-from flext_ldif import c, m, p, t
-from flext_ldif._utilities import FlextLdifEntryValidation
+from flext_ldif import c, m, p, r, t
+from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
 
 
 class FlextLdifUtilitiesPipeline:
@@ -134,7 +132,7 @@ class FlextLdifUtilitiesPipeline:
             if entry.dn is None:
                 errors.append("Entry has no DN (RFC 2849 violation)")
                 return
-            for component in FlextLdifEntryValidation.dn_components(str(entry.dn)):
+            for component in FlextLdifUtilitiesEntry.dn_components(str(entry.dn)):
                 component_error = self._dn_component_error(component)
                 if component_error is not None:
                     errors.append(component_error)

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_cli import p, t
 
-from flext_ldif._protocols.base import FlextLdifProtocolsBase
+from flext_ldif._protocols import FlextLdifProtocolsBase
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence

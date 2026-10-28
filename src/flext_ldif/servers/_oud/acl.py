@@ -13,7 +13,6 @@ from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oud import (
     FlextLdifServersOudAclWriteMixin,
     FlextLdifServersOudConstants,
-    server_utilities,
 )
 
 
@@ -131,7 +130,7 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
             The resulting ``p.Result[m.Ldif.Acl]``.
 
         """
-        settings = server_utilities.FlextLdifServersOudUtilities.resolve_parser_config()
+        settings = u.resolve_parser_config()
         result: p.Result[m.Ldif.Acl] = u.Ldif.parse_aci(acl_line, settings)
         if not result.success:
             return result

@@ -22,8 +22,7 @@ from collections.abc import Sequence
 
 import pytest
 
-from flext_ldif import ldif
-from tests import TestsFlextLdifSettings as LdifSettings, c, m, s, tm
+from tests import TestsFlextLdifSettings, c, ldif, m, s, tm
 
 # Expected DN observable in CONFIG_BASIC_ENTRY.
 _BASIC_DN = "cn=Test,dc=example,dc=com"
@@ -45,9 +44,9 @@ class TestsFlextLdifConfigIntegration:
     """
 
     @staticmethod
-    def create_settings() -> LdifSettings:
+    def create_settings() -> TestsFlextLdifSettings:
         """Return an independent clone of the shared test settings singleton."""
-        settings: LdifSettings = s.fetch_settings().clone()
+        settings: TestsFlextLdifSettings = s.fetch_settings().clone()
         return settings
 
     @staticmethod
@@ -70,7 +69,7 @@ class TestsFlextLdifConfigIntegration:
 
     def test_custom_settings_expose_default_ldif_contract(self) -> None:
         """Cloned settings expose the documented public Ldif field defaults."""
-        settings: LdifSettings = self.create_settings()
+        settings: TestsFlextLdifSettings = self.create_settings()
 
         tm.that(settings.Ldif.ldif_encoding, eq=c.Ldif.Encoding.UTF8)
         tm.that(
@@ -80,8 +79,8 @@ class TestsFlextLdifConfigIntegration:
 
     def test_cloned_settings_preserve_public_field_values(self) -> None:
         """Independent clones agree on the public Ldif field contract."""
-        first: LdifSettings = self.create_settings()
-        second: LdifSettings = self.create_settings()
+        first: TestsFlextLdifSettings = self.create_settings()
+        second: TestsFlextLdifSettings = self.create_settings()
 
         tm.that(first.Ldif.ldif_encoding, eq=second.Ldif.ldif_encoding)
         tm.that(

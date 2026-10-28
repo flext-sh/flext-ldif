@@ -18,8 +18,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from examples import m, p, r
-from flext_ldif import ldif
+from examples import ldif, m, p, r
 
 
 class ExamplesFlextLdifEntryOperations:

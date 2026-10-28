@@ -7,9 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
 
-from flext_ldif import c, ldif, m, p
+from tests import c, ldif, m, p, tm
 
 
 class TestsFlextLdifSchemaProtocols:

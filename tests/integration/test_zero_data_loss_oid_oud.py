@@ -24,8 +24,7 @@ from collections.abc import Mapping
 
 import pytest
 
-from flext_ldif import ldif
-from tests import c, m, p, t, tm, u
+from tests import c, ldif, m, p, t, tm, u
 
 
 class TestsFlextLdifZeroDataLossOidOud:
@@ -39,7 +38,6 @@ class TestsFlextLdifZeroDataLossOidOud:
     })
 
     @pytest.fixture
-    @staticmethod
     def api() -> p.Ldif.LdifClient:
         """Create ldif API instance.
 
@@ -50,7 +48,6 @@ class TestsFlextLdifZeroDataLossOidOud:
         return ldif()
 
     @pytest.fixture
-    @staticmethod
     def oid_fixture() -> str:
         """Load OID entries fixture.
 
@@ -62,7 +59,6 @@ class TestsFlextLdifZeroDataLossOidOud:
         return fixture
 
     @pytest.fixture
-    @staticmethod
     def oud_fixture() -> str:
         """Load OUD entries fixture.
 

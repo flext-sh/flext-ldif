@@ -19,8 +19,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif import ldif
-from tests import m, tm
+from tests import ldif, m, tm
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -33,7 +32,6 @@ class TestsFlextLdifRealLdapConfig:
     """Public-contract tests for LDIF settings and railway composition."""
 
     @pytest.fixture
-    @staticmethod
     def flext_api() -> p.Ldif.LdifClient:
         """Ldif API instance under test.
 
@@ -44,7 +42,6 @@ class TestsFlextLdifRealLdapConfig:
         return ldif()
 
     @pytest.fixture
-    @staticmethod
     def sample_entry() -> m.Ldif.Entry:
         """Build a valid inetOrgPerson entry through the public model API.
 

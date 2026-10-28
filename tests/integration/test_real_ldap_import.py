@@ -24,8 +24,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif import ldif
-from tests import c, tm, u
+from tests import c, ldif, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable

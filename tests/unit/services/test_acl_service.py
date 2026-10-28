@@ -17,15 +17,14 @@ class TestsFlextLdifAclService:
     """Cover ACL behavior through the public ldif facade."""
 
     @pytest.fixture
-    @staticmethod
-    def svc(api: p.Ldif.LdifClient) -> p.Ldif.LdifClient:
+    def svc(self: p.Ldif.LdifClient) -> p.Ldif.LdifClient:
         """Provide ``svc``.
 
         Returns:
             The resulting ``p.Ldif.LdifClient``.
 
         """
-        return api
+        return self
 
     @staticmethod
     def test_service_check_returns_empty_response(svc: p.Ldif.LdifClient) -> None:

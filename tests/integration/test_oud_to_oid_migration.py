@@ -19,9 +19,9 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif import FlextLdif, ldif
+from flext_ldif import FlextLdif
 from flext_ldif.servers import FlextLdifServersOid, FlextLdifServersOud
-from tests import c, m, tm, u
+from tests import c, ldif, m, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -36,7 +36,6 @@ class TestsFlextLdifOudToOidMigration:
     """Behavioral contract of the OUD -> OID migration workflow."""
 
     @pytest.fixture
-    @staticmethod
     def oud() -> FlextLdifServersOud:
         """Create an OUD server instance.
 
@@ -47,7 +46,6 @@ class TestsFlextLdifOudToOidMigration:
         return FlextLdifServersOud(registry=FlextLdif().registry)
 
     @pytest.fixture
-    @staticmethod
     def oid() -> FlextLdifServersOid:
         """Create an OID server instance.
 
@@ -58,7 +56,6 @@ class TestsFlextLdifOudToOidMigration:
         return FlextLdifServersOid()
 
     @pytest.fixture
-    @staticmethod
     def client() -> p.Ldif.LdifClient:
         """Create the public ldif client used to re-parse migrated output.
 
@@ -69,7 +66,6 @@ class TestsFlextLdifOudToOidMigration:
         return ldif()
 
     @pytest.fixture
-    @staticmethod
     def oud_entries() -> str:
         """Load the OUD entries LDIF fixture.
 
@@ -81,7 +77,6 @@ class TestsFlextLdifOudToOidMigration:
         return fixture
 
     @pytest.fixture
-    @staticmethod
     def oud_integration() -> str:
         """Load the OUD integration LDIF fixture (real entries with DNs).
 
@@ -93,7 +88,6 @@ class TestsFlextLdifOudToOidMigration:
         return fixture
 
     @pytest.fixture
-    @staticmethod
     def oud_schema() -> str:
         """Load the OUD schema LDIF fixture.
 

@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import sys
 
-from flext_ldif import ldif, settings
-from tests import c, m, p, tm, u
+from flext_ldif import settings
+from tests import c, ldif, m, p, tm, u
 
 
 class TestsFlextLdifClientContract:
