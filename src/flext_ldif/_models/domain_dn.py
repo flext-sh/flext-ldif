@@ -191,7 +191,10 @@ class FlextLdifModelsDomainDN:
                 components.append(current.strip())
             for component in components:
                 if not c.Ldif.DN_COMPONENT_RE.match(component):
-                    msg = f"RFC 4514 § 2.3: invalid DN component {component!r} in DN {value!r}"
+                    msg = (
+                        f"RFC 4514 § 2.3: invalid DN component {component!r} in DN "
+                        f"{value!r}"
+                    )
                     raise ValueError(msg)
             return value
 

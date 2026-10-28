@@ -34,7 +34,7 @@ class FlextLdifServersOidAclWriteMixin(
 
         """
         return [
-            *FlextLdifServersOidConstants.RFC_ACL_ATTRIBUTES,
+            *c.Ldif.RFC_ACL_ATTRIBUTES,
             *FlextLdifServersOidConstants.OID_ACL_ATTRIBUTES,
         ]
 

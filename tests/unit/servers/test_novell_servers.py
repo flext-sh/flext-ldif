@@ -31,9 +31,10 @@ class TestsFlextLdifNovellServers:
         """
         return FlextLdifServersNovell()
 
+    @staticmethod
     @pytest.fixture
     def schema_server(
-        self: FlextLdifServersNovell,
+        novell_server: FlextLdifServersNovell,
     ) -> FlextLdifServersNovell.Schema:
         """Expose the schema sub-server through the public facade property.
 
@@ -41,12 +42,13 @@ class TestsFlextLdifNovellServers:
             The resulting ``FlextLdifServersNovell.Schema``.
 
         """
-        server = self.schema_server
+        server = novell_server.schema_server
         return tm.instance(server, FlextLdifServersNovell.Schema)
 
+    @staticmethod
     @pytest.fixture
     def acl_server(
-        self: FlextLdifServersNovell,
+        novell_server: FlextLdifServersNovell,
     ) -> FlextLdifServersNovell.Acl:
         """Expose the ACL sub-server through the public facade property.
 
@@ -54,12 +56,13 @@ class TestsFlextLdifNovellServers:
             The resulting ``FlextLdifServersNovell.Acl``.
 
         """
-        server = self.acl_server
+        server = novell_server.acl_server
         return tm.instance(server, FlextLdifServersNovell.Acl)
 
+    @staticmethod
     @pytest.fixture
     def entry_server(
-        self: FlextLdifServersNovell,
+        novell_server: FlextLdifServersNovell,
     ) -> FlextLdifServersNovell.Entry:
         """Expose the entry sub-server through the public facade property.
 
@@ -67,7 +70,7 @@ class TestsFlextLdifNovellServers:
             The resulting ``FlextLdifServersNovell.Entry``.
 
         """
-        server = self.entry_server
+        server = novell_server.entry_server
         return tm.instance(server, FlextLdifServersNovell.Entry)
 
     # ── Schema: attribute detection ─────────────────────────────────────

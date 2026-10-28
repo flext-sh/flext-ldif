@@ -63,10 +63,11 @@ class TestsFlextLdifOidUtilities:
     def test_extract_from_definition_result_is_chainable_on_success() -> None:
         """Test extract from definition result is chainable on success."""
         result = u.Ldif.extract_from_definition("( 1.2.3 NAME 'x' )")
-        tm.that(
-            tm.ok(result.map(lambda oid: oid.split("."))),
-            eq=[c.ParserBooleanToken.ONE, "2", "3"],
-        )
+
+        def rdn_parts(oid: str) -> list[str]:
+            return oid.split(".")
+
+        tm.that(tm.ok(result.map(rdn_parts)), eq=[c.ParserBooleanToken.ONE, "2", "3"])
 
     @staticmethod
     def test_extract_from_definition_is_idempotent() -> None:

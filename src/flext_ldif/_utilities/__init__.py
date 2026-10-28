@@ -25,6 +25,7 @@ if TYPE_CHECKING:
     from flext_ldif._utilities.flext_ldif_servers_oud_utilities import (
         FlextLdifServersOudUtilities,
     )
+    from flext_ldif._utilities.lazy import FlextLdifUtilitiesLazy
     from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
     from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
     from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
@@ -46,6 +47,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifUtilitiesDispatch",
     "FlextLdifUtilitiesEntry",
     "FlextLdifUtilitiesEvents",
+    "FlextLdifUtilitiesLazy",
     "FlextLdifUtilitiesLazyMeta",
     "FlextLdifUtilitiesLazyTree",
     "FlextLdifUtilitiesMetadata",

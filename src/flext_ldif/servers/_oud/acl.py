@@ -106,7 +106,7 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
 
         """
         return [
-            *FlextLdifServersOudConstants.RFC_ACL_ATTRIBUTES,
+            *c.Ldif.RFC_ACL_ATTRIBUTES,
             *FlextLdifServersOudConstants.OUD_ACL_ATTRIBUTES,
         ]
 

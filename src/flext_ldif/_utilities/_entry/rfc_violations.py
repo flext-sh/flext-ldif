@@ -11,6 +11,10 @@ from typing import TYPE_CHECKING, ClassVar
 from flext_cli import u
 
 from flext_ldif import c
+from flext_ldif._utilities._entry import (
+    FlextLdifUtilitiesEntryAttrValidation,
+    FlextLdifUtilitiesEntryValidation,
+)
 
 if TYPE_CHECKING:
     from flext_ldif import p, t
@@ -37,14 +41,20 @@ class FlextLdifUtilitiesEntryRfcViolations:
         return (
             dn_value,
             [
-                *cls.validate_dn_format(dn_value),
-                *cls.validate_attributes_required(entry),
-                *cls.validate_attribute_descriptions(entry),
-                *cls.validate_objectclass(entry, dn_value),
-                *cls.validate_naming_attribute(entry, dn_value),
-                *cls.validate_binary_options(entry),
-                *cls.validate_attribute_syntax(entry),
-                *cls.validate_changetype(entry),
+                *FlextLdifUtilitiesEntryValidation.validate_dn_format(dn_value),
+                *FlextLdifUtilitiesEntryValidation.validate_attributes_required(entry),
+                *FlextLdifUtilitiesEntryAttrValidation.validate_attribute_descriptions(
+                    entry
+                ),
+                *FlextLdifUtilitiesEntryValidation.validate_objectclass(
+                    entry, dn_value
+                ),
+                *FlextLdifUtilitiesEntryValidation.validate_naming_attribute(
+                    entry, dn_value
+                ),
+                *FlextLdifUtilitiesEntryAttrValidation.validate_binary_options(entry),
+                *FlextLdifUtilitiesEntryAttrValidation.validate_attribute_syntax(entry),
+                *FlextLdifUtilitiesEntryValidation.validate_changetype(entry),
             ],
         )
 

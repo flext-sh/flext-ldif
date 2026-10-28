@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Iterable
+
 import pytest
 
 from tests import c, m, t, tm, u
@@ -73,7 +75,11 @@ class TestsFlextLdifCollectionsModels:
             counts.items(),
             eq={c.Ldif.Category.REJECTED.value: expected_count}.items(),
         )
-        tm.that(counts.values(), where=lambda values: expected_count in values)
+
+        def contains_expected(values: Iterable[int]) -> bool:
+            return expected_count in values
+
+        tm.that(counts.values(), where=contains_expected)
 
     @staticmethod
     def test_schema_content_accepts_empty_sequences() -> None:

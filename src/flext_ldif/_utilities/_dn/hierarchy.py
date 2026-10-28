@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import c
+from flext_ldif._utilities._dn import FlextLdifUtilitiesDNParse
 
 
 class FlextLdifUtilitiesDNHierarchy:
@@ -22,8 +23,8 @@ class FlextLdifUtilitiesDNHierarchy:
         """
         if not dn or not base_dn:
             return False
-        dn_str = cls.resolve_dn_value(dn)
-        base_dn_str = cls.resolve_dn_value(base_dn)
+        dn_str = FlextLdifUtilitiesDNParse.resolve_dn_value(dn)
+        base_dn_str = FlextLdifUtilitiesDNParse.resolve_dn_value(base_dn)
         if not dn_str or not base_dn_str:
             return False
         dn_lower = dn_str.lower().strip()
@@ -41,7 +42,10 @@ class FlextLdifUtilitiesDNHierarchy:
             The resulting ``tuple[int, str]``.
 
         """
-        rdns = [c.Ldif.DN_NORMALIZE_EQUALS_RE.sub("=", rdn) for rdn in cls.split(dn)]
+        rdns = [
+            c.Ldif.DN_NORMALIZE_EQUALS_RE.sub("=", rdn)
+            for rdn in FlextLdifUtilitiesDNParse.split(dn)
+        ]
         return (len(rdns), ",".join(reversed(rdns)).lower())
 
 

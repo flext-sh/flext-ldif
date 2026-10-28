@@ -20,8 +20,8 @@ from tests import ldif, p, tm
 class TestsFlextLdifSystematicFixtureCoverage:
     """Public parse/write contract across the serverxfixture-type matrix."""
 
-    @pytest.fixture
-    @staticmethod(scope="class")
+    @pytest.fixture(scope="class")
+    @staticmethod
     def api() -> p.Ldif.LdifClient:
         """Public LDIF client under test.
 
@@ -101,6 +101,9 @@ class TestsFlextLdifSystematicFixtureCoverage:
         Returns:
             The resulting ``int``.
 
+        Raises:
+            TypeError: If Write produced empty content.
+
         """
         parse_result = api.parse_ldif(content)
         tm.ok(parse_result)
@@ -115,6 +118,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
         if not written:
             message = "Write produced empty content"
             tm.reject(message)
+            raise TypeError(message)
 
         roundtrip_result = api.parse_ldif(written)
         tm.ok(roundtrip_result)
@@ -223,7 +227,12 @@ class TestsFlextLdifSystematicFixtureCoverage:
         server_fixture: str,
         request: pytest.FixtureRequest,
     ) -> None:
-        """Large exports keep unique DNs and roughly their size on rewrite."""
+        """Large exports keep unique DNs and roughly their size on rewrite.
+
+        Raises:
+            TypeError: If Write produced empty content.
+
+        """
         fixture_data = self._fixture_content(request, server_fixture)
 
         parse_result = api.parse_ldif(fixture_data)
@@ -245,6 +254,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
         if not written:
             message = "Write produced empty content"
             tm.reject(message)
+            raise TypeError(message)
         tm.that(
             len(written) > len(fixture_data) * 0.5,
             truth=True,
@@ -260,7 +270,12 @@ class TestsFlextLdifSystematicFixtureCoverage:
     def test_basic_ldif_operations_are_available_for_any_server(
         api: p.Ldif.LdifClient,
     ) -> None:
-        """A minimal RFC entry parses, writes, and roundtrips with DN intact."""
+        """A minimal RFC entry parses, writes, and roundtrips with DN intact.
+
+        Raises:
+            TypeError: If Write produced empty content.
+
+        """
         content = (
             "dn: cn=Test,dc=example,dc=com\n"
             "objectClass: person\n"
@@ -286,6 +301,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
         if not written:
             message = "Write produced empty content"
             tm.reject(message)
+            raise TypeError(message)
         tm.that(written.lower(), has="cn=test,dc=example,dc=com")
 
         roundtrip_result = api.parse_ldif(written)

@@ -35,6 +35,7 @@ class TestsFlextLdifOidAclEndToEnd:
         if not isinstance(converted, m.Ldif.Entry) or converted.attributes is None:
             msg = "convert_model did not return an Entry with attributes"
             tm.reject(msg)
+            raise TypeError(msg)
         return converted.attributes.attributes
 
     @pytest.mark.parametrize(
@@ -99,7 +100,12 @@ class TestsFlextLdifOidAclEndToEnd:
     def test_base_dn_field_excludes_out_of_scope_bind_dn() -> None:
         # FlextLdifConversion(base_dn=...) activates the out-of-scope filter:
         # a bind DN outside base_dn is dropped from the emitted aci.
-        """Test base dn field excludes out of scope bind dn."""
+        """Test base dn field excludes out of scope bind dn.
+
+        Raises:
+            TypeError: If convert_model did not return an Entry with attributes.
+
+        """
         entry = u.Tests.orclaci_base_dn_entry(dn="cn=users,dc=ctbc")
         svc = FlextLdifConversion(registry=FlextLdif().registry, base_dn="dc=ctbc")
 
@@ -109,6 +115,7 @@ class TestsFlextLdifOidAclEndToEnd:
         if not isinstance(converted, m.Ldif.Entry) or converted.attributes is None:
             msg = "convert_model did not return an Entry with attributes"
             tm.reject(msg)
+            raise TypeError(msg)
 
         tm.that(
             converted.attributes.attributes["aci"],

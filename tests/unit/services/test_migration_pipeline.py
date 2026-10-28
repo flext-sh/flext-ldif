@@ -115,8 +115,15 @@ class TestsFlextLdifMigrationPipeline:
             source_server_type=source,
             target_server_type=target,
         )
-        tm.that(pipeline.source_server_type, where=lambda value: value is source)
-        tm.that(pipeline.target_server_type, where=lambda value: value is target)
+
+        def is_source(value: c.Ldif.ServerTypes) -> bool:
+            return value is source
+
+        def is_target(value: c.Ldif.ServerTypes) -> bool:
+            return value is target
+
+        tm.that(pipeline.source_server_type, where=is_source)
+        tm.that(pipeline.target_server_type, where=is_target)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -140,14 +147,15 @@ class TestsFlextLdifMigrationPipeline:
         )
         tm.that(pipeline.source_server_type, eq=c.Ldif.ServerTypes(expected_server))
         tm.that(pipeline.target_server_type, eq=c.Ldif.ServerTypes(expected_server))
-        tm.that(
-            pipeline.source_server_type,
-            where=lambda value: value is process.source_server,
-        )
-        tm.that(
-            pipeline.target_server_type,
-            where=lambda value: value is process.target_server,
-        )
+
+        def is_source(value: c.Ldif.ServerTypes) -> bool:
+            return value is process.source_server
+
+        def is_target(value: c.Ldif.ServerTypes) -> bool:
+            return value is process.target_server
+
+        tm.that(pipeline.source_server_type, where=is_source)
+        tm.that(pipeline.target_server_type, where=is_target)
 
     @staticmethod
     def test_unknown_server_type_input_is_rejected_at_configuration() -> None:

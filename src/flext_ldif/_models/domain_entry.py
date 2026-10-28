@@ -253,9 +253,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             if not isinstance(result, Mapping):
                 return empty_attrs
             return {
-                str(k): [str(x) for x in v]
-                if isinstance(v, (list, tuple))
-                else [str(v)]
+                k: [str(x) for x in v] if isinstance(v, (list, tuple)) else [str(v)]
                 for k, v in result.items()
             }
 
@@ -376,12 +374,22 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
 
         @m.model_validator(mode="after")
         def validate_entry_rfc_compliance(self) -> Self:
-            """Validate RFC compliance (RFC validation belongs in utilities/services)."""
+            """Validate RFC compliance (RFC validation belongs in utilities/services).
+
+            Returns:
+                The resulting ``Self``.
+
+            """
             return self
 
         @m.model_validator(mode="after")
         def validate_server_specific_rules(self) -> Self:
-            """Validate server-injected rules (server validation belongs in utilities/services)."""
+            """Validate server-injected rules (that belongs in utilities/services).
+
+            Returns:
+                The resulting ``Self``.
+
+            """
             return self
 
         @m.computed_field

@@ -278,6 +278,7 @@ class TestsSchemaAclAssertionsMixin:
         if method_name is None or not isinstance(server, p.Ldif.SchemaServer):
             msg = f"{parse_method} is not supported by this server"
             tm.reject(msg)
+            raise TypeError(msg)
         method: Callable[
             [str],
             p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl],
@@ -386,6 +387,7 @@ class TestsSchemaAclAssertionsMixin:
         if entry is None:
             msg = f"{write_method} is not supported by this server"
             tm.reject(msg)
+            raise TypeError(msg)
         # Why: widen from the dict's per-key literal tuple type so the
         # isinstance guards below stay a real runtime check (write_method
         # is caller-supplied and can mismatch server/data at runtime)

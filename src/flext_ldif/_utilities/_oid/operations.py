@@ -40,7 +40,12 @@ class FlextLdifUtilitiesOIDOperations:
 
     @staticmethod
     def matches_pattern(definition: str, oid_pattern: t.Ldif.RegexPattern) -> bool:
-        """Check if schema definition string matches server's OID pattern."""
+        """Check if schema definition string matches server's OID pattern.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         if not definition:
             return False
         oid_res = FlextLdifUtilitiesOIDOperations.extract_from_definition(definition)
@@ -50,13 +55,18 @@ class FlextLdifUtilitiesOIDOperations:
 
     @staticmethod
     def validate_format(oid: str) -> p.Result[bool]:
-        """Validate OID format against standard numerical dotted notation."""
+        """Validate OID format against standard numerical dotted notation.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+
+        """
         if not oid:
             return r[bool].fail("OID cannot be empty")
         match = c.Ldif.NUMERIC_OID_RE.match(oid)
         if not match:
             return r[bool].fail(f"Invalid OID format: {oid}")
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
 
 __all__: list[str] = ["FlextLdifUtilitiesOIDOperations"]

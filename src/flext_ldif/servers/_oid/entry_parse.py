@@ -16,10 +16,7 @@ from flext_ldif.servers._oid import (
     FlextLdifServersOidEntryMetadataMixin,
     FlextLdifServersOidEntryNormalizeMixin,
 )
-from flext_ldif.servers._rfc import (
-    FlextLdifServersRfcConstants,
-    FlextLdifServersRfcEntry,
-)
+from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
 class FlextLdifServersOidEntryParseMixin(
@@ -270,7 +267,7 @@ class FlextLdifServersOidEntryParseMixin(
         cleaned_dn, _ = u.Ldif.clean_dn_with_statistics(dn)
         normalized_dn = cleaned_dn
         if cleaned_dn.lower() == FlextLdifServersOidConstants.SCHEMA_DN_SERVER.lower():
-            normalized_dn = FlextLdifServersRfcConstants.SCHEMA_DN
+            normalized_dn = c.Ldif.RFC_SCHEMA_DN
             FlextLdifServersOidEntryParseMixin._module_logger.debug(
                 "OID→RFC transform: Normalizing schema DN",
                 original_dn=cleaned_dn,
