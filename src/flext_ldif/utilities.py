@@ -30,7 +30,9 @@ from flext_ldif._utilities import (
     FlextLdifUtilitiesValidation,
     FlextLdifUtilitiesWriter,
 )
-from flext_ldif.servers._oud import FlextLdifServersOudUtilities
+from flext_ldif._utilities.flext_ldif_servers_oud_utilities import (
+    FlextLdifServersOudUtilities,
+)
 
 
 class FlextLdifUtilities(
