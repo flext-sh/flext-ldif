@@ -21,7 +21,7 @@ class FlextLdifModelsBasesParts:
 
     Usage::
         from flext_cli import m
-        from flext_ldif import FlextLdifModelsBases
+        from flext_ldif._models import FlextLdifModelsBases
 
         Base = m.StrictModel
     """

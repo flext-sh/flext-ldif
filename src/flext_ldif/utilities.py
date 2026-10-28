@@ -17,10 +17,9 @@ from flext_ldif._utilities import (
     FlextLdifUtilitiesDN,
     FlextLdifUtilitiesEntry,
     FlextLdifUtilitiesEvents,
+    FlextLdifUtilitiesLazy,
     FlextLdifUtilitiesLazyMeta,
-    FlextLdifUtilitiesLazyTree,
     FlextLdifUtilitiesMetadata,
-    FlextLdifUtilitiesMetadataSpacing,
     FlextLdifUtilitiesObjectClass,
     FlextLdifUtilitiesOID,
     FlextLdifUtilitiesParser,
@@ -35,8 +34,7 @@ from flext_ldif.servers._oud import FlextLdifServersOudUtilities
 
 
 class FlextLdifUtilities(
-    FlextLdifUtilitiesLazyTree,
-    FlextLdifUtilitiesMetadataSpacing,
+    FlextLdifUtilitiesLazy,
     FlextLdifUtilitiesACL,
     FlextLdifUtilitiesAttribute,
     FlextLdifUtilitiesCollectionLdif,
@@ -54,7 +52,6 @@ class FlextLdifUtilities(
     FlextLdifUtilitiesTransformers,
     FlextLdifUtilitiesValidation,
     FlextLdifUtilitiesWriter,
-    FlextLdifUtilitiesLazyMeta,
     FlextLdifUtilitiesPipeline,
     flext_cli_u,
     metaclass=FlextLdifUtilitiesLazyMeta,

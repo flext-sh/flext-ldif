@@ -10,8 +10,7 @@ import re
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers import FlextLdifServersRfc
-from flext_ldif.servers._base import FlextLdifServersDialectSchema
+from flext_ldif.servers import FlextLdifServersBase, FlextLdifServersRfc
 from flext_ldif.servers._rfc import (
     FlextLdifServersRfcAcl,
     FlextLdifServersRfcConstants,
@@ -164,7 +163,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             "389 Directory Server entry processing failed: {exc}"
         )
 
-    class Schema(FlextLdifServersDialectSchema):
+    class Schema(
+        FlextLdifServersBase,
+    ):
         """Schema servers for Red Hat / 389 Directory Server."""
 
         _NORMALIZE_OBJECTCLASS: ClassVar[bool] = True

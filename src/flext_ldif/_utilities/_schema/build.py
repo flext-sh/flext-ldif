@@ -11,10 +11,10 @@ from typing import TYPE_CHECKING
 from flext_ldif import FlextLdifModels, c, p, t
 from flext_ldif._utilities import (
     FlextLdifUtilitiesOID,
-    FlextLdifUtilitiesSchemaFormat,
     FlextLdifUtilitiesServer,
     FlextLdifUtilitiesWriter,
 )
+from flext_ldif._utilities._schema import FlextLdifUtilitiesSchemaFormat
 
 if TYPE_CHECKING:
     from collections.abc import Callable

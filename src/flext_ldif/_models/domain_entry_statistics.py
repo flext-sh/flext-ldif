@@ -12,7 +12,6 @@ from flext_cli import m
 
 from flext_ldif import t
 from flext_ldif._models import FlextLdifModelsDomainDN
-from flext_ldif._utilities import FlextLdifUtilitiesCollectionLdif
 
 
 class FlextLdifModelsDomainEntryStatistics:
@@ -209,7 +208,7 @@ class FlextLdifModelsDomainEntryStatistics:
                 The resulting ``t.MutableSequenceOf[str]``.
 
             """
-            return FlextLdifUtilitiesCollectionLdif.deduplicate_preserve_order(v)
+            return list(dict.fromkeys(v))
 
         def add_error(self, error: str) -> Self:
             """Add error message.

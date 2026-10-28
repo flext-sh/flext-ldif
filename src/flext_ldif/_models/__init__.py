@@ -13,18 +13,18 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldif._models._settings_acl import FlextLdifModelsSettingsAcl
-    from flext_ldif._models._settings_criteria import FlextLdifModelsSettingsCriteria
-    from flext_ldif._models._settings_migrate import FlextLdifModelsSettingsMigrate
-    from flext_ldif._models._settings_misc import FlextLdifModelsSettingsMisc
-    from flext_ldif._models._settings_normalization import (
+    from flext_ldif._models._settings.acl import FlextLdifModelsSettingsAcl
+    from flext_ldif._models._settings.criteria import FlextLdifModelsSettingsCriteria
+    from flext_ldif._models._settings.migrate import FlextLdifModelsSettingsMigrate
+    from flext_ldif._models._settings.misc import FlextLdifModelsSettingsMisc
+    from flext_ldif._models._settings.normalization import (
         FlextLdifModelsSettingsNormalization,
     )
-    from flext_ldif._models._settings_processing import (
+    from flext_ldif._models._settings.processing import (
         FlextLdifModelsSettingsProcessing,
     )
-    from flext_ldif._models._settings_rules import FlextLdifModelsSettingsRules
-    from flext_ldif._models._settings_validation import (
+    from flext_ldif._models._settings.rules import FlextLdifModelsSettingsRules
+    from flext_ldif._models._settings.validation import (
         FlextLdifModelsSettingsValidation,
     )
     from flext_ldif._models.acl_convert import FlextLdifModelsAclConvert
@@ -118,14 +118,14 @@ install_lazy_exports(
         "FlextLdifModelsResults": ".results",
         "FlextLdifModelsResultsStatistics": ".results_statistics",
         "FlextLdifModelsSettings": ".settings",
-        "FlextLdifModelsSettingsAcl": "._settings_acl",
-        "FlextLdifModelsSettingsCriteria": "._settings_criteria",
-        "FlextLdifModelsSettingsMigrate": "._settings_migrate",
-        "FlextLdifModelsSettingsMisc": "._settings_misc",
-        "FlextLdifModelsSettingsNormalization": "._settings_normalization",
-        "FlextLdifModelsSettingsProcessing": "._settings_processing",
-        "FlextLdifModelsSettingsRules": "._settings_rules",
-        "FlextLdifModelsSettingsValidation": "._settings_validation",
+        "FlextLdifModelsSettingsAcl": "._settings",
+        "FlextLdifModelsSettingsCriteria": "._settings",
+        "FlextLdifModelsSettingsMigrate": "._settings",
+        "FlextLdifModelsSettingsMisc": "._settings",
+        "FlextLdifModelsSettingsNormalization": "._settings",
+        "FlextLdifModelsSettingsProcessing": "._settings",
+        "FlextLdifModelsSettingsRules": "._settings",
+        "FlextLdifModelsSettingsValidation": "._settings",
     }),
     public_exports=__all__,
 )

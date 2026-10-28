@@ -6,10 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif._constants import FlextLdifConstantsServersBase
+from flext_ldif import FlextLdifConstants
 
 
-class FlextLdifServersBaseConstants(FlextLdifConstantsServersBase):
+class FlextLdifServersBaseConstants(
+    FlextLdifConstants,
+):
     """Thin inheritor: declarations live in _constants parts."""
 
 

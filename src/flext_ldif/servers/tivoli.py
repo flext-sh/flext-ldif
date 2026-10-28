@@ -10,8 +10,7 @@ import re
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers import FlextLdifServersRfc
-from flext_ldif.servers._base import FlextLdifServersDialectSchema
+from flext_ldif.servers import FlextLdifServersBase, FlextLdifServersRfc
 from flext_ldif.servers._rfc import (
     FlextLdifServersRfcAcl,
     FlextLdifServersRfcConstants,
@@ -122,7 +121,9 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         ACL_PRIMARY_ATTRIBUTE_NAME: ClassVar[str] = "ibm-slapdaccesscontrol"
         ACL_SEPARATOR: ClassVar[str] = "#"
 
-    class Schema(FlextLdifServersDialectSchema):
+    class Schema(
+        FlextLdifServersBase,
+    ):
         """IBM Tivoli Directory Server schema servers implementation."""
 
         _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]

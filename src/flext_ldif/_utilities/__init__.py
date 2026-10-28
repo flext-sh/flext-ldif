@@ -13,8 +13,8 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldif._utilities._lazy_meta import FlextLdifUtilitiesLazyMeta
-    from flext_ldif._utilities._lazy_tree import FlextLdifUtilitiesLazyTree
+    from flext_ldif._utilities._lazy.meta import FlextLdifUtilitiesLazyMeta
+    from flext_ldif._utilities._lazy.tree import FlextLdifUtilitiesLazyTree
     from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
     from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
     from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
@@ -72,8 +72,9 @@ install_lazy_exports(
         "FlextLdifUtilitiesDispatch": ".dispatch",
         "FlextLdifUtilitiesEntry": ".entry",
         "FlextLdifUtilitiesEvents": ".events",
-        "FlextLdifUtilitiesLazyMeta": "._lazy_meta",
-        "FlextLdifUtilitiesLazyTree": "._lazy_tree",
+        "FlextLdifUtilitiesLazy": ".lazy",
+        "FlextLdifUtilitiesLazyMeta": "._lazy",
+        "FlextLdifUtilitiesLazyTree": "._lazy",
         "FlextLdifUtilitiesMetadata": ".metadata",
         "FlextLdifUtilitiesOID": ".oid",
         "FlextLdifUtilitiesObjectClass": ".object_class",

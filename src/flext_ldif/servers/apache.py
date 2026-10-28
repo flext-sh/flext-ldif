@@ -9,8 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_ldif import c, m, p, r, t
-from flext_ldif.servers import FlextLdifServersRfc
-from flext_ldif.servers._base import FlextLdifServersDialectSchema
+from flext_ldif.servers import FlextLdifServersBase, FlextLdifServersRfc
 from flext_ldif.servers._rfc import (
     FlextLdifServersRfcAcl,
     FlextLdifServersRfcConstants,
@@ -89,7 +88,9 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         ACL_SUBJECT_VALUE_WILDCARD: ClassVar[str] = "*"
         DN_CONFIG_ENTRY_MARKER: ClassVar[str] = "ou=settings"
 
-    class Schema(FlextLdifServersDialectSchema):
+    class Schema(
+        FlextLdifServersBase,
+    ):
         """Schema servers for Apache Directory Server (ApacheDS)."""
 
         _NORMALIZE_OBJECTCLASS: ClassVar[bool] = True

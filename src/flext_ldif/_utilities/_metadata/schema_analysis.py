@@ -12,7 +12,7 @@ from typing import ClassVar
 from flext_cli import u
 
 from flext_ldif import c, m, t
-from flext_ldif._utilities import (
+from flext_ldif._utilities._metadata import (
     FlextLdifUtilitiesMetadataMatch,
     FlextLdifUtilitiesMetadataNameDesc,
     FlextLdifUtilitiesMetadataPrefix,

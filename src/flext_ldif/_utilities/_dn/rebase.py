@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_ldif import FlextLdifModels, c, t
-from flext_ldif._utilities import (
+from flext_ldif._utilities._dn import (
     FlextLdifUtilitiesDNEscape,
     FlextLdifUtilitiesDNParse,
     FlextLdifUtilitiesDNTransform,

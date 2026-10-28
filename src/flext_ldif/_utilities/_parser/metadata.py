@@ -11,11 +11,8 @@ from collections.abc import Mapping
 from flext_cli import u
 
 from flext_ldif import FlextLdifModels, c, t
-from flext_ldif._utilities import (
-    FlextLdifUtilitiesMetadata,
-    FlextLdifUtilitiesParserSchemaFields,
-    FlextLdifUtilitiesServer,
-)
+from flext_ldif._utilities import FlextLdifUtilitiesMetadata, FlextLdifUtilitiesServer
+from flext_ldif._utilities._parser import FlextLdifUtilitiesParserSchemaFields
 
 
 class FlextLdifUtilitiesParserMetadata:

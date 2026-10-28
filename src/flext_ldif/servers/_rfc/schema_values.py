@@ -11,10 +11,13 @@ from collections.abc import Mapping, Sequence
 from typing import ClassVar
 
 from flext_ldif import c, p, r, t, u
-from flext_ldif.servers._base import FlextLdifServersBaseSchema
+from flext_ldif.servers import FlextLdifServersBase
 
 
-class FlextLdifServersRfcSchemaValuesMixin(FlextLdifServersBaseSchema, ABC):
+class FlextLdifServersRfcSchemaValuesMixin(
+    FlextLdifServersBase,
+    ABC,
+):
     """Coerce raw JSON payloads into typed RFC schema values."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)

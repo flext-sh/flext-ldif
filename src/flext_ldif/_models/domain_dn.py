@@ -11,11 +11,7 @@ from typing import Annotated, ClassVar, Self, override
 
 from flext_cli import m
 
-from flext_ldif import p, r, t
-from flext_ldif._utilities import (
-    FlextLdifUtilitiesCollectionLdif,
-    FlextLdifUtilitiesEntry,
-)
+from flext_ldif import c, p, r, t
 
 
 class FlextLdifModelsDomainDN:
@@ -132,7 +128,7 @@ class FlextLdifModelsDomainDN:
                 The resulting ``t.MutableSequenceOf[str]``.
 
             """
-            return FlextLdifUtilitiesCollectionLdif.deduplicate_preserve_order(v)
+            return list(dict.fromkeys(v))
 
     class DN(m.Value):
         """Distinguished Name value."""
@@ -177,9 +173,26 @@ class FlextLdifModelsDomainDN:
                 ValueError: If RFC 4514 § 2.3.
 
             """
-            violations = FlextLdifUtilitiesEntry.dn_component_violations(value)
-            if violations:
-                raise ValueError(violations[0])
+            if not value or not value.strip():
+                return value
+            components: list[str] = []
+            current = ""
+            chars = iter(value)
+            for char in chars:
+                if char == "\\":
+                    current += "\\" + next(chars, "")
+                elif char == ",":
+                    if current.strip():
+                        components.append(current.strip())
+                    current = ""
+                else:
+                    current += char
+            if current.strip():
+                components.append(current.strip())
+            for component in components:
+                if not c.Ldif.DN_COMPONENT_RE.match(component):
+                    msg = f"RFC 4514 § 2.3: invalid DN component {component!r} in DN {value!r}"
+                    raise ValueError(msg)
             return value
 
         @override

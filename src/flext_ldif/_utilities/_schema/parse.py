@@ -11,11 +11,8 @@ from typing import TYPE_CHECKING, ClassVar
 from flext_cli import u
 
 from flext_ldif import FlextLdifModels, c, p, r, t
-from flext_ldif._utilities import (
-    FlextLdifUtilitiesOID,
-    FlextLdifUtilitiesParser,
-    FlextLdifUtilitiesSchemaExtract,
-)
+from flext_ldif._utilities import FlextLdifUtilitiesOID, FlextLdifUtilitiesParser
+from flext_ldif._utilities._schema import FlextLdifUtilitiesSchemaExtract
 
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableMapping
