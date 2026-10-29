@@ -60,12 +60,24 @@ install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "FlextLdifProtocolsModelsLdifGeneratedAclEntryConversion": ".generated_models_ldif_aclentryconversion",
-        "FlextLdifProtocolsModelsLdifGeneratedEntryDetectionMarkers": ".generated_models_ldif_entrydetectionmarkers",
-        "FlextLdifProtocolsModelsLdifGeneratedEntryStatistics": ".generated_models_ldif_entrystatistics",
-        "FlextLdifProtocolsModelsLdifGeneratedSchemaElement": ".generated_models_ldif_schemaelement",
-        "FlextLdifProtocolsModelsLdifGeneratedServerMetadata": ".generated_models_ldif_servermetadata",
-        "FlextLdifProtocolsModelsLdifGeneratedValidationMetadata": ".generated_models_ldif_validationmetadata",
+        "FlextLdifProtocolsModelsLdifGeneratedAclEntryConversion": (
+            ".generated_models_ldif_aclentryconversion"
+        ),
+        "FlextLdifProtocolsModelsLdifGeneratedEntryDetectionMarkers": (
+            ".generated_models_ldif_entrydetectionmarkers"
+        ),
+        "FlextLdifProtocolsModelsLdifGeneratedEntryStatistics": (
+            ".generated_models_ldif_entrystatistics"
+        ),
+        "FlextLdifProtocolsModelsLdifGeneratedSchemaElement": (
+            ".generated_models_ldif_schemaelement"
+        ),
+        "FlextLdifProtocolsModelsLdifGeneratedServerMetadata": (
+            ".generated_models_ldif_servermetadata"
+        ),
+        "FlextLdifProtocolsModelsLdifGeneratedValidationMetadata": (
+            ".generated_models_ldif_validationmetadata"
+        ),
         "FlextLdifProtocolsBase": ".base",
         "FlextLdifProtocolsClient": ".client",
         "FlextLdifProtocolsDomain": ".domain",
