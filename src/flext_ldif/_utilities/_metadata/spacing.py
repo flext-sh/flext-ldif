@@ -6,8 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import re
-
 from flext_ldif import c, t
 
 
@@ -27,7 +25,7 @@ class FlextLdifUtilitiesMetadataSpacing:
 
     @staticmethod
     def token_details(
-        definition: str, token: re.Pattern[str], key: str
+        definition: str, token: t.RegexPattern, key: str
     ) -> t.MutableFeatureFlagMapping:
         """Return whether one token occurs and the whitespace before it.
 
