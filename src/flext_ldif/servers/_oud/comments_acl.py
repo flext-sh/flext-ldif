@@ -1,7 +1,7 @@
 """OUD entry — Acl comment collectors.
 
 Per AGENTS.md §2.3 (MRO Composition) + §3.1 (200-LOC cap): one of the
-domain-specific Mixins composed into ``FlextLdifServersOudCommentsMixin``.
+domain-specific Mixins composed into ``FlextLdifServersOudComments``.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,19 +9,21 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence, Sequence
+
 from flext_ldif import c, m, t
-from flext_ldif.servers._oud import FlextLdifServersOudAclMetadataMixin
+from flext_ldif.servers._oud import FlextLdifServersOudAclMetadata
 
 
-class FlextLdifServersOudCommentsAclMixin:
+class FlextLdifServersOudCommentsAcl:
     """OUD Acl comment collection helpers (phases 01-03 comment sources)."""
 
     @staticmethod
     def _add_acl_value_comments(
-        comments: t.MutableSequenceOf[str],
+        comments: MutableSequence[str],
         original_attr: str,
         attr_name: str,
-        acl_values: t.SequenceOf[str],
+        acl_values: Sequence[str],
     ) -> None:
         """Add TRANSFORMED and SKIP_TO_04 comments for ACL values."""
         for value in acl_values:
@@ -56,10 +58,8 @@ class FlextLdifServersOudCommentsAclMixin:
         )
         if not commented_acl_values:
             return
-        original_acl_attr = (
-            FlextLdifServersOudAclMetadataMixin.resolve_original_acl_attr(
-                entry,
-            )
+        original_acl_attr = FlextLdifServersOudAclMetadata.resolve_original_acl_attr(
+            entry,
         )
         for acl_attr_name, acl_values_raw in commented_acl_values.items():
             if acl_attr_name.lower() in acl_attr_names_to_skip:
@@ -68,7 +68,7 @@ class FlextLdifServersOudCommentsAclMixin:
             sort_key = original_acl_attr or acl_attr_name
             if sort_key not in acl_comments_dict:
                 acl_comments_dict[sort_key] = []
-            FlextLdifServersOudCommentsAclMixin._add_acl_value_comments(
+            FlextLdifServersOudCommentsAcl._add_acl_value_comments(
                 acl_comments_dict[sort_key],
                 original_acl_attr,
                 acl_attr_name,
@@ -102,4 +102,4 @@ class FlextLdifServersOudCommentsAclMixin:
                     ])
 
 
-__all__: list[str] = ["FlextLdifServersOudCommentsAclMixin"]
+__all__: list[str] = ["FlextLdifServersOudCommentsAcl"]

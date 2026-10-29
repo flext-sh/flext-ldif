@@ -1,0 +1,176 @@
+"""Schema normalization helpers for FLEXT-LDIF.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+from collections.abc import Mapping, MutableSequence
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_ldif import FlextLdifModels, t
+
+
+class FlextLdifUtilitiesSchemaNormalize:
+    """Normalize and compare schema attribute/objectClass values."""
+
+    @staticmethod
+    def build_available_attributes_set(
+        attributes: MutableSequence[FlextLdifModels.Ldif.SchemaAttribute],
+    ) -> set[str]:
+        """Build set of available attribute names (lowercase) for dependency validation.
+
+        Returns:
+            The resulting ``set[str]``.
+
+        """
+        available: set[str] = set()
+        for attr_data in attributes:
+            attr_name = attr_data.name.lower()
+            available.add(attr_name)
+        return available
+
+    @staticmethod
+    def boolean_attribute(
+        attribute_name: str | None,
+        boolean_attributes: set[str],
+    ) -> bool:
+        """Check if attribute is in boolean attributes set (case-insensitive).
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        if not attribute_name or not boolean_attributes:
+            return False
+        normalized_input = FlextLdifUtilitiesSchemaNormalize.normalize_attribute_name(
+            attribute_name,
+        )
+        normalized_set = {
+            FlextLdifUtilitiesSchemaNormalize.normalize_attribute_name(attr)
+            for attr in boolean_attributes
+        }
+        return normalized_input in normalized_set
+
+    @staticmethod
+    def normalize_attribute_name(
+        attribute_name: str | None,
+        *,
+        case_sensitive: bool = False,
+    ) -> str | None:
+        """Normalize attribute name for case-insensitive comparisons.
+
+        Returns:
+            The resulting ``str | None``.
+
+        """
+        if not attribute_name:
+            return attribute_name
+        return attribute_name if case_sensitive else attribute_name.lower()
+
+    @staticmethod
+    def normalize_matching_rules(
+        equality: str | None,
+        substr: str | None = None,
+        **kwargs: Mapping[str, str] | None,
+    ) -> tuple[str | None, str | None]:
+        """Normalize EQUALITY and SUBSTR matching rules.
+
+        Returns:
+            The resulting ``tuple[str | None, str | None]``.
+
+        """
+        replacements = kwargs.get("replacements")
+        substr_rules_in_equality = kwargs.get("substr_rules_in_equality")
+        normalized_substr_values = kwargs.get("normalized_substr_values")
+        result_equality = equality
+        result_substr = substr
+        if (
+            substr_rules_in_equality
+            and equality
+            and (equality in substr_rules_in_equality)
+        ):
+            result_substr = equality
+            result_equality = substr_rules_in_equality[equality]
+        if (
+            result_substr
+            and normalized_substr_values
+            and (result_substr in normalized_substr_values)
+        ):
+            result_substr = normalized_substr_values[result_substr]
+        if replacements and result_equality and (result_equality in replacements):
+            result_equality = replacements[result_equality]
+        return (result_equality, result_substr)
+
+    @staticmethod
+    def normalize_name(
+        name_value: str | None,
+        suffixes_to_remove: MutableSequence[str] | None = None,
+        char_replacements: t.MutableStrMapping | None = None,
+    ) -> str | None:
+        """Normalize attribute NAME field.
+
+        Returns:
+            The resulting ``str | None``.
+
+        """
+        if not name_value:
+            return name_value
+        result = name_value
+        normalized_suffixes = (
+            suffixes_to_remove if suffixes_to_remove is not None else [";binary"]
+        )
+        normalized_replacements = (
+            char_replacements if char_replacements is not None else {"_": "-"}
+        )
+        for suffix in normalized_suffixes:
+            if suffix in result:
+                result = result.replace(suffix, "")
+        for old, new in normalized_replacements.items():
+            if old in result:
+                result = result.replace(old, new)
+        return result if result != name_value else name_value
+
+    @staticmethod
+    def normalize_syntax_oid(
+        syntax: str | None,
+        *,
+        replacements: Mapping[str, str] | None = None,
+    ) -> str | None:
+        """Normalize SYNTAX OID field.
+
+        Returns:
+            The resulting ``str | None``.
+
+        """
+        if not syntax:
+            return syntax
+        result = syntax
+        if result.startswith("'") and result.endswith("'"):
+            result = result[1:-1]
+        if replacements and result in replacements:
+            result = replacements[result]
+        return result
+
+    @staticmethod
+    def replace_invalid_substr_rule(
+        substr: str | None,
+        invalid_rules: t.OptionalStrMapping,
+    ) -> str | None:
+        """Replace invalid SUBSTR rule with valid replacement.
+
+        Returns:
+            The resulting ``str | None``.
+
+        """
+        if not substr or not invalid_rules:
+            return substr
+        if substr in invalid_rules:
+            replacement: str | None = invalid_rules[substr]
+            return replacement
+        return substr
+
+
+__all__: list[str] = ["FlextLdifUtilitiesSchemaNormalize"]

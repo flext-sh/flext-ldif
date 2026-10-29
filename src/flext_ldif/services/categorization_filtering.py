@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, MutableSequence
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.services import FlextLdifCategorizationRules, FlextLdifFilters
@@ -39,19 +39,19 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
 
     @staticmethod
     def _filter_entries_by_base_dn(
-        entries: t.MutableSequenceOf[m.Ldif.Entry],
+        entries: MutableSequence[m.Ldif.Entry],
         base_dn: str,
-    ) -> tuple[t.MutableSequenceOf[m.Ldif.Entry], t.MutableSequenceOf[m.Ldif.Entry]]:
+    ) -> tuple[MutableSequence[m.Ldif.Entry], MutableSequence[m.Ldif.Entry]]:
         """Filter entries by base DN using u.Ldif.
 
         Returns:
-            The resulting ``tuple[t.MutableSequenceOf[m.Ldif.Entry],
-                t.MutableSequenceOf[m.Ldif.Entry]]``.
+            The resulting ``tuple[MutableSequence[m.Ldif.Entry],
+                MutableSequence[m.Ldif.Entry]]``.
 
         """
-        model_entries: t.MutableSequenceOf[m.Ldif.Entry] = list(entries)
-        included: t.MutableSequenceOf[m.Ldif.Entry] = []
-        excluded: t.MutableSequenceOf[m.Ldif.Entry] = []
+        model_entries: MutableSequence[m.Ldif.Entry] = list(entries)
+        included: MutableSequence[m.Ldif.Entry] = []
+        excluded: MutableSequence[m.Ldif.Entry] = []
         for entry in model_entries:
             dn_str = str(entry.dn) if entry.dn else None
             if dn_str and u.Ldif.under_base(dn_str, base_dn):
@@ -63,13 +63,13 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
     @staticmethod
     def _append_rejected_entries(
         filtered: m.Ldif.FlexibleCategories,
-        rejected_entries: t.MutableSequenceOf[m.Ldif.Entry],
+        rejected_entries: MutableSequence[m.Ldif.Entry],
     ) -> None:
         """Append rejected entries into the canonical REJECTED bucket."""
         if not rejected_entries:
             return
         rejected_category = c.Ldif.Category.REJECTED
-        existing_rejected_raw: t.MutableSequenceOf[m.Ldif.Entry] = filtered.get(
+        existing_rejected_raw: MutableSequence[m.Ldif.Entry] = filtered.get(
             rejected_category,
             [],
         )
@@ -149,12 +149,12 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
         filtered = m.Ldif.FlexibleCategories()
         for category in c.Ldif.CATEGORY_BUCKET_ORDER:
             filtered[category] = []
-        all_excluded_entries: t.MutableSequenceOf[m.Ldif.Entry] = []
+        all_excluded_entries: MutableSequence[m.Ldif.Entry] = []
         for category, entries in categories.items():
             if not entries:
                 continue
             if category in c.Ldif.CATEGORY_FILTERABLE_BY_BASE_DN:
-                entries_list: t.MutableSequenceOf[m.Ldif.Entry] = [
+                entries_list: MutableSequence[m.Ldif.Entry] = [
                     entry_model
                     for entry_raw in entries
                     if (
@@ -213,17 +213,17 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
 
     def filter_schema_by_oids(
         self,
-        schema_entries: t.MutableSequenceOf[m.Ldif.Entry],
-    ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
+        schema_entries: MutableSequence[m.Ldif.Entry],
+    ) -> p.Result[MutableSequence[m.Ldif.Entry]]:
         """Filter schema entries by OID whitelist.
 
         Returns:
-            The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
+            The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
 
         """
         sw_rules = self._whitelist_rules_with_oid_filters()
         if sw_rules is None:
-            return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(schema_entries)
+            return r[MutableSequence[m.Ldif.Entry]].ok(schema_entries)
         result = FlextLdifFilters.filter_schema_by_oids(
             entries=schema_entries,
             allowed_oids=sw_rules,
@@ -237,21 +237,21 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
                     filtered_entries=u.count(filtered),
                     removed_entries=u.count(schema_entries) - u.count(filtered),
                 )
-                return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(filtered)
+                return r[MutableSequence[m.Ldif.Entry]].ok(filtered)
         error_msg = result.error or c.Ldif.ERR_FAILED_FILTER_ENTRIES
-        return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(error_msg)
+        return r[MutableSequence[m.Ldif.Entry]].fail(error_msg)
 
     @staticmethod
     def _update_metadata_for_filtered_entries(
-        entries: t.MutableSequenceOf[m.Ldif.Entry],
+        entries: MutableSequence[m.Ldif.Entry],
         *,
         passed: bool,
         rejection_reason: str | None = None,
-    ) -> t.MutableSequenceOf[m.Ldif.Entry]:
+    ) -> MutableSequence[m.Ldif.Entry]:
         """Update metadata for filtered entries using u.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[m.Ldif.Entry]``.
+            The resulting ``MutableSequence[m.Ldif.Entry]``.
 
         """
         return [

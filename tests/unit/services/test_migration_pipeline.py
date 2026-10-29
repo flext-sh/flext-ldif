@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import PurePath
 from typing import TYPE_CHECKING
 
@@ -42,7 +43,7 @@ class TestsFlextLdifMigrationPipeline:
     @staticmethod
     def test_complete_protocol_accepts_entry_sequences_and_pathlike_files(
         migration_pipeline: p.Ldif.MigrationPipeline,
-        migration_dirs: t.Pair[Path, Path],
+        migration_dirs: tuple[Path, Path],
     ) -> None:
         """The fixture exposes real migration operations through one protocol."""
         entry = u.Tests.create_real_entry(
@@ -67,7 +68,7 @@ class TestsFlextLdifMigrationPipeline:
     @staticmethod
     def test_initialization_exposes_supplied_configuration(
         server: p.Ldif.ServerRegistry,
-        migration_dirs: t.Pair[Path, Path],
+        migration_dirs: tuple[Path, Path],
     ) -> None:
         """Supplied directories and server types surface on public fields."""
         input_dir, output_dir = migration_dirs
@@ -115,8 +116,15 @@ class TestsFlextLdifMigrationPipeline:
             source_server_type=source,
             target_server_type=target,
         )
-        tm.that(pipeline.source_server_type, where=lambda value: value is source)
-        tm.that(pipeline.target_server_type, where=lambda value: value is target)
+
+        def is_source(value: c.Ldif.ServerTypes) -> bool:
+            return value is source
+
+        def is_target(value: c.Ldif.ServerTypes) -> bool:
+            return value is target
+
+        tm.that(pipeline.source_server_type, where=is_source)
+        tm.that(pipeline.target_server_type, where=is_target)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -140,14 +148,15 @@ class TestsFlextLdifMigrationPipeline:
         )
         tm.that(pipeline.source_server_type, eq=c.Ldif.ServerTypes(expected_server))
         tm.that(pipeline.target_server_type, eq=c.Ldif.ServerTypes(expected_server))
-        tm.that(
-            pipeline.source_server_type,
-            where=lambda value: value is process.source_server,
-        )
-        tm.that(
-            pipeline.target_server_type,
-            where=lambda value: value is process.target_server,
-        )
+
+        def is_source(value: c.Ldif.ServerTypes) -> bool:
+            return value is process.source_server
+
+        def is_target(value: c.Ldif.ServerTypes) -> bool:
+            return value is process.target_server
+
+        tm.that(pipeline.source_server_type, where=is_source)
+        tm.that(pipeline.target_server_type, where=is_target)
 
     @staticmethod
     def test_unknown_server_type_input_is_rejected_at_configuration() -> None:
@@ -191,7 +200,7 @@ class TestsFlextLdifMigrationPipelineExecution:
 
     @staticmethod
     def test_execute_fails_without_output_dir(
-        migration_dirs: t.Pair[Path, Path],
+        migration_dirs: tuple[Path, Path],
         server: p.Ldif.ServerRegistry,
     ) -> None:
         """execute() returns failure naming output_dir when none was configured."""
@@ -219,7 +228,7 @@ class TestsFlextLdifMigrationPipelineExecution:
 
     @staticmethod
     def test_execute_creates_missing_output_dir(
-        migration_dirs: t.Pair[Path, Path],
+        migration_dirs: tuple[Path, Path],
         server: p.Ldif.ServerRegistry,
         tmp_path: Path,
     ) -> None:
@@ -247,7 +256,7 @@ class TestsFlextLdifMigrationPipelineExecution:
 
     @staticmethod
     def test_execute_rfc_to_rfc_processes_entries(
-        migration_dirs: t.Pair[Path, Path],
+        migration_dirs: tuple[Path, Path],
         migration_pipeline: p.Ldif.MigrationPipeline,
     ) -> None:
         """An RFC-to-RFC run reports at least one processed entry."""
@@ -260,7 +269,7 @@ class TestsFlextLdifMigrationPipelineExecution:
 
     @staticmethod
     def test_execute_aggregates_across_multiple_files(
-        migration_dirs: t.Pair[Path, Path],
+        migration_dirs: tuple[Path, Path],
         migration_pipeline: p.Ldif.MigrationPipeline,
     ) -> None:
         """execute() sums entries across every ``*.ldif`` input file."""
@@ -276,7 +285,7 @@ class TestsFlextLdifMigrationPipelineExecution:
 
     @staticmethod
     def test_execute_propagates_the_first_file_failure(
-        migration_dirs: t.Pair[Path, Path],
+        migration_dirs: tuple[Path, Path],
         migration_pipeline: p.Ldif.MigrationPipeline,
     ) -> None:
         """An unreadable input fails the directory instead of faking a zero result."""
@@ -300,7 +309,7 @@ class TestsFlextLdifMigrationPipelineExecution:
                 ),
             ),
         ]
-        migrated: t.SequenceOf[p.Ldif.Entry] = tm.ok(
+        migrated: Sequence[p.Ldif.Entry] = tm.ok(
             migration_pipeline.migrate_entries(entries),
         )
         tm.that(len(migrated), eq=1)
@@ -310,7 +319,7 @@ class TestsFlextLdifMigrationPipelineExecution:
         migration_pipeline: p.Ldif.MigrationPipeline,
     ) -> None:
         """migrate_entries([]) succeeds with an empty result."""
-        migrated: t.SequenceOf[p.Ldif.Entry] = tm.ok(
+        migrated: Sequence[p.Ldif.Entry] = tm.ok(
             migration_pipeline.migrate_entries([]),
         )
         tm.that(migrated, empty=True)
@@ -349,7 +358,7 @@ class TestsFlextLdifMigrationPipelineExecution:
 
     @staticmethod
     def test_migrate_file_reports_total_entries(
-        migration_dirs: t.Pair[Path, Path],
+        migration_dirs: tuple[Path, Path],
         migration_pipeline: p.Ldif.MigrationPipeline,
     ) -> None:
         """migrate_file() succeeds and reports the parsed entry count."""
@@ -363,7 +372,7 @@ class TestsFlextLdifMigrationPipelineExecution:
 
     @staticmethod
     def test_migrate_file_fails_when_file_missing(
-        migration_dirs: t.Pair[Path, Path],
+        migration_dirs: tuple[Path, Path],
         migration_pipeline: p.Ldif.MigrationPipeline,
     ) -> None:
         """migrate_file() on an absent path returns a 'not found' failure."""
@@ -375,7 +384,7 @@ class TestsFlextLdifMigrationPipelineExecution:
 
     @staticmethod
     def test_migrate_file_fails_when_write_target_is_a_directory(
-        migration_dirs: t.Pair[Path, Path],
+        migration_dirs: tuple[Path, Path],
         migration_pipeline: p.Ldif.MigrationPipeline,
     ) -> None:
         """A write that cannot complete surfaces as a 'Write failed' failure."""
@@ -394,7 +403,7 @@ class TestsFlextLdifMigrationPipelineExecution:
 
     @staticmethod
     def test_migrate_file_fails_on_undecodable_input(
-        migration_dirs: t.Pair[Path, Path],
+        migration_dirs: tuple[Path, Path],
         migration_pipeline: p.Ldif.MigrationPipeline,
     ) -> None:
         """Undecodable input retains the original reader failure without rewriting."""
@@ -413,7 +422,7 @@ class TestsFlextLdifMigrationPipelineFileAndProcessing:
 
     @staticmethod
     def test_migrate_file_fails_without_output_target(
-        migration_dirs: t.Pair[Path, Path],
+        migration_dirs: tuple[Path, Path],
         server: p.Ldif.ServerRegistry,
     ) -> None:
         """migrate_file() fails when neither output_dir nor output_file is given."""

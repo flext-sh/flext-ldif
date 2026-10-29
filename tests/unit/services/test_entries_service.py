@@ -20,6 +20,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
+
 import pytest
 
 from flext_ldif.services import FlextLdifEntries
@@ -31,9 +33,9 @@ class TestsFlextLdifEntries:
 
     @staticmethod
     def _basic_entry(
-        extra_attrs: t.MappingKV[str, list[str]] | None = None,
+        extra_attrs: Mapping[str, list[str]] | None = None,
     ) -> m.Ldif.Entry:
-        attrs: t.MutableMappingKV[str, list[str]] = {
+        attrs: MutableMapping[str, list[str]] = {
             "objectClass": list(c.Tests.ENTRIES_OBJECTCLASS_PERSON),
             "cn": ["entries-test"],
             "sn": [c.ContextScope.USER],
@@ -53,7 +55,7 @@ class TestsFlextLdifEntries:
 
     @staticmethod
     def _to_attribute_mapping(
-        data: t.MappingKV[str, str | t.StrSequence],
+        data: Mapping[str, str | Sequence[str]],
     ) -> t.MutableAttributeMapping:
         typed: t.MutableAttributeMapping = {}
         for key, value in data.items():
@@ -111,7 +113,7 @@ class TestsFlextLdifEntries:
     )
     def test_normalize_attribute_values_yields_expected_list(
         scenario: str,
-        value: str | list[str] | t.StrSequence | set[str] | frozenset[str],
+        value: str | list[str] | Sequence[str] | set[str] | frozenset[str],
         *,
         should_succeed: bool,
     ) -> None:
@@ -121,7 +123,7 @@ class TestsFlextLdifEntries:
         if not should_succeed:
             tm.fail(result)
             return
-        values: t.MutableSequenceOf[str] = u.Tests.assert_success(result)
+        values: MutableSequence[str] = u.Tests.assert_success(result)
         expected = [value] if isinstance(value, str) else list(value)
         tm.that(values, eq=expected)
 
@@ -155,7 +157,7 @@ class TestsFlextLdifEntries:
     def test_resolve_dn_from_dict_yields_expected_value(
         self,
         scenario: str,
-        entry_dict: t.MappingKV[str, str | t.StrSequence],
+        entry_dict: Mapping[str, str | Sequence[str]],
         *,
         should_succeed: bool,
     ) -> None:
@@ -195,7 +197,7 @@ class TestsFlextLdifEntries:
     def test_resolve_objectclasses_returns_declared_classes(self) -> None:
         """Test resolve objectclasses returns declared classes."""
         result = FlextLdifEntries.resolve_entry_objectclasses(self._basic_entry())
-        ocs: t.MutableSequenceOf[str] = u.Tests.assert_success(result)
+        ocs: MutableSequence[str] = u.Tests.assert_success(result)
         tm.that(ocs, eq=list(c.Tests.ENTRIES_OBJECTCLASS_PERSON))
 
     @staticmethod
@@ -290,7 +292,7 @@ class TestsFlextLdifEntries:
         if not should_succeed:
             tm.fail(result)
             return
-        cleaned: t.MutableSequenceOf[m.Ldif.Entry] = u.Tests.assert_success(result)
+        cleaned: MutableSequence[m.Ldif.Entry] = u.Tests.assert_success(result)
         tm.ok(len(cleaned) == 1)
         stripped = cleaned[0]
         remaining = {k.lower() for k in tm.not_none(stripped.attributes).attributes}

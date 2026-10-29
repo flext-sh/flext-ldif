@@ -20,18 +20,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import base64
+from collections.abc import MutableMapping
 from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif import ldif
-from tests import c, tm, u
+from tests import c, ldif, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-from tests import p, t
+from tests import p
 
 
 @pytest.fixture
@@ -71,11 +71,11 @@ class TestsFlextLdifRealLdapImport:
         return list(u.Ldif.resolve_attribute_values(entry, "objectclass"))
 
     @staticmethod
-    def _all_attrs(entry: p.Ldif.Entry) -> t.MutableMappingKV[str, list[str]]:
+    def _all_attrs(entry: p.Ldif.Entry) -> MutableMapping[str, list[str]]:
         """Full attribute mapping via the public ``Attributes`` protocol.
 
         Returns:
-            The resulting ``t.MutableMappingKV[str, list[str]]``.
+            The resulting ``MutableMapping[str, list[str]]``.
 
         """
         attributes = tm.not_none(entry.attributes)
@@ -85,11 +85,11 @@ class TestsFlextLdifRealLdapImport:
     def _non_objectclass_attrs(
         cls,
         entry: p.Ldif.Entry,
-    ) -> t.MutableMappingKV[str, list[str]]:
+    ) -> MutableMapping[str, list[str]]:
         """Public attribute mapping without objectClass/dn, for an LDAP add.
 
         Returns:
-            The resulting ``t.MutableMappingKV[str, list[str]]``.
+            The resulting ``MutableMapping[str, list[str]]``.
 
         """
         return {
@@ -218,7 +218,7 @@ class TestsFlextLdifRealLdapImport:
         )
 
         dn = self._dn(entry)
-        attributes: t.MutableMappingKV[str, list[str] | bytes] = dict(
+        attributes: MutableMapping[str, list[str] | bytes] = dict(
             self._non_objectclass_attrs(entry),
         )
         # ldap3 requires raw bytes for a binary attribute value.

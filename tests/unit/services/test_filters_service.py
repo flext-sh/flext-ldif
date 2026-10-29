@@ -11,11 +11,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence, Sequence
+
 import pytest
 
-from flext_ldif import ldif
 from flext_ldif.services import FlextLdifFilters
-from tests import c, m, p, t, tm, u
+from tests import c, ldif, m, p, tm, u
 
 
 class TestsFlextLdifFiltersService:
@@ -23,7 +24,6 @@ class TestsFlextLdifFiltersService:
 
     # ── fixtures ──────────────────────────────────────────────────────────────
 
-    @staticmethod
     @pytest.fixture
     def regular_entry() -> m.Ldif.Entry:
         """Build a person entry carrying objectClasses plus filterable attributes.
@@ -47,7 +47,6 @@ class TestsFlextLdifFiltersService:
             },
         )
 
-    @staticmethod
     @pytest.fixture
     def entry_without_attributes() -> m.Ldif.Entry:
         """Build an entry whose ``attributes`` field is ``None``.
@@ -63,7 +62,7 @@ class TestsFlextLdifFiltersService:
         return entry.model_copy(update={"attributes": None})
 
     @staticmethod
-    def _schema_entry(values: t.StrSequence) -> m.Ldif.Entry:
+    def _schema_entry(values: Sequence[str]) -> m.Ldif.Entry:
         return u.Tests.create_real_entry(
             dn=c.Tests.FILTERS_DN_SCHEMA,
             attributes={
@@ -293,11 +292,11 @@ class TestsFlextLdifFiltersService:
     @staticmethod
     def _filter_entries_by_allowed_oids(
         entry: m.Ldif.Entry,
-    ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
+    ) -> p.Result[MutableSequence[m.Ldif.Entry]]:
         """Filter one entry against the full allowed-OID whitelist.
 
         Returns:
-            The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
+            The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
 
         """
         whitelist = m.Ldif.WhitelistRules.model_validate(

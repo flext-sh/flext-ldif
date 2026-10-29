@@ -18,14 +18,14 @@ from flext_ldif.servers._base import (
     FlextLdifServersBaseEntry,
     FlextLdifServersBaseSchema,
 )
-from flext_ldif.servers._relaxed import FlextLdifServersRelaxedConstants
+from flext_ldif.servers._relaxed import FlextLdifConstantsServersRelaxed
 from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 
 
 class FlextLdifServersRelaxed(FlextLdifServersRfc):
     """Relaxed mode server servers for non-compliant LDIF."""
 
-    Constants: ClassVar[type[p.Ldif.ServerConstants]] = FlextLdifServersRelaxedConstants
+    Constants: ClassVar[type[p.Ldif.ServerConstants]] = FlextLdifConstantsServersRelaxed
     Schema: ClassVar[type[FlextLdifServersBaseSchema]] = FlextLdifServersRelaxedSchema
     Entry: ClassVar[type[FlextLdifServersBaseEntry]] = FlextLdifServersRelaxedEntry
 
@@ -153,17 +153,17 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
 
             """
             relaxed_acl: m.Ldif.Acl = m.Ldif.Acl.model_validate({
-                "name": FlextLdifServersRelaxedConstants.ACL_DEFAULT_NAME,
+                "name": FlextLdifConstantsServersRelaxed.ACL_DEFAULT_NAME,
                 "target": m.Ldif.AclTarget.model_validate({
                     "target_dn": (
-                        FlextLdifServersRelaxedConstants.ACL_DEFAULT_TARGET_DN
+                        FlextLdifConstantsServersRelaxed.ACL_DEFAULT_TARGET_DN
                     ),
                     "attributes": [],
                 }),
                 "subject": m.Ldif.AclSubject.model_validate({
                     "subject_type": "all",
                     "subject_value": (
-                        FlextLdifServersRelaxedConstants.ACL_DEFAULT_SUBJECT_VALUE
+                        FlextLdifConstantsServersRelaxed.ACL_DEFAULT_SUBJECT_VALUE
                     ),
                 }),
                 "permissions": m.Ldif.AclPermissions.model_validate({}),
@@ -192,10 +192,10 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             if acl_data.raw_acl:
                 return r[str].ok(acl_data.raw_acl)
             acl_name = (
-                acl_data.name or FlextLdifServersRelaxedConstants.ACL_DEFAULT_NAME
+                acl_data.name or FlextLdifConstantsServersRelaxed.ACL_DEFAULT_NAME
             )
             return r[str].ok(
-                f"{FlextLdifServersRelaxedConstants.ACL_WRITE_PREFIX}{acl_name}",
+                f"{FlextLdifConstantsServersRelaxed.ACL_WRITE_PREFIX}{acl_name}",
             )
 
 

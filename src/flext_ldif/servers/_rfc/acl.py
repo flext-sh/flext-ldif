@@ -6,16 +6,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping, MutableSequence
 from typing import Self, cast, overload, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base import (
-    FlextLdifServerMethodsMixin,
+    FlextLdifServerMethods,
     FlextLdifServersBaseSchemaAcl,
 )
 
 
-class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
+class FlextLdifServersRfcAcl(
+    FlextLdifServersBaseSchemaAcl,
+):
     """LDAP ACL Server - Base Implementation."""
 
     @overload
@@ -72,12 +75,12 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
             return self.configure_runtime(
                 server=server, settings=settings, registry=registry, **fields
             )
-        processor_fields: t.MutableMappingKV[str, t.JsonValue | m.Ldif.Acl | None] = (
-            dict(fields)
+        processor_fields: MutableMapping[str, t.JsonValue | m.Ldif.Acl | None] = dict(
+            fields
         )
         processor_fields["data"] = data
         processor_fields[c.ContextScope.OPERATION] = operation
-        configured = FlextLdifServerMethodsMixin.dispatch_builder(
+        configured = FlextLdifServerMethods.dispatch_builder(
             super().__call__,
             processor_fields,
             frozenset({"data", c.ContextScope.OPERATION}),
@@ -106,7 +109,7 @@ class FlextLdifServersRfcAcl(FlextLdifServersBaseSchemaAcl):
         return acl
 
     @override
-    def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
+    def resolve_acl_attributes(self) -> MutableSequence[str]:
         """Return the RFC ACL attribute names.
 
         Returns:

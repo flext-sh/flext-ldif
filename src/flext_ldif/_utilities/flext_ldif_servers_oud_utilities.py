@@ -8,10 +8,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import c, m
-from flext_ldif.servers._oud.server_constants import FlextLdifServersOudConstants
+from flext_ldif._constants import FlextLdifConstantsServersOud
 
 
-class FlextLdifServersOudUtilities:
+class FlextLdifUtilitiesServersOud:
     """Oracle Unified Directory-specific utilities."""
 
     @staticmethod
@@ -22,7 +22,7 @@ class FlextLdifServersOudUtilities:
             The resulting ``m.Ldif.AciParserConfig``.
 
         """
-        constants = FlextLdifServersOudConstants
+        constants = FlextLdifConstantsServersOud
         config: m.Ldif.AciParserConfig = m.Ldif.AciParserConfig.model_validate({
             "server_type": c.Ldif.ServerTypes.OUD,
             "aci_prefix": "aci:",
@@ -48,4 +48,4 @@ class FlextLdifServersOudUtilities:
         return config
 
 
-__all__: list[str] = ["FlextLdifServersOudUtilities"]
+__all__: list[str] = ["FlextLdifUtilitiesServersOud"]

@@ -6,12 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Iterable, MutableSequence
+
 import pytest
 
 from tests import c, m, t, tm, u
 
 
-class TestsFlextLdifCollectionsModels:
+class TestsFlextLdifModelsCollections:
     """Cover DynamicCounts, SchemaContent, and FlexibleCategories behavior."""
 
     @staticmethod
@@ -73,7 +75,11 @@ class TestsFlextLdifCollectionsModels:
             counts.items(),
             eq={c.Ldif.Category.REJECTED.value: expected_count}.items(),
         )
-        tm.that(counts.values(), where=lambda values: expected_count in values)
+
+        def contains_expected(values: Iterable[int]) -> bool:
+            return expected_count in values
+
+        tm.that(counts.values(), where=contains_expected)
 
     @staticmethod
     def test_schema_content_accepts_empty_sequences() -> None:
@@ -99,7 +105,7 @@ class TestsFlextLdifCollectionsModels:
     def test_flexible_categories_setitem_copies_entries(self) -> None:
         """Test flexible categories setitem copies entries."""
         categories = m.Ldif.FlexibleCategories()
-        original_entries: t.MutableSequenceOf[m.Ldif.Entry] = [self._entry("alpha")]
+        original_entries: MutableSequence[m.Ldif.Entry] = [self._entry("alpha")]
 
         categories[c.Ldif.Category.USERS.value] = original_entries
         original_entries.append(self._entry("beta"))

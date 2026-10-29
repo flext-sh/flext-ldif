@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
@@ -35,7 +36,7 @@ class FlextLdifConstantsServersBase:
 
     SCHEMA_SUP_SEPARATOR: ClassVar[str] = "$"
 
-    RFC_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = (
+    RFC_ACL_ATTRIBUTES: ClassVar[Sequence[str]] = (
         FlextLdifConstantsBase.RFC_ACL_ATTRIBUTES
     )
 
@@ -49,7 +50,7 @@ class FlextLdifConstantsServersBase:
 
     OBJECTCLASS_REQUIREMENTS: ClassVar[t.BoolMapping] = MappingProxyType({})
 
-    CATEGORIZATION_PRIORITY: ClassVar[t.StrSequence] = ()
+    CATEGORIZATION_PRIORITY: ClassVar[Sequence[str]] = ()
 
     CATEGORY_OBJECTCLASSES: ClassVar[t.FrozensetMapping] = MappingProxyType({})
 

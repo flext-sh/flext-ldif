@@ -6,25 +6,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, override
+from collections.abc import MutableMapping, MutableSequence
+from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t
 from flext_ldif.servers import FlextLdifServersRfc
 from flext_ldif.servers._base import FlextLdifServersDialectSchema
 from flext_ldif.servers._rfc import (
+    FlextLdifConstantsServersRfc,
     FlextLdifServersRfcAcl,
-    FlextLdifServersRfcConstants,
     FlextLdifServersRfcEntry,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import MutableMapping
 
 
 class FlextLdifServersApache(FlextLdifServersRfc):
     """Apache Directory Server servers implementation."""
 
-    class Constants(FlextLdifServersRfcConstants):
+    class Constants(FlextLdifConstantsServersRfc):
         """Standardized constants for Apache Directory Server server."""
 
         SERVER_TYPE: ClassVar[str] = "apache"
@@ -89,7 +87,9 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         ACL_SUBJECT_VALUE_WILDCARD: ClassVar[str] = "*"
         DN_CONFIG_ENTRY_MARKER: ClassVar[str] = "ou=settings"
 
-    class Schema(FlextLdifServersDialectSchema):
+    class Schema(
+        FlextLdifServersDialectSchema,
+    ):
         """Schema servers for Apache Directory Server (ApacheDS)."""
 
         _NORMALIZE_OBJECTCLASS: ClassVar[bool] = True
@@ -157,7 +157,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         def _parse_entry(
             self,
             entry_dn: str,
-            entry_attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
+            entry_attrs: MutableMapping[str, MutableSequence[str | bytes]],
         ) -> p.Result[m.Ldif.Entry]:
             """Parse raw LDIF entry data into Entry model.
 

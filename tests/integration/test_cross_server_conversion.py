@@ -13,15 +13,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence, Sequence
 from typing import TYPE_CHECKING
 
 from tests import c, m, tm
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from flext_ldif.servers import FlextLdifServersBase
     from flext_ldif.services import FlextLdifConversion
+from collections.abc import Callable
+
 from tests import p, t
 
 
@@ -30,7 +31,7 @@ def _assert_cross_server_identity(
     target_schema: p.Ldif.SchemaServer,
     definition: str,
     parse_method: t.Tests.ParseMethod,
-    tokens: t.VariadicTuple[str],
+    tokens: tuple[str, ...],
 ) -> None:
     """Render via source, re-parse via target, and assert the identity tokens."""
     parse: Callable[
@@ -280,14 +281,14 @@ class TestsFlextLdifCrossServerConversion:
 
         Each distinct attribute name is preserved.
         """
-        oud_attr_strings: t.SequenceOf[str] = [
+        oud_attr_strings: Sequence[str] = [
             c.Tests.CROSS_SERVER_OUD_ATTRIBUTE_ORCLGUID,
             (
                 "( 2.16.840.1.113894.1.1.2 NAME 'orclDBName' "
                 "SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )"
             ),
         ]
-        oid_rendered: t.MutableSequenceOf[str] = []
+        oid_rendered: MutableSequence[str] = []
         for attr_string in oud_attr_strings:
             oud_parsed = oud_server.schema_server.parse_attribute(attr_string)
             tm.ok(oud_parsed)

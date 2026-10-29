@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableSequence
 
 from flext_ldif import c, m, t, u
 
@@ -87,7 +87,7 @@ class FlextLdifServersEntryWriteOptions:
         hidden_raw = extensions_data.get(c.Ldif.HIDDEN_ATTRIBUTES)
         if not isinstance(hidden_raw, list):
             return set()
-        hidden_text: t.MutableSequenceOf[str] = [str(value) for value in hidden_raw]
+        hidden_text: MutableSequence[str] = [str(value) for value in hidden_raw]
         return {attr.lower() for attr in hidden_text}
 
     @staticmethod

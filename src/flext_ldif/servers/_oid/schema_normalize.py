@@ -6,15 +6,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar
 
-from flext_ldif import c, m, p, t, u
-from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
-from flext_ldif.servers._rfc.schema import FlextLdifServersRfcSchema
+from flext_ldif import c, m, p, u
+from flext_ldif.servers._oid import FlextLdifConstantsServersOid
+from flext_ldif.servers._rfc import FlextLdifServersRfcSchema
 
 
-class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfcSchema):
+class FlextLdifServersOidSchemaNormalize(FlextLdifServersRfcSchema):
     """Normalize parsed OID schema fields toward RFC-canonical values."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -34,15 +34,15 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfcSchema):
         normalized_equality, normalized_substr = u.Ldif.normalize_matching_rules(
             attr.equality,
             attr.substr,
-            replacements=FlextLdifServersOidConstants.MATCHING_RULE_TO_RFC,
-            normalized_substr_values=FlextLdifServersOidConstants.MATCHING_RULE_TO_RFC,
+            replacements=FlextLdifConstantsServersOid.MATCHING_RULE_TO_RFC,
+            normalized_substr_values=FlextLdifConstantsServersOid.MATCHING_RULE_TO_RFC,
         )
         if normalized_equality != attr.equality:
             attr.equality = normalized_equality
         if normalized_substr != attr.substr:
             attr.substr = normalized_substr
         if attr.ordering:
-            normalized_ordering = FlextLdifServersOidConstants.MATCHING_RULE_TO_RFC.get(
+            normalized_ordering = FlextLdifConstantsServersOid.MATCHING_RULE_TO_RFC.get(
                 attr.ordering,
             )
             if normalized_ordering:
@@ -50,7 +50,7 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfcSchema):
         if attr.syntax:
             attr.syntax = u.Ldif.normalize_syntax_oid(
                 attr.syntax,
-                replacements=FlextLdifServersOidConstants.SYNTAX_OID_TO_RFC,
+                replacements=FlextLdifConstantsServersOid.SYNTAX_OID_TO_RFC,
             )
         return self._transform_case_ignore_substrings(attr)
 
@@ -80,7 +80,7 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfcSchema):
         updated_kind = self._normalize_auxiliary_typo(oc, original_format_str)
         normalized_must = self._normalize_attribute_names(oc.must)
         normalized_may = self._normalize_attribute_names(oc.may)
-        update_dict: MutableMapping[str, str | t.MutableSequenceOf[str] | None] = {
+        update_dict: MutableMapping[str, str | MutableSequence[str] | None] = {
             k: v
             for k, v in {
                 "sup": updated_sup,
@@ -97,17 +97,17 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfcSchema):
 
     @staticmethod
     def _normalize_attribute_names(
-        attr_list: t.MutableSequenceOf[str] | None,
-    ) -> t.MutableSequenceOf[str] | None:
+        attr_list: MutableSequence[str] | None,
+    ) -> MutableSequence[str] | None:
         """Normalize attribute names using OID case mappings.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str] | None``.
+            The resulting ``MutableSequence[str] | None``.
 
         """
         if not attr_list:
             return attr_list
-        case_map = FlextLdifServersOidConstants.ATTR_NAME_CASE_MAP
+        case_map = FlextLdifConstantsServersOid.ATTR_NAME_CASE_MAP
         return [case_map.get(attr_name.lower(), attr_name) for attr_name in attr_list]
 
     @staticmethod
@@ -124,7 +124,7 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfcSchema):
         kind = getattr(oc_data, "kind", None)
         match (kind, original_format_str):
             case [k, _] if k and k.upper() == "AUXILLARY":
-                FlextLdifServersOidSchemaNormalizeMixin._module_logger.debug(
+                FlextLdifServersOidSchemaNormalize._module_logger.debug(
                     "OID→RFC transform: AUXILLARY → AUXILIARY",
                     objectclass_name=oc_data.name,
                     objectclass_oid=oc_data.oid,
@@ -133,12 +133,12 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfcSchema):
                 )
                 return "AUXILIARY"
             case [_, fmt] if fmt and "AUXILLARY" in fmt:
-                FlextLdifServersOidSchemaNormalizeMixin._module_logger.debug(
+                FlextLdifServersOidSchemaNormalize._module_logger.debug(
                     "OID→RFC: AUXILLARY → AUXILIARY (original_format)",
                     objectclass_name=oc_data.name,
                     objectclass_oid=oc_data.oid,
                     original_format_preview=fmt[
-                        : FlextLdifServersOidConstants.MAX_LOG_LINE_LENGTH
+                        : FlextLdifConstantsServersOid.MAX_LOG_LINE_LENGTH
                     ],
                 )
                 return "AUXILIARY"
@@ -147,12 +147,12 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfcSchema):
 
     @staticmethod
     def _normalize_sup_from_model(oc_data: m.Ldif.SchemaObjectClass) -> str | (
-        t.MutableSequenceOf[str] | None
+        MutableSequence[str] | None
     ):
         """Normalize SUP from objectClass model.
 
         Returns:
-            The resulting ``str | (t.MutableSequenceOf[str] | None)``.
+            The resulting ``str | (MutableSequence[str] | None)``.
 
         """
         if not oc_data.sup:
@@ -160,7 +160,7 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfcSchema):
         sup_normalize_set = {"( top )", "(top)", "'top'", '"top"'}
         match oc_data.sup:
             case sup_str if (sup_clean := str(sup_str).strip()) in sup_normalize_set:
-                FlextLdifServersOidSchemaNormalizeMixin._module_logger.debug(
+                FlextLdifServersOidSchemaNormalize._module_logger.debug(
                     "OID→RFC transform: SUP normalization",
                     objectclass_name=oc_data.name,
                     objectclass_oid=oc_data.oid,
@@ -169,7 +169,7 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfcSchema):
                 )
                 return "top"
             case [sup_item] if (sup_clean := sup_item.strip()) in sup_normalize_set:
-                FlextLdifServersOidSchemaNormalizeMixin._module_logger.debug(
+                FlextLdifServersOidSchemaNormalize._module_logger.debug(
                     "OID→RFC transform: SUP normalization (list)",
                     objectclass_name=oc_data.name,
                     objectclass_oid=oc_data.oid,
@@ -193,10 +193,10 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfcSchema):
         sup_patterns = ("SUP 'top'", "SUP ( top )", "SUP (top)")
         match original_format_str:
             case s if any(pattern in s for pattern in sup_patterns):
-                FlextLdifServersOidSchemaNormalizeMixin._module_logger.debug(
+                FlextLdifServersOidSchemaNormalize._module_logger.debug(
                     "OID→RFC transform: SUP normalization (from original_format)",
                     original_format_preview=s[
-                        : FlextLdifServersOidConstants.MAX_LOG_LINE_LENGTH
+                        : FlextLdifConstantsServersOid.MAX_LOG_LINE_LENGTH
                     ],
                 )
                 return "top"
@@ -225,7 +225,7 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfcSchema):
             normalized_equality != attr_data.equality
             or normalized_substr != attr_data.substr
         ):
-            FlextLdifServersOidSchemaNormalizeMixin._module_logger.debug(
+            FlextLdifServersOidSchemaNormalize._module_logger.debug(
                 "Moved caseIgnoreSubstringsMatch from EQUALITY to SUBSTR",
                 attribute_name=attr_data.name,
                 original_equality=attr_data.equality or "",
@@ -248,4 +248,4 @@ class FlextLdifServersOidSchemaNormalizeMixin(FlextLdifServersRfcSchema):
         return attr_data
 
 
-__all__: list[str] = ["FlextLdifServersOidSchemaNormalizeMixin"]
+__all__: list[str] = ["FlextLdifServersOidSchemaNormalize"]

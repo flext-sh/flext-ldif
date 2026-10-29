@@ -9,13 +9,10 @@ from __future__ import annotations
 import time
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.services import (
-    FlextLdifConversionAclMixin,
-    FlextLdifConversionEntryMixin,
-)
+from flext_ldif.services import FlextLdifConversionAcl, FlextLdifConversionEntry
 
 
-class FlextLdifConversion(FlextLdifConversionEntryMixin, FlextLdifConversionAclMixin):
+class FlextLdifConversion(FlextLdifConversionEntry, FlextLdifConversionAcl):
     """Facade for universal, model-driven server-to-server conversion.
 
     Composes the entry-conversion concern (which brings metadata / support /

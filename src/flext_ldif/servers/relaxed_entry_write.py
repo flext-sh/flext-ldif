@@ -6,14 +6,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import override
 
 from flext_ldif import c, m, p, r, t
-from flext_ldif.servers._relaxed import FlextLdifServersRelaxedConstants
+from flext_ldif.servers._relaxed import FlextLdifConstantsServersRelaxed
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
-class FlextLdifServersRelaxedEntryWriteMixin(FlextLdifServersRfcEntry):
+class FlextLdifServersRelaxedEntryWrite(FlextLdifServersRfcEntry):
     """Relaxed entry write side and predicate hooks for lenient processing."""
 
     @override
@@ -92,26 +93,26 @@ class FlextLdifServersRelaxedEntryWriteMixin(FlextLdifServersRfcEntry):
             The resulting ``p.Result[str]``.
 
         """
-        ldif_lines: t.MutableSequenceOf[str] = []
+        ldif_lines: MutableSequence[str] = []
         if not entry_data.dn or not entry_data.dn.value:
             return r[str].fail("Entry DN is required for LDIF output")
         ldif_lines.append(
-            f"{FlextLdifServersRelaxedConstants.LDIF_DN_PREFIX}{entry_data.dn.value}",
+            f"{FlextLdifConstantsServersRelaxed.LDIF_DN_PREFIX}{entry_data.dn.value}",
         )
         if entry_data.attributes and entry_data.attributes.attributes:
             for attr_name, attr_values in entry_data.attributes.attributes.items():
                 ldif_lines.extend(
-                    f"{attr_name}{FlextLdifServersRelaxedConstants.LDIF_ATTR_SEPARATOR}{value}"
+                    f"{attr_name}{FlextLdifConstantsServersRelaxed.LDIF_ATTR_SEPARATOR}{value}"
                     for value in attr_values
                 )
-        ldif_text = FlextLdifServersRelaxedConstants.LDIF_JOIN_SEPARATOR.join(
+        ldif_text = FlextLdifConstantsServersRelaxed.LDIF_JOIN_SEPARATOR.join(
             ldif_lines,
         )
         if ldif_text and (
-            not ldif_text.endswith(FlextLdifServersRelaxedConstants.LDIF_NEWLINE)
+            not ldif_text.endswith(FlextLdifConstantsServersRelaxed.LDIF_NEWLINE)
         ):
-            ldif_text += FlextLdifServersRelaxedConstants.LDIF_NEWLINE
+            ldif_text += FlextLdifConstantsServersRelaxed.LDIF_NEWLINE
         return r[str].ok(ldif_text)
 
 
-__all__: list[str] = ["FlextLdifServersRelaxedEntryWriteMixin"]
+__all__: list[str] = ["FlextLdifServersRelaxedEntryWrite"]

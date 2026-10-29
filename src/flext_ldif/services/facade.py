@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Self
 
 from flext_ldif import c, m, p, t, u
@@ -76,7 +77,7 @@ class FlextLdifFacade(
         settings_type: p.SettingsType | None = None,
         settings_overrides: t.JsonMapping | None = None,
         initial_context: p.Context | None = None,
-        **fields: t.ModelInput[p.Model] | t.SequenceOf[p.Model],
+        **fields: t.ModelInput[p.Model] | Sequence[p.Model],
     ) -> None:
         """Compose isolated registry/runtime dependencies and builtin dialects.
 
@@ -125,7 +126,7 @@ class FlextLdifFacade(
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
         registry: p.Registry | None = None,
-        **fields: t.ModelInput[p.Model] | t.SequenceOf[p.Model],
+        **fields: t.ModelInput[p.Model] | Sequence[p.Model],
     ) -> Self:
         """Return a configured facade instance while keeping the DSL alias callable.
 
@@ -198,8 +199,8 @@ class FlextLdifFacade(
     @staticmethod
     def filter_entry_attributes(
         entry: p.Ldif.Entry,
-        forbidden_attrs: t.StrSequence,
-        forbidden_ocs: t.StrSequence,
+        forbidden_attrs: Sequence[str],
+        forbidden_ocs: Sequence[str],
     ) -> p.Ldif.Entry:
         """Expose the stateless filter helper through the facade DSL.
 
@@ -247,7 +248,7 @@ class FlextLdifFacade(
         target_server: str | c.Ldif.ServerTypes | None = None,
         base_dn: str = "",
         runtime_settings: p.Ldif.Settings | None = None,
-        **fields: t.ModelInput[p.Model] | t.SequenceOf[p.Model],
+        **fields: t.ModelInput[p.Model] | Sequence[p.Model],
     ) -> p.Ldif.ProcessingPipeline:
         """Create a processing pipeline from explicit config or server pair.
 

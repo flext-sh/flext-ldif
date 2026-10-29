@@ -7,14 +7,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from collections.abc import MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers import FlextLdifServersRfc
 from flext_ldif.servers._base import FlextLdifServersDialectSchema
 from flext_ldif.servers._rfc import (
+    FlextLdifConstantsServersRfc,
     FlextLdifServersRfcAcl,
-    FlextLdifServersRfcConstants,
     FlextLdifServersRfcEntry,
 )
 
@@ -22,7 +23,7 @@ from flext_ldif.servers._rfc import (
 class FlextLdifServersDs389(FlextLdifServersRfc):
     """389 Directory Server servers implementation."""
 
-    class Constants(FlextLdifServersRfcConstants):
+    class Constants(FlextLdifConstantsServersRfc):
         """Standardized constants for 389 Directory Server server."""
 
         SERVER_TYPE: ClassVar[str] = "ds389"
@@ -47,7 +48,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             "nsds5ReplConflict",
         ])
         SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
-            FlextLdifServersRfcConstants.SUPPORTED_PERMISSIONS
+            FlextLdifConstantsServersRfc.SUPPORTED_PERMISSIONS
             | frozenset(["proxy", "all"])
         )
         DETECTION_OID_PATTERN: ClassVar[str] = "2\\.16\\.840\\.1\\.113730\\."
@@ -164,7 +165,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             "389 Directory Server entry processing failed: {exc}"
         )
 
-    class Schema(FlextLdifServersDialectSchema):
+    class Schema(
+        FlextLdifServersDialectSchema,
+    ):
         """Schema servers for Red Hat / 389 Directory Server."""
 
         _NORMALIZE_OBJECTCLASS: ClassVar[bool] = True
@@ -237,7 +240,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         @staticmethod
         def _build_acl_string(
             acl_name: str,
-            permissions: t.MutableSequenceOf[str],
+            permissions: MutableSequence[str],
             targetattr: str,
             userdn: str,
         ) -> p.Result[str]:
@@ -281,7 +284,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         @staticmethod
         def _extract_acl_permissions(
             permissions_data: m.Ldif.AclPermissions | None,
-        ) -> t.MutableSequenceOf[str]:
+        ) -> MutableSequence[str]:
             """Extract permission names from Permissions model flags.
 
             Args:
@@ -291,7 +294,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 Sequence of set permission names.
 
             """
-            permissions: t.MutableSequenceOf[str] = []
+            permissions: MutableSequence[str] = []
             if not permissions_data:
                 return permissions
             if permissions_data.read:
@@ -358,7 +361,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             permissions_match = FlextLdifServersDs389.Constants.ACL_ALLOW_RE.search(
                 content,
             )
-            permissions: t.MutableSequenceOf[str] = (
+            permissions: MutableSequence[str] = (
                 [
                     perm.strip()
                     for perm in permissions_match.group(1).split(
@@ -402,7 +405,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             return r[m.Ldif.Acl].ok(acl)
 
         @staticmethod
-        def _parse_target_attributes(content: str) -> t.MutableSequenceOf[str]:
+        def _parse_target_attributes(content: str) -> MutableSequence[str]:
             """Parse the targetattr clause from 389 DS ACI content.
 
             Args:

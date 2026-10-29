@@ -225,6 +225,15 @@ attrs = entry.attributes.to_ldap3()  # Direct
 ```text
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_core import d
 
 
@@ -259,6 +268,15 @@ class RfcLdifParser:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 
 class FlextLdifDetector:
@@ -311,12 +329,21 @@ def parse(
 ```text
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from typing import Literal
 
 
 def parse(
     self,
-    source: str | Path | t.SequenceOf[str | Path],
+    source: str | Path | Sequence[str | Path],
     *,
     mode: Literal["single", "batch", "paginate"] = "single",
     server_type: str = "rfc",

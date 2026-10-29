@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from typing import Annotated
 
 from flext_core import m, r, t
@@ -17,7 +17,7 @@ class FlextLdifTypesBase:
 
     @staticmethod
     def _coerce_normalized_str_frozenset(
-        value: t.JsonValue | t.StrSequence | set[str] | frozenset[str] | None,
+        value: t.JsonValue | Sequence[str] | set[str] | frozenset[str] | None,
     ) -> frozenset[str]:
         match value:
             case None:
@@ -33,27 +33,27 @@ class FlextLdifTypesBase:
     type RegexMatch = t.RegexMatch
     type Scalar = t.Primitives | None
     type MetadataInputValue = t.JsonValue
-    type MetadataInputMapping = t.MappingKV[str, MetadataInputValue]
+    type MetadataInputMapping = Mapping[str, MetadataInputValue]
     type MutableMetadataInputMapping = MutableMapping[str, MetadataInputValue]
     type MutableMetadataMapping = t.MutableJsonMapping
     type MetadataCarrierValue = MetadataInputValue
     type MetadataAnalysisDetail = MutableMapping[str, t.JsonValue | t.JsonMapping]
-    type ValueType = Scalar | t.StrSequence
+    type ValueType = Scalar | Sequence[str]
     type AttributeValue = str | bytes
     type MutableEntryAttributesDict = t.MutableStrSequenceMapping
-    type UnconvertedAttributeValue = str | t.MutableSequenceOf[str] | bytes
+    type UnconvertedAttributeValue = str | MutableSequence[str] | bytes
     type UnconvertedAttributes = MutableMapping[str, UnconvertedAttributeValue]
     type SchemaExtensionsMapping = MutableMapping[
         str,
-        t.MutableSequenceOf[str] | str | bool | None,
+        MutableSequence[str] | str | bool | None,
     ]
     type AttributeDict = t.StrSequenceMapping
     type DN = str
     type ParseMethodArg = str
-    type ParseMethodReturn = r[Scalar | t.StrSequence | None]
-    type WriteMethodArg = Scalar | t.StrSequence | None
+    type ParseMethodReturn = r[Scalar | Sequence[str] | None]
+    type WriteMethodArg = Scalar | Sequence[str] | None
     type WriteMethodReturn = (
-        Scalar | t.StrSequence | r[Scalar | t.StrSequence | None] | None
+        Scalar | Sequence[str] | r[Scalar | Sequence[str] | None] | None
     )
     type Rfc4512Descriptor = Annotated[
         str,

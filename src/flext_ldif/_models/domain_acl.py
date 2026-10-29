@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import Annotated, Self
 
 from flext_cli import m
@@ -119,7 +120,7 @@ class FlextLdifModelsDomainAcl:
 
         target_dn: Annotated[str, m.Field(..., description="Target DN pattern")]
         attributes: Annotated[
-            t.MutableSequenceOf[str],
+            MutableSequence[str],
             m.Field(description="Target attributes"),
         ]
 
@@ -217,7 +218,7 @@ class FlextLdifModelsDomainAcl:
                 The resulting ``Self``.
 
             """
-            violations: t.MutableSequenceOf[str] = []
+            violations: MutableSequence[str] = []
             valid_server_types: frozenset[c.Ldif.ServerTypes] = frozenset({
                 c.Ldif.ServerTypes.RFC,
                 c.Ldif.ServerTypes.OPENLDAP,

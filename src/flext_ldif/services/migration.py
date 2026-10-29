@@ -6,11 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence, Sequence
 from os import PathLike
 from pathlib import Path
 from typing import override
 
-from flext_ldif import c, m, p, r, s, t, u
+from flext_ldif import c, m, p, r, s, u
 from flext_ldif.services import (
     FlextLdifParser,
     FlextLdifProcessingPipeline,
@@ -61,8 +62,8 @@ class FlextLdifMigrationPipeline(
             failure with its original metadata preserved.
 
         """
-        all_entries: t.MutableSequenceOf[p.Ldif.Entry] = []
-        output_files: t.MutableSequenceOf[str] = []
+        all_entries: MutableSequence[p.Ldif.Entry] = []
+        output_files: MutableSequence[str] = []
         total_processed = 0
         total_migrated = 0
         for input_file in in_dir.glob("*.ldif"):
@@ -87,12 +88,12 @@ class FlextLdifMigrationPipeline(
 
     def migrate_entries(
         self,
-        entries: t.SequenceOf[p.Ldif.Entry],
-    ) -> p.Result[t.SequenceOf[p.Ldif.Entry]]:
+        entries: Sequence[p.Ldif.Entry],
+    ) -> p.Result[Sequence[p.Ldif.Entry]]:
         """Migrate an ordered entry sequence without changing caller ownership.
 
         Returns:
-            The resulting ``p.Result[t.SequenceOf[p.Ldif.Entry]]`` with the
+            The resulting ``p.Result[Sequence[p.Ldif.Entry]]`` with the
             migrated sequence, the propagated pipeline failure metadata, or
             ``fail_op`` metadata when the migration raises.
 
@@ -111,8 +112,8 @@ class FlextLdifMigrationPipeline(
             })
             result = pipeline.execute()
             if result.failure:
-                return r[t.SequenceOf[p.Ldif.Entry]].from_failure(result)
-            return r[t.SequenceOf[p.Ldif.Entry]].ok(result.value)
+                return r[Sequence[p.Ldif.Entry]].from_failure(result)
+            return r[Sequence[p.Ldif.Entry]].ok(result.value)
         except c.Ldif.EXC_LDIF_PARSE as exc:
             self.logger.exception(
                 "Migration failed",
@@ -120,7 +121,7 @@ class FlextLdifMigrationPipeline(
                 target=str(self.target_server_type),
                 error=str(exc),
             )
-            return r[t.SequenceOf[p.Ldif.Entry]].fail_op("Migration", exc)
+            return r[Sequence[p.Ldif.Entry]].fail_op("Migration", exc)
 
     def migrate_file(
         self,
@@ -179,24 +180,24 @@ class FlextLdifMigrationPipeline(
     def _read_and_parse(
         self,
         input_path: Path,
-    ) -> p.Result[t.SequenceOf[p.Ldif.Entry]]:
+    ) -> p.Result[Sequence[p.Ldif.Entry]]:
         """Read one file and parse its entries through the public parser.
 
         Returns:
-            The resulting ``p.Result[t.SequenceOf[p.Ldif.Entry]]`` with the
+            The resulting ``p.Result[Sequence[p.Ldif.Entry]]`` with the
             parsed entries or the propagated read and parse failure metadata.
 
         """
         read = u.Cli.files_read_text(input_path)
         if read.failure:
-            return r[t.SequenceOf[p.Ldif.Entry]].from_failure(read)
+            return r[Sequence[p.Ldif.Entry]].from_failure(read)
         parsed = FlextLdifParser(
             registry=self.registry,
             runtime_settings=self.settings,
         ).parse_string(read.value, server_type=self.source_server_type)
         if parsed.failure:
-            return r[t.SequenceOf[p.Ldif.Entry]].from_failure(parsed)
-        return r[t.SequenceOf[p.Ldif.Entry]].ok(parsed.value.entries)
+            return r[Sequence[p.Ldif.Entry]].from_failure(parsed)
+        return r[Sequence[p.Ldif.Entry]].ok(parsed.value.entries)
 
     def _resolve_output_path(
         self,
@@ -217,8 +218,8 @@ class FlextLdifMigrationPipeline(
 
     def _write_outcome(
         self,
-        entries: t.SequenceOf[p.Ldif.Entry],
-        migrated: t.SequenceOf[p.Ldif.Entry],
+        entries: Sequence[p.Ldif.Entry],
+        migrated: Sequence[p.Ldif.Entry],
         output_path: Path,
     ) -> p.Result[p.Ldif.MigrationPipelineResult]:
         """Build the outcome model and write the migrated entries to disk.

@@ -14,15 +14,14 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import ldif
-from tests import p, tm
+from tests import ldif, p, tm
 
 
 class TestsFlextLdifSystematicFixtureCoverage:
     """Public parse/write contract across the serverxfixture-type matrix."""
 
-    @staticmethod
     @pytest.fixture(scope="class")
+    @staticmethod
     def api() -> p.Ldif.LdifClient:
         """Public LDIF client under test.
 

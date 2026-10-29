@@ -6,11 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif._constants.servers_base import FlextLdifConstantsServersBase
 
+class FlextLdifConstantsServersBase:
+    """Thin namespace: declarations live in _constants parts.
 
-class FlextLdifServersBaseConstants(FlextLdifConstantsServersBase):
-    """Thin inheritor: declarations live in _constants parts."""
-
-
-__all__: list[str] = ["FlextLdifServersBaseConstants"]
+    Nao herda do facade de constants (flext_cli_c): a heranca puxava os
+    type-sets do nucleo (PRIMITIVES_TYPES e demais) para dentro do
+    namespace Ldif, e o codemod de type-set os redescobria em
+    c.Ldif.* como duplicados de c.* ("type set declared twice").
+    """

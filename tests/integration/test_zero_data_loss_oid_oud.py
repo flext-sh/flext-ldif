@@ -24,8 +24,7 @@ from collections.abc import Mapping
 
 import pytest
 
-from flext_ldif import ldif
-from tests import c, m, p, t, tm, u
+from tests import c, ldif, m, p, t, tm, u
 
 
 class TestsFlextLdifZeroDataLossOidOud:
@@ -38,7 +37,6 @@ class TestsFlextLdifZeroDataLossOidOud:
         "entrycsn",
     })
 
-    @staticmethod
     @pytest.fixture
     def api() -> p.Ldif.LdifClient:
         """Create ldif API instance.
@@ -49,7 +47,6 @@ class TestsFlextLdifZeroDataLossOidOud:
         """
         return ldif()
 
-    @staticmethod
     @pytest.fixture
     def oid_fixture() -> str:
         """Load OID entries fixture.
@@ -61,7 +58,6 @@ class TestsFlextLdifZeroDataLossOidOud:
         fixture: str = u.Tests.load(c.Tests.OID, c.Tests.ENTRIES)
         return fixture
 
-    @staticmethod
     @pytest.fixture
     def oud_fixture() -> str:
         """Load OUD entries fixture.
@@ -172,17 +168,11 @@ orclIsEnabled: 1
             if metadata is None:
                 continue
             converted = metadata.extensions[c.Ldif.CONVERTED_ATTRIBUTES]
-            match converted:
-                case Mapping():
-                    pass
-                case _:
-                    tm.reject()
+            if not isinstance(converted, Mapping):
+                tm.reject()
             boolean_conversions = converted[c.Ldif.CONVERSION_BOOLEAN_CONVERSIONS]
-            match boolean_conversions:
-                case Mapping():
-                    pass
-                case _:
-                    tm.reject()
+            if not isinstance(boolean_conversions, Mapping):
+                tm.reject()
             tracked_conversions.append(boolean_conversions)
 
         tm.ok(
@@ -193,11 +183,8 @@ orclIsEnabled: 1
         for boolean_conversions in tracked_conversions:
             for raw in boolean_conversions.values():
                 conversion = raw
-                match conversion:
-                    case Mapping():
-                        pass
-                    case _:
-                        tm.reject()
+                if not isinstance(conversion, Mapping):
+                    tm.reject()
                 tm.that(conversion, has="original")
                 tm.that(conversion, has="converted")
                 tm.that(conversion.get(c.Ldif.ORIGINAL_FORMAT), eq="1/0")

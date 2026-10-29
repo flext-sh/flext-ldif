@@ -15,7 +15,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif.servers import FlextLdifServersOidAclToOud
-from tests import c, m, t, tm
+from tests import c, m, tm
 
 
 class TestsFlextLdifOidAclConvertOud:
@@ -111,10 +111,10 @@ class TestsFlextLdifOidAclConvertOud:
         ],
     )
     def test_convert_permissions_yields_ordered_allow_set(
-        permissions: t.VariadicTuple[str],
+        permissions: tuple[str, ...],
         *,
         is_entry: bool,
-        expected: t.VariadicTuple[str],
+        expected: tuple[str, ...],
     ) -> None:
         """Test convert permissions yields ordered allow set."""
         result = FlextLdifServersOidAclToOud.convert_permissions(
@@ -126,7 +126,7 @@ class TestsFlextLdifOidAclConvertOud:
     @staticmethod
     @pytest.mark.parametrize("permissions", [("bogus",), ("nofoo",)])
     def test_convert_permissions_unknown_token_surfaces_failure(
-        permissions: t.VariadicTuple[str],
+        permissions: tuple[str, ...],
     ) -> None:
         """Test convert permissions unknown token surfaces failure."""
         result = FlextLdifServersOidAclToOud.convert_permissions(

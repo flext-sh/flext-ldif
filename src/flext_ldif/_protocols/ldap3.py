@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
@@ -32,14 +32,14 @@ class FlextLdifProtocolsLdap3(Protocol):
             ...
 
         @property
-        def entry_attributes(self) -> t.StrSequence:
+        def entry_attributes(self) -> Sequence[str]:
             """The attribute names present in this entry."""
             ...
 
         @property
         def entry_attributes_as_dict(
             self,
-        ) -> t.MappingKV[str, t.SequenceOf[str | bytes]]:
+        ) -> Mapping[str, Sequence[str | bytes]]:
             """The entry attributes as an LDAP attribute mapping."""
             ...
 
@@ -55,7 +55,7 @@ class FlextLdifProtocolsLdap3(Protocol):
         """Structural contract for ldap3-compatible attribute objects."""
 
         @property
-        def values(self) -> t.SequenceOf[str | bytes]:
+        def values(self) -> Sequence[str | bytes]:
             """The raw LDAP values for this attribute."""
             ...
 
@@ -68,7 +68,7 @@ class FlextLdifProtocolsLdap3(Protocol):
             | int
             | float
             | bool
-            | t.SequenceOf[str | bytes | int | float | bool]
+            | Sequence[str | bytes | int | float | bool]
             | None
         ):
             """The resolved attribute value."""
@@ -79,12 +79,12 @@ class FlextLdifProtocolsLdap3(Protocol):
         """Structural marker for ldap3-compatible server info payloads."""
 
         @property
-        def naming_contexts(self) -> t.StrSequence | None:
+        def naming_contexts(self) -> Sequence[str] | None:
             """The advertised naming contexts when available."""
             ...
 
         @property
-        def other(self) -> t.MappingKV[str, t.JsonValue]:
+        def other(self) -> Mapping[str, t.JsonValue]:
             """The auxiliary ldap3 server info fields."""
             ...
 
@@ -119,7 +119,7 @@ class FlextLdifProtocolsLdap3(Protocol):
             ...
 
         @property
-        def entries(self) -> t.SequenceOf[FlextLdifProtocolsLdap3.Ldap3Entry]:
+        def entries(self) -> Sequence[FlextLdifProtocolsLdap3.Ldap3Entry]:
             """The entries produced by the last LDAP operation."""
             ...
 
@@ -159,7 +159,7 @@ class FlextLdifProtocolsLdap3(Protocol):
         """Protocol for ldap3.ParseResponse objects (structural type)."""
 
         @property
-        def entries(self) -> t.SequenceOf[FlextLdifProtocolsLdap3.Ldap3Entry]:
+        def entries(self) -> Sequence[FlextLdifProtocolsLdap3.Ldap3Entry]:
             """The list of entries."""
             ...
 
@@ -170,14 +170,14 @@ class FlextLdifProtocolsLdap3(Protocol):
         @property
         def entry_attributes_as_dict(
             self,
-        ) -> t.MappingKV[
+        ) -> Mapping[
             str,
             str
             | bytes
             | int
             | float
             | bool
-            | t.SequenceOf[str | bytes | int | float | bool],
+            | Sequence[str | bytes | int | float | bool],
         ]:
             """The raw ldap3-style attribute payloads."""
             ...
@@ -199,14 +199,14 @@ class FlextLdifProtocolsLdap3(Protocol):
         @property
         def entries(
             self,
-        ) -> t.SequenceOf[
+        ) -> Sequence[
             FlextLdifProtocolsLdap3.RootDseEntry
             | str
             | bytes
             | int
             | float
             | bool
-            | t.SequenceOf[str | bytes | int | float | bool]
+            | Sequence[str | bytes | int | float | bool]
         ]:
             """The entry payloads produced by the last search."""
             ...

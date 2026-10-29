@@ -1,7 +1,7 @@
 """OUD entry — AclMetadata helpers.
 
 Per AGENTS.md §2.3 (MRO Composition) + §3.1 (200-LOC cap): one of the
-domain-specific Mixins composed into ``FlextLdifServersOudHelpersMixin``.
+domain-specific Mixins composed into ``FlextLdifServersOudHelpers``.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -12,10 +12,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from flext_ldif import c, m, t, u
-from flext_ldif.servers._oud import FlextLdifServersOudConstants
+from flext_ldif.servers._oud import FlextLdifConstantsServersOud
 
 
-class FlextLdifServersOudAclMetadataMixin:
+class FlextLdifServersOudAclMetadata:
     """OUD AclMetadata helpers."""
 
     @staticmethod
@@ -64,7 +64,7 @@ class FlextLdifServersOudAclMetadataMixin:
         acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> None:
         """Extract ACL metadata from dict extensions."""
-        for src_key, dest_key in FlextLdifServersOudConstants.ACL_KEY_MAP.items():
+        for src_key, dest_key in FlextLdifConstantsServersOud.ACL_KEY_MAP.items():
             value_raw = acl_extensions.get(src_key)
             if value_raw is not None:
                 acl_metadata_extensions[dest_key] = u.normalize_to_json_value(value_raw)
@@ -139,7 +139,7 @@ class FlextLdifServersOudAclMetadataMixin:
         return updated_entry
 
     @staticmethod
-    def _extension_target_key(key: str, key_map: t.MappingKV[str, str]) -> str:
+    def _extension_target_key(key: str, key_map: Mapping[str, str]) -> str:
         """Resolve the canonical destination key for one ACL extension key.
 
         Returns:
@@ -173,9 +173,9 @@ class FlextLdifServersOudAclMetadataMixin:
         current_extensions: t.Ldif.MutableMetadataInputMapping,
     ) -> None:
         """Process parsed ACL extensions and add to current extensions."""
-        key_map = FlextLdifServersOudConstants.PARSED_ACL_KEY_MAP
+        key_map = FlextLdifConstantsServersOud.PARSED_ACL_KEY_MAP
         for key, value in acl_extensions.items():
-            final_key = FlextLdifServersOudAclMetadataMixin._extension_target_key(
+            final_key = FlextLdifServersOudAclMetadata._extension_target_key(
                 key,
                 key_map,
             )
@@ -190,10 +190,10 @@ class FlextLdifServersOudAclMetadataMixin:
                 )
             elif isinstance(value, Mapping):
                 current_extensions[final_key] = (
-                    FlextLdifServersOudAclMetadataMixin._normalized_mapping_value(value)
+                    FlextLdifServersOudAclMetadata._normalized_mapping_value(value)
                 )
             else:
                 current_extensions[final_key] = str(value)
 
 
-__all__: list[str] = ["FlextLdifServersOudAclMetadataMixin"]
+__all__: list[str] = ["FlextLdifServersOudAclMetadata"]

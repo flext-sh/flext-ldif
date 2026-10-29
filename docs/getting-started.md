@@ -93,6 +93,15 @@ Create your first LDIF processing script:
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_ldif import ldif
 
 # Initialize the LDIF API
@@ -133,6 +142,15 @@ Process LDIF files with error handling:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from pathlib import Path
 
@@ -241,6 +259,15 @@ Parse LDAP schema files with automatic server-specific handling:
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from pathlib import Path
 
 from flext_ldif import FlextLdif
@@ -267,6 +294,15 @@ Migrate entries between different LDAP servers using generic transformation:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from pathlib import Path
 

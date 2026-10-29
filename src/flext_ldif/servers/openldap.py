@@ -7,14 +7,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from collections.abc import MutableSequence
 from types import MappingProxyType
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers import FlextLdifServersRfc
 from flext_ldif.servers._rfc import (
+    FlextLdifConstantsServersRfc,
     FlextLdifServersRfcAcl,
-    FlextLdifServersRfcConstants,
     FlextLdifServersRfcEntry,
     FlextLdifServersRfcSchema,
 )
@@ -23,7 +24,7 @@ from flext_ldif.servers._rfc import (
 class FlextLdifServersOpenldap(FlextLdifServersRfc):
     """OpenLDAP 2.x Servers - Complete Implementation."""
 
-    class Constants(FlextLdifServersRfcConstants):
+    class Constants(FlextLdifConstantsServersRfc):
         """Standardized constants for OpenLDAP 2.x server."""
 
         SERVER_TYPE: ClassVar[str] = "openldap2"
@@ -82,11 +83,11 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             "olcSchemaConfig",
         ])
         OPERATIONAL_ATTRIBUTES: ClassVar[frozenset[str]] = (
-            FlextLdifServersRfcConstants.OPERATIONAL_ATTRIBUTES
+            FlextLdifConstantsServersRfc.OPERATIONAL_ATTRIBUTES
             | frozenset(["entryUUID", "entryCSN", "contextCSN", "hasSubordinates"])
         )
         SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
-            FlextLdifServersRfcConstants.SUPPORTED_PERMISSIONS | frozenset(["auth"])
+            FlextLdifConstantsServersRfc.SUPPORTED_PERMISSIONS | frozenset(["auth"])
         )
         ATTRIBUTE_FIELDS: ClassVar[frozenset[str]] = frozenset(["x_origin", "ordering"])
         OBJECTCLASS_REQUIREMENTS: ClassVar[t.BoolMapping] = MappingProxyType({
@@ -293,7 +294,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         def _build_openldap_acl_model(
             self,
             what: str,
-            attributes: t.MutableSequenceOf[str],
+            attributes: MutableSequence[str],
             subject_value: str,
             access: str,
             acl_line: str,
@@ -381,7 +382,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             return r[m.Ldif.Acl].ok(acl)
 
         @staticmethod
-        def _parse_by_clauses(acl_content: str) -> t.StrPair:
+        def _parse_by_clauses(acl_content: str) -> tuple[str, str]:
             """Parse the ``by <who> <access>`` clauses of an ACL line.
 
             Args:
@@ -410,7 +411,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         @staticmethod
         def _parse_what_clause(
             acl_content: str,
-        ) -> tuple[str | None, t.MutableSequenceOf[str]]:
+        ) -> tuple[str | None, MutableSequence[str]]:
             """Parse the ``to <what>`` clause and extract targeted attributes.
 
             Args:
@@ -427,7 +428,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             if not to_match:
                 return (None, [])
             what = to_match.group(1).strip()
-            attributes: t.MutableSequenceOf[str] = []
+            attributes: MutableSequence[str] = []
             attrs_match = FlextLdifServersOpenldap.Constants.ACL_ATTRS_RE.search(what)
             if attrs_match:
                 attr_string = attrs_match.group(1)
@@ -508,7 +509,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             acl_parts = [f"{constants.ACL_PREFIX_TO}{what}"]
             acl_parts.append(f"{constants.ACL_PREFIX_BY}{who}")
             if acl_data.permissions:
-                perms: t.MutableSequenceOf[str] = []
+                perms: MutableSequence[str] = []
                 if acl_data.permissions.read:
                     perms.append("read")
                 if acl_data.permissions.write:
@@ -545,7 +546,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             )
             has_olc_attrs = any(attr.startswith("olc") for attr in attributes)
             object_classes_raw = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
-            object_classes_list: t.MutableSequenceOf[str] = list(object_classes_raw)
+            object_classes_list: MutableSequence[str] = list(object_classes_raw)
             has_olc_classes = any(
                 oc in FlextLdifServersOpenldap.Constants.OPENLDAP_2_OBJECTCLASSES
                 for oc in object_classes_list

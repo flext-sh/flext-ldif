@@ -14,8 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from examples import c, m, p, t
-from flext_ldif import ldif
+from examples import c, ldif, m, p, t
 
 
 class ExamplesFlextLdifAclProcessing:
@@ -24,7 +23,7 @@ class ExamplesFlextLdifAclProcessing:
     @staticmethod
     def _parse_first_entry_with_acls(
         ldif_content: str,
-    ) -> t.Pair[p.Ldif.Entry, p.Ldif.AclResponse] | None:
+    ) -> tuple[p.Ldif.Entry, p.Ldif.AclResponse] | None:
         """Parse LDIF text and extract ACLs from its first entry.
 
         Returns:

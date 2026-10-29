@@ -9,11 +9,11 @@ from __future__ import annotations
 from typing import ClassVar
 
 from flext_ldif import c, m, p, t, u
-from flext_ldif.servers._oud import FlextLdifServersOudConstants
+from flext_ldif.servers._oud import FlextLdifConstantsServersOud
 from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 
 
-class FlextLdifServersOudAclSubjectMixin(FlextLdifServersRfcAcl):
+class FlextLdifServersOudAclSubject(FlextLdifServersRfcAcl):
     """OUD ACI subject/bind-rule clause helpers."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -55,8 +55,8 @@ class FlextLdifServersOudAclSubjectMixin(FlextLdifServersRfcAcl):
             acl_data,
         )
         if not subject_type or subject_type == "self":
-            return f'userdn="{FlextLdifServersOudConstants.ACL_SELF_SUBJECT}";)'
-        suffix = FlextLdifServersOudConstants.ACL_SUBJECT_ATTR_SUFFIXES.get(
+            return f'userdn="{FlextLdifConstantsServersOud.ACL_SELF_SUBJECT}";)'
+        suffix = FlextLdifConstantsServersOud.ACL_SUBJECT_ATTR_SUFFIXES.get(
             subject_type
         )
         if suffix is not None:
@@ -66,9 +66,9 @@ class FlextLdifServersOudAclSubjectMixin(FlextLdifServersRfcAcl):
             if base_dn and subject_value.endswith(base_dn)
             else subject_value
         )
-        bind_operator = FlextLdifServersOudConstants.ACL_SUBJECT_BIND_OPERATORS.get(
+        bind_operator = FlextLdifConstantsServersOud.ACL_SUBJECT_BIND_OPERATORS.get(
             subject_type,
-            FlextLdifServersOudConstants.ACL_SUBJECT_BIND_OPERATORS[
+            FlextLdifConstantsServersOud.ACL_SUBJECT_BIND_OPERATORS[
                 c.Ldif.AclSubjectType.USER
             ],
         )
@@ -99,7 +99,7 @@ class FlextLdifServersOudAclSubjectMixin(FlextLdifServersRfcAcl):
             if source_subject_type in attr_subject_types
             else (subject.subject_type if subject else source_subject_type)
         ) or "self"
-        if subject_type == FlextLdifServersOudConstants.ACL_SUBJECT_TYPE_BIND_RULES:
+        if subject_type == FlextLdifConstantsServersOud.ACL_SUBJECT_TYPE_BIND_RULES:
             subject_type = self._resolved_bind_rules_subject_type(
                 subject,
                 source_subject_type,
@@ -109,7 +109,7 @@ class FlextLdifServersOudAclSubjectMixin(FlextLdifServersRfcAcl):
         ) or self._extension_get_str(ext, "acl_original_subject_value")
         if not subject_value:
             subject_value = (
-                FlextLdifServersOudConstants.ACL_SELF_SUBJECT
+                FlextLdifConstantsServersOud.ACL_SELF_SUBJECT
                 if subject_type == "self"
                 else ""
             )
@@ -135,12 +135,12 @@ class FlextLdifServersOudAclSubjectMixin(FlextLdifServersRfcAcl):
                 return "group"
             case _ if (
                 "group=" in subject_value_lower
-                or FlextLdifServersOudConstants.ACL_BIND_RULE_TYPE_GROUPDN
+                or FlextLdifConstantsServersOud.ACL_BIND_RULE_TYPE_GROUPDN
                 in subject_value_lower
             ):
                 return "group"
             case _:
-                return FlextLdifServersOudConstants.ACL_SUBJECT_TYPE_BIND_RULES
+                return FlextLdifConstantsServersOud.ACL_SUBJECT_TYPE_BIND_RULES
 
 
-__all__: list[str] = ["FlextLdifServersOudAclSubjectMixin"]
+__all__: list[str] = ["FlextLdifServersOudAclSubject"]

@@ -1,7 +1,7 @@
 """OUD entry — AclExtract helpers.
 
 Per AGENTS.md §2.3 (MRO Composition) + §3.1 (200-LOC cap): one of the
-domain-specific Mixins composed into ``FlextLdifServersOudHelpersMixin``.
+domain-specific Mixins composed into ``FlextLdifServersOudHelpers``.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,10 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
+
 from flext_ldif import c, m, t, u
 
 
-class FlextLdifServersOudAclExtractMixin:
+class FlextLdifServersOudAclExtract:
     """OUD AclExtract helpers."""
 
     @staticmethod
@@ -31,7 +33,7 @@ class FlextLdifServersOudAclExtractMixin:
         if not entry_data.attributes or not acl_attribute_names:
             return entry_data
         new_attributes_dict, commented_acl_values, hidden_attrs = (
-            FlextLdifServersOudAclExtractMixin.extract_and_remove_acl_attributes(
+            FlextLdifServersOudAclExtract.extract_and_remove_acl_attributes(
                 entry_data.attributes.attributes,
                 acl_attribute_names,
             )
@@ -44,7 +46,7 @@ class FlextLdifServersOudAclExtractMixin:
                 server_type=c.Ldif.ServerTypes.OUD,
             )
         updated_metadata = (
-            FlextLdifServersOudAclExtractMixin.update_metadata_with_commented_acls(
+            FlextLdifServersOudAclExtract.update_metadata_with_commented_acls(
                 existing_metadata,
                 acl_attribute_names,
                 commented_acl_values,
@@ -64,11 +66,11 @@ class FlextLdifServersOudAclExtractMixin:
     @staticmethod
     def normalize_acl_values(
         acl_values_raw: t.Ldif.ValueType | t.Ldif.MetadataInputMapping,
-    ) -> t.MutableSequenceOf[str] | str:
+    ) -> MutableSequence[str] | str:
         """Normalize ACL values to expected type for comment generation.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str] | str``.
+            The resulting ``MutableSequence[str] | str``.
 
         """
         if isinstance(acl_values_raw, list):
@@ -154,7 +156,7 @@ class FlextLdifServersOudAclExtractMixin:
                 u.Cli.JSON_VALUE_ADAPTER.validate_python(sorted(hidden_attribute_names))
             )
         if commented_acl_values:
-            converted_attrs_list: t.MutableSequenceOf[str] = list(
+            converted_attrs_list: MutableSequence[str] = list(
                 commented_acl_values.keys(),
             )
             current_extensions[c.Ldif.CONVERTED_ATTRIBUTES] = (
@@ -170,7 +172,7 @@ class FlextLdifServersOudAclExtractMixin:
             c.Ldif.ACL_COMMENTED_ATTRIBUTES,
             [],
         )
-        commented_attrs: t.MutableSequenceOf[str] = (
+        commented_attrs: MutableSequence[str] = (
             [str(x) for x in commented_attrs_raw]
             if isinstance(commented_attrs_raw, list)
             else []
@@ -185,4 +187,4 @@ class FlextLdifServersOudAclExtractMixin:
         return metadata_typed.model_copy(update={"extensions": current_extensions})
 
 
-__all__: list[str] = ["FlextLdifServersOudAclExtractMixin"]
+__all__: list[str] = ["FlextLdifServersOudAclExtract"]

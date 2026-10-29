@@ -13,6 +13,7 @@ sourced from code and docstrings.
 - [Configuration](configuration.md)
 - [Constants pattern](constants-pattern.md)
 - [Development](development.md)
+- [Engine](engine.md)
 - [Filters](filters.md)
 - [Flext_ldif_parse_acl_usages](flext_ldif_parse_acl_usages.md)
 - [Getting started](getting-started.md)

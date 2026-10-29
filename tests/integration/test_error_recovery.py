@@ -14,14 +14,12 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif import ldif
-from tests import p, tm
+from tests import ldif, p, tm
 
 
 class TestsFlextLdifErrorRecovery:
     """Observable-behavior tests for malformed and edge-case LDIF input."""
 
-    @staticmethod
     @pytest.fixture
     def api() -> p.Ldif.LdifClient:
         """Return a configured LDIF facade instance (public DSL alias)."""

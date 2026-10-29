@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from pathlib import Path
 from typing import Annotated, ClassVar
 
@@ -16,8 +17,8 @@ from flext_ldif._models import (
     FlextLdifModelsCollections,
     FlextLdifModelsDomainsEntries,
     FlextLdifModelsResultsStatistics,
-    FlextLdifModelsSettingsMigrate,
 )
+from flext_ldif._models._settings import FlextLdifModelsSettingsMigrate
 
 
 class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
@@ -26,7 +27,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
     class WriteRequest(m.ArbitraryTypesModel):
         """One validated write boundary for structural entries and options."""
 
-        entries: t.MutableSequenceOf[FlextLdifModelsDomainsEntries.Entry] = m.Field(
+        entries: MutableSequence[FlextLdifModelsDomainsEntries.Entry] = m.Field(
             description="Owned LDIF entries supplied for serialization",
         )
         format_options: FlextLdifModelsSettingsMigrate.WriteFormatOptions | None = (
@@ -109,7 +110,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
             ),
             description="Schema content after migration transformation",
         )
-        entries: t.MutableSequenceOf[FlextLdifModelsDomainsEntries.Entry] = m.Field(
+        entries: MutableSequence[FlextLdifModelsDomainsEntries.Entry] = m.Field(
             default_factory=list[FlextLdifModelsDomainsEntries.Entry],
             description="Migrated LDIF entries",
         )
@@ -117,7 +118,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
             default_factory=FlextLdifModelsResultsStatistics.Statistics,
             description="Migration processing statistics",
         )
-        output_files: t.MutableSequenceOf[str] = m.Field(
+        output_files: MutableSequence[str] = m.Field(
             default_factory=list[str],
             description="Output file paths produced by the migration pipeline.",
         )
@@ -167,7 +168,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
             description="Entries that failed validation",
         )
         errors: Annotated[
-            t.MutableSequenceOf[str],
+            MutableSequence[str],
             m.Field(description="Validation error messages"),
         ]
 
@@ -192,7 +193,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
             m.Field(description="Per-server-type detection scores"),
         ]
         patterns_found: Annotated[
-            t.MutableSequenceOf[str],
+            MutableSequence[str],
             m.Field(description="Server-identifying patterns found in LDIF"),
         ]
         detection_error: Annotated[
@@ -230,7 +231,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
 
     class ParseResponse(Response):
         entries: Annotated[
-            t.MutableSequenceOf[FlextLdifModelsDomainsEntries.Entry],
+            MutableSequence[FlextLdifModelsDomainsEntries.Entry],
             m.Field(description="Parsed LDIF entries"),
         ]
         detected_server_type: Annotated[
@@ -240,7 +241,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
 
     class AclResponse(Response):
         acls: Annotated[
-            t.MutableSequenceOf[t.Port[p.Ldif.Acl]],
+            MutableSequence[t.Port[p.Ldif.Acl]],
             m.Field(description="Extracted ACL models"),
         ]
 

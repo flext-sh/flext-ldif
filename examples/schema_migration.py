@@ -10,10 +10,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from examples import create_entry_or_none, m, p, r, t, u
-from flext_ldif import FlextLdif, ldif
+from examples import create_entry_or_none, ldif, m, p, r, t, u
+
+if TYPE_CHECKING:
+    from flext_ldif import FlextLdif
 
 _LEGACY_LDIF_FIXTURES: tuple[str, ...] = (
     (
@@ -143,7 +147,7 @@ class ExamplesFlextLdifSchemaMigration:
             ExamplesFlextLdifSchemaMigration._prepare_migration_dirs()
         )
         ExamplesFlextLdifSchemaMigration._write_legacy_fixtures(source_dir)
-        migration_results: t.MutableMappingKV[str, t.JsonValue] = {}
+        migration_results: MutableMapping[str, t.JsonValue] = {}
         all_entries = ExamplesFlextLdifSchemaMigration._parse_source_entries(
             api,
             source_dir,

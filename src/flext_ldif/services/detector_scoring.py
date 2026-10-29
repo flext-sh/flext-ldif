@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from collections.abc import MutableSequence
 
 from flext_ldif import c, p, t, u
 from flext_ldif.services import FlextLdifServer
@@ -24,32 +25,32 @@ class FlextLdifDetectorScoring(FlextLdifServer):
         *,
         condition: bool,
         description: str,
-        patterns: t.MutableSequenceOf[str],
+        patterns: MutableSequence[str],
     ) -> None:
         """Add pattern description if condition is met."""
         if condition:
             patterns.append(description)
 
     @staticmethod
-    def _get_all_server_types() -> t.MutableSequenceOf[str]:
+    def _get_all_server_types() -> MutableSequence[str]:
         """Get all supported server types from constants.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
-        types: t.MutableSequenceOf[str] = u.Ldif.resolve_all_server_types()
+        types: MutableSequence[str] = u.Ldif.resolve_all_server_types()
         return types
 
     @staticmethod
     def _detection_pattern_value(
-        pattern_value: t.JsonValue | re.Pattern[str] | None,
+        pattern_value: t.JsonValue | t.RegexPattern | None,
     ) -> t.JsonValue:
         """Normalize a detection pattern constant into its source text.
 
         Args:
             pattern_value: Raw constant value read through ``getattr``; only
-                ``str`` and ``re.Pattern[str]`` members carry a usable pattern.
+                ``str`` and ``t.RegexPattern`` members carry a usable pattern.
 
         Returns:
             The resulting ``t.JsonValue`` (``str`` when well-typed).
@@ -133,7 +134,7 @@ class FlextLdifDetectorScoring(FlextLdifServer):
         self,
         constants: type[p.Ldif.ServerConstants] | None,
         content: str,
-        patterns: t.MutableSequenceOf[str],
+        patterns: MutableSequence[str],
     ) -> None:
         """Extract OID-specific patterns (ACLs, etc.)."""
         if not constants:
@@ -154,7 +155,7 @@ class FlextLdifDetectorScoring(FlextLdifServer):
         constants: type[p.Ldif.ServerConstants] | None,
         pattern_spec: tuple[c.Ldif.ServerTypes, str, str, bool],
         content: str,
-        patterns: t.MutableSequenceOf[str],
+        patterns: MutableSequence[str],
     ) -> None:
         """Extract pattern using pattern attribute from constants."""
         _, pattern_attr, description, case_sensitive = pattern_spec
@@ -170,14 +171,14 @@ class FlextLdifDetectorScoring(FlextLdifServer):
             patterns=patterns,
         )
 
-    def _extract_patterns(self, content: str) -> t.MutableSequenceOf[str]:
+    def _extract_patterns(self, content: str) -> MutableSequence[str]:
         """Extract detected patterns from content.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
-        patterns: t.MutableSequenceOf[str] = []
+        patterns: MutableSequence[str] = []
         content_lower = content.lower()
         for pattern_spec in c.Ldif.DETECTION_PATTERN_SPECS:
             server_type, _pattern_attr, _description, _case_sensitive = pattern_spec

@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence, Sequence
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 from flext_cli import p, t
@@ -14,7 +15,6 @@ from flext_ldif import c
 from flext_ldif._protocols import FlextLdifProtocolsBase, FlextLdifProtocolsValues
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
     from os import PathLike
     from pathlib import Path
 
@@ -27,7 +27,7 @@ class FlextLdifProtocolsClient(Protocol):
 
     @runtime_checkable
     class ProcessingPipeline(
-        p.Service[t.SequenceOf[FlextLdifProtocolsValues.Entry]], Protocol
+        p.Service[Sequence[FlextLdifProtocolsValues.Entry]], Protocol
     ):
         """Runtime-bound entry transformations and their declared configuration."""
 
@@ -41,7 +41,7 @@ class FlextLdifProtocolsClient(Protocol):
         @property
         def entries_input(
             self,
-        ) -> t.SequenceOf[FlextLdifProtocolsValues.Entry] | None: ...
+        ) -> Sequence[FlextLdifProtocolsValues.Entry] | None: ...
 
         @classmethod
         def for_servers(
@@ -71,8 +71,8 @@ class FlextLdifProtocolsClient(Protocol):
         base_dn: str
 
         def migrate_entries(
-            self, entries: t.SequenceOf[FlextLdifProtocolsValues.Entry]
-        ) -> p.Result[t.SequenceOf[FlextLdifProtocolsValues.Entry]]:
+            self, entries: Sequence[FlextLdifProtocolsValues.Entry]
+        ) -> p.Result[Sequence[FlextLdifProtocolsValues.Entry]]:
             """Migrate the supplied entries through the bound registry."""
             ...
 
@@ -277,7 +277,7 @@ class FlextLdifProtocolsClient(Protocol):
 
         def write(
             self,
-            entries: t.SequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+            entries: Sequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
             *,
             server_type: str | None = None,
             format_options: m.Ldif.WriteFormatOptions | None = None,
@@ -287,7 +287,7 @@ class FlextLdifProtocolsClient(Protocol):
 
         def write_ldif_file(
             self,
-            entries: t.SequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+            entries: Sequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
             path: Path,
             *,
             server_type: str | None = None,
@@ -298,7 +298,7 @@ class FlextLdifProtocolsClient(Protocol):
 
         def write_to_string(
             self,
-            entries: t.SequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+            entries: Sequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
             server_type: str | None = None,
             format_options: m.Ldif.WriteFormatOptions | None = None,
         ) -> p.Result[str]:
@@ -307,7 +307,7 @@ class FlextLdifProtocolsClient(Protocol):
 
         def validate_entries(
             self,
-            entries: t.SequenceOf[FlextLdifProtocolsValues.Entry]
+            entries: Sequence[FlextLdifProtocolsValues.Entry]
             | FlextLdifProtocolsValues.ParseResponse,
             validation_service: FlextLdifProtocolsBase.ValidationService | None = None,
         ) -> p.Result[FlextLdifProtocolsBase.ValidationResult]:
@@ -336,7 +336,7 @@ class FlextLdifProtocolsClient(Protocol):
 
         def evaluate_acl_context(
             self,
-            acls: t.SequenceOf[FlextLdifProtocolsBase.Acl],
+            acls: Sequence[FlextLdifProtocolsBase.Acl],
             required_permissions: FlextLdifProtocolsBase.AclPermissions
             | t.MutableBoolMapping,
         ) -> p.Result[FlextLdifProtocolsBase.AclEvaluationResult]:
@@ -345,16 +345,16 @@ class FlextLdifProtocolsClient(Protocol):
 
         def process_entries(
             self,
-            entries: t.SequenceOf[FlextLdifProtocolsValues.Entry],
+            entries: Sequence[FlextLdifProtocolsValues.Entry],
             options: FlextLdifProtocolsBase.ProcessEntriesOptions | None = None,
             **kwargs: t.JsonValue,
-        ) -> p.Result[t.MutableSequenceOf[FlextLdifProtocolsBase.ProcessingResult]]:
+        ) -> p.Result[MutableSequence[FlextLdifProtocolsBase.ProcessingResult]]:
             """Process entries through the public facade DSL."""
             ...
 
         def calculate_for_entries(
             self,
-            entries: t.SequenceOf[FlextLdifProtocolsValues.Entry]
+            entries: Sequence[FlextLdifProtocolsValues.Entry]
             | FlextLdifProtocolsValues.ParseResponse,
         ) -> p.Result[FlextLdifProtocolsBase.EntriesStatistics]:
             """Calculate entry statistics through the public facade DSL."""

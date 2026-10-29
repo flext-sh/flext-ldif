@@ -73,6 +73,15 @@ rfc_server: FlextLdifServersBase = server.server("rfc")
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 import pytest
 
 from flext_ldif import FlextLdifServer, FlextLdifServersBase
@@ -112,6 +121,15 @@ def rfc_server(server: FlextLdifServer) -> FlextLdifServersBase:
 
 ```text
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 
 def test_conversion_oid_to_oud(
@@ -154,6 +172,15 @@ oud = server.server("oud")
 
 ```text
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 
 # ANTES

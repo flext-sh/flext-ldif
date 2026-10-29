@@ -6,15 +6,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, MutableSequence
 from typing import override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._relaxed import FlextLdifServersRelaxedConstants
+from flext_ldif.servers._relaxed import FlextLdifConstantsServersRelaxed
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
-class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
+class FlextLdifServersRelaxedEntryParse(FlextLdifServersRfcEntry):
     """Relaxed entry parse side for lenient LDIF processing."""
 
     def normalize_dn(self, dn: str) -> p.Result[str]:
@@ -62,7 +62,7 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
     def _scan_relaxed_entry_lines(
         cls,
         entry_content: str,
-    ) -> tuple[str, MutableMapping[str, t.MutableSequenceOf[str | bytes]]]:
+    ) -> tuple[str, MutableMapping[str, MutableSequence[str | bytes]]]:
         """Scan relaxed entry content into its DN and raw attribute values.
 
         Args:
@@ -73,7 +73,7 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
 
         """
         dn: str = ""
-        attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]] = {}
+        attrs: MutableMapping[str, MutableSequence[str | bytes]] = {}
         for raw_line in entry_content.split("\n"):
             line = raw_line.strip()
             if not line or line.startswith("#"):
@@ -87,7 +87,7 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
     def _absorb_relaxed_line(
         cls,
         line: str,
-        attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
+        attrs: MutableMapping[str, MutableSequence[str | bytes]],
     ) -> str | None:
         """Absorb one non-comment line; return its DN value for DN lines.
 
@@ -117,7 +117,7 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
     @staticmethod
     def _fold_relaxed_continuation_line(
         line: str,
-        attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
+        attrs: MutableMapping[str, MutableSequence[str | bytes]],
     ) -> None:
         """Fold one continuation line into the last attribute value."""
         last_key = list(attrs.keys())[-1]
@@ -128,7 +128,7 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
     def _parse_content(
         self,
         ldif_content: str,
-    ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
+    ) -> p.Result[MutableSequence[m.Ldif.Entry]]:
         """Parse raw LDIF content into entry models.
 
         Falls back to relaxed parsing when the RFC baseline fails.
@@ -154,7 +154,7 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
                 "Failed to parse content",
                 server_type=self._get_server_type(),
             )
-            return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
+            return r[MutableSequence[m.Ldif.Entry]].fail(
                 f"Failed to parse content: {error}",
                 exception=error,
             )
@@ -162,7 +162,7 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
     def _parse_relaxed_content(
         self,
         ldif_content: str,
-    ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
+    ) -> p.Result[MutableSequence[m.Ldif.Entry]]:
         """Parse raw LDIF content with relaxed record splitting.
 
         Blank-line-separated blocks are parsed individually; failed blocks
@@ -175,7 +175,7 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
             Result carrying the successfully parsed entries.
 
         """
-        entries: t.MutableSequenceOf[m.Ldif.Entry] = []
+        entries: MutableSequence[m.Ldif.Entry] = []
         raw_entries = ldif_content.strip().split("\n\n")
         successful = 0
         failed = 0
@@ -200,7 +200,7 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
             successful=successful,
             failed=failed,
         )
-        return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(entries)
+        return r[MutableSequence[m.Ldif.Entry]].ok(entries)
 
     @staticmethod
     def _prepare_relaxed_raw_entry(raw_entry: str) -> str | None:
@@ -227,7 +227,7 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
     def _parse_entry(
         self,
         entry_dn: str,
-        entry_attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
+        entry_attrs: MutableMapping[str, MutableSequence[str | bytes]],
     ) -> p.Result[m.Ldif.Entry]:
         """Parse one entry with best-effort relaxed handling.
 
@@ -248,7 +248,7 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
     def _parse_relaxed_entry(
         self,
         entry_dn: str,
-        entry_attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
+        entry_attrs: MutableMapping[str, MutableSequence[str | bytes]],
     ) -> p.Result[m.Ldif.Entry]:
         """Build an entry model from relaxed raw entry components.
 
@@ -281,7 +281,7 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
 
     @staticmethod
     def _decode_relaxed_attributes(
-        entry_attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
+        entry_attrs: MutableMapping[str, MutableSequence[str | bytes]],
     ) -> t.MutableStrSequenceMapping:
         """Decode relaxed entry attribute values to strings.
 
@@ -294,15 +294,15 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
         """
         attr_dict: t.MutableStrSequenceMapping = {}
         for attr_key, attr_value in entry_attrs.items():
-            converted_list: t.MutableSequenceOf[str] = []
+            converted_list: MutableSequence[str] = []
             for value in attr_value:
                 if isinstance(value, str):
                     converted_list.append(value)
                 else:
                     converted_list.append(
                         value.decode(
-                            FlextLdifServersRelaxedConstants.ENCODING_UTF8,
-                            errors=FlextLdifServersRelaxedConstants.ENCODING_ERROR_HANDLING,
+                            FlextLdifConstantsServersRelaxed.ENCODING_UTF8,
+                            errors=FlextLdifConstantsServersRelaxed.ENCODING_ERROR_HANDLING,
                         ),
                     )
             attr_dict[attr_key] = converted_list
@@ -311,7 +311,7 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
     @staticmethod
     def _build_relaxed_entry_metadata(
         entry_dn: str,
-        entry_attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
+        entry_attrs: MutableMapping[str, MutableSequence[str | bytes]],
     ) -> m.Ldif.ServerMetadata:
         """Build relaxed-mode metadata for a parsed entry.
 
@@ -346,4 +346,4 @@ class FlextLdifServersRelaxedEntryParseMixin(FlextLdifServersRfcEntry):
         return metadata
 
 
-__all__: list[str] = ["FlextLdifServersRelaxedEntryParseMixin"]
+__all__: list[str] = ["FlextLdifServersRelaxedEntryParse"]

@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+
 import pytest
 
 from flext_ldif import FlextLdif
@@ -23,7 +25,7 @@ class TestsFlextLdifOidAclEndToEnd:
     def _convert(
         api: p.Ldif.LdifClient,
         dn: str,
-        attrs: t.MappingKV[str, t.StrSequence],
+        attrs: Mapping[str, Sequence[str]],
     ) -> t.MutableStrSequenceMapping:
         entry = u.Tests.create_real_entry(dn=dn, attributes=attrs)
         result = api.convert_model(

@@ -6,18 +6,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oud import (
-    FlextLdifServersOudAclWriteMixin,
-    FlextLdifServersOudConstants,
-    server_utilities,
+    FlextLdifConstantsServersOud,
+    FlextLdifServersOudAclWrite,
 )
 
 
-class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
+class FlextLdifServersOudAcl(FlextLdifServersOudAclWrite):
     """Oracle OUD ACL Implementation (RFC 4876 ACI Format)."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -41,7 +40,7 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
 
         """
         return line.lower().startswith(
-            FlextLdifServersOudConstants.ACL_ACI_PREFIX.lower(),
+            FlextLdifConstantsServersOud.ACL_ACI_PREFIX.lower(),
         )
 
     @staticmethod
@@ -53,7 +52,7 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
 
         """
         return line.lower().startswith(
-            FlextLdifServersOudConstants.ACL_DS_CFG_PREFIX.lower(),
+            FlextLdifConstantsServersOud.ACL_DS_CFG_PREFIX.lower(),
         )
 
     @override
@@ -76,7 +75,7 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
                 acl_model.name
                 and u.Ldif.normalize_attribute_name(acl_model.name)
                 == u.Ldif.normalize_attribute_name(
-                    FlextLdifServersOudConstants.ACL_ATTRIBUTE_NAME,
+                    FlextLdifConstantsServersOud.ACL_ATTRIBUTE_NAME,
                 ),
             )
         normalized = acl_line.strip()
@@ -84,10 +83,10 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
             return False
         normalized_lower = normalized.lower()
         oud_prefixes = [
-            FlextLdifServersOudConstants.ACL_ACI_PREFIX,
-            FlextLdifServersOudConstants.ACL_TARGETATTR_PREFIX,
-            FlextLdifServersOudConstants.ACL_TARGETSCOPE_PREFIX,
-            FlextLdifServersOudConstants.ACL_DEFAULT_VERSION,
+            FlextLdifConstantsServersOud.ACL_ACI_PREFIX,
+            FlextLdifConstantsServersOud.ACL_TARGETATTR_PREFIX,
+            FlextLdifConstantsServersOud.ACL_TARGETSCOPE_PREFIX,
+            FlextLdifConstantsServersOud.ACL_DEFAULT_VERSION,
         ]
         starts_like_oud = (
             any(normalized.startswith(prefix) for prefix in oud_prefixes)
@@ -99,22 +98,22 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
         return starts_like_oud or is_non_legacy_acl
 
     @override
-    def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
+    def resolve_acl_attributes(self) -> MutableSequence[str]:
         """Get RFC + OUD extensions.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         return [
-            *FlextLdifServersOudConstants.RFC_ACL_ATTRIBUTES,
-            *FlextLdifServersOudConstants.OUD_ACL_ATTRIBUTES,
+            *c.Ldif.RFC_ACL_ATTRIBUTES,
+            *FlextLdifConstantsServersOud.OUD_ACL_ATTRIBUTES,
         ]
 
     def _finalize_aci(
         self,
-        current_aci: t.MutableSequenceOf[str],
-        acls: t.MutableSequenceOf[m.Ldif.Acl],
+        current_aci: MutableSequence[str],
+        acls: MutableSequence[m.Ldif.Acl],
     ) -> None:
         """Parse and add accumulated ACI to ACL list."""
         if current_aci:
@@ -131,7 +130,7 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
             The resulting ``p.Result[m.Ldif.Acl]``.
 
         """
-        settings = server_utilities.FlextLdifServersOudUtilities.resolve_parser_config()
+        settings = u.resolve_parser_config()
         result: p.Result[m.Ldif.Acl] = u.Ldif.parse_aci(acl_line, settings)
         if not result.success:
             return result
@@ -140,14 +139,14 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
         extensions: t.MutableJsonMapping = {}
         if acl.metadata and acl.metadata.extensions:
             extensions.update(acl.metadata.extensions)
-        timeofday_match = FlextLdifServersOudConstants.ACL_TIMEOFDAY_RE.search(
+        timeofday_match = FlextLdifConstantsServersOud.ACL_TIMEOFDAY_RE.search(
             aci_content,
         )
         if timeofday_match:
             extensions[c.Ldif.ACL_BIND_TIMEOFDAY] = (
                 f"{timeofday_match.group(1)}{timeofday_match.group(2)}"
             )
-        ssf_match = FlextLdifServersOudConstants.ACL_SSF_RE.search(aci_content)
+        ssf_match = FlextLdifConstantsServersOud.ACL_SSF_RE.search(aci_content)
         if ssf_match:
             extensions[c.Ldif.ACL_SSF] = f"{ssf_match.group(1)}{ssf_match.group(2)}"
         server_type_value = settings.server_type if settings else "oud"
@@ -176,13 +175,13 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
         # attribute-value body is wrapped before parsing instead of falling
         # through to the ds-privilege-name fallback.
         if normalized.startswith("(") and (
-            FlextLdifServersOudConstants.ACL_ALLOW_PREFIX in normalized
-            or FlextLdifServersOudConstants.ACL_DEFAULT_VERSION in normalized
+            FlextLdifConstantsServersOud.ACL_ALLOW_PREFIX in normalized
+            or FlextLdifConstantsServersOud.ACL_DEFAULT_VERSION in normalized
         ):
             return self._parse_aci_format(
-                f"{FlextLdifServersOudConstants.ACL_ACI_PREFIX} {normalized}",
+                f"{FlextLdifConstantsServersOud.ACL_ACI_PREFIX} {normalized}",
             )
-        if normalized.startswith(FlextLdifServersOudConstants.ACL_ACI_PREFIX):
+        if normalized.startswith(FlextLdifConstantsServersOud.ACL_ACI_PREFIX):
             return self._parse_aci_format(acl_line)
         rfc_result = super()._parse_acl(acl_line)
         if rfc_result.success:
@@ -213,11 +212,11 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWriteMixin):
                 metadata=m.Ldif.ServerMetadata(
                     server_type=c.Ldif.ServerTypes.OUD,
                     extensions={
-                        FlextLdifServersOudConstants.DS_PRIVILEGE_NAME_KEY: (
+                        FlextLdifConstantsServersOud.DS_PRIVILEGE_NAME_KEY: (
                             privilege_name
                         ),
-                        FlextLdifServersOudConstants.FORMAT_TYPE_KEY: (
-                            FlextLdifServersOudConstants.FORMAT_TYPE_DS_PRIVILEGE
+                        FlextLdifConstantsServersOud.FORMAT_TYPE_KEY: (
+                            FlextLdifConstantsServersOud.FORMAT_TYPE_DS_PRIVILEGE
                         ),
                     },
                 ),

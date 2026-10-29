@@ -6,14 +6,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers import FlextLdifServersRfc
 from flext_ldif.servers._base import FlextLdifServersDialectSchema
 from flext_ldif.servers._rfc import (
+    FlextLdifConstantsServersRfc,
     FlextLdifServersRfcAcl,
-    FlextLdifServersRfcConstants,
     FlextLdifServersRfcEntry,
 )
 
@@ -21,7 +22,7 @@ from flext_ldif.servers._rfc import (
 class FlextLdifServersNovell(FlextLdifServersRfc):
     """Novell eDirectory servers implementation."""
 
-    class Constants(FlextLdifServersRfcConstants):
+    class Constants(FlextLdifConstantsServersRfc):
         """Standardized constants for Novell eDirectory server."""
 
         SERVER_TYPE: ClassVar[str] = "novell"
@@ -130,7 +131,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         NOVELL_PERMISSION_SUPERVISOR: ClassVar[str] = "supervisor"
         NOVELL_PERMISSION_ENTRY: ClassVar[str] = "entry"
 
-    class Schema(FlextLdifServersDialectSchema):
+    class Schema(
+        FlextLdifServersDialectSchema,
+    ):
         """Novell eDirectory schema server."""
 
         _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
@@ -140,7 +143,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         """Novell eDirectory ACL server."""
 
         @staticmethod
-        def splitacl_line(acl_line: str) -> t.StrPair:
+        def splitacl_line(acl_line: str) -> tuple[str, str]:
             """Split an ACL line into attribute name and payload.
 
             Args:
@@ -175,8 +178,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         @staticmethod
         def _build_novell_permissions_from_rights(
-            rights: t.MutableSequenceOf[str],
-            permission_name_map: t.StrMapping,
+            rights: MutableSequence[str],
+            permission_name_map: Mapping[str, str],
         ) -> t.MutableBoolMapping:
             """Build the permission flags granted by parsed rights.
 
@@ -312,7 +315,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             "S": ("supervisor",),
             "E": ("entry",),
         }
-        _NOVELL_PERMISSION_MAP: ClassVar[t.StrMapping] = {
+        _NOVELL_PERMISSION_MAP: ClassVar[Mapping[str, str]] = {
             "read": c.Ldif.RfcAclPermission.READ,
             "write": c.Ldif.RfcAclPermission.WRITE,
             "add": c.Ldif.RfcAclPermission.ADD,
@@ -322,7 +325,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         }
 
         @staticmethod
-        def _segment_at(segments: t.MutableSequenceOf[str], index: int) -> str | None:
+        def _segment_at(segments: MutableSequence[str], index: int) -> str | None:
             """Return segment at index when present."""
             if len(segments) > index:
                 segment: str = segments[index]
@@ -330,7 +333,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             return None
 
         @classmethod
-        def _parse_novell_rights(cls, rights_str: str) -> t.MutableSequenceOf[str]:
+        def _parse_novell_rights(cls, rights_str: str) -> MutableSequence[str]:
             """Map Novell rights characters to canonical rights.
 
             Args:
@@ -340,7 +343,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 Canonical rights recognized in the string.
 
             """
-            rights: t.MutableSequenceOf[str] = []
+            rights: MutableSequence[str] = []
             for char in rights_str:
                 char_upper = char.upper()
                 if char_upper in cls._NOVELL_RIGHT_CHAR_MAP:
@@ -349,8 +352,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
 
         @staticmethod
         def _parse_novell_acl_attributes(
-            rights: t.MutableSequenceOf[str],
-        ) -> t.MutableSequenceOf[str]:
+            rights: MutableSequence[str],
+        ) -> MutableSequence[str]:
             """Extract attribute names encoded in rights segments.
 
             Args:
@@ -360,7 +363,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
                 Attribute names that are not permission keywords.
 
             """
-            attributes: t.MutableSequenceOf[str] = []
+            attributes: MutableSequence[str] = []
             for right_segment in rights:
                 segment_str = right_segment.strip()
                 if segment_str and ":" in segment_str:
@@ -386,7 +389,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             acl_attribute = FlextLdifServersNovell.Constants.ACL_ATTRIBUTE_NAME_WRITE
             if acl_data.raw_acl:
                 return r[str].ok(acl_data.raw_acl)
-            parts: t.MutableSequenceOf[str] = []
+            parts: MutableSequence[str] = []
             if acl_data.target and acl_data.target.target_dn:
                 parts.append(acl_data.target.target_dn)
             if acl_data.subject and acl_data.subject.subject_value:
@@ -404,9 +407,9 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
         def _active_novell_permissions(
             cls,
             permissions: m.Ldif.AclPermissions | None,
-        ) -> t.MutableSequenceOf[str]:
+        ) -> MutableSequence[str]:
             """Return active Novell permission tokens."""
-            active_perms: t.MutableSequenceOf[str] = []
+            active_perms: MutableSequence[str] = []
             if not permissions:
                 return active_perms
             perms_dict = {
@@ -488,7 +491,7 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             object_classes = attributes.get(c.Ldif.DictKeys.OBJECTCLASS, [])
             processed_attributes: t.MutableStrSequenceMapping = {}
             for attr_name, attr_values in attributes.items():
-                processed_values: t.MutableSequenceOf[str] = list(attr_values)
+                processed_values: MutableSequence[str] = list(attr_values)
                 processed_attributes[attr_name] = processed_values
             processed_attributes[c.Ldif.ServerMetadataKeys.SERVER_TYPE] = [
                 self._get_server_type(),

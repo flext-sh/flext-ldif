@@ -16,13 +16,10 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif import ldif
-from tests import c, tm
+from tests import c, ldif, p, tm
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-from tests import p
 
 
 class TestsFlextLdifLdifFixturesIntegration:
@@ -37,7 +34,6 @@ class TestsFlextLdifLdifFixturesIntegration:
         ("openldap2", "openldap2_integration_fixtures.ldif", 45),
     )
 
-    @staticmethod
     @pytest.fixture
     def ldif_client() -> p.Ldif.LdifClient:
         """Provide the public FlextLdif facade under test.

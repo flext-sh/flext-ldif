@@ -6,12 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence, Sequence
 from typing import override
 
-from flext_core import r
-
-from flext_ldif import c, m, p, t
-from flext_ldif._utilities import FlextLdifEntryValidation
+from flext_ldif import c, m, p, r, t
+from flext_ldif._utilities import FlextLdifUtilitiesEntry
 
 
 class FlextLdifUtilitiesPipeline:
@@ -26,8 +25,8 @@ class FlextLdifUtilitiesPipeline:
             self,
             *,
             valid: bool,
-            errors: t.MutableSequenceOf[str] | None = None,
-            warnings: t.MutableSequenceOf[str] | None = None,
+            errors: MutableSequence[str] | None = None,
+            warnings: MutableSequence[str] | None = None,
         ) -> None:
             """Initialize validation result."""
             super().__init__()
@@ -45,7 +44,7 @@ class FlextLdifUtilitiesPipeline:
             )
 
         @property
-        def errors(self) -> t.MutableSequenceOf[str]:
+        def errors(self) -> MutableSequence[str]:
             """The list of error messages."""
             return self._errors
 
@@ -55,7 +54,7 @@ class FlextLdifUtilitiesPipeline:
             return self._is_valid
 
         @property
-        def warnings(self) -> t.MutableSequenceOf[str]:
+        def warnings(self) -> MutableSequence[str]:
             """The list of warning messages."""
             return self._warnings
 
@@ -79,24 +78,22 @@ class FlextLdifUtilitiesPipeline:
 
         def validate(
             self,
-            entries: t.SequenceOf[m.Ldif.Entry],
-        ) -> p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]:
+            entries: Sequence[m.Ldif.Entry],
+        ) -> p.Result[MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]]:
             """Validate a sequence of entries.
 
             Returns:
                 The resulting
-                    ``p.Result[t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]]``.
+                    ``p.Result[MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]]``.
 
             """
-            results: t.MutableSequenceOf[
-                FlextLdifUtilitiesPipeline.ValidationResult
-            ] = []
+            results: MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult] = []
             total_errors = 0
             for entry in entries:
                 validation_result = self.validate_one(entry)
                 if validation_result.failure:
                     return r[
-                        t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]
+                        MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]
                     ].fail(validation_result.error)
                 validation = validation_result.value
                 results.append(validation)
@@ -105,9 +102,9 @@ class FlextLdifUtilitiesPipeline:
                     break
                 if not self._collect_all and (not validation.valid):
                     break
-            return r[
-                t.MutableSequenceOf[FlextLdifUtilitiesPipeline.ValidationResult]
-            ].ok(results)
+            return r[MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]].ok(
+                results
+            )
 
         @staticmethod
         def _dn_component_error(component: str) -> str | None:
@@ -128,13 +125,13 @@ class FlextLdifUtilitiesPipeline:
         def _collect_dn_errors(
             self,
             entry: m.Ldif.Entry,
-            errors: t.MutableSequenceOf[str],
+            errors: MutableSequence[str],
         ) -> None:
             """Collect DN-related violations for one entry."""
             if entry.dn is None:
                 errors.append("Entry has no DN (RFC 2849 violation)")
                 return
-            for component in FlextLdifEntryValidation.dn_components(str(entry.dn)):
+            for component in FlextLdifUtilitiesEntry.dn_components(str(entry.dn)):
                 component_error = self._dn_component_error(component)
                 if component_error is not None:
                     errors.append(component_error)
@@ -142,8 +139,8 @@ class FlextLdifUtilitiesPipeline:
         def _collect_attribute_messages(
             self,
             entry: m.Ldif.Entry,
-            errors: t.MutableSequenceOf[str],
-            warnings: t.MutableSequenceOf[str],
+            errors: MutableSequence[str],
+            warnings: MutableSequence[str],
         ) -> None:
             """Collect attribute-presence violations for one entry."""
             if entry.attributes is None:
@@ -174,8 +171,8 @@ class FlextLdifUtilitiesPipeline:
                 The resulting ``p.Result[FlextLdifUtilitiesPipeline.ValidationResult]``.
 
             """
-            errors: t.MutableSequenceOf[str] = []
-            warnings: t.MutableSequenceOf[str] = []
+            errors: MutableSequence[str] = []
+            warnings: MutableSequence[str] = []
             self._collect_dn_errors(entry, errors)
             self._collect_attribute_messages(entry, errors, warnings)
             return r[FlextLdifUtilitiesPipeline.ValidationResult].ok(

@@ -12,7 +12,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, m, p, r, t, u
+from collections.abc import Mapping, Sequence
+
+from flext_ldif import c, m, p, r, u
 
 
 class FlextLdifServersOidAclToOud:
@@ -65,7 +67,7 @@ class FlextLdifServersOidAclToOud:
         return converted
 
     @staticmethod
-    def _order_perms(perms: set[str]) -> t.StrSequence:
+    def _order_perms(perms: set[str]) -> Sequence[str]:
         ordered = tuple(p for p in c.Ldif.PERM_ORDERED if p in perms)
         extra = tuple(sorted(perms - set(c.Ldif.PERM_ORDERED)))
         return ordered + extra
@@ -74,7 +76,7 @@ class FlextLdifServersOidAclToOud:
     def _map_tokens(
         cls,
         bases: set[str],
-        perm_map: t.MappingKV[str, str | None],
+        perm_map: Mapping[str, str | None],
     ) -> set[str]:
         granted: set[str] = set()
         for base in bases:
@@ -88,8 +90,8 @@ class FlextLdifServersOidAclToOud:
     @classmethod
     def _collect_permission_bases(
         cls,
-        permissions: t.StrSequence,
-        perm_map: t.MappingKV[str, str | None],
+        permissions: Sequence[str],
+        perm_map: Mapping[str, str | None],
         all_perms: frozenset[str],
     ) -> p.Result[tuple[set[str], set[str], bool, bool]]:
         """Split OID permission tokens into positive/negated base sets.
@@ -135,14 +137,14 @@ class FlextLdifServersOidAclToOud:
     @classmethod
     def _resolve_allowed_perms(
         cls,
-        perm_map: t.MappingKV[str, str | None],
+        perm_map: Mapping[str, str | None],
         all_perms: frozenset[str],
         bases: tuple[set[str], set[str], bool, bool],
-    ) -> t.StrSequence:
+    ) -> Sequence[str]:
         """Expand collected positive/negated bases into the ordered allow set.
 
         Returns:
-            The resulting ``t.StrSequence``.
+            The resulting ``Sequence[str]``.
 
         """
         positive_bases, negated_bases, deny_all, explicit_all = bases
@@ -162,10 +164,10 @@ class FlextLdifServersOidAclToOud:
     @classmethod
     def convert_permissions(
         cls,
-        permissions: t.StrSequence,
+        permissions: Sequence[str],
         *,
         is_entry: bool,
-    ) -> p.Result[t.StrSequence]:
+    ) -> p.Result[Sequence[str]]:
         """Convert OID permission tokens to the ordered OUD allow set.
 
         ``none``/pure negations → no allow (``()``); a pure-negation set expands
@@ -175,15 +177,15 @@ class FlextLdifServersOidAclToOud:
         here and is skipped; a token in neither scope → ``r.fail``.
 
         Returns:
-            The resulting ``p.Result[t.StrSequence]``.
+            The resulting ``p.Result[Sequence[str]]``.
 
         """
         perm_map = c.Ldif.ENTRY_PERM_MAP if is_entry else c.Ldif.ATTR_PERM_MAP
         all_perms = c.Ldif.ALL_ENTRY_PERMS if is_entry else c.Ldif.ALL_ATTR_PERMS
         bases_result = cls._collect_permission_bases(permissions, perm_map, all_perms)
         if bases_result.failure:
-            return r[t.StrSequence].from_failure(bases_result)
-        return r[t.StrSequence].ok(
+            return r[Sequence[str]].from_failure(bases_result)
+        return r[Sequence[str]].ok(
             cls._resolve_allowed_perms(perm_map, all_perms, bases_result.value),
         )
 

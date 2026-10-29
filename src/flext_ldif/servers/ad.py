@@ -15,8 +15,8 @@ from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers import FlextLdifServersRfc
 from flext_ldif.servers._base import FlextLdifServersDialectSchema
 from flext_ldif.servers._rfc import (
+    FlextLdifConstantsServersRfc,
     FlextLdifServersRfcAcl,
-    FlextLdifServersRfcConstants,
     FlextLdifServersRfcEntry,
 )
 
@@ -24,7 +24,7 @@ from flext_ldif.servers._rfc import (
 class FlextLdifServersAd(FlextLdifServersRfc):
     """Active Directory server servers implementation."""
 
-    class Constants(FlextLdifServersRfcConstants):
+    class Constants(FlextLdifConstantsServersRfc):
         """Standardized constants for Active Directory server."""
 
         SERVER_TYPE: ClassVar[str] = "ad"
@@ -93,7 +93,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             "whenChanged",
         ])
         SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
-            FlextLdifServersRfcConstants.SUPPORTED_PERMISSIONS
+            FlextLdifConstantsServersRfc.SUPPORTED_PERMISSIONS
             | frozenset(["control_access"])
         )
         DETECTION_OID_PATTERN: ClassVar[str] = "1\\.2\\.840\\.113556\\."
@@ -173,7 +173,9 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         )
         ACL_TARGET_WILDCARD: ClassVar[str] = "*"
 
-    class Schema(FlextLdifServersDialectSchema):
+    class Schema(
+        FlextLdifServersDialectSchema,
+    ):
         """Active Directory schema server."""
 
         _NORMALIZE_OBJECTCLASS: ClassVar[bool] = True

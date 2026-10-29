@@ -22,10 +22,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
+
 import pytest
 
-from flext_ldif import ldif
-from tests import c, m, p, t, tm, u
+from tests import c, ldif, m, p, tm, u
 
 _BASE_DN = "dc=example"
 
@@ -66,11 +67,11 @@ class TestsFlextLdifCategorizationRealData:
         )
 
     @pytest.fixture
-    def hierarchy_entries(self) -> t.MutableSequenceOf[m.Ldif.Entry]:
+    def hierarchy_entries(self) -> MutableSequence[m.Ldif.Entry]:
         """Mixed entries: three under dc=example, two under dc=example2.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[m.Ldif.Entry]``.
+            The resulting ``MutableSequence[m.Ldif.Entry]``.
 
         """
         return [
@@ -82,7 +83,7 @@ class TestsFlextLdifCategorizationRealData:
         ]
 
     @staticmethod
-    def _dns(entries: t.MutableSequenceOf[m.Ldif.Entry]) -> set[str]:
+    def _dns(entries: MutableSequence[m.Ldif.Entry]) -> set[str]:
         """Collect the DN string values from a category bucket.
 
         Returns:
@@ -94,7 +95,7 @@ class TestsFlextLdifCategorizationRealData:
     def _categorize_filter_and_split(
         self,
         categorization: p.Ldif.CategorizationService,
-        entries: t.MutableSequenceOf[m.Ldif.Entry],
+        entries: MutableSequence[m.Ldif.Entry],
     ) -> tuple[set[str], set[str], set[str]]:
         """Validate, categorize, base-DN filter, then split category DN sets.
 
@@ -117,7 +118,7 @@ class TestsFlextLdifCategorizationRealData:
 
     def test_validate_dns_succeeds_and_returns_all_valid_entries(
         self,
-        hierarchy_entries: t.MutableSequenceOf[m.Ldif.Entry],
+        hierarchy_entries: MutableSequence[m.Ldif.Entry],
     ) -> None:
         """validate_dns returns a success result preserving every valid entry."""
         categorization = ldif.categorization(base_dn=_BASE_DN, server_type=c.Tests.OUD)
@@ -132,7 +133,7 @@ class TestsFlextLdifCategorizationRealData:
 
     def test_categorize_entries_places_domains_ous_and_people_by_contract(
         self,
-        hierarchy_entries: t.MutableSequenceOf[m.Ldif.Entry],
+        hierarchy_entries: MutableSequence[m.Ldif.Entry],
     ) -> None:
         """Domains/OUs categorize as HIERARCHY, person entries as USERS."""
         categorization = ldif.categorization(base_dn=_BASE_DN, server_type=c.Tests.OUD)
@@ -166,7 +167,7 @@ class TestsFlextLdifCategorizationRealData:
 
     def test_filter_by_base_dn_keeps_under_base_and_rejects_outside(
         self,
-        hierarchy_entries: t.MutableSequenceOf[m.Ldif.Entry],
+        hierarchy_entries: MutableSequence[m.Ldif.Entry],
     ) -> None:
         """Base-DN filtering uses hierarchy, so dc=example2 never matches dc=example."""
         categorization = ldif.categorization(base_dn=_BASE_DN, server_type=c.Tests.OUD)

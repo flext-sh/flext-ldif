@@ -8,20 +8,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableSequence, Sequence
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oud import (
-    FlextLdifServersOudConstants,
-    FlextLdifServersOudEntryParseMixin,
-    FlextLdifServersOudHelpersMixin,
+    FlextLdifConstantsServersOud,
+    FlextLdifServersOudEntryParse,
+    FlextLdifServersOudHelpers,
 )
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
 class FlextLdifServersOudEntry(
-    FlextLdifServersOudEntryParseMixin,
+    FlextLdifServersOudEntryParse,
     FlextLdifServersRfcEntry,
 ):
     """Oracle OUD Entry implementation extending RFC 2849.
@@ -31,9 +31,9 @@ class FlextLdifServersOudEntry(
     (OUD post-processing), ``_hook_pre_write_entry`` / ``_write_entry``
     (schema definition normalization + phase-aware ACL handling + comment
     generation). Stateless helpers come from
-    ``FlextLdifServersOudHelpersMixin`` (composed Mixin facade); the parse
+    ``FlextLdifServersOudHelpers`` (composed Mixin facade); the parse
     loop and ACL finalize hook come from
-    ``FlextLdifServersOudEntryParseMixin``.
+    ``FlextLdifServersOudEntryParse``.
     """
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -50,7 +50,7 @@ class FlextLdifServersOudEntry(
             The resulting ``bool``.
 
         """
-        oud_constants = FlextLdifServersOudConstants
+        oud_constants = FlextLdifConstantsServersOud
         patterns_config = m.Ldif.ServerPatternsConfig(
             dn_patterns=oud_constants.DN_DETECTION_PATTERNS,
             attr_prefixes=oud_constants.DETECTION_ATTRIBUTE_PREFIXES,
@@ -125,7 +125,7 @@ class FlextLdifServersOudEntry(
         if has_macros:
             FlextLdifServersOudEntry._log_aci_macros_preserved(entry, aci_attrs)
         return r[m.Ldif.Entry].ok(
-            FlextLdifServersOudHelpersMixin.merge_acl_metadata_to_entry(
+            FlextLdifServersOudHelpers.merge_acl_metadata_to_entry(
                 entry,
                 acl_metadata_extensions,
             ),
@@ -133,12 +133,12 @@ class FlextLdifServersOudEntry(
 
     @staticmethod
     def _process_aci_attribute_values(
-        aci_attrs: t.StrSequence,
-    ) -> p.Result[t.Pair[bool, t.Ldif.MutableMetadataInputMapping]]:
+        aci_attrs: Sequence[str],
+    ) -> p.Result[tuple[bool, t.Ldif.MutableMetadataInputMapping]]:
         """Process each ACI value, accumulating metadata and the macro flag.
 
         Returns:
-            The resulting ``p.Result[t.Pair[bool,
+            The resulting ``p.Result[tuple[bool,
                 t.Ldif.MutableMetadataInputMapping]]``.
 
         """
@@ -147,17 +147,17 @@ class FlextLdifServersOudEntry(
         for aci_value in aci_attrs:
             if not u.matches_type(aci_value, str):
                 continue
-            process_result = FlextLdifServersOudHelpersMixin.process_single_aci_value(
+            process_result = FlextLdifServersOudHelpers.process_single_aci_value(
                 aci_value,
                 acl_metadata_extensions,
             )
             if process_result.failure:
-                return r[t.Pair[bool, t.Ldif.MutableMetadataInputMapping]].from_failure(
+                return r[tuple[bool, t.Ldif.MutableMetadataInputMapping]].from_failure(
                     process_result,
                 )
             if process_result.value:
                 has_macros = True
-        return r[t.Pair[bool, t.Ldif.MutableMetadataInputMapping]].ok((
+        return r[tuple[bool, t.Ldif.MutableMetadataInputMapping]].ok((
             has_macros,
             acl_metadata_extensions,
         ))
@@ -165,7 +165,7 @@ class FlextLdifServersOudEntry(
     @staticmethod
     def _log_aci_macros_preserved(
         entry: m.Ldif.Entry,
-        aci_attrs: t.StrSequence,
+        aci_attrs: Sequence[str],
     ) -> None:
         """Log that an entry carries OUD ACI macros preserved for runtime expansion."""
         aci_list = (
@@ -187,14 +187,14 @@ class FlextLdifServersOudEntry(
             The resulting ``p.Result[m.Ldif.Entry]``.
 
         """
-        if not FlextLdifServersOudHelpersMixin.carries_schema_definitions(entry):
+        if not FlextLdifServersOudHelpers.carries_schema_definitions(entry):
             return r[m.Ldif.Entry].ok(entry)
         if not isinstance(self.parent_server, p.Ldif.RegistryBound):
             return r[m.Ldif.Entry].fail_op(
                 "normalize OUD schema definitions",
                 "Explicit registry-bound parent is required",
             )
-        return FlextLdifServersOudHelpersMixin.normalize_schema_definitions_for_write(
+        return FlextLdifServersOudHelpers.normalize_schema_definitions_for_write(
             entry,
             registry=self.parent_server.registry,
         )
@@ -213,13 +213,13 @@ class FlextLdifServersOudEntry(
         if hook_result.failure:
             return r[str].from_failure(hook_result)
         normalized_entry = hook_result.value
-        entry_to_write = FlextLdifServersOudHelpersMixin.restore_entry_from_metadata(
+        entry_to_write = FlextLdifServersOudHelpers.restore_entry_from_metadata(
             normalized_entry,
         )
         write_options = self._extract_write_format_options(entry_to_write.metadata)
-        ldif_parts: t.MutableSequenceOf[str] = []
+        ldif_parts: MutableSequence[str] = []
         ldif_parts.extend(
-            FlextLdifServersOudHelpersMixin.add_original_entry_comments(
+            FlextLdifServersOudHelpers.add_original_entry_comments(
                 entry_data,
                 write_options,
             ),
@@ -232,17 +232,17 @@ class FlextLdifServersOudEntry(
             and write_options.entry_category != c.Ldif.Categories.ACL
             and write_options.acl_attribute_names
         ):
-            entry_data = FlextLdifServersOudHelpersMixin.comment_acl_attributes(
+            entry_data = FlextLdifServersOudHelpers.comment_acl_attributes(
                 entry_data,
                 write_options.acl_attribute_names,
             )
-            FlextLdifServersOudHelpersMixin.add_oud_acl_comments(
+            FlextLdifServersOudHelpers.add_oud_acl_comments(
                 ldif_parts,
                 entry_data,
                 write_options,
             )
-        if FlextLdifServersOudConstants.ACL_NORMALIZE_DNS_IN_VALUES:
-            entry_data = FlextLdifServersOudHelpersMixin.normalize_acl_dns(entry_data)
+        if FlextLdifConstantsServersOud.ACL_NORMALIZE_DNS_IN_VALUES:
+            entry_data = FlextLdifServersOudHelpers.normalize_acl_dns(entry_data)
         return (
             super()
             ._write_entry(entry_data)

@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT.
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import cast
 
 import pytest
@@ -23,7 +24,7 @@ TARGET = "dc=r123,dc=algar,dc=local"
 
 def _entry(
     dn: str,
-    attributes: t.MappingKV[str, t.StrSequence] | None = None,
+    attributes: Mapping[str, Sequence[str]] | None = None,
 ) -> m.Ldif.Entry:
     """Build a minimal LDIF entry model for transform tests.
 

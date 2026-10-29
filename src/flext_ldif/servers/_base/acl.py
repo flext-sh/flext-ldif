@@ -7,16 +7,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable
+from collections.abc import Callable, MutableSequence
 from typing import Annotated, ClassVar, override
 
 from flext_ldif import c, m, p, r, s, t, u
-from flext_ldif.servers._base import FlextLdifServerMethodsMixin
+from flext_ldif.servers._base import FlextLdifServerMethods
 
 
 class FlextLdifServersBaseSchemaAcl(
     s[t.Ldif.AclPayload],
-    FlextLdifServerMethodsMixin,
+    FlextLdifServerMethods,
     ABC,
 ):
     """Base class for ACL servers - satisfies Acl (structural typing)."""
@@ -45,7 +45,7 @@ class FlextLdifServersBaseSchemaAcl(
     ] = None
 
     @abstractmethod
-    def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
+    def resolve_acl_attributes(self) -> MutableSequence[str]:
         """Return the ACL attribute names owned by this server flavor.
 
         Raises:

@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 import pytest
@@ -22,12 +23,12 @@ from flext_ldif.servers import (
     FlextLdifServersOidAclPipeline,
     FlextLdifServersOidAclRender,
 )
-from tests import c, m, t, tm, u
+from tests import c, m, tm, u
 
 _KIND = c.Ldif.AclSubjectOutcomeKind
 
 
-def _acl_entry(attributes: t.MappingKV[str, t.StrSequence]) -> m.Ldif.Entry:
+def _acl_entry(attributes: Mapping[str, Sequence[str]]) -> m.Ldif.Entry:
     """Build one real entry at the shared ACL test DN.
 
     Returns:

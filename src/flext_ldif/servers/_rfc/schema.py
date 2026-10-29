@@ -9,21 +9,18 @@ from __future__ import annotations
 from typing import ClassVar, Self, cast, overload, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._base import (
-    FlextLdifServerMethodsMixin,
-    FlextLdifServersBaseSchema,
-)
+from flext_ldif.servers._base import FlextLdifServerMethods, FlextLdifServersBaseSchema
 from flext_ldif.servers._rfc import (
-    FlextLdifServersRfcSchemaParseMixin,
-    FlextLdifServersRfcSchemaValuesMixin,
-    FlextLdifServersRfcSchemaWriteMixin,
+    FlextLdifServersRfcSchemaParse,
+    FlextLdifServersRfcSchemaValues,
+    FlextLdifServersRfcSchemaWrite,
 )
 
 
 class FlextLdifServersRfcSchema(
-    FlextLdifServersRfcSchemaWriteMixin,
-    FlextLdifServersRfcSchemaParseMixin,
-    FlextLdifServersRfcSchemaValuesMixin,
+    FlextLdifServersRfcSchemaWrite,
+    FlextLdifServersRfcSchemaParse,
+    FlextLdifServersRfcSchemaValues,
     FlextLdifServersBaseSchema,
 ):
     """RFC 4512 Compliant Schema Server - STRICT Implementation."""
@@ -90,7 +87,7 @@ class FlextLdifServersRfcSchema(
             return self.configure_runtime(
                 server=server, settings=settings, registry=registry, **fields
             )
-        configured = FlextLdifServerMethodsMixin.dispatch_builder(
+        configured = FlextLdifServerMethods.dispatch_builder(
             super().__call__,
             fields,
             frozenset({"data", c.ContextScope.OPERATION}),

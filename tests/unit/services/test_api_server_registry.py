@@ -11,9 +11,9 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif import FlextLdif, ldif, services
+from flext_ldif import FlextLdif, services
 from flext_ldif.servers import FlextLdifServersRfc
-from tests import c, m, tm, u
+from tests import c, ldif, m, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path

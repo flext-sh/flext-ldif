@@ -102,6 +102,15 @@ tests/
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 
 def test_flext_ldif_entry_validation(sample_entry):
     """Test domain entity validation rules."""
@@ -132,6 +141,15 @@ def test_flext_ldif_entry_validation(sample_entry):
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 
 def test_api_service_integration(flext_ldif_api, sample_ldif_content):
     """Test API service with real dependencies."""
@@ -157,6 +175,15 @@ def test_api_service_integration(flext_ldif_api, sample_ldif_content):
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 
 def test_e2e_ldif_processing_workflow(tmp_path):
@@ -197,6 +224,15 @@ def test_e2e_ldif_processing_workflow(tmp_path):
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 
 def test_ldif_rfc_compliance(rfc_compliant_ldif):
@@ -334,6 +370,15 @@ tests/data/
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 
 def generate_ldif_with_entries(count: int) -> str:
     """Generate LDIF content with specified number of entries."""
@@ -434,6 +479,15 @@ pytest --tb=long # Detailed traceback
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 
 def test_new_feature_specification():

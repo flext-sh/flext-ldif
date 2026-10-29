@@ -6,16 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, MutableSequence, Sequence
 from typing import Annotated, ClassVar, Self, override
 
 from flext_cli import m
 
-from flext_ldif import p, r, t
-from flext_ldif._utilities import (
-    FlextLdifEntryValidation,
-    FlextLdifUtilitiesCollectionLdif,
-)
+from flext_ldif import c, p, r, t
 
 
 class FlextLdifModelsDomainDN:
@@ -37,7 +33,7 @@ class FlextLdifModelsDomainDN:
             m.Field(..., description="Final normalized DN (RFC 4514 compliant)"),
         ]
         transformations: Annotated[
-            t.StrSequence,
+            Sequence[str],
             m.Field(description="Ordered list of transformations applied"),
         ]
         had_tab_chars: Annotated[
@@ -73,11 +69,11 @@ class FlextLdifModelsDomainDN:
             m.Field(description="Validation status (use ValidationStatus constants)"),
         ] = "valid"
         validation_warnings: Annotated[
-            t.StrSequence,
+            Sequence[str],
             m.Field(description="Non-fatal validation warnings"),
         ]
         validation_errors: Annotated[
-            t.StrSequence,
+            Sequence[str],
             m.Field(description="Fatal validation errors"),
         ]
 
@@ -124,15 +120,15 @@ class FlextLdifModelsDomainDN:
         @classmethod
         def deduplicate_transformations(
             cls,
-            v: t.MutableSequenceOf[str],
-        ) -> t.MutableSequenceOf[str]:
+            v: MutableSequence[str],
+        ) -> MutableSequence[str]:
             """Remove duplicate transformations while preserving order.
 
             Returns:
-                The resulting ``t.MutableSequenceOf[str]``.
+                The resulting ``MutableSequence[str]``.
 
             """
-            return FlextLdifUtilitiesCollectionLdif.deduplicate_preserve_order(v)
+            return list(dict.fromkeys(v))
 
     class DN(m.Value):
         """Distinguished Name value."""
@@ -177,9 +173,29 @@ class FlextLdifModelsDomainDN:
                 ValueError: If RFC 4514 § 2.3.
 
             """
-            violations = FlextLdifEntryValidation.dn_component_violations(value)
-            if violations:
-                raise ValueError(violations[0])
+            if not value or not value.strip():
+                return value
+            components: list[str] = []
+            current = ""
+            chars = iter(value)
+            for char in chars:
+                if char == "\\":
+                    current += "\\" + next(chars, "")
+                elif char == ",":
+                    if current.strip():
+                        components.append(current.strip())
+                    current = ""
+                else:
+                    current += char
+            if current.strip():
+                components.append(current.strip())
+            for component in components:
+                if not c.Ldif.DN_COMPONENT_RE.match(component):
+                    msg = (
+                        f"RFC 4514 § 2.3: invalid DN component {component!r} in DN "
+                        f"{value!r}"
+                    )
+                    raise ValueError(msg)
             return value
 
         @override
@@ -217,7 +233,7 @@ class FlextLdifModelsDomainDN:
             super().__init__()
             # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed:
             # plain dict registry.
-            self._registry: t.MutableMappingKV[str, t.JsonValue] = {}
+            self._registry: MutableMapping[str, t.JsonValue] = {}
             self._case_variants: MutableMapping[str, set[str]] = {}
 
         @staticmethod
@@ -269,8 +285,8 @@ class FlextLdifModelsDomainDN:
                 The resulting ``p.Result[bool]``.
 
             """
-            inconsistencies: t.MutableSequenceOf[
-                MutableMapping[str, str | int | t.MutableSequenceOf[str]]
+            inconsistencies: MutableSequence[
+                MutableMapping[str, str | int | MutableSequence[str]]
             ] = []
             for normalized_dn, variants in self._case_variants.items():
                 if len(variants) > 1:

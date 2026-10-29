@@ -16,13 +16,13 @@ from flext_ldif._constants import (
     FlextLdifConstantsBaseParts,
     FlextLdifConstantsEnums,
     FlextLdifConstantsServers,
-    FlextLdifConstantsServersBase,
-    FlextLdifConstantsServersOid,
-    FlextLdifConstantsServersOud,
-    FlextLdifConstantsServersRelaxed,
-    FlextLdifConstantsServersRfc,
     FlextLdifConstantsStrEnums,
 )
+from flext_ldif.servers._base import FlextLdifConstantsServersBase
+from flext_ldif.servers._oid import FlextLdifConstantsServersOid
+from flext_ldif.servers._oud import FlextLdifConstantsServersOud
+from flext_ldif.servers._relaxed import FlextLdifConstantsServersRelaxed
+from flext_ldif.servers._rfc import FlextLdifConstantsServersRfc
 
 
 class FlextLdifConstants(flext_cli_c):

@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import Annotated, Self
 
 from flext_core import m
@@ -168,7 +169,7 @@ class FlextLdifModelsResultsStatistics:
             default_factory=FlextLdifModelsCollections.DynamicCounts,
             description="Counts of entries rejected by reason category",
         )
-        events: t.MutableSequenceOf[
+        events: MutableSequence[
             FlextLdifModelsEvents.ConversionEvent | FlextLdifModelsEvents.DnEvent
         ] = m.Field(
             default_factory=list[

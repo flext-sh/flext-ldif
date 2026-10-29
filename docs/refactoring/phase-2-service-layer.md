@@ -223,6 +223,15 @@ FlextLdifServersOud (extends FlextLdifServersRfc)
 ```text
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 # Before
 class FlextLdifServersOud(FlextLdifServersRfc):
     class Schema(FlextLdifServersRfc.Schema):
@@ -248,6 +257,15 @@ class FlextLdifServersOud(FlextLdifServersRfc):
 
 ```text
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 
 class FlextLdifServiceComposer:

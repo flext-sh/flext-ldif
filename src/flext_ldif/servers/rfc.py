@@ -16,8 +16,8 @@ from flext_ldif.servers._base import (
     FlextLdifServersBaseSchemaAcl,
 )
 from flext_ldif.servers._rfc import (
+    FlextLdifConstantsServersRfc,
     FlextLdifServersRfcAcl,
-    FlextLdifServersRfcConstants,
     FlextLdifServersRfcEntry,
     FlextLdifServersRfcSchema,
 )
@@ -26,7 +26,7 @@ from flext_ldif.servers._rfc import (
 class FlextLdifServersRfc(FlextLdifServersBase):
     """RFC-Compliant LDAP Server Implementation - STRICT Baseline."""
 
-    Constants: ClassVar[type[p.Ldif.ServerConstants]] = FlextLdifServersRfcConstants
+    Constants: ClassVar[type[p.Ldif.ServerConstants]] = FlextLdifConstantsServersRfc
     Acl: ClassVar[type[FlextLdifServersBaseSchemaAcl]] = FlextLdifServersRfcAcl
     Schema: ClassVar[type[FlextLdifServersBaseSchema]] = FlextLdifServersRfcSchema
     Entry: ClassVar[type[FlextLdifServersBaseEntry]] = FlextLdifServersRfcEntry

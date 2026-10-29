@@ -10,8 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from examples import m, p, r, t, u
-from flext_ldif import ldif
+from collections.abc import Mapping, MutableMapping, Sequence
+
+from examples import ldif, m, p, r, t, u
 
 
 class ExamplesFlextLdifSchemaValidation:
@@ -68,7 +69,7 @@ class ExamplesFlextLdifSchemaValidation:
                 dn,
                 attrs,
             )
-        invalid_scenarios: t.SequenceOf[tuple[str, t.MutableAttributeMapping]] = [
+        invalid_scenarios: Sequence[tuple[str, t.MutableAttributeMapping]] = [
             (
                 "cn=Invalid Person,ou=People,dc=example,dc=com",
                 {"objectClass": ["person"], "cn": ["Invalid Person"]},
@@ -114,14 +115,14 @@ class ExamplesFlextLdifSchemaValidation:
         return "other"
 
     @staticmethod
-    def _error_analysis(errors: t.SequenceOf[str]) -> t.MutableMappingKV[str, int]:
+    def _error_analysis(errors: Sequence[str]) -> MutableMapping[str, int]:
         """Count validation errors per category.
 
         Returns:
-            The resulting ``t.MutableMappingKV[str, int]``.
+            The resulting ``MutableMapping[str, int]``.
 
         """
-        error_analysis: t.MutableMappingKV[str, int] = {}
+        error_analysis: MutableMapping[str, int] = {}
         for error in errors:
             error_type = ExamplesFlextLdifSchemaValidation._classify_error(error)
             error_analysis[error_type] = error_analysis.get(error_type, 0) + 1
@@ -143,7 +144,7 @@ class ExamplesFlextLdifSchemaValidation:
                 f"Schema validation failed: {validation_result.error}",
             )
         validation_report = validation_result.unwrap()
-        analysis: t.MutableMappingKV[str, t.Numeric | t.MappingKV[str, t.Numeric]] = {
+        analysis: MutableMapping[str, t.Numeric | Mapping[str, t.Numeric]] = {
             "total_entries": len(test_entries),
             "valid_entries": validation_report.valid_entries,
             "invalid_entries": validation_report.invalid_entries,

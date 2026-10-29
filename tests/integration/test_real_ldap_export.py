@@ -19,18 +19,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif import ldif
-from tests import c, tm, u
+from tests import c, ldif, tm, u
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Sequence
+    from collections.abc import Callable
     from pathlib import Path
 
-from tests import m, p, t
+from tests import m, p
 
 
 @pytest.fixture
@@ -71,7 +71,7 @@ class TestsFlextLdifRealLdapExport:
     def _parse_back(
         flext_api: p.Ldif.LdifClient,
         content: str | None,
-    ) -> t.MappingKV[str, t.MappingKV[str, t.StrSequence]]:
+    ) -> Mapping[str, Mapping[str, Sequence[str]]]:
         """Parse exported LDIF and index attribute maps by DN string.
 
         Parsing the export through the public parser is the strongest available
@@ -79,7 +79,7 @@ class TestsFlextLdifRealLdapExport:
         faithfully round-trips every DN and attribute.
 
         Returns:
-            The resulting ``t.MappingKV[str, t.MappingKV[str, t.StrSequence]]``.
+            The resulting ``Mapping[str, Mapping[str, Sequence[str]]]``.
 
         """
         parsed = flext_api.parse_string(tm.not_none(content))

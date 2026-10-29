@@ -6,10 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from flext_ldif import m, p, r, t, u
+from flext_ldif import m, p, r, u
 from flext_ldif.services import FlextLdifServer
 
 if TYPE_CHECKING:
@@ -21,7 +22,7 @@ class FlextLdifWriter(FlextLdifServer):
 
     def write(
         self,
-        entries: t.SequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: Sequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
         *,
         server_type: str | None = None,
         format_options: m.Ldif.WriteFormatOptions | None = None,
@@ -54,7 +55,7 @@ class FlextLdifWriter(FlextLdifServer):
 
     def write_ldif_file(
         self,
-        entries: t.SequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: Sequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
         path: PathLike[str],
         *,
         server_type: str | None = None,
@@ -95,7 +96,7 @@ class FlextLdifWriter(FlextLdifServer):
 
     def write_to_string(
         self,
-        entries: t.SequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: Sequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
         server_type: str | None = None,
         format_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> p.Result[str]:

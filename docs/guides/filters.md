@@ -63,6 +63,15 @@ result = FlextLdifFilters.by_attributes(
 ```text
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_ldif import FlextLdifFilters
 
 my_entries: list = []
@@ -88,7 +97,7 @@ filtered_result = (
     .with_dn_pattern("*,ou=users,dc=example,dc=com")
     .with_objectclass("person")
     .with_required_attributes(["cn", "mail"])
-    .build()  # Returns t.SequenceOf[Entry] directly
+    .build()  # Returns Sequence[Entry] directly
 )
 ```
 

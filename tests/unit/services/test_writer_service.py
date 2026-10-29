@@ -12,27 +12,27 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import errno
+from collections.abc import MutableSequence
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from uuid import uuid4
 
 import pytest
 
-from flext_ldif import ldif
-from tests import c, m, p, t, tm, u
+from tests import c, ldif, m, p, tm, u
 
 
 class TestsFlextLdifWriterService:
     """Assert the observable writing behavior promised by the public API."""
 
     @staticmethod
-    def _entries() -> t.MutableSequenceOf[m.Ldif.Entry]:
+    def _entries() -> MutableSequence[m.Ldif.Entry]:
         return [
             u.Tests.create_real_entry(dn=dn) for dn in sorted(c.Tests.WRITER_ENTRY_DNS)
         ]
 
     @staticmethod
-    def _dns() -> t.VariadicTuple[str]:
+    def _dns() -> tuple[str, ...]:
         return tuple(sorted(c.Tests.WRITER_ENTRY_DNS))
 
     # ── write_to_string: success contract ────────────────────────────────
@@ -322,7 +322,7 @@ class TestsFlextLdifWriterService:
         for line in reason.splitlines():
             tm.that(enabled_text, has=f"# Rejection reason: {line}")
 
-        def active_lines(text: str) -> t.ListOf[str]:
+        def active_lines(text: str) -> list[str]:
             return [line for line in text.splitlines() if not line.startswith("#")]
 
         tm.that(active_lines(enabled_text), eq=active_lines(original_text))

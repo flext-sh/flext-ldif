@@ -8,19 +8,19 @@ from __future__ import annotations
 
 import copy
 from abc import ABC, abstractmethod
-from collections.abc import Mapping, MutableMapping, MutableSequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from typing import Annotated, ClassVar, override
 
 from flext_ldif import c, m, p, r, s, t, u
 from flext_ldif.servers._base import (
-    FlextLdifServerMethodsMixin,
+    FlextLdifServerMethods,
     FlextLdifServersEntryWriteContext,
 )
 
 
 class FlextLdifServersBaseEntry(
     s[t.Ldif.EntryPayload],
-    FlextLdifServerMethodsMixin,
+    FlextLdifServerMethods,
     ABC,
 ):
     """Base class for entry processing servers - satisfies Entry (structural typing)."""
@@ -132,7 +132,7 @@ class FlextLdifServersBaseEntry(
             return r[t.Ldif.EntryPayload].ok(str_result.map_or(""))
         return r[t.Ldif.EntryPayload].ok("")
 
-    def parse_server(self, value: str) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
+    def parse_server(self, value: str) -> p.Result[MutableSequence[m.Ldif.Entry]]:
         """Parse LDIF content into entry models.
 
         Args:
@@ -144,7 +144,7 @@ class FlextLdifServersBaseEntry(
         """
         return self._parse_content(value)
 
-    def parse_input(self, ldif_text: str) -> t.MutableSequenceOf[m.Ldif.Entry] | None:
+    def parse_input(self, ldif_text: str) -> MutableSequence[m.Ldif.Entry] | None:
         """Parse LDIF text for direct server consumers.
 
         Args:
@@ -190,7 +190,7 @@ class FlextLdifServersBaseEntry(
 
     def write(
         self,
-        entry_data: m.Ldif.Entry | t.MutableSequenceOf[m.Ldif.Entry],
+        entry_data: m.Ldif.Entry | MutableSequence[m.Ldif.Entry],
         write_options: m.Ldif.WriteFormatOptions | None = None,
     ) -> p.Result[str]:
         """Write entry models to an LDIF string.
@@ -211,7 +211,7 @@ class FlextLdifServersBaseEntry(
     def _build_header_lines(
         write_options: m.Ldif.WriteFormatOptions | None,
         entry_count: int,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Build the header lines requested by the write options.
 
         Args:
@@ -222,7 +222,7 @@ class FlextLdifServersBaseEntry(
             Header lines in output order.
 
         """
-        lines: t.MutableSequenceOf[str] = []
+        lines: MutableSequence[str] = []
         if write_options is None:
             return lines
         if write_options.include_version_header:
@@ -237,7 +237,7 @@ class FlextLdifServersBaseEntry(
 
     def _convert_raw_attributes(
         self,
-        entry_attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
+        entry_attrs: MutableMapping[str, MutableSequence[str | bytes]],
     ) -> t.MutableStrSequenceMapping:
         """Normalize raw LDIF attribute values into canonical form.
 
@@ -299,7 +299,7 @@ class FlextLdifServersBaseEntry(
     @staticmethod
     def _hook_validate_entry_raw(
         dn: str,
-        attrs: MutableMapping[str, t.MutableSequenceOf[str | bytes]],
+        attrs: MutableMapping[str, MutableSequence[str | bytes]],
     ) -> p.Result[bool]:
         """Validate a raw entry before parsing.
 
@@ -377,7 +377,7 @@ class FlextLdifServersBaseEntry(
     def _parse_content(
         self,
         ldif_content: str,
-    ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
+    ) -> p.Result[MutableSequence[m.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models (internal)."""
         del ldif_content
         msg = "Entry servers must implement _parse_content"
@@ -386,7 +386,7 @@ class FlextLdifServersBaseEntry(
     @abstractmethod
     def _parse_entry_from_lines(
         self,
-        lines: t.MutableSequenceOf[str],
+        lines: MutableSequence[str],
     ) -> p.Result[m.Ldif.Entry]:
         """Parse one unfolded LDIF record into an Entry model."""
         del lines
@@ -411,7 +411,7 @@ class FlextLdifServersBaseEntry(
         restored = context.restore_original()
         if restored is not None:
             return restored
-        output_lines: t.MutableSequenceOf[str] = []
+        output_lines: MutableSequence[str] = []
         header_failure = context.emit_entry_header(output_lines)
         if header_failure is not None:
             return header_failure
@@ -419,7 +419,7 @@ class FlextLdifServersBaseEntry(
 
     def _write_entry_list(
         self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry],
+        entries: MutableSequence[m.Ldif.Entry],
         write_options: m.Ldif.WriteFormatOptions | None,
     ) -> p.Result[str]:
         """Write a sequence of entries to LDIF.
@@ -434,7 +434,7 @@ class FlextLdifServersBaseEntry(
         """
         header_lines = self._build_header_lines(write_options, len(entries))
 
-        def format_output(results: t.StrSequence) -> str:
+        def format_output(results: Sequence[str]) -> str:
             # RFC 2849 SEP: a blank line closes the header and every record.
             blocks = [
                 *(("\n".join(header_lines) + "\n",) if header_lines else ()),

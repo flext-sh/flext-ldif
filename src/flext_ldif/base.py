@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping
 from typing import Self, override
 
 from flext_core import FlextService
@@ -65,7 +66,7 @@ class FlextLdifServiceBase[TDomainResult](
             ValueError: If both server and registry dependencies are supplied.
 
         """
-        payload: t.MutableMappingKV[
+        payload: MutableMapping[
             str,
             t.JsonValue | p.Registry | p.Ldif.Settings | None,
         ] = dict(fields)

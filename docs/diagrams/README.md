@@ -185,6 +185,15 @@ note right : Version: 0.12.0-dev
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 # docs/diagrams/generate.py - Automated diagram generation
 from pathlib import Path
 

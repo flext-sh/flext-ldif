@@ -20,12 +20,10 @@ import pytest
 
 from flext_ldif import FlextLdif
 from flext_ldif.services import FlextLdifConversion, FlextLdifServer
-from tests import m, tm
+from tests import m, p, t, tm
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-from tests import p, t
 
 pytestmark = [pytest.mark.integration]
 
@@ -47,7 +45,7 @@ def _resolve_schema_server(
 
 def _assert_definition_roundtrip(
     registry: FlextLdifServer,
-    case: tuple[str, str, str, t.VariadicTuple[str], t.VariadicTuple[str]],
+    case: tuple[str, str, str, tuple[str, ...], tuple[str, ...]],
     parse_method: t.Tests.ParseMethod,
 ) -> None:
     """Parse the definition in the source server and write it in the target."""
@@ -79,7 +77,6 @@ def _assert_definition_roundtrip(
 class TestsFlextLdifCrossDirectionConversion:
     """Cross-direction schema conversion observable behavior."""
 
-    @staticmethod
     @pytest.fixture
     def server_registry() -> FlextLdifServer:
         """Real server registry (unit under test, no mocks).
@@ -90,7 +87,6 @@ class TestsFlextLdifCrossDirectionConversion:
         """
         return FlextLdifServer(registry=FlextLdif().registry)
 
-    @staticmethod
     @pytest.fixture
     def conversion() -> FlextLdifConversion:
         """Real entry-level conversion service (unit under test).
@@ -167,7 +163,7 @@ class TestsFlextLdifCrossDirectionConversion:
     )
     def test_attribute_definition_conversion_normalizes_output(
         server_registry: FlextLdifServer,
-        case: tuple[str, str, str, t.VariadicTuple[str], t.VariadicTuple[str]],
+        case: tuple[str, str, str, tuple[str, ...], tuple[str, ...]],
     ) -> None:
         """Parsing in the source server and writing in the target normalizes text."""
         _assert_definition_roundtrip(server_registry, case, "parse_attribute")
@@ -222,7 +218,7 @@ class TestsFlextLdifCrossDirectionConversion:
     )
     def test_objectclass_definition_conversion_normalizes_output(
         server_registry: FlextLdifServer,
-        case: tuple[str, str, str, t.VariadicTuple[str], t.VariadicTuple[str]],
+        case: tuple[str, str, str, tuple[str, ...], tuple[str, ...]],
     ) -> None:
         """Parsing in source and writing in target preserves/normalizes semantics."""
         _assert_definition_roundtrip(server_registry, case, "parse_objectclass")

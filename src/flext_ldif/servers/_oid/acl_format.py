@@ -6,15 +6,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Mapping, MutableMapping, MutableSequence
 from typing import ClassVar
 
 from flext_ldif import c, m, p, t, u
-from flext_ldif.servers._oid import FlextLdifServersOidConstants
+from flext_ldif.servers._oid import FlextLdifConstantsServersOid
 from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 
 
-class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfcAcl):
+class FlextLdifServersOidAclFormat(FlextLdifServersRfcAcl):
     """OID ACL OID ACL clause formatting helpers."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -27,10 +27,10 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfcAcl):
             The resulting ``str``.
 
         """
-        allowed_perms: t.MutableSequenceOf[str] = []
+        allowed_perms: MutableSequence[str] = []
         for perm, allowed in permissions.items():
             if allowed:
-                oid_perm_name = FlextLdifServersOidConstants.ACL_PERMISSION_NAMES.get(
+                oid_perm_name = FlextLdifConstantsServersOid.ACL_PERMISSION_NAMES.get(
                     perm,
                     perm,
                 )
@@ -47,10 +47,10 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfcAcl):
             The resulting ``str``.
 
         """
-        clean_value = FlextLdifServersOidAclFormatMixin.clean_subject_value(
+        clean_value = FlextLdifServersOidAclFormat.clean_subject_value(
             subject_value,
         )
-        sc = FlextLdifServersOidConstants
+        sc = FlextLdifConstantsServersOid
         match subject_type.lower():
             case sc.OidAclSubjectType.SELF:
                 result = sc.OidAclSubjectType.SELF
@@ -75,7 +75,7 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfcAcl):
         return result
 
     @staticmethod
-    def _format_oid_target(target_dn: str, attributes: t.MutableSequenceOf[str]) -> str:
+    def _format_oid_target(target_dn: str, attributes: MutableSequence[str]) -> str:
         """Format OID ACL target clause.
 
         Returns:
@@ -124,7 +124,7 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfcAcl):
         | t.MutableConfigurationMapping
         | MutableMapping[
             str,
-            t.Ldif.Scalar | t.MutableSequenceOf[str] | t.MutableAttributeMapping | None,
+            t.Ldif.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
         ]
         | str
         | None,
@@ -178,14 +178,14 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfcAcl):
         metadata: m.Ldif.ServerMetadata
         | MutableMapping[
             str,
-            t.Ldif.Scalar | t.MutableSequenceOf[str] | t.MutableAttributeMapping | None,
+            t.Ldif.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
         ]
         | None,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Build OID ACL extension clauses from metadata.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         if not metadata:
@@ -200,7 +200,7 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfcAcl):
         metadata: m.Ldif.ServerMetadata
         | MutableMapping[
             str,
-            t.Ldif.Scalar | t.MutableSequenceOf[str] | t.MutableAttributeMapping | None,
+            t.Ldif.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
         ],
     ) -> t.Ldif.MutableMetadataMapping:
         """Extract extensions dict from metadata, converting types if needed.
@@ -218,14 +218,14 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfcAcl):
     @staticmethod
     def _format_extensions(
         meta_extensions: t.Ldif.MutableMetadataMapping,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Format extension values based on metadata key type.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
-        extensions: t.MutableSequenceOf[str] = []
+        extensions: MutableSequence[str] = []
         acl_filter = meta_extensions.get(c.Ldif.ACL_FILTER)
         if isinstance(acl_filter, str) and acl_filter:
             extensions.append(f"filter={acl_filter}")
@@ -252,4 +252,4 @@ class FlextLdifServersOidAclFormatMixin(FlextLdifServersRfcAcl):
         return extensions
 
 
-__all__: list[str] = ["FlextLdifServersOidAclFormatMixin"]
+__all__: list[str] = ["FlextLdifServersOidAclFormat"]

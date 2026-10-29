@@ -6,13 +6,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import m, p, r, t, u
 from flext_ldif.servers._base import FlextLdifServersBaseEntry
 
 
-class FlextLdifServersRfcEntry(FlextLdifServersBaseEntry):
+class FlextLdifServersRfcEntry(
+    FlextLdifServersBaseEntry,
+):
     """RFC 2849 compliant LDIF entry processing."""
 
     __doc_inline__ = True
@@ -78,7 +81,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBaseEntry):
     @override
     def _parse_entry_from_lines(
         self,
-        lines: t.MutableSequenceOf[str],
+        lines: MutableSequence[str],
     ) -> p.Result[m.Ldif.Entry]:
         """Parse one unfolded LDIF record using the shared RFC utility.
 
@@ -110,34 +113,34 @@ class FlextLdifServersRfcEntry(FlextLdifServersBaseEntry):
     def _parse_content(
         self,
         ldif_content: str,
-    ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
+    ) -> p.Result[MutableSequence[m.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models.
 
         Returns:
-            The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
+            The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
 
         """
         if not ldif_content or not ldif_content.strip():
-            return r[t.MutableSequenceOf[m.Ldif.Entry]].ok([])
+            return r[MutableSequence[m.Ldif.Entry]].ok([])
         try:
             return self._parse_ldif_records(ldif_content)
         except ValueError as exc:
             FlextLdifServersRfcEntry._module_logger.exception(
                 "Failed to parse LDIF content",
             )
-            return r[t.MutableSequenceOf[m.Ldif.Entry]].fail_op("Processing", exc)
+            return r[MutableSequence[m.Ldif.Entry]].fail_op("Processing", exc)
 
     def _parse_ldif_records(
         self,
         ldif_content: str,
-    ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
+    ) -> p.Result[MutableSequence[m.Ldif.Entry]]:
         """Parse all LDIF records from non-empty content.
 
         Returns:
-            The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
+            The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
 
         """
-        entries: t.MutableSequenceOf[m.Ldif.Entry] = []
+        entries: MutableSequence[m.Ldif.Entry] = []
         for record_lines in u.Ldif.split_ldif_records(ldif_content):
             result = self._parse_entry_from_lines(record_lines)
             if result.success:
@@ -147,7 +150,7 @@ class FlextLdifServersRfcEntry(FlextLdifServersBaseEntry):
                 "Skipping invalid entry block",
                 error=result.error or "",
             )
-        return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(entries)
+        return r[MutableSequence[m.Ldif.Entry]].ok(entries)
 
 
 __all__: list[str] = ["FlextLdifServersRfcEntry"]

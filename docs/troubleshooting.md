@@ -131,6 +131,15 @@ MemoryError: Unable to allocate array
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 import pathlib
 import typing
 
@@ -298,6 +307,15 @@ u.Cli.print(f"\nEntry {i + 1}: {entry.dn}")
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 import pathlib
 import time
 
@@ -380,6 +398,15 @@ result = container.bind("ldif_api", api)
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from flext_core import FlextContainer
 
@@ -515,6 +542,15 @@ api = ldif()
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_core import FlextContainer
 
 from flext_ldif import ldif, t, u
@@ -604,6 +640,15 @@ def print_health_check_report() -> None:
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_ldif import FlextLdif, FlextLdifModels, ldif, u
 
 
@@ -645,6 +690,15 @@ When creating support requests, include:
 
 ```text
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 import platform
 import sys

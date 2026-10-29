@@ -6,9 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
 
-from flext_ldif import c, m, p, r, t, u
+from flext_ldif import c, m, p, r, u
 
 if TYPE_CHECKING:
     from flext_ldif.servers._base import (
@@ -26,7 +27,7 @@ class FlextLdifServersEntryWriteBodyEmitter:
 
     def emit_modify_entry(
         self,
-        output_lines: t.MutableSequenceOf[str],
+        output_lines: MutableSequence[str],
     ) -> p.Result[str]:
         """Emit the LDIF modify body (change operations or attribute ops).
 
@@ -52,7 +53,7 @@ class FlextLdifServersEntryWriteBodyEmitter:
 
     def _emit_change_operation(
         self,
-        output_lines: t.MutableSequenceOf[str],
+        output_lines: MutableSequence[str],
         change_operation: m.Ldif.ChangeOperation,
     ) -> None:
         """Emit one LDIF change operation with its values."""
@@ -75,7 +76,7 @@ class FlextLdifServersEntryWriteBodyEmitter:
 
     def emit_modifydn_entry(
         self,
-        output_lines: t.MutableSequenceOf[str],
+        output_lines: MutableSequence[str],
     ) -> p.Result[str]:
         """Emit the LDIF moddn/modrdn body.
 
@@ -110,7 +111,7 @@ class FlextLdifServersEntryWriteBodyEmitter:
 
     def emit_add_entry(
         self,
-        output_lines: t.MutableSequenceOf[str],
+        output_lines: MutableSequence[str],
     ) -> p.Result[str]:
         """Emit the entry attribute body with hidden-attribute handling.
 
@@ -132,7 +133,7 @@ class FlextLdifServersEntryWriteBodyEmitter:
     def emit_changetype_body(
         self,
         entry_data: m.Ldif.Entry,
-        output_lines: t.MutableSequenceOf[str],
+        output_lines: MutableSequence[str],
     ) -> p.Result[str]:
         """Emit the changetype line and dispatch the matching entry body.
 
@@ -163,7 +164,7 @@ class FlextLdifServersEntryWriteBodyEmitter:
 
     def _emit_modify_attribute_operations(
         self,
-        output_lines: t.MutableSequenceOf[str],
+        output_lines: MutableSequence[str],
     ) -> None:
         """Emit attribute-level modify operations from entry attributes."""
         entry = self._entry
@@ -180,9 +181,9 @@ class FlextLdifServersEntryWriteBodyEmitter:
 
     def _emit_single_modify_attribute(
         self,
-        output_lines: t.MutableSequenceOf[str],
+        output_lines: MutableSequence[str],
         attr_name: str,
-        values: t.MutableSequenceOf[str],
+        values: MutableSequence[str],
     ) -> None:
         """Emit one attribute's modify operation block."""
         non_empty = [v for v in values if v]
@@ -209,9 +210,9 @@ class FlextLdifServersEntryWriteBodyEmitter:
 
     def _emit_entry_attribute_values(
         self,
-        output_lines: t.MutableSequenceOf[str],
+        output_lines: MutableSequence[str],
         attr_name: str,
-        values: t.MutableSequenceOf[str],
+        values: MutableSequence[str],
     ) -> None:
         """Emit one attribute's values with hidden-attribute comment handling."""
         attr_is_hidden = attr_name.lower() in self._options.hidden_attributes

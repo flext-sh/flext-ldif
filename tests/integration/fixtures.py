@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -100,7 +101,7 @@ def unique_dn_suffix(worker_id: str, request: pytest.FixtureRequest) -> str:
 
     """
     getattr(request, "node", None)
-    test_name: t.StrSequence = ()
+    test_name: Sequence[str] = ()
     test_name_clean: str = "".join(
         ch if ch.isalnum() or ch in {"-", "_"} else "-" for ch in test_name
     )[:20]
@@ -159,8 +160,7 @@ def ldap_connection(ldap_container: t.JsonMapping) -> Generator[p.Ldap3Connectio
 
 @pytest.fixture
 def clean_test_ou(
-    ldap_connection: p.Ldap3Connection,
-    make_test_base_dn: Callable[[str], str],
+    ldap_connection: p.Ldap3Connection, make_test_base_dn: Callable[[str], str]
 ) -> Generator[str]:
     """Create and clean up an isolated OU for integration tests.
 
@@ -174,9 +174,9 @@ def clean_test_ou(
         "(objectClass=*)",
         search_scope=c.Ldap3SearchScope.SUBTREE.value,
     )
-    entries: t.SequenceOf[p.Ldap3Entry] = list(ldap_connection.entries)
+    entries: Sequence[p.Ldap3Entry] = list(ldap_connection.entries)
     if entries:
-        dns_to_delete: t.StrSequence = [str(entry.entry_dn) for entry in entries]
+        dns_to_delete: Sequence[str] = [str(entry.entry_dn) for entry in entries]
         for dn in reversed(dns_to_delete):
             ldap_connection.delete(dn)
     ldap_connection.add(test_ou_dn, ["organizationalUnit"], {"ou": "FlextLdifTests"})
@@ -186,8 +186,8 @@ def clean_test_ou(
         "(objectClass=*)",
         search_scope=c.Ldap3SearchScope.SUBTREE.value,
     )
-    entries2: t.SequenceOf[p.Ldap3Entry] = list(ldap_connection.entries)
+    entries2: Sequence[p.Ldap3Entry] = list(ldap_connection.entries)
     if entries2:
-        dns_to_delete2: t.StrSequence = [str(entry.entry_dn) for entry in entries2]
+        dns_to_delete2: Sequence[str] = [str(entry.entry_dn) for entry in entries2]
         for dn in reversed(dns_to_delete2):
             ldap_connection.delete(dn)

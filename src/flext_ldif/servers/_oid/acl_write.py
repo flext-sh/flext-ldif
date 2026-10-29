@@ -6,36 +6,36 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oid import (
-    FlextLdifServersOidAclFormatMixin,
-    FlextLdifServersOidAclSubjectMixin,
-    FlextLdifServersOidConstants,
+    FlextLdifConstantsServersOid,
+    FlextLdifServersOidAclFormat,
+    FlextLdifServersOidAclSubject,
 )
 
 
-class FlextLdifServersOidAclWriteMixin(
-    FlextLdifServersOidAclSubjectMixin,
-    FlextLdifServersOidAclFormatMixin,
+class FlextLdifServersOidAclWrite(
+    FlextLdifServersOidAclSubject,
+    FlextLdifServersOidAclFormat,
 ):
     """OID ACL OID ACL write assembly."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     @override
-    def resolve_acl_attributes(self) -> t.MutableSequenceOf[str]:
+    def resolve_acl_attributes(self) -> MutableSequence[str]:
         """Get RFC + OID extensions.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         return [
-            *FlextLdifServersOidConstants.RFC_ACL_ATTRIBUTES,
-            *FlextLdifServersOidConstants.OID_ACL_ATTRIBUTES,
+            *c.Ldif.RFC_ACL_ATTRIBUTES,
+            *FlextLdifConstantsServersOid.OID_ACL_ATTRIBUTES,
         ]
 
     def _authorize_write_permissions(
@@ -45,14 +45,14 @@ class FlextLdifServersOidAclWriteMixin(
         metadata: m.Ldif.ServerMetadata
         | MutableMapping[
             str,
-            t.Ldif.Scalar | t.MutableSequenceOf[str] | t.MutableAttributeMapping | None,
+            t.Ldif.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
         ]
         | None,
-    ) -> t.StrPair:
+    ) -> tuple[str, str]:
         """Prepare OID subject and permissions clauses for ACL write.
 
         Returns:
-            The resulting ``t.StrPair``.
+            The resulting ``tuple[str, str]``.
 
         """
         subject_dict = self._normalize_to_dict(acl_subject)
@@ -88,12 +88,12 @@ class FlextLdifServersOidAclWriteMixin(
         """
         del _format_option
         if acl_data.raw_acl and acl_data.raw_acl.startswith(
-            FlextLdifServersOidConstants.ORCLACI + ":",
+            FlextLdifConstantsServersOid.ORCLACI + ":",
         ):
             return r[str].ok(acl_data.raw_acl)
         acl_parts = [
-            FlextLdifServersOidConstants.ORCLACI + ":",
-            FlextLdifServersOidConstants.ACL_ACCESS_TO,
+            FlextLdifConstantsServersOid.ORCLACI + ":",
+            FlextLdifConstantsServersOid.ACL_ACCESS_TO,
         ]
         if acl_data.target:
             target_public = m.Ldif.AclTarget.model_validate(
@@ -125,7 +125,7 @@ class FlextLdifServersOidAclWriteMixin(
                 metadata_public,
             )
             acl_parts.extend([
-                FlextLdifServersOidConstants.ACL_BY,
+                FlextLdifConstantsServersOid.ACL_BY,
                 subject_clause,
                 permissions_clause,
             ])
@@ -138,4 +138,4 @@ class FlextLdifServersOidAclWriteMixin(
         return r[str].ok(orclaci_str)
 
 
-__all__: list[str] = ["FlextLdifServersOidAclWriteMixin"]
+__all__: list[str] = ["FlextLdifServersOidAclWrite"]

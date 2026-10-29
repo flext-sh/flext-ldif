@@ -34,7 +34,6 @@ def _has_schema_attrs(entry: m.Ldif.Entry) -> bool:
 class TestsFlextLdifRfcDockerReal:
     """Behavioral contract tests for LDIF parse/write over real fixtures."""
 
-    @staticmethod
     @pytest.fixture
     def server_registry() -> FlextLdifServer:
         """Real server registry (genuine collaborator, not mocked).
@@ -45,7 +44,6 @@ class TestsFlextLdifRfcDockerReal:
         """
         return FlextLdifServer(registry=FlextLdif().registry)
 
-    @staticmethod
     @pytest.fixture
     def fixtures_dir() -> Path:
         """Root fixtures directory.

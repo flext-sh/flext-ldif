@@ -8,13 +8,13 @@ from __future__ import annotations
 
 from flext_ldif.servers import FlextLdifServersRfc
 from flext_ldif.servers._oid import (
+    FlextLdifConstantsServersOid,
     FlextLdifServersOidAcl,
     FlextLdifServersOidAclAssemble,
     FlextLdifServersOidAclConvert,
     FlextLdifServersOidAclPipeline,
     FlextLdifServersOidAclRender,
     FlextLdifServersOidAclToOud,
-    FlextLdifServersOidConstants,
     FlextLdifServersOidEntry,
     FlextLdifServersOidSchema,
 )
@@ -23,7 +23,7 @@ from flext_ldif.servers._oid import (
 class FlextLdifServersOid(FlextLdifServersRfc):
     """Oracle OID server servers - implements t.JsonValue."""
 
-    class Constants(FlextLdifServersOidConstants):
+    class Constants(FlextLdifConstantsServersOid):
         """OID server constants."""
 
     class Acl(FlextLdifServersOidAcl):
@@ -45,13 +45,13 @@ class FlextLdifServersOid(FlextLdifServersRfc):
 # their module-level test re-export (tests/unit/servers/test_oid_acl_*.py)
 # satisfies ruff F401 without leaking further up the generated chain.
 __all__: list[str] = [
+    "FlextLdifConstantsServersOid",
     "FlextLdifServersOid",
     "FlextLdifServersOidAclAssemble",
     "FlextLdifServersOidAclConvert",
     "FlextLdifServersOidAclPipeline",
     "FlextLdifServersOidAclRender",
     "FlextLdifServersOidAclToOud",
-    "FlextLdifServersOidConstants",
     "FlextLdifServersOidEntry",
     "FlextLdifServersOidSchema",
 ]

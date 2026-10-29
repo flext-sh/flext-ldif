@@ -9,14 +9,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import ClassVar
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._oid import FlextLdifServersOidConstants
+from flext_ldif.servers._oid import FlextLdifConstantsServersOid
 from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 
 
-class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
+class FlextLdifServersOidAclSubject(FlextLdifServersRfcAcl):
     """OID ACL subject detection and OID/RFC subject mapping."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -31,7 +32,7 @@ class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
         """
         if not content:
             return None
-        const = FlextLdifServersOidConstants
+        const = FlextLdifConstantsServersOid
         for pattern_key, (_, subject_type, _) in const.ACL_SUBJECT_PATTERNS.items():
             if pattern_key.lower() in content.lower():
                 detected_subject: str = subject_type
@@ -84,7 +85,7 @@ class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
             The resulting ``str``.
 
         """
-        sc = FlextLdifServersOidConstants
+        sc = FlextLdifConstantsServersOid
         if (
             isinstance(source_subject_type, str)
             and source_subject_type
@@ -123,7 +124,7 @@ class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
             The resulting ``tuple[c.Ldif.AclSubjectType, str]``.
 
         """
-        sc = FlextLdifServersOidConstants
+        sc = FlextLdifConstantsServersOid
         if oid_subject_type == sc.OidAclSubjectType.SELF:
             result = (c.Ldif.AclSubjectType.SELF, "ldap:///self")
         elif oid_subject_type == sc.OidAclSubjectType.GROUP_DN:
@@ -154,7 +155,7 @@ class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
         rfc_subject_type = str(rfc_subject.subject_type)
         rfc_subject_value = rfc_subject.subject_value
         source_subject_type = self._get_source_subject_type(metadata)
-        sc = FlextLdifServersOidConstants
+        sc = FlextLdifConstantsServersOid
         if isinstance(source_subject_type, str) and source_subject_type in {
             sc.OidAclSubjectType.DN_ATTR,
             sc.OidAclSubjectType.GUID_ATTR,
@@ -205,7 +206,7 @@ class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
             The resulting ``str``.
 
         """
-        sc = FlextLdifServersOidConstants
+        sc = FlextLdifConstantsServersOid
         if (
             oid_subject_type
             in {
@@ -215,7 +216,7 @@ class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
             }
             and "#" not in subject_value
         ):
-            type_suffix: t.MappingKV[str, str] = {
+            type_suffix: Mapping[str, str] = {
                 sc.OidAclSubjectType.DN_ATTR: sc.OidAclSubjectSuffix.LDAPURL,
                 sc.OidAclSubjectType.GUID_ATTR: sc.OidAclSubjectSuffix.USERDN,
                 sc.OidAclSubjectType.GROUP_ATTR: sc.OidAclSubjectSuffix.GROUPDN,
@@ -224,4 +225,4 @@ class FlextLdifServersOidAclSubjectMixin(FlextLdifServersRfcAcl):
         return subject_value
 
 
-__all__: list[str] = ["FlextLdifServersOidAclSubjectMixin"]
+__all__: list[str] = ["FlextLdifServersOidAclSubject"]

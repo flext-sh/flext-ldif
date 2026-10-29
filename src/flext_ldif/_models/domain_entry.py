@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
 from typing import Annotated, ClassVar, Self, override
 
@@ -20,7 +20,6 @@ from flext_ldif._models import (
     FlextLdifModelsDomainEntryControl,
     FlextLdifModelsDomainMetadata,
 )
-from flext_ldif._utilities import FlextLdifUtilitiesEntry
 
 
 class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
@@ -43,7 +42,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             validate_assignment=True,
             extra="allow",
         )
-        _DATETIME_FIELDS: ClassVar[t.StrPair] = ("created_at", "updated_at")
+        _DATETIME_FIELDS: ClassVar[tuple[str, str]] = ("created_at", "updated_at")
         _VALIDATION_RULES_KEY: ClassVar[str] = "validation_rules"
         _VALIDATION_SERVER_TYPE_KEY: ClassVar[str] = "validation_server_type"
         dn: Annotated[
@@ -77,13 +76,11 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             ),
         ] = c.Ldif.RecordKind.CONTENT
         controls: Annotated[
-            t.SequenceOf[FlextLdifModelsDomainEntryControl.Control],
+            Sequence[FlextLdifModelsDomainEntryControl.Control],
             m.Field(description="RFC 2849 control lines associated with the record"),
         ] = m.Field(default_factory=tuple)
         change_operations: Annotated[
-            t.MutableSequenceOf[
-                FlextLdifModelsDomainEntryChangeOperation.ChangeOperation
-            ],
+            MutableSequence[FlextLdifModelsDomainEntryChangeOperation.ChangeOperation],
             m.Field(
                 description="Structured modify operation blocks for changetype=modify",
             ),
@@ -186,7 +183,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             m.Field(description="RFC 2849 newsuperior field for moddn/modrdn records"),
         ] = None
         raw_record_lines: Annotated[
-            t.MutableSequenceOf[str],
+            MutableSequence[str],
             m.Field(
                 description="Original unfolded LDIF lines for loss-aware round-trip",
             ),
@@ -250,9 +247,13 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             empty_attrs: t.Ldif.UnconvertedAttributes = {}
             if self.metadata is None:
                 return empty_attrs
-            # mro-wgwh.5 (agent: kimi-coder) — extensions is a plain mapping now.
             result = self.metadata.extensions.get("unconverted_attributes")
-            return FlextLdifUtilitiesEntry.normalize_unconverted_attributes(result)
+            if not isinstance(result, Mapping):
+                return empty_attrs
+            return {
+                k: [str(x) for x in v] if isinstance(v, (list, tuple)) else [str(v)]
+                for k, v in result.items()
+            }
 
         @m.model_validator(mode="before")
         @classmethod
@@ -338,7 +339,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             return c.Ldif.ServerTypes.RFC
 
         @override
-        def model_post_init(self, context: t.ScalarMapping | None, /) -> None:
+        def model_post_init(self, context: Mapping[str, t.Scalar] | None, /) -> None:
             """Post-init hook to ensure metadata is always initialized.
 
             Properly initialized before any code tries to access it.
@@ -371,101 +372,22 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
 
         @m.model_validator(mode="after")
         def validate_entry_rfc_compliance(self) -> Self:
-            """Validate RFC compliance and capture violations without rejecting.
-
-            Checks RFC 2849 section 2 (DN and attribute presence), RFC 4514
-            sections 2.3 and 2.4 (DN format), and RFC 4512 section 2.5
-            (attribute name format). Problematic entries are preserved for
-            round-trip handling; violations are stored in validation metadata
-            for downstream processing.
+            """Validate RFC compliance (RFC validation belongs in utilities/services).
 
             Returns:
-                The validated entry.
+                The resulting ``Self``.
 
             """
-            dn_value, violations = FlextLdifUtilitiesEntry.collect_rfc_violations(self)
-            if not violations or self.metadata is None:
-                return self
-            previous = self.metadata.validation_results
-            self.metadata.validation_results = (
-                FlextLdifModelsDomainMetadata.ValidationMetadata(
-                    rfc_violations=list(violations),
-                    errors=[],
-                    warnings=[],
-                    server_specific_violations=[],
-                    context=FlextLdifUtilitiesEntry.rfc_violation_context(
-                        self,
-                        dn_value,
-                        len(violations),
-                        {} if previous is None else previous.context,
-                    ),
-                )
-            )
             return self
 
         @m.model_validator(mode="after")
         def validate_server_specific_rules(self) -> Self:
-            """Validate the entry with server-injected validation rules.
+            """Validate server-injected rules (that belongs in utilities/services).
 
             Returns:
-                The validated entry, with server-specific violations recorded
-                in validation metadata when rules apply.
+                The resulting ``Self``.
 
             """
-            if (
-                self.metadata is None
-                or self._VALIDATION_RULES_KEY not in self.metadata.extensions
-            ):
-                return self
-            validation_rules = self.metadata.extensions.get(self._VALIDATION_RULES_KEY)
-            rules = (
-                FlextLdifUtilitiesEntry.parse_validation_rules(validation_rules)
-                if isinstance(validation_rules, (str, Mapping))
-                else None
-            )
-            if rules is None:
-                return self
-            dn_value = self.dn.value if self.dn else ""
-            server_violations: t.MutableSequenceOf[str] = []
-            server_violations.extend(
-                FlextLdifUtilitiesEntry.check_objectclass_rule(self, rules, dn_value),
-            )
-            server_violations.extend(
-                FlextLdifUtilitiesEntry.check_naming_attr_rule(self, rules, dn_value),
-            )
-            server_violations.extend(
-                FlextLdifUtilitiesEntry.check_binary_option_rule(self, rules),
-            )
-            self.metadata.extensions[self._VALIDATION_SERVER_TYPE_KEY] = (
-                self.metadata.server_type
-            )
-            if not server_violations:
-                return self
-            if self.metadata.validation_results is None:
-                self.metadata.validation_results = (
-                    FlextLdifModelsDomainMetadata.ValidationMetadata(
-                        rfc_violations=[],
-                        errors=[],
-                        warnings=[],
-                        context={},
-                        server_specific_violations=[],
-                    )
-                )
-            previous = self.metadata.validation_results
-            updated_validation_results = (
-                FlextLdifModelsDomainMetadata.ValidationMetadata(
-                    rfc_violations=previous.rfc_violations,
-                    errors=previous.errors,
-                    warnings=previous.warnings,
-                    context=previous.context,
-                    server_specific_violations=server_violations,
-                    validation_server_type=self.metadata.server_type,
-                )
-            )
-            self.metadata.validation_results = updated_validation_results
-            ext_violations: t.JsonValueList = list(server_violations)
-            # mro-wgwh.5 (agent: kimi-coder) — extensions is a plain mapping now.
-            self.metadata.extensions["server_specific_violations"] = ext_violations
             return self
 
         @m.computed_field
@@ -531,7 +453,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             attrs_dict: t.MutableStrSequenceMapping = {}
             for attr_name, attr_values in attributes.items():
                 if isinstance(attr_values, str):
-                    values_list: t.MutableSequenceOf[str] = [attr_values]
+                    values_list: MutableSequence[str] = [attr_values]
                 else:
                     values_list = list(attr_values)
                 attrs_dict[attr_name] = values_list

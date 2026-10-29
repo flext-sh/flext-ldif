@@ -6,17 +6,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oud import (
-    FlextLdifServersOudAclSubjectMixin,
-    FlextLdifServersOudConstants,
+    FlextLdifConstantsServersOud,
+    FlextLdifServersOudAclSubject,
 )
 
 
-class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
+class FlextLdifServersOudAclWrite(FlextLdifServersOudAclSubject):
     """OUD ACI write-side helpers (target/permissions clauses + serialization)."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -36,11 +36,11 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
             return r[str].fail(
                 f"ACL model has no OUD-supported permissions "
                 f"(all were unsupported vendor-specific permissions like "
-                f"{FlextLdifServersOudConstants.PERMISSION_SELF_WRITE}, "
+                f"{FlextLdifConstantsServersOud.PERMISSION_SELF_WRITE}, "
                 f"stored in metadata)",
             )
         ops_str = ",".join(filtered_ops)
-        return r[str].ok(f"{FlextLdifServersOudConstants.ACL_ALLOW_PREFIX}{ops_str})")
+        return r[str].ok(f"{FlextLdifConstantsServersOud.ACL_ALLOW_PREFIX}{ops_str})")
 
     def _permissions_from_extensions(
         self,
@@ -84,7 +84,7 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
 
     @staticmethod
     def _permission_dict_from_extensions(
-        target_perms_dict: t.MappingKV[str, t.JsonPayload],
+        target_perms_dict: Mapping[str, t.JsonPayload],
     ) -> t.Ldif.MutableMetadataInputMapping:
         """Collect scalar/list permission values from an extensions mapping.
 
@@ -109,15 +109,15 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
     def _supported_oud_permissions(
         perms: m.Ldif.AclPermissions,
         acl_data: m.Ldif.Acl,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """List OUD-supported permission tokens active on the ACL model.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
-        sc = FlextLdifServersOudConstants
-        ops: t.MutableSequenceOf[str] = [
+        sc = FlextLdifConstantsServersOud
+        ops: MutableSequence[str] = [
             field_name
             for field_name in (
                 "read",
@@ -194,7 +194,7 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
             return None
         attrs_raw = target_data.get("attributes")
         dn_raw = target_data.get("target_dn")
-        attrs: t.MutableSequenceOf[str] = (
+        attrs: MutableSequence[str] = (
             [item for item in attrs_raw if isinstance(item, str)]
             if isinstance(attrs_raw, list)
             else []
@@ -216,7 +216,7 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
         if not acl_data.raw_acl:
             return False
         raw_acl_str: str = acl_data.raw_acl
-        acl_aci_prefix: str = FlextLdifServersOudConstants.ACL_ACI_PREFIX
+        acl_aci_prefix: str = FlextLdifConstantsServersOud.ACL_ACI_PREFIX
         return raw_acl_str.startswith(acl_aci_prefix)
 
     @override
@@ -230,7 +230,7 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
         try:
             return self._write_oud_aci(acl_data)
         except c.Ldif.EXC_LDIF_PARSE as e:
-            FlextLdifServersOudAclWriteMixin._module_logger.exception(
+            FlextLdifServersOudAclWrite._module_logger.exception(
                 "Failed to write ACL to OUD ACI format",
             )
             return r[str].fail(
@@ -245,7 +245,7 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
             The resulting ``p.Result[str]``.
 
         """
-        sc = FlextLdifServersOudConstants
+        sc = FlextLdifConstantsServersOud
         extensions: t.Ldif.MutableMetadataMapping | None = (
             acl_data.metadata.extensions
             if acl_data.metadata and acl_data.metadata.extensions
@@ -288,4 +288,4 @@ class FlextLdifServersOudAclWriteMixin(FlextLdifServersOudAclSubjectMixin):
         return r[str].ok("\n".join(aci_output_lines))
 
 
-__all__: list[str] = ["FlextLdifServersOudAclWriteMixin"]
+__all__: list[str] = ["FlextLdifServersOudAclWrite"]

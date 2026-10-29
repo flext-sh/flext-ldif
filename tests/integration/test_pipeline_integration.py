@@ -13,15 +13,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping, MutableSequence
 from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif import ldif
-from tests import tm
+from tests import ldif, tm
 
 if TYPE_CHECKING:
-    from collections.abc import MutableMapping, MutableSequence
     from pathlib import Path
 
     from tests import m

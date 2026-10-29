@@ -11,7 +11,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, m, p, r, t
+from collections.abc import Sequence
+
+from flext_ldif import c, m, p, r
 
 
 class FlextLdifServersOidAclConvert:
@@ -80,7 +82,7 @@ class FlextLdifServersOidAclConvert:
         )
 
     @staticmethod
-    def _split_perms(raw: str) -> t.StrSequence:
+    def _split_perms(raw: str) -> Sequence[str]:
         return tuple(token.strip() for token in raw.split(",") if token.strip())
 
     @staticmethod

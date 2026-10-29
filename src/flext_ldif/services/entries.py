@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, MutableSequence, Sequence
 from typing import Annotated, cast
 
 from flext_ldif import c, m, p, r, s, t, u
@@ -16,7 +16,7 @@ class FlextLdifEntries(s[p.Ldif.Response]):
     """Entry operations with strict contracts."""
 
     entries: Annotated[
-        t.MutableSequenceOf[m.Ldif.Entry],
+        MutableSequence[m.Ldif.Entry],
         m.Field(
             default_factory=list,
             exclude=True,
@@ -34,7 +34,7 @@ class FlextLdifEntries(s[p.Ldif.Response]):
         ),
     ]
     attributes_to_remove: Annotated[
-        t.MutableSequenceOf[str],
+        MutableSequence[str],
         m.Field(
             default_factory=list,
             exclude=True,
@@ -70,7 +70,7 @@ class FlextLdifEntries(s[p.Ldif.Response]):
         return r[str].fail("Invalid DN value type")
 
     @staticmethod
-    def _normalize_list_value(value: t.MutableSequenceOf[str]) -> p.Result[str]:
+    def _normalize_list_value(value: MutableSequence[str]) -> p.Result[str]:
         if not value:
             return r[str].fail("Cannot normalize empty list")
         return FlextLdifEntries._normalize_string_value(value[0])
@@ -86,7 +86,7 @@ class FlextLdifEntries(s[p.Ldif.Response]):
     def create_entry(
         dn: str,
         attributes: t.MutableAttributeMapping,
-        objectclasses: t.MutableSequenceOf[str] | None = None,
+        objectclasses: MutableSequence[str] | None = None,
     ) -> p.Result[m.Ldif.Entry]:
         """Create a validated entry from DN and attributes.
 
@@ -104,25 +104,25 @@ class FlextLdifEntries(s[p.Ldif.Response]):
     @staticmethod
     def normalize_attribute_values(
         attribute: t.Ldif.UnconvertedAttributeValue
-        | t.StrSequence
+        | Sequence[str]
         | set[str]
         | frozenset[str],
-    ) -> p.Result[t.MutableSequenceOf[str]]:
+    ) -> p.Result[MutableSequence[str]]:
         """Normalize attribute input into a list of strings.
 
         Returns:
-            The resulting ``p.Result[t.MutableSequenceOf[str]]``.
+            The resulting ``p.Result[MutableSequence[str]]``.
 
         """
         match attribute:
             case str() as value:
-                return r[t.MutableSequenceOf[str]].ok([value])
+                return r[MutableSequence[str]].ok([value])
             case list() as values:
-                return r[t.MutableSequenceOf[str]].ok(values)
+                return r[MutableSequence[str]].ok(values)
             case tuple() | set() | frozenset() as values:
-                return r[t.MutableSequenceOf[str]].ok(list(values))
+                return r[MutableSequence[str]].ok(list(values))
             case _:
-                return r[t.MutableSequenceOf[str]].fail(
+                return r[MutableSequence[str]].fail(
                     "Unsupported attribute input type",
                 )
 
@@ -158,16 +158,16 @@ class FlextLdifEntries(s[p.Ldif.Response]):
     @staticmethod
     def resolve_entry_objectclasses(
         entry: m.Ldif.Entry,
-    ) -> p.Result[t.MutableSequenceOf[str]]:
+    ) -> p.Result[MutableSequence[str]]:
         """Get objectClass values from entry attributes.
 
         Returns:
-            The resulting ``p.Result[t.MutableSequenceOf[str]]``.
+            The resulting ``p.Result[MutableSequence[str]]``.
 
         """
         attributes_result = FlextLdifEntries.resolve_entry_attributes(entry)
         if attributes_result.failure:
-            return r[t.MutableSequenceOf[str]].fail(
+            return r[MutableSequence[str]].fail(
                 f"Failed to get entry attributes: {attributes_result.error}",
             )
         attributes: t.MutableStrSequenceMapping = {
@@ -184,15 +184,15 @@ class FlextLdifEntries(s[p.Ldif.Response]):
             None,
         )
         if objectclasses is not None:
-            return r[t.MutableSequenceOf[str]].ok(objectclasses)
-        return r[t.MutableSequenceOf[str]].fail(
+            return r[MutableSequence[str]].ok(objectclasses)
+        return r[MutableSequence[str]].fail(
             "Entry is missing objectClass attribute",
         )
 
     @staticmethod
     def remove_attributes(
         entry: m.Ldif.Entry,
-        attributes_to_remove: t.MutableSequenceOf[str],
+        attributes_to_remove: MutableSequence[str],
     ) -> p.Result[m.Ldif.Entry]:
         """Remove selected attributes from a single entry.
 
@@ -215,27 +215,27 @@ class FlextLdifEntries(s[p.Ldif.Response]):
             metadata=entry.metadata,
         )
 
-    def run_configured_operation(self) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
+    def run_configured_operation(self) -> p.Result[MutableSequence[m.Ldif.Entry]]:
         """Run the configured entry operation against the bound entries.
 
         Returns:
-            The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
+            The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
 
         """
         if not self.operation:
-            return r[t.MutableSequenceOf[m.Ldif.Entry]].fail("No operation specified")
+            return r[MutableSequence[m.Ldif.Entry]].fail("No operation specified")
         if self.operation == c.Ldif.ENTRY_OPERATION_REMOVE_ATTRIBUTES:
             if not self.attributes_to_remove:
-                return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
+                return r[MutableSequence[m.Ldif.Entry]].fail(
                     "No attributes_to_remove specified for remove-attributes operation",
                 )
-            results: t.MutableSequenceOf[m.Ldif.Entry] = []
+            results: MutableSequence[m.Ldif.Entry] = []
             for entry in self.entries:
                 result = self.remove_attributes(entry, self.attributes_to_remove)
                 if result.success:
                     results.append(result.value)
-            return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(results)
-        return r[t.MutableSequenceOf[m.Ldif.Entry]].fail(
+            return r[MutableSequence[m.Ldif.Entry]].ok(results)
+        return r[MutableSequence[m.Ldif.Entry]].fail(
             f"Unknown operation: {self.operation}",
         )
 

@@ -10,11 +10,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping, Sequence
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_ldif._constants import FlextLdifConstantsBase, FlextLdifConstantsEnums
-from flext_ldif._constants.servers_rfc import FlextLdifConstantsServersRfc
+from flext_ldif._constants import (
+    FlextLdifConstantsBase,
+    FlextLdifConstantsEnums,
+    FlextLdifConstantsServersRfc,
+)
 
 if TYPE_CHECKING:
     from flext_ldif import t
@@ -64,7 +68,7 @@ class FlextLdifConstantsServersOud:
 
     PERMISSION_ALL: ClassVar[str] = "all"
 
-    ACL_PERMISSION_TOKEN_MAP: ClassVar[t.StrMapping] = MappingProxyType({
+    ACL_PERMISSION_TOKEN_MAP: ClassVar[Mapping[str, str]] = MappingProxyType({
         PERMISSION_SELFWRITE: PERMISSION_SELF_WRITE,
     })
     """OUD ACI permission tokens mapped to their ``AclPermissions`` field names."""
@@ -149,25 +153,25 @@ class FlextLdifConstantsServersOud:
         ("ssf", 'ssf {operator} "{value}"', ">="),
     )
 
-    ACL_TARGET_EXTENSIONS_CONFIG: ClassVar[t.StrPairTuple] = (
+    ACL_TARGET_EXTENSIONS_CONFIG: ClassVar[tuple[tuple[str, str], ...]] = (
         ("targattrfilters", '(targattrfilters="{value}")'),
         ("targetcontrol", '(targetcontrol="{value}")'),
         ("extop", '(extop="{value}")'),
     )
 
-    ACL_BIND_PATTERNS: ClassVar[t.StrMapping] = MappingProxyType({
+    ACL_BIND_PATTERNS: ClassVar[Mapping[str, str]] = MappingProxyType({
         ACL_BIND_RULE_TYPE_USERDN: ACL_USERDN_PATTERN,
         ACL_BIND_RULE_TYPE_GROUPDN: ACL_GROUPDN_PATTERN,
     })
 
-    ACL_SUBJECT_ATTR_SUFFIXES: ClassVar[t.StrMapping] = MappingProxyType({
+    ACL_SUBJECT_ATTR_SUFFIXES: ClassVar[Mapping[str, str]] = MappingProxyType({
         "dn_attr": "LDAPURL",
         "guid_attr": "USERDN",
         "group_attr": "GROUPDN",
     })
     """``userattr`` value suffix per attribute-based ACI subject type."""
 
-    ACL_SUBJECT_BIND_OPERATORS: ClassVar[t.StrMapping] = MappingProxyType({
+    ACL_SUBJECT_BIND_OPERATORS: ClassVar[Mapping[str, str]] = MappingProxyType({
         FlextLdifConstantsEnums.AclSubjectType.USER: "userdn",
         FlextLdifConstantsEnums.AclSubjectType.GROUP: "groupdn",
         FlextLdifConstantsEnums.AclSubjectType.ROLE: "roledn",
@@ -239,7 +243,7 @@ class FlextLdifConstantsServersOud:
         "pwdminlength",
     ])
 
-    ATTRIBUTE_CASE_MAP: ClassVar[t.StrMapping] = MappingProxyType({
+    ATTRIBUTE_CASE_MAP: ClassVar[Mapping[str, str]] = MappingProxyType({
         "uniquemember": "uniqueMember",
         "displayname": "displayName",
         "distinguishedname": "distinguishedName",
@@ -265,7 +269,7 @@ class FlextLdifConstantsServersOud:
         "numericStringMatch": "numericStringSubstringsMatch",
     })
 
-    MATCHING_RULE_TO_RFC: ClassVar[t.StrMapping] = MappingProxyType({
+    MATCHING_RULE_TO_RFC: ClassVar[Mapping[str, str]] = MappingProxyType({
         "distinguishedNAMEMatch": "distinguishedNameMatch",
         "DistinguishedNameMatch": "distinguishedNameMatch",
         "caseIgnoreSubstringMatch": "caseIgnoreSubstringsMatch",
@@ -293,7 +297,7 @@ class FlextLdifConstantsServersOud:
 
     CATEGORIZATION_ACL_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset(["aci"])
 
-    CATEGORIZATION_PRIORITY: ClassVar[t.StrSequence] = (
+    CATEGORIZATION_PRIORITY: ClassVar[Sequence[str]] = (
         "schema",
         "acl",
         "users",
@@ -302,13 +306,13 @@ class FlextLdifConstantsServersOud:
         "rejected",
     )
 
-    DN_DETECTION_PATTERNS: ClassVar[tuple[t.StrSequence, ...]] = (
+    DN_DETECTION_PATTERNS: ClassVar[tuple[Sequence[str], ...]] = (
         ("cn=settings", "cn=schema"),
         ("cn=settings", "cn=directory"),
         ("cn=settings", "cn=ds"),
     )
 
-    KEYWORD_PATTERNS: ClassVar[t.StrSequence] = ("pwd", "password")
+    KEYWORD_PATTERNS: ClassVar[Sequence[str]] = ("pwd", "password")
 
     DETECTION_PATTERN: ClassVar[str] = "(?i)(ds-sync-|ds-pwp-|ds-cfg-|root dns)"
 
@@ -351,9 +355,9 @@ class FlextLdifConstantsServersOud:
 
     DEFAULT_PORT: ClassVar[int] = 1389
 
-    OUD_ACL_ATTRIBUTES: ClassVar[t.StrSequence] = ("ds-privilege-name",)
+    OUD_ACL_ATTRIBUTES: ClassVar[Sequence[str]] = ("ds-privilege-name",)
 
-    PARSED_ACL_KEY_MAP: ClassVar[t.MappingKV[str, str]] = MappingProxyType({
+    PARSED_ACL_KEY_MAP: ClassVar[Mapping[str, str]] = MappingProxyType({
         "targattrfilters": FlextLdifConstantsBase.ACL_TARGETATTR_FILTERS,
         "targetcontrol": FlextLdifConstantsBase.ACL_TARGET_CONTROL,
         "extop": FlextLdifConstantsBase.ACL_EXTOP,
@@ -365,7 +369,7 @@ class FlextLdifConstantsServersOud:
         "ssf": FlextLdifConstantsBase.ACL_SSFS,
     })
 
-    ACL_KEY_MAP: ClassVar[t.MappingKV[str, str]] = MappingProxyType({
+    ACL_KEY_MAP: ClassVar[Mapping[str, str]] = MappingProxyType({
         "extop": FlextLdifConstantsBase.ACL_EXTOP,
         "ip": FlextLdifConstantsBase.ACL_BIND_IP_FILTER,
         "bind_ip": FlextLdifConstantsBase.ACL_BIND_IP_FILTER,

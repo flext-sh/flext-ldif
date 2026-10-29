@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Annotated
 
 from flext_core import m
@@ -37,7 +38,7 @@ class FlextLdifModelsAclConvert:
             m.Field(description="Subject value: DN, group DN, or attribute name"),
         ] = ""
         permissions: Annotated[
-            t.StrSequence,
+            Sequence[str],
             m.Field(description="Raw OID permission tokens for this by-clause"),
         ] = ()
         bindmode: Annotated[
@@ -85,7 +86,7 @@ class FlextLdifModelsAclConvert:
             m.Field(description="Bind-rule value, e.g. ldap:///cn=Directory Manager"),
         ]
         permissions: Annotated[
-            t.StrSequence,
+            Sequence[str],
             m.Field(description="OUD permission tokens in canonical order"),
         ] = ()
         authmethod: Annotated[
@@ -182,11 +183,11 @@ class FlextLdifModelsAclConvert:
         """One render-time allow group keyed by identical OUD permission tokens."""
 
         permissions: Annotated[
-            t.StrSequence,
+            Sequence[str],
             m.Field(description="Canonical permission tuple shared by this group"),
         ] = ()
         binds: Annotated[
-            t.StrSequence,
+            Sequence[str],
             m.Field(description="Rendered bind rules joined with OUD 'or'"),
         ] = ()
         authmethod: Annotated[

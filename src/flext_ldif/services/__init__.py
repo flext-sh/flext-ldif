@@ -21,17 +21,17 @@ if TYPE_CHECKING:
     )
     from flext_ldif.services.categorization_rules import FlextLdifCategorizationRules
     from flext_ldif.services.conversion import FlextLdifConversion
-    from flext_ldif.services.conversion_acl import FlextLdifConversionAclMixin
+    from flext_ldif.services.conversion_acl import FlextLdifConversionAcl
     from flext_ldif.services.conversion_acl_preserve import (
-        FlextLdifConversionAclPreserveMixin,
+        FlextLdifConversionAclPreserve,
     )
-    from flext_ldif.services.conversion_entry import FlextLdifConversionEntryMixin
-    from flext_ldif.services.conversion_metadata import FlextLdifConversionMetadataMixin
-    from flext_ldif.services.conversion_schema import FlextLdifConversionSchemaMixin
+    from flext_ldif.services.conversion_entry import FlextLdifConversionEntry
+    from flext_ldif.services.conversion_metadata import FlextLdifConversionMetadata
+    from flext_ldif.services.conversion_schema import FlextLdifConversionSchema
     from flext_ldif.services.conversion_schema_entry import (
-        FlextLdifConversionSchemaEntryMixin,
+        FlextLdifConversionSchemaEntry,
     )
-    from flext_ldif.services.conversion_support import FlextLdifConversionSupportMixin
+    from flext_ldif.services.conversion_support import FlextLdifConversionSupport
     from flext_ldif.services.detector import FlextLdifDetector
     from flext_ldif.services.detector_scoring import FlextLdifDetectorScoring
     from flext_ldif.services.entries import FlextLdifEntries
@@ -55,13 +55,13 @@ __all__: tuple[str, ...] = (
     "FlextLdifCategorizationFiltering",
     "FlextLdifCategorizationRules",
     "FlextLdifConversion",
-    "FlextLdifConversionAclMixin",
-    "FlextLdifConversionAclPreserveMixin",
-    "FlextLdifConversionEntryMixin",
-    "FlextLdifConversionMetadataMixin",
-    "FlextLdifConversionSchemaEntryMixin",
-    "FlextLdifConversionSchemaMixin",
-    "FlextLdifConversionSupportMixin",
+    "FlextLdifConversionAcl",
+    "FlextLdifConversionAclPreserve",
+    "FlextLdifConversionEntry",
+    "FlextLdifConversionMetadata",
+    "FlextLdifConversionSchema",
+    "FlextLdifConversionSchemaEntry",
+    "FlextLdifConversionSupport",
     "FlextLdifDetector",
     "FlextLdifDetectorScoring",
     "FlextLdifEntries",
@@ -88,13 +88,13 @@ install_lazy_exports(
         "FlextLdifCategorizationFiltering": ".categorization_filtering",
         "FlextLdifCategorizationRules": ".categorization_rules",
         "FlextLdifConversion": ".conversion",
-        "FlextLdifConversionAclMixin": ".conversion_acl",
-        "FlextLdifConversionAclPreserveMixin": ".conversion_acl_preserve",
-        "FlextLdifConversionEntryMixin": ".conversion_entry",
-        "FlextLdifConversionMetadataMixin": ".conversion_metadata",
-        "FlextLdifConversionSchemaEntryMixin": ".conversion_schema_entry",
-        "FlextLdifConversionSchemaMixin": ".conversion_schema",
-        "FlextLdifConversionSupportMixin": ".conversion_support",
+        "FlextLdifConversionAcl": ".conversion_acl",
+        "FlextLdifConversionAclPreserve": ".conversion_acl_preserve",
+        "FlextLdifConversionEntry": ".conversion_entry",
+        "FlextLdifConversionMetadata": ".conversion_metadata",
+        "FlextLdifConversionSchema": ".conversion_schema",
+        "FlextLdifConversionSchemaEntry": ".conversion_schema_entry",
+        "FlextLdifConversionSupport": ".conversion_support",
         "FlextLdifDetector": ".detector",
         "FlextLdifDetectorScoring": ".detector_scoring",
         "FlextLdifEntries": ".entries",

@@ -11,11 +11,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif._constants import FlextLdifConstantsServersRelaxed
-from flext_ldif._constants.servers_base import FlextLdifConstantsServersBase
-from flext_ldif._constants.servers_oid import FlextLdifConstantsServersOid
-from flext_ldif._constants.servers_oud import FlextLdifConstantsServersOud
-from flext_ldif._constants.servers_rfc import FlextLdifConstantsServersRfc
+from flext_ldif._constants import (
+    FlextLdifConstantsServersBase,
+    FlextLdifConstantsServersOid,
+    FlextLdifConstantsServersOud,
+    FlextLdifConstantsServersRelaxed,
+    FlextLdifConstantsServersRfc,
+)
 
 
 class FlextLdifConstantsServers:

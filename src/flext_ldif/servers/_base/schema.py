@@ -7,21 +7,22 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import MutableSequence
 from typing import Annotated, ClassVar, override
 
 from flext_ldif import m, p, r, s, t, u
 from flext_ldif.servers._base import (
-    FlextLdifServerMethodsMixin,
-    FlextLdifServersBaseSchemaMetadataMixin,
-    FlextLdifServersBaseSchemaValuesMixin,
+    FlextLdifServerMethods,
+    FlextLdifServersBaseSchemaMetadata,
+    FlextLdifServersBaseSchemaValues,
 )
 
 
 class FlextLdifServersBaseSchema(
-    FlextLdifServersBaseSchemaMetadataMixin,
-    FlextLdifServersBaseSchemaValuesMixin,
+    FlextLdifServersBaseSchemaMetadata,
+    FlextLdifServersBaseSchemaValues,
     s[t.Ldif.SchemaConversionValue],
-    FlextLdifServerMethodsMixin,
+    FlextLdifServerMethods,
     ABC,
 ):
     """Base class for schema servers using `s` with enhanced usability."""
@@ -385,7 +386,7 @@ class FlextLdifServersBaseSchema(
 
     @staticmethod
     def _hook_validate_attributes(
-        attributes: t.MutableSequenceOf[m.Ldif.SchemaAttribute],
+        attributes: MutableSequence[m.Ldif.SchemaAttribute],
         available_attrs: set[str],
     ) -> p.Result[bool]:
         """Validate server-specific attributes during schema extraction.

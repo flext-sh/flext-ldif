@@ -6,15 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, MutableSequence, Sequence
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_cli import p, t
 
-from flext_ldif._protocols.base import FlextLdifProtocolsBase
+from flext_ldif._protocols import FlextLdifProtocolsBase
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
-
     from flext_ldif import c, m
 
 
@@ -47,7 +46,7 @@ class FlextLdifProtocolsValues(Protocol):
             ...
 
         @property
-        def patterns_found(self) -> t.MutableSequenceOf[str]:
+        def patterns_found(self) -> MutableSequence[str]:
             """Server-identifying patterns found in LDIF."""
             ...
 
@@ -83,7 +82,7 @@ class FlextLdifProtocolsValues(Protocol):
         @property
         def change_operations(
             self,
-        ) -> t.SequenceOf[FlextLdifProtocolsValues.ChangeOperation]: ...
+        ) -> Sequence[FlextLdifProtocolsValues.ChangeOperation]: ...
 
     @runtime_checkable
     class ChangeOperation(Protocol):
@@ -98,7 +97,7 @@ class FlextLdifProtocolsValues(Protocol):
         @property
         def values(
             self,
-        ) -> t.SequenceOf[FlextLdifProtocolsValues.ChangeOperationValue]: ...
+        ) -> Sequence[FlextLdifProtocolsValues.ChangeOperationValue]: ...
 
     @runtime_checkable
     class ChangeOperationValue(Protocol):
@@ -137,7 +136,7 @@ class FlextLdifProtocolsValues(Protocol):
         """Parsed LDIF batch response."""
 
         @property
-        def entries(self) -> t.SequenceOf[m.Ldif.Entry]: ...
+        def entries(self) -> Sequence[m.Ldif.Entry]: ...
 
         @property
         def detected_server_type(self) -> str | None: ...
@@ -150,13 +149,13 @@ class FlextLdifProtocolsValues(Protocol):
         def entry_count(self) -> int: ...
 
         @property
-        def entries(self) -> t.SequenceOf[m.Ldif.Entry]: ...
+        def entries(self) -> Sequence[m.Ldif.Entry]: ...
 
         @property
         def stats(self) -> FlextLdifProtocolsBase.Statistics: ...
 
         @property
-        def output_files(self) -> t.StrSequence: ...
+        def output_files(self) -> Sequence[str]: ...
 
     @runtime_checkable
     class AciAllow(p.Model, Protocol):
@@ -169,7 +168,7 @@ class FlextLdifProtocolsValues(Protocol):
         def subject_value(self) -> str: ...
 
         @property
-        def permissions(self) -> t.StrSequence: ...
+        def permissions(self) -> Sequence[str]: ...
 
         @property
         def authmethod(self) -> str: ...
@@ -262,7 +261,7 @@ class FlextLdifProtocolsValues(Protocol):
         def allows(self) -> Sequence[FlextLdifProtocolsValues.AciAllow]: ...
 
         @property
-        def notes(self) -> t.StrSequence: ...
+        def notes(self) -> Sequence[str]: ...
 
     @runtime_checkable
     class AclMetadataConfig(p.Model, Protocol):
@@ -488,7 +487,7 @@ class FlextLdifProtocolsValues(Protocol):
         def value(self) -> str: ...
 
         @property
-        def permissions(self) -> t.StrSequence: ...
+        def permissions(self) -> Sequence[str]: ...
 
         @property
         def bindmode(self) -> str: ...
@@ -529,16 +528,16 @@ class FlextLdifProtocolsValues(Protocol):
         def oid_pattern(self) -> str: ...
 
         @property
-        def dn_patterns(self) -> Sequence[t.StrSequence]: ...
+        def dn_patterns(self) -> Sequence[Sequence[str]]: ...
 
         @property
-        def attr_prefixes(self) -> t.StrSequence | frozenset[str]: ...
+        def attr_prefixes(self) -> Sequence[str] | frozenset[str]: ...
 
         @property
         def attr_names(self) -> frozenset[str] | set[str]: ...
 
         @property
-        def keyword_patterns(self) -> t.StrSequence: ...
+        def keyword_patterns(self) -> Sequence[str]: ...
 
         @property
         def detection_string(self) -> str | None: ...

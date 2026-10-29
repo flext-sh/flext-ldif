@@ -10,14 +10,14 @@ from abc import ABC, abstractmethod
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.services import (
-    FlextLdifConversionAclPreserveMixin,
-    FlextLdifConversionSupportMixin,
+    FlextLdifConversionAclPreserve,
+    FlextLdifConversionSupport,
 )
 
 
-class FlextLdifConversionAclMixin(
-    FlextLdifConversionAclPreserveMixin,
-    FlextLdifConversionSupportMixin,
+class FlextLdifConversionAcl(
+    FlextLdifConversionAclPreserve,
+    FlextLdifConversionSupport,
     ABC,
 ):
     """ACL-model conversion orchestration (preservation via the parent mixin)."""
@@ -151,4 +151,4 @@ class FlextLdifConversionAclMixin(
         )
 
 
-__all__: list[str] = ["FlextLdifConversionAclMixin"]
+__all__: list[str] = ["FlextLdifConversionAcl"]

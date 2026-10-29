@@ -7,16 +7,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar
 
-from flext_ldif import c, m, p, r, t, u
+from flext_ldif import c, m, p, r, u
 from flext_ldif.servers._base import FlextLdifServersBaseSchema
-from flext_ldif.servers._rfc import FlextLdifServersRfcSchemaValuesMixin
+from flext_ldif.servers._rfc import FlextLdifServersRfcSchemaValues
 
 
-class FlextLdifServersRfcSchemaParseMixin(
-    FlextLdifServersRfcSchemaValuesMixin,
+class FlextLdifServersRfcSchemaParse(
+    FlextLdifServersRfcSchemaValues,
     FlextLdifServersBaseSchema,
     ABC,
 ):
@@ -61,16 +61,16 @@ class FlextLdifServersRfcSchemaParseMixin(
     ) -> p.Result[
         MutableMapping[
             str,
-            t.MutableSequenceOf[m.Ldif.SchemaAttribute]
-            | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
+            MutableSequence[m.Ldif.SchemaAttribute]
+            | MutableSequence[m.Ldif.SchemaObjectClass],
         ]
     ]:
         """Extract schema definitions from LDIF using u.
 
         Returns:
             The resulting ``p.Result[MutableMapping[str,
-                t.MutableSequenceOf[m.Ldif.SchemaAttribute] |
-                t.MutableSequenceOf[m.Ldif.SchemaObjectClass]]]``.
+                MutableSequence[m.Ldif.SchemaAttribute] |
+                MutableSequence[m.Ldif.SchemaObjectClass]]]``.
 
         """
         try:
@@ -85,8 +85,8 @@ class FlextLdifServersRfcSchemaParseMixin(
             return r[
                 MutableMapping[
                     str,
-                    t.MutableSequenceOf[m.Ldif.SchemaAttribute]
-                    | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
+                    MutableSequence[m.Ldif.SchemaAttribute]
+                    | MutableSequence[m.Ldif.SchemaObjectClass],
                 ]
             ].fail_op("Schema extraction", e)
 
@@ -98,16 +98,16 @@ class FlextLdifServersRfcSchemaParseMixin(
     ) -> p.Result[
         MutableMapping[
             str,
-            t.MutableSequenceOf[m.Ldif.SchemaAttribute]
-            | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
+            MutableSequence[m.Ldif.SchemaAttribute]
+            | MutableSequence[m.Ldif.SchemaObjectClass],
         ]
     ]:
         """Extract schema definitions and optionally validate dependencies.
 
         Returns:
             The resulting ``p.Result[MutableMapping[str,
-                t.MutableSequenceOf[m.Ldif.SchemaAttribute] |
-                t.MutableSequenceOf[m.Ldif.SchemaObjectClass]]]``.
+                MutableSequence[m.Ldif.SchemaAttribute] |
+                MutableSequence[m.Ldif.SchemaObjectClass]]]``.
 
         """
         attributes_parsed = u.Ldif.extract_attributes_from_lines(
@@ -124,8 +124,8 @@ class FlextLdifServersRfcSchemaParseMixin(
                 return r[
                     MutableMapping[
                         str,
-                        t.MutableSequenceOf[m.Ldif.SchemaAttribute]
-                        | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
+                        MutableSequence[m.Ldif.SchemaAttribute]
+                        | MutableSequence[m.Ldif.SchemaObjectClass],
                     ]
                 ].fail_op("Attribute validation", validation_result.error)
 
@@ -135,8 +135,8 @@ class FlextLdifServersRfcSchemaParseMixin(
         )
         schema_dict: MutableMapping[
             str,
-            t.MutableSequenceOf[m.Ldif.SchemaAttribute]
-            | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
+            MutableSequence[m.Ldif.SchemaAttribute]
+            | MutableSequence[m.Ldif.SchemaObjectClass],
         ] = {
             str(c.Ldif.DictKeys.ATTRIBUTES): attributes_parsed,
             str(c.Ldif.DictKeys.OBJECTCLASS): objectclasses_parsed,
@@ -144,8 +144,8 @@ class FlextLdifServersRfcSchemaParseMixin(
         return r[
             MutableMapping[
                 str,
-                t.MutableSequenceOf[m.Ldif.SchemaAttribute]
-                | t.MutableSequenceOf[m.Ldif.SchemaObjectClass],
+                MutableSequence[m.Ldif.SchemaAttribute]
+                | MutableSequence[m.Ldif.SchemaObjectClass],
             ]
         ].ok(schema_dict)
 
@@ -154,7 +154,7 @@ class FlextLdifServersRfcSchemaParseMixin(
         oc_definition: str,
         metadata_extensions: MutableMapping[
             str,
-            t.MutableSequenceOf[str] | str | bool | None,
+            MutableSequence[str] | str | bool | None,
         ],
     ) -> m.Ldif.ServerMetadata:
         """Build objectClass metadata with extensions.
@@ -264,11 +264,11 @@ class FlextLdifServersRfcSchemaParseMixin(
 
     @staticmethod
     def _validate_oid_list(
-        oids: t.MutableSequenceOf[str] | None,
+        oids: MutableSequence[str] | None,
         oid_type: str,
         metadata_extensions: MutableMapping[
             str,
-            t.MutableSequenceOf[str] | str | bool | None,
+            MutableSequence[str] | str | bool | None,
         ],
     ) -> None:
         """Validate OID list and track in metadata."""
@@ -286,4 +286,4 @@ class FlextLdifServersRfcSchemaParseMixin(
                     pass
 
 
-__all__: list[str] = ["FlextLdifServersRfcSchemaParseMixin"]
+__all__: list[str] = ["FlextLdifServersRfcSchemaParse"]

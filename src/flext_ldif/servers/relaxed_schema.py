@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import override
 
 from flext_ldif import c, m, p, r, u
-from flext_ldif.servers._relaxed import FlextLdifServersRelaxedConstants
+from flext_ldif.servers._relaxed import FlextLdifConstantsServersRelaxed
 from flext_ldif.servers._rfc import FlextLdifServersRfcSchema
 
 
@@ -85,7 +85,7 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
         oid_result = u.Ldif.extract_oid(definition)
         if oid_result.success:
             return oid_result.value
-        for pattern in FlextLdifServersRelaxedConstants.OID_EXTRACTION_PATTERNS[1:]:
+        for pattern in FlextLdifConstantsServersRelaxed.OID_EXTRACTION_PATTERNS[1:]:
             match = pattern.search(definition)
             if match:
                 return match.group(1)
@@ -111,11 +111,11 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
             sup_value = sup_match.group(2).strip()
         else:
             sup_value = ""
-        if FlextLdifServersRelaxedConstants.SCHEMA_MUST_SEPARATOR in sup_value:
+        if FlextLdifConstantsServersRelaxed.SCHEMA_MUST_SEPARATOR in sup_value:
             first_part: str = next(
                 s.strip()
                 for s in sup_value.split(
-                    FlextLdifServersRelaxedConstants.SCHEMA_MUST_SEPARATOR,
+                    FlextLdifConstantsServersRelaxed.SCHEMA_MUST_SEPARATOR,
                 )
             )
             return first_part
@@ -221,7 +221,7 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
             return r[m.Ldif.SchemaAttribute].fail(
                 "Cannot extract OID from attribute definition",
             )
-        name_match = FlextLdifServersRelaxedConstants.SCHEMA_NAME_RE.search(
+        name_match = FlextLdifConstantsServersRelaxed.SCHEMA_NAME_RE.search(
             attr_definition,
         )
         name = name_match.group(1) if name_match else oid
@@ -303,8 +303,8 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
         kind = u.Ldif.extract_objectclass_kind(oc_definition)
         must, may = u.Ldif.extract_objectclass_must_may(
             oc_definition,
-            must_separator=FlextLdifServersRelaxedConstants.SCHEMA_MUST_SEPARATOR,
-            may_separator=FlextLdifServersRelaxedConstants.SCHEMA_MAY_SEPARATOR,
+            must_separator=FlextLdifConstantsServersRelaxed.SCHEMA_MUST_SEPARATOR,
+            may_separator=FlextLdifConstantsServersRelaxed.SCHEMA_MAY_SEPARATOR,
         )
         metadata = m.Ldif.ServerMetadata.model_validate({
             "server_type": self._get_server_type(),

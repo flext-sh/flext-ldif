@@ -7,13 +7,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC
+from collections.abc import MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._base import FlextLdifServersBaseSchema
 
 
-class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBaseSchema, ABC):
+class FlextLdifServersRfcSchemaWrite(
+    FlextLdifServersBaseSchema,
+    ABC,
+):
     """Write schema attributes/objectClasses to RFC-compliant strings."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -21,7 +25,7 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBaseSchema, ABC):
     def _build_attribute_parts(
         self,
         attr_data: m.Ldif.SchemaAttribute,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Build the RFC attribute definition parts for writing.
 
         Args:
@@ -31,7 +35,7 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBaseSchema, ABC):
             Definition parts joined with spaces to form the definition.
 
         """
-        parts: t.MutableSequenceOf[str] = u.Ldif.build_attribute_parts_with_metadata(
+        parts: MutableSequence[str] = u.Ldif.build_attribute_parts_with_metadata(
             attr_data,
             restore_original=u.Ldif.should_restore_schema_original_format(
                 attr_data.metadata,
@@ -43,7 +47,7 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBaseSchema, ABC):
     def _build_objectclass_parts(
         self,
         oc_data: m.Ldif.SchemaObjectClass,
-    ) -> t.MutableSequenceOf[str]:
+    ) -> MutableSequence[str]:
         """Build the RFC objectClass definition parts for writing.
 
         Args:
@@ -53,7 +57,7 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBaseSchema, ABC):
             Definition parts joined with spaces to form the definition.
 
         """
-        parts: t.MutableSequenceOf[str] = u.Ldif.build_objectclass_parts_with_metadata(
+        parts: MutableSequence[str] = u.Ldif.build_objectclass_parts_with_metadata(
             oc_data,
             restore_original=u.Ldif.should_restore_schema_original_format(
                 oc_data.metadata,
@@ -246,4 +250,4 @@ class FlextLdifServersRfcSchemaWriteMixin(FlextLdifServersBaseSchema, ABC):
         )
 
 
-__all__: list[str] = ["FlextLdifServersRfcSchemaWriteMixin"]
+__all__: list[str] = ["FlextLdifServersRfcSchemaWrite"]

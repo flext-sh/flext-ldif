@@ -14,14 +14,13 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldif.servers.novell import FlextLdifServersNovell
+from flext_ldif.servers import FlextLdifServersNovell
 from tests import c, m, tm, u
 
 
 class TestsFlextLdifNovellServers:
     """Public-behaviour tests for the Novell eDirectory server."""
 
-    @staticmethod
     @pytest.fixture
     def novell_server() -> FlextLdifServersNovell:
         """Create a Novell eDirectory server instance.

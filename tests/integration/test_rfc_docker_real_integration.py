@@ -24,7 +24,6 @@ from tests import c, m, tm
 class TestsFlextLdifRfcDockerRealIntegration:
     """Behavioral contract of parser/writer against real LDIF fixtures."""
 
-    @staticmethod
     @pytest.fixture
     def server() -> FlextLdifServer:
         """Real server registry used as writer collaborator.
@@ -35,7 +34,6 @@ class TestsFlextLdifRfcDockerRealIntegration:
         """
         return FlextLdifServer(registry=FlextLdif().registry)
 
-    @staticmethod
     @pytest.fixture
     def parser() -> FlextLdifParser:
         """Parser under test.

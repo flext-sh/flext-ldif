@@ -18,8 +18,7 @@ from collections.abc import MutableSequence
 from datetime import UTC, datetime
 from pathlib import Path
 
-from examples import ExamplesFlextLdifUtilities, m, p, u
-from flext_ldif import ldif
+from examples import ExamplesFlextLdifUtilities, ldif, m, p, u
 
 BYTES_PER_UNIT = 1024.0
 

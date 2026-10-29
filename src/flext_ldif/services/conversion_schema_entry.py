@@ -3,7 +3,7 @@
 Holds the embedded-schema-definition conversion (``_convert_schema_entry_value``
 and ``_convert_schema_entry_attributes``) used by the entry mixin. Inherits the
 shared schema helpers (``_validate_parsed_schema``, the ``_resolve_schema_server``
-stub) from :class:`FlextLdifConversionSchemaMixin`; the concrete resolver wins via
+stub) from :class:`FlextLdifConversionSchema`; the concrete resolver wins via
 the facade MRO (Support precedes this mixin).
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
@@ -13,13 +13,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC
+from collections.abc import Mapping, MutableSequence, Sequence
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.services import FlextLdifConversionSchemaMixin
+from flext_ldif.services import FlextLdifConversionSchema
 
 
-class FlextLdifConversionSchemaEntryMixin(
-    FlextLdifConversionSchemaMixin,
+class FlextLdifConversionSchemaEntry(
+    FlextLdifConversionSchema,
     ABC,
 ):
     """Conversion of schema definitions embedded inside a schema entry."""
@@ -182,14 +183,14 @@ class FlextLdifConversionSchemaEntryMixin(
     @staticmethod
     def _schema_fields_to_convert(
         entry: m.Ldif.Entry,
-    ) -> list[tuple[str, c.Ldif.SchemaItemKind, t.MutableSequenceOf[str]]]:
+    ) -> list[tuple[str, c.Ldif.SchemaItemKind, MutableSequence[str]]]:
         """Collect the schema-definition fields present in one entry.
 
         Returns:
             The resulting list of (field name, item kind, values) triples.
 
         """
-        schema_field_kinds: t.MappingKV[str, c.Ldif.SchemaItemKind] = {
+        schema_field_kinds: Mapping[str, c.Ldif.SchemaItemKind] = {
             c.Ldif.ATTRIBUTE_TYPES.lower(): c.Ldif.SchemaItemKind.ATTRIBUTE,
             c.Ldif.OBJECT_CLASSES.lower(): c.Ldif.SchemaItemKind.OBJECTCLASS,
         }
@@ -206,7 +207,7 @@ class FlextLdifConversionSchemaEntryMixin(
         self,
         source_schema: p.Ldif.SchemaServer,
         target_schema: p.Ldif.SchemaServer,
-        field: tuple[str, c.Ldif.SchemaItemKind, t.MutableSequenceOf[str]],
+        field: tuple[str, c.Ldif.SchemaItemKind, MutableSequence[str]],
     ) -> p.Result[tuple[str, list[str]]]:
         """Convert every definition value of one schema field.
 
@@ -233,7 +234,7 @@ class FlextLdifConversionSchemaEntryMixin(
     @staticmethod
     def _entry_with_converted_fields(
         entry: m.Ldif.Entry,
-        converted_fields: t.SequenceOf[tuple[str, list[str]]],
+        converted_fields: Sequence[tuple[str, list[str]]],
     ) -> m.Ldif.Entry:
         """Rebuild the entry with converted schema fields applied.
 
@@ -257,4 +258,4 @@ class FlextLdifConversionSchemaEntryMixin(
         )
 
 
-__all__: list[str] = ["FlextLdifConversionSchemaEntryMixin"]
+__all__: list[str] = ["FlextLdifConversionSchemaEntry"]

@@ -13,7 +13,7 @@ from flext_ldif import c, m, p, r, t
 from flext_ldif.services import FlextLdifServer
 
 
-class FlextLdifConversionSupportMixin(FlextLdifServer):
+class FlextLdifConversionSupport(FlextLdifServer):
     """Support-check helpers shared by the conversion facade.
 
     Owns the conversion state (``dn_registry`` / ``base_dn``) so every mixin the
@@ -196,7 +196,7 @@ class FlextLdifConversionSupportMixin(FlextLdifServer):
             The resulting ``t.MutableIntMapping``.
 
         """
-        return FlextLdifConversionSupportMixin._record_schema_support(
+        return FlextLdifConversionSupport._record_schema_support(
             server_schema.parse_attribute(test_attr_def),
             c.Ldif.SchemaItemKind.ATTRIBUTE.value,
             support,
@@ -229,7 +229,7 @@ class FlextLdifConversionSupportMixin(FlextLdifServer):
             The resulting ``t.MutableIntMapping``.
 
         """
-        return FlextLdifConversionSupportMixin._record_schema_support(
+        return FlextLdifConversionSupport._record_schema_support(
             server_schema.parse_objectclass(test_oc_def),
             c.Ldif.SchemaItemKind.OBJECTCLASS.value,
             support,
@@ -258,4 +258,4 @@ class FlextLdifConversionSupportMixin(FlextLdifServer):
         return self._check_objectclass_support(server_schema, test_oc_def, support)
 
 
-__all__: list[str] = ["FlextLdifConversionSupportMixin"]
+__all__: list[str] = ["FlextLdifConversionSupport"]

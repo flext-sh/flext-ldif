@@ -7,14 +7,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableSequence, Sequence
 from typing import ClassVar
 
 from flext_ldif import c, p, r, t, u
 from flext_ldif.servers._base import FlextLdifServersBaseSchema
 
 
-class FlextLdifServersRfcSchemaValuesMixin(FlextLdifServersBaseSchema, ABC):
+class FlextLdifServersRfcSchemaValues(
+    FlextLdifServersBaseSchema,
+    ABC,
+):
     """Coerce raw JSON payloads into typed RFC schema values."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -29,7 +32,7 @@ class FlextLdifServersRfcSchemaValuesMixin(FlextLdifServersBaseSchema, ABC):
     def _to_optional_str_or_list(
         cls,
         value: t.JsonValue | None,
-    ) -> str | t.MutableSequenceOf[str] | None:
+    ) -> str | MutableSequence[str] | None:
         if isinstance(value, str):
             return value
         return cls._to_string_list(value)
@@ -60,9 +63,7 @@ class FlextLdifServersRfcSchemaValuesMixin(FlextLdifServersBaseSchema, ABC):
         for key, value in metadata.items():
             json_value: t.JsonPayload | None = value
             if isinstance(json_value, list):
-                list_value: t.MutableSequenceOf[str] = [
-                    str(item) for item in json_value
-                ]
+                list_value: MutableSequence[str] = [str(item) for item in json_value]
                 extensions[key] = list_value
             elif isinstance(json_value, (bool, str)):
                 extensions[key] = json_value
@@ -81,7 +82,7 @@ class FlextLdifServersRfcSchemaValuesMixin(FlextLdifServersBaseSchema, ABC):
             isinstance(json_value, Sequence) and not isinstance(json_value, str | bytes)
         ):
             return None
-        parsed = FlextLdifServersRfcSchemaValuesMixin._parse_int(json_value)
+        parsed = FlextLdifServersRfcSchemaValues._parse_int(json_value)
         if parsed.success:
             parsed_value: int = parsed.value
             return parsed_value
@@ -128,12 +129,12 @@ class FlextLdifServersRfcSchemaValuesMixin(FlextLdifServersBaseSchema, ABC):
         return str(json_value)
 
     @staticmethod
-    def _to_string_list(value: t.JsonValue | None) -> t.MutableSequenceOf[str] | None:
+    def _to_string_list(value: t.JsonValue | None) -> MutableSequence[str] | None:
         json_value: t.JsonPayload | None = value
         if isinstance(json_value, Sequence) and not isinstance(json_value, str | bytes):
-            list_value: t.MutableSequenceOf[str] = [str(item) for item in json_value]
+            list_value: MutableSequence[str] = [str(item) for item in json_value]
             return list_value
         return None
 
 
-__all__: list[str] = ["FlextLdifServersRfcSchemaValuesMixin"]
+__all__: list[str] = ["FlextLdifServersRfcSchemaValues"]

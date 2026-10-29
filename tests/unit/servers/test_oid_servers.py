@@ -59,7 +59,6 @@ _SUPERIOR_NORMALIZATION_CASES: tuple[tuple[str, str, str], ...] = (
 class TestsFlextLdifOidServers:
     """Public-contract behavior of the OID schema server."""
 
-    @staticmethod
     @pytest.fixture
     def schema() -> p.Ldif.SchemaServer:
         """Resolve the OID schema server through the public registry.

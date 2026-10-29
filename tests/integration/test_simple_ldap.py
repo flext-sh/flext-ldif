@@ -11,12 +11,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldif import ldif
-from tests import c, m, tm
+from tests import c, ldif, m, tm
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -73,7 +73,7 @@ class TestsFlextLdifSimpleLdap:
     @staticmethod
     def test_bound_connection_reaches_configured_base_dn(
         ldap_connection: p.Ldap3Connection,
-        ldap_container: t.StrMapping,
+        ldap_container: Mapping[str, str],
     ) -> None:
         """A base-scoped search on the configured base DN yields its entry."""
         base_dn = ldap_container.get("base_dn", "dc=flext,dc=local")
@@ -91,7 +91,7 @@ class TestsFlextLdifSimpleLdap:
     def test_entry_create_exposes_attributes_through_public_api(
         self,
         ldap_connection: p.Ldap3Connection,
-        ldap_container: t.StrMapping,
+        ldap_container: Mapping[str, str],
         make_test_username: Callable[[str], str],
     ) -> None:
         """A model built from a live entry exposes dn and attributes publicly."""
@@ -113,7 +113,7 @@ class TestsFlextLdifSimpleLdap:
     def test_write_serializes_entry_to_ldif_content(
         self,
         ldap_connection: p.Ldap3Connection,
-        ldap_container: t.StrMapping,
+        ldap_container: Mapping[str, str],
         make_test_username: Callable[[str], str],
     ) -> None:
         """write() returns success with LDIF content and matching statistics."""
@@ -137,7 +137,7 @@ class TestsFlextLdifSimpleLdap:
     def test_written_entry_roundtrips_through_parse(
         self,
         ldap_connection: p.Ldap3Connection,
-        ldap_container: t.StrMapping,
+        ldap_container: Mapping[str, str],
         make_test_username: Callable[[str], str],
     ) -> None:
         """Parsing the LDIF produced by write() recovers the original entry."""

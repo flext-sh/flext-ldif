@@ -12,7 +12,7 @@ from collections.abc import Callable
 from flext_ldif import c, m, p, r, s, t, u
 
 
-class FlextLdifConversionSchemaMixin(s[p.Ldif.Response], ABC):
+class FlextLdifConversionSchema(s[p.Ldif.Response], ABC):
     """Schema-conversion helpers shared by the conversion facade."""
 
     @abstractmethod
@@ -226,4 +226,4 @@ class FlextLdifConversionSchemaMixin(s[p.Ldif.Response], ABC):
             return r[T].fail(str(exc), exception=exc)
 
 
-__all__: list[str] = ["FlextLdifConversionSchemaMixin"]
+__all__: list[str] = ["FlextLdifConversionSchema"]

@@ -14,7 +14,7 @@ from flext_ldif.servers import (
 )
 
 
-class TestsFlextLdifServiceTypings:
+class TestsFlextLdifTypingsService:
     """Service test typings namespace."""
 
     type ServerClass = type[
@@ -22,4 +22,4 @@ class TestsFlextLdifServiceTypings:
     ]
 
 
-__all__: list[str] = ["TestsFlextLdifServiceTypings"]
+__all__: list[str] = ["TestsFlextLdifTypingsService"]

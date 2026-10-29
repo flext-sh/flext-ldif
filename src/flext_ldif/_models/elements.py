@@ -6,12 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import Annotated
 
 from flext_cli import m
 
-from flext_ldif import c, t
-from flext_ldif.shared import FlextLdifShared
+from flext_ldif import FlextLdifShared, c
 
 
 class FlextLdifModelsBasesParts:
@@ -22,7 +22,7 @@ class FlextLdifModelsBasesParts:
 
     Usage::
         from flext_cli import m
-        from flext_ldif import FlextLdifModelsBases
+        from flext_ldif._models import FlextLdifModelsBases
 
         Base = m.StrictModel
     """
@@ -86,7 +86,7 @@ class FlextLdifModelsBasesParts:
             m.Field(description="LDAP server type (oid, oud, openldap, rfc, etc.)"),
         ] = c.Ldif.ServerTypes.RFC
         validation_violations: Annotated[
-            t.MutableSequenceOf[str],
+            MutableSequence[str],
             m.Field(
                 default_factory=list,
                 description="Validation violations recorded while normalizing ACL "

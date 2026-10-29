@@ -21,7 +21,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif.servers import FlextLdifServersOidAclConvert
-from tests import c, m, t, tm
+from tests import c, m, tm
 
 _DN: str = "dc=ctbc"
 
@@ -191,7 +191,7 @@ class TestsFlextLdifOidAclConvert:
         clause: str,
         subject_type: str,
         value: str,
-        permissions: t.VariadicTuple[str],
+        permissions: tuple[str, ...],
     ) -> None:
         """Test subject clause maps to typed subject."""
         subject = FlextLdifServersOidAclConvert.parse_subject(clause)

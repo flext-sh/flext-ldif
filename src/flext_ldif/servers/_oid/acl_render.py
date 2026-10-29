@@ -13,14 +13,22 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, m, t
+from collections.abc import Sequence
+
+from flext_ldif import c, m
 
 
 class FlextLdifServersOidAclRender:
     """Render an assembled OUD :class:`m.Ldif.AciRule` to its string form."""
 
     @staticmethod
-    def _render_bind(allow: m.Ldif.AciAllow) -> str:
+    def render_bind(allow: m.Ldif.AciAllow) -> str:
+        """Render one allow clause's bind-rule in canonical OUD form.
+
+        Returns:
+            The bind-rule string (subject plus optional authmethod/ip).
+
+        """
         if allow.subject_type == c.Ldif.OudSubjectType.USERATTR:
             keyword = c.Ldif.OudSubjectType.USERATTR.value
             bind = f'{keyword}="{allow.subject_value}"'
@@ -33,7 +41,14 @@ class FlextLdifServersOidAclRender:
         return bind
 
     @staticmethod
-    def _target_parts(aci: m.Ldif.AciRule) -> t.StrSequence:
+    def target_parts(aci: m.Ldif.AciRule) -> Sequence[str]:
+        """Assemble the ACI target clauses (attr/filter/scope) in OUD order.
+
+        Returns:
+            Target clause strings; the first is the unprefixed
+            ``(targetattr=…`` head, ready for layout composition.
+
+        """
         if aci.targetattr.startswith(c.Ldif.OUD_ATTR_NEGATION):
             body = aci.targetattr[len(c.Ldif.OUD_ATTR_NEGATION) :]
             parts = [f'(targetattr{c.Ldif.OUD_ATTR_NEGATION}"{body}")']
@@ -69,7 +84,7 @@ class FlextLdifServersOidAclRender:
         """
         grouped = m.Ldif.AciAllowGroups()
         for allow in aci.allows:
-            grouped = grouped.with_allow(allow, cls._render_bind(allow))
+            grouped = grouped.with_allow(allow, cls.render_bind(allow))
         heads = tuple(
             f"{c.Ldif.ACI_ALLOW} ({', '.join(group.permissions)})"
             for group in grouped.groups
@@ -82,7 +97,7 @@ class FlextLdifServersOidAclRender:
             f"{or_joint.join(group.binds)};"
             for head, group in zip(heads, grouped.groups, strict=True)
         )
-        first, *rest = cls._target_parts(aci)
+        first, *rest = cls.target_parts(aci)
         parts = "".join(
             f"{c.Ldif.ACI_PART_INDENT}{part}"
             for part in (*rest, f'({c.Ldif.ACI_VERSION}; acl "{aci.acl_name}";')

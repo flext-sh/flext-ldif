@@ -10,12 +10,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 import pytest
 
-from tests import c, p, t, tm, u
+from tests import c, p, tm, u
 
 
-class TestsFlextLdifParserUtilities:
+class TestsFlextLdifUtilitiesParser:
     """Public-contract behavior of the LDIF parser utilities."""
 
     @staticmethod
@@ -236,7 +238,7 @@ class TestsFlextLdifParserUtilities:
             ("dn: cn=a\n\ndn: cn=b", ["dn: cn=a", "", "dn: cn=b"]),
         ],
     )
-    def test_unfold_lines(content: str, expected: t.StrSequence) -> None:
+    def test_unfold_lines(content: str, expected: Sequence[str]) -> None:
         """Unfold continuations while preserving record-separating blank lines."""
         # RFC 2849 folding: the single leading space is stripped and the
         # remainder is concatenated verbatim onto the previous line.

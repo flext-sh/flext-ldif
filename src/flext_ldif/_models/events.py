@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import Annotated
 
 from flext_cli import m
@@ -58,7 +59,7 @@ class FlextLdifModelsEvents:
             m.Field(description="Conversion duration in milliseconds"),
         ] = 0.0
         error_details: Annotated[
-            t.MutableSequenceOf[str] | None,
+            MutableSequence[str] | None,
             m.Field(description="Error messages for failed items"),
         ] = None
 
@@ -105,7 +106,7 @@ class FlextLdifModelsEvents:
             m.Field(description="Conversion duration in milliseconds"),
         ] = 0.0
         error_details: Annotated[
-            t.MutableSequenceOf[str] | None,
+            MutableSequence[str] | None,
             m.Field(description="Error messages for failed items"),
         ] = None
         conversion_success_rate: Annotated[

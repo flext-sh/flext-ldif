@@ -7,14 +7,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from collections.abc import Callable
+from collections.abc import Callable, MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers import FlextLdifServersOpenldap1Entry, FlextLdifServersRfc
 from flext_ldif.servers._rfc import (
+    FlextLdifConstantsServersRfc,
     FlextLdifServersRfcAcl,
-    FlextLdifServersRfcConstants,
     FlextLdifServersRfcSchema,
 )
 
@@ -22,7 +22,7 @@ from flext_ldif.servers._rfc import (
 class FlextLdifServersOpenldap1(FlextLdifServersRfc):
     """OpenLDAP 1.x Legacy Servers - Complete Implementation."""
 
-    class Constants(FlextLdifServersRfcConstants):
+    class Constants(FlextLdifConstantsServersRfc):
         """Standardized constants for OpenLDAP 1.x server."""
 
         SERVER_TYPE: ClassVar[str] = c.Ldif.ServerTypes.OPENLDAP1
@@ -49,7 +49,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         ACL_ATTRIBUTE_NAME: ClassVar[str] = "access"
         ACL_PERMISSION_AUTH: ClassVar[str] = "auth"
         SUPPORTED_PERMISSIONS: ClassVar[frozenset[str]] = (
-            FlextLdifServersRfcConstants.SUPPORTED_PERMISSIONS
+            FlextLdifConstantsServersRfc.SUPPORTED_PERMISSIONS
             | frozenset([ACL_PERMISSION_AUTH])
         )
         OPENLDAP_1_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset([
@@ -335,10 +335,10 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
             """
             kind = oc_data.kind or "STRUCTURAL"
-            must: t.MutableSequenceOf[str] = (
+            must: MutableSequence[str] = (
                 list(oc_data.must) if oc_data.must is not None else []
             )
-            may: t.MutableSequenceOf[str] = (
+            may: MutableSequence[str] = (
                 list(oc_data.may) if oc_data.may is not None else []
             )
             oc_str = f"objectclass ( {oc_data.oid}"
@@ -480,7 +480,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         @staticmethod
         def _parse_openldap1_target(
             what: str,
-        ) -> t.StrPair | tuple[str, t.MutableSequenceOf[str]]:
+        ) -> tuple[str, str] | tuple[str, MutableSequence[str]]:
             """Parse the OpenLDAP 1.x target DN and attribute list.
 
             Args:
@@ -491,7 +491,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
 
             """
             target_dn = ""
-            target_attrs: t.MutableSequenceOf[str] = []
+            target_attrs: MutableSequence[str] = []
             dn_prefix = FlextLdifServersOpenldap1.Constants.ACL_TARGET_DN_PREFIX
             attrs_prefix = FlextLdifServersOpenldap1.Constants.ACL_TARGET_ATTRS_PREFIX
             if what.lower().startswith(dn_prefix):
@@ -517,8 +517,8 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                 Validated ACL permissions derived from the token.
 
             """
-            read_perm = FlextLdifServersRfcConstants.PERMISSION_READ
-            write_perm = FlextLdifServersRfcConstants.PERMISSION_WRITE
+            read_perm = FlextLdifConstantsServersRfc.PERMISSION_READ
+            write_perm = FlextLdifConstantsServersRfc.PERMISSION_WRITE
             auth_perm = FlextLdifServersOpenldap1.Constants.ACL_PERMISSION_AUTH
             return m.Ldif.AclPermissions(
                 read=read_perm in first_access or write_perm in first_access,
@@ -569,7 +569,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             who = acl_data.subject.subject_value if acl_data.subject else "*"
             acl_str = f"access to {what} by {who}"
             if acl_data.permissions:
-                perms: t.MutableSequenceOf[str] = []
+                perms: MutableSequence[str] = []
                 if acl_data.permissions.read:
                     perms.append(FlextLdifServersOpenldap1.Constants.PERMISSION_READ)
                 if acl_data.permissions.write:

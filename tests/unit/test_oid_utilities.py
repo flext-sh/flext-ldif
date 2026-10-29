@@ -6,12 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 import pytest
 
 from tests import c, t, tm, u
 
 
-class TestsFlextLdifOidUtilities:
+class TestsFlextLdifUtilitiesOid:
     """Behavioral contract for the OID schema-definition utilities."""
 
     @staticmethod
@@ -34,7 +36,7 @@ class TestsFlextLdifOidUtilities:
     def test_extract_from_definition_returns_leading_oid(
         definition: str,
         expected_oid: str,
-        patterns: t.SequenceOf[t.Ldif.RegexPattern],
+        patterns: Sequence[t.Ldif.RegexPattern],
     ) -> None:
         """Test extract from definition returns leading oid."""
         value = tm.ok(u.Ldif.extract_from_definition(definition, patterns=patterns))
@@ -63,10 +65,11 @@ class TestsFlextLdifOidUtilities:
     def test_extract_from_definition_result_is_chainable_on_success() -> None:
         """Test extract from definition result is chainable on success."""
         result = u.Ldif.extract_from_definition("( 1.2.3 NAME 'x' )")
-        tm.that(
-            tm.ok(result.map(lambda oid: oid.split("."))),
-            eq=[c.ParserBooleanToken.ONE, "2", "3"],
-        )
+
+        def rdn_parts(oid: str) -> list[str]:
+            return oid.split(".")
+
+        tm.that(tm.ok(result.map(rdn_parts)), eq=[c.ParserBooleanToken.ONE, "2", "3"])
 
     @staticmethod
     def test_extract_from_definition_is_idempotent() -> None:

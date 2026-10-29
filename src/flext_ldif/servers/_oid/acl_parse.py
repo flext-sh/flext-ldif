@@ -6,15 +6,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers._oid import FlextLdifServersOidAclSubjectMixin
-from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
-from flext_ldif.servers._rfc.server_constants import FlextLdifServersRfcConstants
+from flext_ldif.servers._oid import (
+    FlextLdifConstantsServersOid,
+    FlextLdifServersOidAclSubject,
+)
+from flext_ldif.servers._rfc import FlextLdifConstantsServersRfc
 
 
-class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
+class FlextLdifServersOidAclParse(FlextLdifServersOidAclSubject):
     """OID ACL parsing."""
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
@@ -58,7 +61,7 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
             append_to_all=settings.append_to_all is True,
             bind_ip_filter=settings.bind_ip_filter,
             constrain_to_added_object=settings.constrain_to_added_object,
-            target_key=FlextLdifServersOidConstants.OID_ACL_SOURCE_TARGET,
+            target_key=FlextLdifConstantsServersOid.OID_ACL_SOURCE_TARGET,
         )
         json_value_adapter = u.json_value_adapter()
         metadata_dict: t.Ldif.MutableMetadataMapping = {
@@ -72,7 +75,7 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
     @staticmethod
     def _extract_oid_target(
         content: str,
-    ) -> tuple[str | None, t.MutableSequenceOf[str]]:
+    ) -> tuple[str | None, MutableSequence[str]]:
         """Extract the target DN and attributes from an OID ACL.
 
         Args:
@@ -83,8 +86,8 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
 
         """
         target_dn: str | None = None
-        attributes: t.MutableSequenceOf[str] = []
-        patterns = FlextLdifServersOidConstants
+        attributes: MutableSequence[str] = []
+        patterns = FlextLdifConstantsServersOid
         target_match = patterns.ACL_TARGET_DN_EXTRACT_RE.search(content)
         if target_match:
             target_dn = target_match.group(1)
@@ -108,7 +111,7 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
 
         """
         permissions: t.MutableBoolMapping = {}
-        const = FlextLdifServersOidConstants
+        const = FlextLdifConstantsServersOid
         perm_match = const.ACL_PERMS_EXTRACT_OID_RE.search(content)
         if perm_match:
             perms_str = perm_match.group(1)
@@ -148,8 +151,8 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
         else:
             acl_line_lower = acl_line.strip().lower()
             can_handle = bool(acl_line_lower) and acl_line_lower.startswith((
-                f"{FlextLdifServersOidConstants.ORCLACI}:",
-                f"{FlextLdifServersOidConstants.ORCLENTRYLEVELACI}:",
+                f"{FlextLdifConstantsServersOid.ORCLACI}:",
+                f"{FlextLdifConstantsServersOid.ORCLENTRYLEVELACI}:",
                 "access to ",
             ))
         return can_handle
@@ -200,9 +203,9 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
         try:
             return self._parse_oid_specific_acl_core(acl_line)
         except c.Ldif.EXC_LDIF_PARSE as e:
-            max_len = FlextLdifServersOidConstants.MAX_LOG_LINE_LENGTH
+            max_len = FlextLdifConstantsServersOid.MAX_LOG_LINE_LENGTH
             acl_preview = acl_line[:max_len] if len(acl_line) > max_len else acl_line
-            FlextLdifServersOidAclParseMixin._module_logger.debug(
+            FlextLdifServersOidAclParse._module_logger.debug(
                 "OID ACL parse failed",
                 error=e,
                 error_type=type(e).__name__,
@@ -247,7 +250,7 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
             perms_dict,
         )
         acl_model = m.Ldif.Acl.model_validate({
-            "name": FlextLdifServersRfcConstants.ACL_ATTRIBUTE_NAME,
+            "name": FlextLdifConstantsServersRfc.ACL_ATTRIBUTE_NAME,
             "target": m.Ldif.AclTarget.model_validate({
                 "target_dn": target_dn,
                 "attributes": target_attrs or [],
@@ -284,17 +287,17 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
         """
         oid_subject_type = self._detect_oid_subject(acl_line)
         if not oid_subject_type:
-            oid_subject_type = FlextLdifServersOidConstants.OidAclSubjectType.SELF
+            oid_subject_type = FlextLdifConstantsServersOid.OidAclSubjectType.SELF
             return (
                 oid_subject_type,
-                FlextLdifServersOidConstants.OidAclSubjectType.SELF,
+                FlextLdifConstantsServersOid.OidAclSubjectType.SELF,
             )
         subject_value: str | None = None
         for (
             regex,
             subj_type,
             _,
-        ) in FlextLdifServersOidConstants.ACL_SUBJECT_PATTERNS.values():
+        ) in FlextLdifConstantsServersOid.ACL_SUBJECT_PATTERNS.values():
             if subj_type == oid_subject_type and regex:
                 subject_value = u.Ldif.extract_component(
                     acl_line,
@@ -304,11 +307,11 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
                 if subject_value:
                     break
         return oid_subject_type, (
-            subject_value or FlextLdifServersOidConstants.OidAclSubjectType.ANONYMOUS
+            subject_value or FlextLdifConstantsServersOid.OidAclSubjectType.ANONYMOUS
         )
 
     @staticmethod
-    def _extract_oid_acl_options(acl_line: str) -> t.MutableMappingKV[str, str | bool]:
+    def _extract_oid_acl_options(acl_line: str) -> MutableMapping[str, str | bool]:
         """Extract the optional ACL components of one OID ACL line.
 
         Args:
@@ -319,7 +322,7 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
 
         """
         extract = u.Ldif.extract_component
-        kls = FlextLdifServersOidConstants
+        kls = FlextLdifConstantsServersOid
         return {
             "acl_filter": extract(acl_line, kls.ACL_FILTER_PATTERN, group=1) or "",
             "acl_constraint": extract(
@@ -369,7 +372,7 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
 
         """
         del _acl_line
-        server_type = FlextLdifServersOidConstants.SERVER_TYPE
+        server_type = FlextLdifConstantsServersOid.SERVER_TYPE
         updated_metadata = (
             acl_data.metadata.model_copy(update={"server_type": server_type})
             if acl_data.metadata
@@ -381,4 +384,4 @@ class FlextLdifServersOidAclParseMixin(FlextLdifServersOidAclSubjectMixin):
         return updated_acl
 
 
-__all__: list[str] = ["FlextLdifServersOidAclParseMixin"]
+__all__: list[str] = ["FlextLdifServersOidAclParse"]

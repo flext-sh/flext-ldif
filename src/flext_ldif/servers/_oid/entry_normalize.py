@@ -6,18 +6,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 from flext_ldif import c, t
-from flext_ldif.servers._oid import FlextLdifServersOidConstants
+from flext_ldif.servers._oid import FlextLdifConstantsServersOid
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
-class FlextLdifServersOidEntryNormalizeMixin(FlextLdifServersRfcEntry):
+class FlextLdifServersOidEntryNormalize(FlextLdifServersRfcEntry):
     """OID entry schema value normalization helpers."""
 
     @staticmethod
     def apply_matching_rule_tokens(
         value: str,
-        token_map: t.MappingKV[str, str],
+        token_map: Mapping[str, str],
         prefix: str,
     ) -> tuple[str, bool]:
         """Replace ``<PREFIX> <oid>`` tokens with their RFC rule names.
@@ -38,7 +40,7 @@ class FlextLdifServersOidEntryNormalizeMixin(FlextLdifServersRfcEntry):
     @staticmethod
     def apply_syntax_tokens(
         value: str,
-        syntax_map: t.MappingKV[str, str],
+        syntax_map: Mapping[str, str],
     ) -> tuple[str, bool]:
         """Replace quoted or space-delimited syntax OIDs with RFC names.
 
@@ -86,11 +88,11 @@ class FlextLdifServersOidEntryNormalizeMixin(FlextLdifServersRfcEntry):
             The resulting ``str``.
 
         """
-        equality_map: t.MappingKV[str, str] = {
+        equality_map: Mapping[str, str] = {
             "caseIgnoreSubStringsMatch": "caseIgnoreMatch",
             "caseIgnoreSubstringsMatch": "caseIgnoreMatch",
         }
-        mixin = FlextLdifServersOidEntryNormalizeMixin
+        mixin = FlextLdifServersOidEntryNormalize
         new_value, _ = mixin.apply_matching_rule_tokens(
             value,
             equality_map,
@@ -98,12 +100,12 @@ class FlextLdifServersOidEntryNormalizeMixin(FlextLdifServersRfcEntry):
         )
         new_value, _ = mixin.apply_matching_rule_tokens(
             new_value,
-            FlextLdifServersOidConstants.MATCHING_RULE_TO_RFC,
+            FlextLdifConstantsServersOid.MATCHING_RULE_TO_RFC,
             "SUBSTR",
         )
         new_value, _ = mixin.apply_syntax_tokens(
             new_value,
-            FlextLdifServersOidConstants.SYNTAX_OID_TO_RFC,
+            FlextLdifConstantsServersOid.SYNTAX_OID_TO_RFC,
         )
         if attr_name_lower in {"objectclasses", "attributetypes"}:
             new_value, _ = mixin.unquote_sup_value(new_value)
@@ -125,7 +127,7 @@ class FlextLdifServersOidEntryNormalizeMixin(FlextLdifServersRfcEntry):
                 continue
             values = attrs[attr_name]
             updated: list[str] = [
-                FlextLdifServersOidEntryNormalizeMixin._normalize_schema_value(
+                FlextLdifServersOidEntryNormalize._normalize_schema_value(
                     value,
                     attr_name.lower(),
                 )
@@ -135,4 +137,4 @@ class FlextLdifServersOidEntryNormalizeMixin(FlextLdifServersRfcEntry):
                 attrs[attr_name] = updated
 
 
-__all__: list[str] = ["FlextLdifServersOidEntryNormalizeMixin"]
+__all__: list[str] = ["FlextLdifServersOidEntryNormalize"]

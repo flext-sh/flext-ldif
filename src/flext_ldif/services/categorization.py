@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, MutableSequence
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.services import FlextLdifCategorizationFiltering
@@ -17,7 +17,7 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering):
 
     def categorize_entries(
         self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry],
+        entries: MutableSequence[m.Ldif.Entry],
     ) -> p.Result[m.Ldif.FlexibleCategories]:
         """Categorize entries into 6 categories.
 
@@ -125,12 +125,12 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering):
 
     def validate_dns(
         self,
-        entries: t.MutableSequenceOf[m.Ldif.Entry] | m.Ldif.ParseResponse,
-    ) -> p.Result[t.MutableSequenceOf[m.Ldif.Entry]]:
+        entries: MutableSequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
+    ) -> p.Result[MutableSequence[m.Ldif.Entry]]:
         """Validate and normalize all DNs to RFC 4514.
 
         Returns:
-            The resulting ``p.Result[t.MutableSequenceOf[m.Ldif.Entry]]``.
+            The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
 
         """
         normalized_entries = u.Ldif.as_entries(entries)
@@ -182,7 +182,7 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering):
             dn_obj = m.Ldif.DN(value=normalized_dn)
             return r[m.Ldif.Entry].ok(entry.model_copy(update={"dn": dn_obj}))
 
-        validated: t.MutableSequenceOf[m.Ldif.Entry] = [
+        validated: MutableSequence[m.Ldif.Entry] = [
             validation_result.value
             for entry in normalized_entries
             if (validation_result := validate_entry(entry)).success
@@ -211,7 +211,7 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering):
                 sample_count=len(sample_rejected_dns),
                 rejected_dns_preview=", ".join(sample_rejected_dns),
             )
-        return r[t.MutableSequenceOf[m.Ldif.Entry]].ok(validated)
+        return r[MutableSequence[m.Ldif.Entry]].ok(validated)
 
 
 __all__: list[str] = ["FlextLdifCategorization"]

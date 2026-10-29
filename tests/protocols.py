@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from tests import m
 
 
-class TestsFlextLdifLdapProtocols(p):
+class TestsFlextLdifProtocolsLdap(p):
     """ldap3 client contracts grouped for composition by the tests facade."""
 
     @runtime_checkable
@@ -39,14 +39,14 @@ class TestsFlextLdifLdapProtocols(p):
 
         def ldap3_to_ldif_entry(
             self,
-            ldap3_entry: TestsFlextLdifLdapProtocols.Ldap3Entry,
+            ldap3_entry: TestsFlextLdifProtocolsLdap.Ldap3Entry,
         ) -> p.Result[m.Ldif.Entry]:
             """Convert one ldap3 entry into the LDIF entry model."""
             ...
 
 
 class TestsFlextLdifProtocols(
-    TestsFlextLdifLdapProtocols,
+    TestsFlextLdifProtocolsLdap,
     flext_tests_p,
     p,
 ):
@@ -122,7 +122,7 @@ class TestsFlextLdifProtocols(
 p = TestsFlextLdifProtocols
 
 __all__: list[str] = [
-    "TestsFlextLdifLdapProtocols",
     "TestsFlextLdifProtocols",
+    "TestsFlextLdifProtocolsLdap",
     "p",
 ]

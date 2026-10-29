@@ -6,15 +6,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from functools import partial
 from typing import Self, override
 
-from flext_ldif import c, m, p, r, s, t, u
+from flext_ldif import c, m, p, r, s, u
 from flext_ldif.services import FlextLdifTransformer
 
 
 class FlextLdifProcessingPipeline(
-    s[t.SequenceOf[p.Ldif.Entry]],
+    s[Sequence[p.Ldif.Entry]],
     m.Ldif.RegistryPortOptions,
     m.Ldif.ProcessingPipelineOptions,
 ):
@@ -47,16 +48,16 @@ class FlextLdifProcessingPipeline(
         )
 
     @override
-    def execute(self) -> p.Result[t.SequenceOf[p.Ldif.Entry]]:
+    def execute(self) -> p.Result[Sequence[p.Ldif.Entry]]:
         """Transform each complete batch before starting the following stage.
 
         Returns:
-            The resulting ``p.Result[t.SequenceOf[p.Ldif.Entry]]``.
+            The resulting ``p.Result[Sequence[p.Ldif.Entry]]``.
 
         """
         batch = self.entries_input
         if batch is None:
-            return r[t.SequenceOf[p.Ldif.Entry]].fail("No entries provided")
+            return r[Sequence[p.Ldif.Entry]].fail("No entries provided")
         configuration = self.transform_config or m.Ldif.TransformConfig()
         process = configuration.process_config
         if configuration.normalize_dns and process is not None:
@@ -79,7 +80,7 @@ class FlextLdifProcessingPipeline(
                 ),
             )
             if result.failure:
-                return r[t.SequenceOf[p.Ldif.Entry]].from_failure(result)
+                return r[Sequence[p.Ldif.Entry]].from_failure(result)
             batch = result.value
         if configuration.normalize_attrs and process is not None:
             attr_options = process.attr_config or m.Ldif.AttrNormalizationConfig()
@@ -93,7 +94,7 @@ class FlextLdifProcessingPipeline(
                 ),
             )
             if result.failure:
-                return r[t.SequenceOf[p.Ldif.Entry]].from_failure(result)
+                return r[Sequence[p.Ldif.Entry]].from_failure(result)
             batch = result.value
         if process is not None and process.source_server and process.target_server:
             transformer = FlextLdifTransformer(
@@ -105,9 +106,9 @@ class FlextLdifProcessingPipeline(
             )
             result = r.traverse(batch, transformer.apply)
             if result.failure:
-                return r[t.SequenceOf[p.Ldif.Entry]].from_failure(result)
+                return r[Sequence[p.Ldif.Entry]].from_failure(result)
             batch = result.value
-        return r[t.SequenceOf[p.Ldif.Entry]].ok(list(batch))
+        return r[Sequence[p.Ldif.Entry]].ok(list(batch))
 
 
 __all__: list[str] = ["FlextLdifProcessingPipeline"]

@@ -17,13 +17,11 @@ from typing import TYPE_CHECKING
 import pytest
 
 from flext_ldif import FlextLdif
-from flext_ldif.servers import FlextLdifServersOidConstants
+from flext_ldif.servers import FlextLdifConstantsServersOid
 from tests import c, m, tm
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-from tests import t
 
 
 class TestsFlextLdifMigrationPipelineServers:
@@ -36,14 +34,14 @@ class TestsFlextLdifMigrationPipelineServers:
         ldif_content: str,
         source_server: str,
         target_server: str,
-    ) -> tuple[str, int, t.VariadicTuple[str]]:
+    ) -> tuple[str, int, tuple[str, ...]]:
         """Drive ``execute`` through its public API and return observable state.
 
         Returns the produced output-file text, the model's ``entry_count`` and
         its ``output_files`` tuple -- all public contract surface.
 
         Returns:
-            The resulting ``tuple[str, int, t.VariadicTuple[str]]``.
+            The resulting ``tuple[str, int, tuple[str, ...]]``.
 
         """
         input_dir = tmp_path / "input"
@@ -165,15 +163,15 @@ class TestsFlextLdifMigrationPipelineServers:
         tm.that(len(output_files), eq=1)
         tm.that(content, has=f"{expected_attribute}: {c.Tests.ACL_READ_VALUE}")
 
-        if expected_attribute == FlextLdifServersOidConstants.ORCLACI:
+        if expected_attribute == FlextLdifConstantsServersOid.ORCLACI:
             _ = tm.ok(not c.Tests.MIGRATION_ACI_LINE_REGEX.search(content))
         else:
-            tm.ok(f"{FlextLdifServersOidConstants.ORCLACI}:" not in content)
+            tm.ok(f"{FlextLdifConstantsServersOid.ORCLACI}:" not in content)
 
     def test_schema_dn_is_converted_from_oid_to_rfc(self, tmp_path: Path) -> None:
         """OID schema DN (cn=subschemasubentry) is rewritten to the RFC schema DN."""
         ldif_content = c.Tests.MIGRATION_SCHEMA_ENTRY_TEMPLATE.format(
-            dn=FlextLdifServersOidConstants.SCHEMA_DN_SERVER,
+            dn=FlextLdifConstantsServersOid.SCHEMA_DN_SERVER,
             objectclass=c.Tests.NAME_OBJECTCLASS,
             top=c.Tests.NAME_TOP,
             subschema=c.Tests.NAME_SUBSCHEMA,
@@ -188,7 +186,7 @@ class TestsFlextLdifMigrationPipelineServers:
 
         tm.that(content, has=f"dn: {c.Ldif.RFC_SCHEMA_DN}")
         tm.that(
-            f"dn: {FlextLdifServersOidConstants.SCHEMA_DN_SERVER}" not in content,
+            f"dn: {FlextLdifConstantsServersOid.SCHEMA_DN_SERVER}" not in content,
             eq=True,
         )
 

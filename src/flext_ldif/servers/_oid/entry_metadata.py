@@ -6,14 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Mapping, MutableMapping, MutableSequence
 
 from flext_ldif import c, m, t, u
-from flext_ldif.servers._oid.server_constants import FlextLdifServersOidConstants
+from flext_ldif.servers._oid import FlextLdifConstantsServersOid
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
-class FlextLdifServersOidEntryMetadataMixin(FlextLdifServersRfcEntry):
+class FlextLdifServersOidEntryMetadata(FlextLdifServersRfcEntry):
     """OID entry metadata extraction helpers."""
 
     @staticmethod
@@ -24,31 +24,31 @@ class FlextLdifServersOidEntryMetadataMixin(FlextLdifServersRfcEntry):
         """Extract OID-specific ACL metadata from ACL string."""
         bindmode = u.Ldif.extract_component(
             acl_value,
-            FlextLdifServersOidConstants.ACL_BINDMODE_PATTERN,
+            FlextLdifConstantsServersOid.ACL_BINDMODE_PATTERN,
             group=1,
         )
         if bindmode:
             current_extensions[c.Ldif.ACL_BINDMODE] = bindmode
         if u.Ldif.extract_component(
             acl_value,
-            FlextLdifServersOidConstants.ACL_DENY_GROUP_OVERRIDE_PATTERN,
+            FlextLdifConstantsServersOid.ACL_DENY_GROUP_OVERRIDE_PATTERN,
         ):
             current_extensions[c.Ldif.ACL_DENY_GROUP_OVERRIDE] = True
         if u.Ldif.extract_component(
             acl_value,
-            FlextLdifServersOidConstants.ACL_APPEND_TO_ALL_PATTERN,
+            FlextLdifConstantsServersOid.ACL_APPEND_TO_ALL_PATTERN,
         ):
             current_extensions[c.Ldif.ACL_APPEND_TO_ALL] = True
         bind_ip_filter = u.Ldif.extract_component(
             acl_value,
-            FlextLdifServersOidConstants.ACL_BIND_IP_FILTER_PATTERN,
+            FlextLdifConstantsServersOid.ACL_BIND_IP_FILTER_PATTERN,
             group=1,
         )
         if bind_ip_filter:
             current_extensions[c.Ldif.ACL_BIND_IP_FILTER] = bind_ip_filter
         constrain_to_added = u.Ldif.extract_component(
             acl_value,
-            FlextLdifServersOidConstants.ACL_CONSTRAIN_TO_ADDED_PATTERN,
+            FlextLdifConstantsServersOid.ACL_CONSTRAIN_TO_ADDED_PATTERN,
             group=1,
         )
         if constrain_to_added:
@@ -103,7 +103,7 @@ class FlextLdifServersOidEntryMetadataMixin(FlextLdifServersRfcEntry):
             if isinstance(raw_value, str):
                 typed_dict[key_str] = raw_value
             elif isinstance(raw_value, list):
-                typed_items: t.MutableSequenceOf[str] = [
+                typed_items: MutableSequence[str] = [
                     str(item) for item in raw_value if u.primitive(item)
                 ]
                 typed_dict[key_str] = typed_items
@@ -121,14 +121,14 @@ class FlextLdifServersOidEntryMetadataMixin(FlextLdifServersRfcEntry):
         """
         boolean_conversions: MutableMapping[str, t.MutableAttributeMapping] = {}
         conversions_obj = (
-            FlextLdifServersOidEntryMetadataMixin._boolean_conversions_container(
+            FlextLdifServersOidEntryMetadata._boolean_conversions_container(
                 entry_data,
             )
         )
         if conversions_obj is None:
             return boolean_conversions
         for key, value in conversions_obj.items():
-            typed_dict = FlextLdifServersOidEntryMetadataMixin._typed_conversion_entry(
+            typed_dict = FlextLdifServersOidEntryMetadata._typed_conversion_entry(
                 value,
             )
             if typed_dict is not None:
@@ -161,4 +161,4 @@ class FlextLdifServersOidEntryMetadataMixin(FlextLdifServersRfcEntry):
         return original_extensions
 
 
-__all__: list[str] = ["FlextLdifServersOidEntryMetadataMixin"]
+__all__: list[str] = ["FlextLdifServersOidEntryMetadata"]

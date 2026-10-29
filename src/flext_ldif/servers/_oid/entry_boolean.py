@@ -6,18 +6,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, MutableSequence, Sequence
 
 from flext_ldif import c, m, t, u
 from flext_ldif.servers._oid import (
-    FlextLdifServersOidConstants,
-    FlextLdifServersOidEntryMetadataMixin,
+    FlextLdifConstantsServersOid,
+    FlextLdifServersOidEntryMetadata,
 )
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
 
-class FlextLdifServersOidEntryBooleanMixin(
-    FlextLdifServersOidEntryMetadataMixin,
+class FlextLdifServersOidEntryBoolean(
+    FlextLdifServersOidEntryMetadata,
     FlextLdifServersRfcEntry,
 ):
     """OID entry boolean value conversion helpers."""
@@ -37,7 +37,7 @@ class FlextLdifServersOidEntryBooleanMixin(
                 MutableMapping[str, t.MutableAttributeMapping]]``.
 
         """
-        oid_constants = FlextLdifServersOidConstants
+        oid_constants = FlextLdifConstantsServersOid
         boolean_attributes = oid_constants.BOOLEAN_ATTRIBUTES
         boolean_attr_names = {attr.lower() for attr in boolean_attributes}
         converted_attrs_for_util: t.MutableStrSequenceMapping = dict(
@@ -55,20 +55,20 @@ class FlextLdifServersOidEntryBooleanMixin(
         boolean_conversions: MutableMapping[str, t.MutableAttributeMapping] = {}
         for attr_name, attr_values in entry_attributes.items():
             if attr_name.lower() in boolean_attr_names:
-                original_values: t.MutableSequenceOf[str] = list(attr_values)
-                converted_values: t.MutableSequenceOf[str] = converted_attributes.get(
+                original_values: MutableSequence[str] = list(attr_values)
+                converted_values: MutableSequence[str] = converted_attributes.get(
                     attr_name,
                     original_values,
                 )
                 if converted_values != original_values:
                     converted_attrs.add(attr_name)
                     boolean_conversions[attr_name] = (
-                        FlextLdifServersOidEntryBooleanMixin._boolean_conversion_record(
+                        FlextLdifServersOidEntryBoolean._boolean_conversion_record(
                             original_values,
                             converted_values,
                         )
                     )
-                    FlextLdifServersOidEntryBooleanMixin._module_logger.debug(
+                    FlextLdifServersOidEntryBoolean._module_logger.debug(
                         "Converted boolean attribute OID→RFC",
                         attribute_name=attr_name,
                     )
@@ -76,16 +76,16 @@ class FlextLdifServersOidEntryBooleanMixin(
 
     @staticmethod
     def _boolean_conversion_record(
-        original_values: t.MutableSequenceOf[str],
-        converted_values: t.MutableSequenceOf[str],
-    ) -> MutableMapping[str, str | t.MutableSequenceOf[str]]:
+        original_values: MutableSequence[str],
+        converted_values: MutableSequence[str],
+    ) -> MutableMapping[str, str | MutableSequence[str]]:
         """Build one OID→RFC boolean conversion metadata record.
 
         Returns:
-            The resulting ``MutableMapping[str, str | t.MutableSequenceOf[str]]``.
+            The resulting ``MutableMapping[str, str | MutableSequence[str]]``.
 
         """
-        oid_constants = FlextLdifServersOidConstants
+        oid_constants = FlextLdifConstantsServersOid
         return {
             c.Ldif.CONVERSION_ORIGINAL_VALUE: original_values,
             c.Ldif.CONVERSION_CONVERTED_VALUE: converted_values,
@@ -99,11 +99,11 @@ class FlextLdifServersOidEntryBooleanMixin(
     def _convert_boolean_values_to_oid(
         self,
         attr_name: str,
-        current_values: t.MutableSequenceOf[str],
+        current_values: MutableSequence[str],
         restored_attrs: t.MutableStrSequenceMapping,
     ) -> None:
         """Convert RFC boolean values to OID format for an attribute."""
-        new_values: t.MutableSequenceOf[str] = []
+        new_values: MutableSequence[str] = []
         changed = False
         for val in current_values:
             converted, was_converted = self._convert_rfc_boolean_to_oid(val)
@@ -122,9 +122,9 @@ class FlextLdifServersOidEntryBooleanMixin(
 
         """
         if value == "TRUE":
-            return (FlextLdifServersOidConstants.ONE_OID, True)
+            return (FlextLdifConstantsServersOid.ONE_OID, True)
         if value == "FALSE":
-            return (FlextLdifServersOidConstants.ZERO_OID, True)
+            return (FlextLdifConstantsServersOid.ZERO_OID, True)
         return (value, False)
 
     @staticmethod
@@ -143,15 +143,15 @@ class FlextLdifServersOidEntryBooleanMixin(
         converted_val = conv_data.get(mk.CONVERSION_CONVERTED_VALUE)
         match converted_val:
             case str() as s:
-                converted_val_list: t.StrSequence = [s]
+                converted_val_list: Sequence[str] = [s]
             case list() as items:
                 converted_val_list = list(items)
             case _:
                 return False
         rfc_value = converted_val_list[0]
-        oid_value = FlextLdifServersOidConstants.RFC_TO_OID.get(rfc_value, rfc_value)
+        oid_value = FlextLdifConstantsServersOid.RFC_TO_OID.get(rfc_value, rfc_value)
         restored_attrs[attr_name] = [oid_value]
-        FlextLdifServersOidEntryBooleanMixin._module_logger.debug(
+        FlextLdifServersOidEntryBoolean._module_logger.debug(
             "Restored OID boolean format from metadata",
             attribute_name=attr_name,
             rfc_value=rfc_value,
@@ -171,7 +171,7 @@ class FlextLdifServersOidEntryBooleanMixin(
             return entry_data
         boolean_conversions = self._parse_metadata_boolean_flags(entry_data)
         boolean_attr_names = {
-            attr.lower() for attr in FlextLdifServersOidConstants.BOOLEAN_ATTRIBUTES
+            attr.lower() for attr in FlextLdifConstantsServersOid.BOOLEAN_ATTRIBUTES
         }
         restored_attrs = dict(entry_data.attributes.attributes)
         for attr_name in list(restored_attrs.keys()):
@@ -209,4 +209,4 @@ class FlextLdifServersOidEntryBooleanMixin(
         return copied
 
 
-__all__: list[str] = ["FlextLdifServersOidEntryBooleanMixin"]
+__all__: list[str] = ["FlextLdifServersOidEntryBoolean"]
