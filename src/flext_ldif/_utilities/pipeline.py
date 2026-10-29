@@ -10,7 +10,7 @@ from collections.abc import MutableSequence, Sequence
 from typing import override
 
 from flext_ldif import c, m, p, r, t
-from flext_ldif._utilities.entry import FlextLdifUtilitiesEntry
+from flext_ldif._utilities import FlextLdifUtilitiesEntry
 
 
 class FlextLdifUtilitiesPipeline:

@@ -107,9 +107,9 @@ install_lazy_exports(
     MappingProxyType({
         "TestsFlextLdifConstants": ".constants",
         "TestsFlextLdifConstantsLdap": ".constants_ldap",
-        "TestsFlextLdifProtocolsLdap": ".protocols",
         "TestsFlextLdifModels": ".models",
         "TestsFlextLdifProtocols": ".protocols",
+        "TestsFlextLdifProtocolsLdap": ".protocols",
         "TestsFlextLdifSchemaExpectations": ".utilities",
         "TestsFlextLdifServiceBase": ".base",
         "TestsFlextLdifSettings": ".settings",

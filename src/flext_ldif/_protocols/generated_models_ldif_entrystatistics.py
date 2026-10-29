@@ -1,25 +1,31 @@
-"""Generated models ldif entrystatistics module.
+# AUTO-GENERATED FILE — Regenerate with: make gen
+"""Source-derived structural model contract.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 src/flext_ldif/_protocols/generated_models_ldif_entrystatistics
 SPDX-License-Identifier: MIT
 """
 
-# AUTO-GENERATED FILE — Regenerate with: make gen
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
-    from collections.abc import MutableMapping as collections_abc_MutableMapping
+    from collections.abc import (
+        MutableMapping as collections_abc_MutableMapping,
+        MutableSequence as collections_abc_MutableSequence,
+    )
 
-    from flext_ldif import t as flext_ldif_t
     from flext_ldif._protocols import FlextLdifProtocolsBase
 
 
-class FlextLdifProtocolsModelsLdifGeneratedEntryStatistics:
+class FlextLdifLdifProtocolsGeneratedModelsEntryStatistics:
+    """Own the structural model contract declared by this module."""
+
     @runtime_checkable
     class EntryStatistics(Protocol):
+        """Structural data contract projected from the owning model."""
+
         was_parsed: bool
         was_validated: bool
         was_filtered: bool
@@ -27,21 +33,23 @@ class FlextLdifProtocolsModelsLdifGeneratedEntryStatistics:
         was_rejected: bool
         rejection_category: str | None
         rejection_reason: str | None
-        attributes_added: flext_ldif_t.MutableSequence[str]
-        attributes_removed: flext_ldif_t.MutableSequence[str]
-        attributes_modified: flext_ldif_t.MutableSequence[str]
-        attributes_filtered: flext_ldif_t.MutableSequence[str]
-        objectclasses_original: flext_ldif_t.MutableSequence[str]
-        objectclasses_final: flext_ldif_t.MutableSequence[str]
-        servers_applied: flext_ldif_t.MutableSequence[str]
+        attributes_added: collections_abc_MutableSequence[str]
+        attributes_removed: collections_abc_MutableSequence[str]
+        attributes_modified: collections_abc_MutableSequence[str]
+        attributes_filtered: collections_abc_MutableSequence[str]
+        objectclasses_original: collections_abc_MutableSequence[str]
+        objectclasses_final: collections_abc_MutableSequence[str]
+        servers_applied: collections_abc_MutableSequence[str]
         server_transformations: int
         dn_statistics: FlextLdifProtocolsBase.DNStatistics | None
-        filters_applied: flext_ldif_t.MutableSequence[str]
+        filters_applied: collections_abc_MutableSequence[str]
         filter_results: collections_abc_MutableMapping[str, bool]
-        errors: flext_ldif_t.MutableSequence[str]
-        warnings: flext_ldif_t.MutableSequence[str]
+        errors: collections_abc_MutableSequence[str]
+        warnings: collections_abc_MutableSequence[str]
         category_assigned: str | None
         category_confidence: float
 
 
-__all__ = ["FlextLdifProtocolsModelsLdifGeneratedEntryStatistics"]
+__all__: list[str] = [
+    "FlextLdifLdifProtocolsGeneratedModelsEntryStatistics",
+]

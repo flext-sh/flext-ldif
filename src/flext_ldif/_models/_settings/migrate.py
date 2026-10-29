@@ -13,7 +13,7 @@ from typing import Annotated
 from flext_core import m
 
 from flext_ldif import c, t
-from flext_ldif._models import FlextLdifModelsSettingsRules
+from flext_ldif._models._settings import FlextLdifModelsSettingsRules
 
 
 class FlextLdifModelsSettingsMigrate:

@@ -18,7 +18,6 @@ from flext_ldif._utilities import (
     FlextLdifUtilitiesEntry,
     FlextLdifUtilitiesEvents,
     FlextLdifUtilitiesLazy,
-    FlextLdifUtilitiesLazyMeta,
     FlextLdifUtilitiesMetadata,
     FlextLdifUtilitiesObjectClass,
     FlextLdifUtilitiesOID,
@@ -30,13 +29,11 @@ from flext_ldif._utilities import (
     FlextLdifUtilitiesValidation,
     FlextLdifUtilitiesWriter,
 )
-from flext_ldif._utilities.flext_ldif_servers_oud_utilities import (
-    FlextLdifUtilitiesServersOud,
-)
+from flext_ldif._utilities._lazy import FlextLdifUtilitiesLazyMeta
+from flext_ldif.servers._oud import FlextLdifUtilitiesServersOud
 
 
 class FlextLdifUtilities(
-    FlextLdifUtilitiesLazy,
     FlextLdifUtilitiesACL,
     FlextLdifUtilitiesAttribute,
     FlextLdifUtilitiesCollectionLdif,
@@ -45,6 +42,7 @@ class FlextLdifUtilities(
     FlextLdifUtilitiesEntry,
     FlextLdifUtilitiesEvents,
     FlextLdifUtilitiesServersOud,
+    FlextLdifUtilitiesLazy,
     FlextLdifUtilitiesMetadata,
     FlextLdifUtilitiesObjectClass,
     FlextLdifUtilitiesOID,

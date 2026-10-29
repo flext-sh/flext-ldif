@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import c, m
-from flext_ldif._constants.servers_oud import FlextLdifConstantsServersOud
+from flext_ldif._constants import FlextLdifConstantsServersOud
 
 
 class FlextLdifUtilitiesServersOud:

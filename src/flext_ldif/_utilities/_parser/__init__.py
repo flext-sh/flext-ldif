@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Internal package for parser.
+"""Flext Ldif. Utilities. Parser package.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -20,6 +20,7 @@ if TYPE_CHECKING:
         FlextLdifUtilitiesParserSchemaFields,
     )
     from flext_ldif._utilities._parser.values import FlextLdifUtilitiesParserValues
+
 
 __all__: tuple[str, ...] = (
     "FlextLdifUtilitiesParserMetadata",

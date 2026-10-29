@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Internal package for settings.
+"""Flext Ldif. Models. Settings package.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from flext_ldif._models._settings.validation import (
         FlextLdifModelsSettingsValidation,
     )
+
 
 __all__: tuple[str, ...] = (
     "FlextLdifModelsSettingsAcl",

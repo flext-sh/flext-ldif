@@ -716,7 +716,7 @@ class FlextLdifConstantsBase:
 
     LDAP_SYNTAXES: ClassVar[str] = "ldapSyntaxes"
 
-    SCHEMA_OID_ATTRIBUTE_KEYS: ClassVar[tuple[str, str]] = (
+    SCHEMA_OID_ATTRIBUTE_KEYS: ClassVar[tuple[tuple[str, str], ...]] = (
         (ATTRIBUTE_TYPES, "attributetypes"),
         (OBJECT_CLASSES, "objectclasses"),
         (MATCHING_RULES, "matchingrules"),

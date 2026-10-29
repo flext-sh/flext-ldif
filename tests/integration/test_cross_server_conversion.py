@@ -19,10 +19,10 @@ from typing import TYPE_CHECKING
 from tests import c, m, tm
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from flext_ldif.servers import FlextLdifServersBase
     from flext_ldif.services import FlextLdifConversion
+from collections.abc import Callable
+
 from tests import p, t
 
 

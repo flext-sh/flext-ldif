@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Internal package for metadata.
+"""Flext Ldif. Utilities. Metadata package.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -39,6 +39,7 @@ if TYPE_CHECKING:
     from flext_ldif._utilities._metadata.tracking import (
         FlextLdifUtilitiesMetadataTracking,
     )
+
 
 __all__: tuple[str, ...] = (
     "FlextLdifUtilitiesMetadataBuilders",

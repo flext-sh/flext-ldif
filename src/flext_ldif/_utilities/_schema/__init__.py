@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Internal package for schema.
+"""Flext Ldif. Utilities. Schema package.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -20,6 +20,7 @@ if TYPE_CHECKING:
         FlextLdifUtilitiesSchemaNormalize,
     )
     from flext_ldif._utilities._schema.parse import FlextLdifUtilitiesSchemaParse
+
 
 __all__: tuple[str, ...] = (
     "FlextLdifUtilitiesSchemaBuild",

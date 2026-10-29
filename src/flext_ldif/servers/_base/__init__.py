@@ -60,8 +60,8 @@ install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "FlextLdifServerMethods": ".mixins",
         "FlextLdifConstantsServersBase": ".server_constants",
+        "FlextLdifServerMethods": ".mixins",
         "FlextLdifServersBaseEntry": ".entry",
         "FlextLdifServersBaseExecuteParams": ".execute_params",
         "FlextLdifServersBaseIo": ".server_io",

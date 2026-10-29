@@ -1,3 +1,4 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """Extracted facade class for lazy.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
@@ -13,8 +14,8 @@ from flext_ldif._utilities._lazy import (
 
 
 class FlextLdifUtilitiesLazy(
-    FlextLdifUtilitiesLazyMeta,
     FlextLdifUtilitiesLazyTree,
+    FlextLdifUtilitiesLazyMeta,
 ):
     """Facade for lazy."""
 

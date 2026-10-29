@@ -17,8 +17,8 @@ from flext_ldif._models import (
     FlextLdifModelsCollections,
     FlextLdifModelsDomainsEntries,
     FlextLdifModelsResultsStatistics,
-    FlextLdifModelsSettingsMigrate,
 )
+from flext_ldif._models._settings import FlextLdifModelsSettingsMigrate
 
 
 class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):

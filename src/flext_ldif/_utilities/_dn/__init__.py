@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Internal package for dn.
+"""Flext Ldif. Utilities. Dn package.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from flext_ldif._utilities._dn.rebase import FlextLdifUtilitiesDNRebase
     from flext_ldif._utilities._dn.transform import FlextLdifUtilitiesDNTransform
     from flext_ldif._utilities._dn.validate import FlextLdifUtilitiesDNValidate
+
 
 __all__: tuple[str, ...] = (
     "FlextLdifUtilitiesDNChars",

@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Internal package for validation.
+"""Flext Ldif. Utilities. Validation package.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -17,6 +17,7 @@ if TYPE_CHECKING:
         FlextLdifUtilitiesValidationLdifValue,
     )
     from flext_ldif._utilities._validation.rfc import FlextLdifUtilitiesValidationRfc
+
 
 __all__: tuple[str, ...] = (
     "FlextLdifUtilitiesValidationLdifValue",

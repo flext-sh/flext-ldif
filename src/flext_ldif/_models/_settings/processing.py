@@ -13,7 +13,7 @@ from flext_core import m
 
 from flext_ldif import FlextLdifShared, t
 from flext_ldif._constants import FlextLdifConstantsEnums
-from flext_ldif._models import FlextLdifModelsSettingsNormalization
+from flext_ldif._models._settings import FlextLdifModelsSettingsNormalization
 
 
 class FlextLdifModelsSettingsProcessing:

@@ -785,7 +785,7 @@ VERB_ARGUMENTS_check := CHECK_PHASE
 VERB_DESCRIPTION_tests := Discover the complete global pytest inventory and execute testmon-selected cases with the persistent external database.
 VERB_ARGUMENTS_tests :=
 
-VERB_DESCRIPTION_tests-full := Execute incremental tests followed by the complete population of each governed repository using the same persistent external database.
+VERB_DESCRIPTION_tests-full := Execute the complete applicable population once without Testmon or a preliminary incremental run, preserving the existing database untouched.
 VERB_ARGUMENTS_tests-full :=
 
 VERB_DESCRIPTION_help := Discover the declared public interface without effects.

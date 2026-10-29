@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Internal package for oid.
+"""Flext Ldif. Utilities. Oid package.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -15,13 +15,12 @@ from flext_core.lazy import install_lazy_exports
 if TYPE_CHECKING:
     from flext_ldif._utilities._oid.operations import FlextLdifUtilitiesOIDOperations
 
+
 __all__: tuple[str, ...] = ("FlextLdifUtilitiesOIDOperations",)
 
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({
-        "FlextLdifUtilitiesOIDOperations": ".operations",
-    }),
+    MappingProxyType({"FlextLdifUtilitiesOIDOperations": ".operations"}),
     public_exports=__all__,
 )

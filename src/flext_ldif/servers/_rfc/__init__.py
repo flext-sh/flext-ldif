@@ -36,8 +36,8 @@ install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "FlextLdifServersRfcAcl": ".acl",
         "FlextLdifConstantsServersRfc": ".server_constants",
+        "FlextLdifServersRfcAcl": ".acl",
         "FlextLdifServersRfcEntry": ".entry",
         "FlextLdifServersRfcSchema": ".schema",
         "FlextLdifServersRfcSchemaParse": ".schema_parse",

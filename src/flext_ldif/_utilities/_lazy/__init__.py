@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Internal package for lazy.
+"""Flext Ldif. Utilities. Lazy package.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -16,10 +16,8 @@ if TYPE_CHECKING:
     from flext_ldif._utilities._lazy.meta import FlextLdifUtilitiesLazyMeta
     from flext_ldif._utilities._lazy.tree import FlextLdifUtilitiesLazyTree
 
-__all__: tuple[str, ...] = (
-    "FlextLdifUtilitiesLazyMeta",
-    "FlextLdifUtilitiesLazyTree",
-)
+
+__all__: tuple[str, ...] = ("FlextLdifUtilitiesLazyMeta", "FlextLdifUtilitiesLazyTree")
 
 install_lazy_exports(
     __name__,

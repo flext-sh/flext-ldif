@@ -12,7 +12,7 @@ from typing import ClassVar, override
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers import FlextLdifServersRfc
-from flext_ldif.servers._base.dialect_schema import FlextLdifServersDialectSchema
+from flext_ldif.servers._base import FlextLdifServersDialectSchema
 from flext_ldif.servers._rfc import (
     FlextLdifConstantsServersRfc,
     FlextLdifServersRfcAcl,

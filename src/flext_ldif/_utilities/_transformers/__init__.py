@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Internal package for transformers.
+"""Flext Ldif. Utilities. Transformers package.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -17,6 +17,7 @@ if TYPE_CHECKING:
         FlextLdifUtilitiesTransformersAttrs,
     )
     from flext_ldif._utilities._transformers.dn import FlextLdifUtilitiesTransformersDn
+
 
 __all__: tuple[str, ...] = (
     "FlextLdifUtilitiesTransformersAttrs",

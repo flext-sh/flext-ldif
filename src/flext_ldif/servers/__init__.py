@@ -74,6 +74,7 @@ install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
+        "FlextLdifConstantsServersOid": ".oid",
         "FlextLdifServersAd": ".ad",
         "FlextLdifServersApache": ".apache",
         "FlextLdifServersBase": ".base",
@@ -85,7 +86,6 @@ install_lazy_exports(
         "FlextLdifServersOidAclPipeline": ".oid",
         "FlextLdifServersOidAclRender": ".oid",
         "FlextLdifServersOidAclToOud": ".oid",
-        "FlextLdifConstantsServersOid": ".oid",
         "FlextLdifServersOidEntry": ".oid",
         "FlextLdifServersOidSchema": ".oid",
         "FlextLdifServersOpenldap": ".openldap",

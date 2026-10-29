@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Internal package for writer.
+"""Flext Ldif. Utilities. Writer package.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from flext_ldif._utilities._writer.chars import FlextLdifUtilitiesWriterChars
     from flext_ldif._utilities._writer.fold import FlextLdifUtilitiesWriterFold
     from flext_ldif._utilities._writer.schema import FlextLdifUtilitiesWriterSchema
+
 
 __all__: tuple[str, ...] = (
     "FlextLdifUtilitiesWriterChars",

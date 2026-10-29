@@ -1,20 +1,24 @@
-"""Generated models basemodel module.
+# AUTO-GENERATED FILE — Regenerate with: make gen
+"""Source-derived structural model contract.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 src/flext_ldif/_protocols/generated_models_basemodel
 SPDX-License-Identifier: MIT
 """
 
-# AUTO-GENERATED FILE — Regenerate with: make gen
 from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
 
-class FlextLdifProtocolsModelsGeneratedBaseModel:
+class FlextLdifProtocolsGeneratedModelsBaseModel:
+    """Own the structural model contract declared by this module."""
+
     @runtime_checkable
     class BaseModel(Protocol):
-        pass
+        """Structural data contract projected from the owning model."""
 
 
-__all__ = ["FlextLdifProtocolsModelsGeneratedBaseModel"]
+__all__: list[str] = [
+    "FlextLdifProtocolsGeneratedModelsBaseModel",
+]

@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import Literal
 
 from flext_tests import FlextTestsTypes
@@ -19,10 +20,10 @@ class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
     class Tests(FlextTestsTypes.Tests):
         """flext-ldif-specific test type definitions namespace."""
 
-        type GenericFieldsDict = FlextLdifTypes.Mapping[str, str]
-        type DnRefData = FlextLdifTypes.Mapping[
+        type GenericFieldsDict = Mapping[str, str]
+        type DnRefData = Mapping[
             str,
-            FlextLdifTypes.Mapping[str, str] | FlextLdifTypes.Sequence[str] | str,
+            Mapping[str, str] | Sequence[str] | str,
         ]
         type FixtureServer = str
         type FixtureKind = str
@@ -30,9 +31,7 @@ class TestsFlextLdifTypes(FlextTestsTypes, FlextLdifTypes):
         type ObjectClassCaseRow = tuple[
             str, str, bool, str | None, str | None, str | None
         ]
-        type EntryCaseRow = tuple[
-            str, str, FlextLdifTypes.Mapping[str, FlextLdifTypes.Sequence[str]], bool
-        ]
+        type EntryCaseRow = tuple[str, str, Mapping[str, Sequence[str]], bool]
         type ParseMethod = Literal[
             "parse_server",
             "parse_attribute",

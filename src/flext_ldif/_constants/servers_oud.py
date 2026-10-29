@@ -153,7 +153,7 @@ class FlextLdifConstantsServersOud:
         ("ssf", 'ssf {operator} "{value}"', ">="),
     )
 
-    ACL_TARGET_EXTENSIONS_CONFIG: ClassVar[tuple[str, str]] = (
+    ACL_TARGET_EXTENSIONS_CONFIG: ClassVar[tuple[tuple[str, str], ...]] = (
         ("targattrfilters", '(targattrfilters="{value}")'),
         ("targetcontrol", '(targetcontrol="{value}")'),
         ("extop", '(extop="{value}")'),

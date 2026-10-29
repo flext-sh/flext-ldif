@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Internal package for acl.
+"""Flext Ldif. Utilities. Acl package.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from flext_ldif._utilities._acl.format import FlextLdifUtilitiesACLFormat
     from flext_ldif._utilities._acl.parse import FlextLdifUtilitiesACLParse
     from flext_ldif._utilities._acl.permissions import FlextLdifUtilitiesACLPermissions
+
 
 __all__: tuple[str, ...] = (
     "FlextLdifUtilitiesACLExtensions",

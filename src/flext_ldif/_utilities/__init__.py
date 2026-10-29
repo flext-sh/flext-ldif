@@ -13,8 +13,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldif._utilities._lazy.meta import FlextLdifUtilitiesLazyMeta
-    from flext_ldif._utilities._lazy.tree import FlextLdifUtilitiesLazyTree
     from flext_ldif._utilities.acl import FlextLdifUtilitiesACL
     from flext_ldif._utilities.attribute import FlextLdifUtilitiesAttribute
     from flext_ldif._utilities.collection_ldif import FlextLdifUtilitiesCollectionLdif
@@ -47,8 +45,6 @@ __all__: tuple[str, ...] = (
     "FlextLdifUtilitiesEntry",
     "FlextLdifUtilitiesEvents",
     "FlextLdifUtilitiesLazy",
-    "FlextLdifUtilitiesLazyMeta",
-    "FlextLdifUtilitiesLazyTree",
     "FlextLdifUtilitiesMetadata",
     "FlextLdifUtilitiesOID",
     "FlextLdifUtilitiesObjectClass",
@@ -66,7 +62,6 @@ install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "FlextLdifUtilitiesServersOud": ".flext_ldif_servers_oud_utilities",
         "FlextLdifUtilitiesACL": ".acl",
         "FlextLdifUtilitiesAttribute": ".attribute",
         "FlextLdifUtilitiesCollectionLdif": ".collection_ldif",
@@ -75,8 +70,6 @@ install_lazy_exports(
         "FlextLdifUtilitiesEntry": ".entry",
         "FlextLdifUtilitiesEvents": ".events",
         "FlextLdifUtilitiesLazy": ".lazy",
-        "FlextLdifUtilitiesLazyMeta": "._lazy",
-        "FlextLdifUtilitiesLazyTree": "._lazy",
         "FlextLdifUtilitiesMetadata": ".metadata",
         "FlextLdifUtilitiesOID": ".oid",
         "FlextLdifUtilitiesObjectClass": ".object_class",
@@ -84,6 +77,7 @@ install_lazy_exports(
         "FlextLdifUtilitiesPipeline": ".pipeline",
         "FlextLdifUtilitiesSchema": ".schema",
         "FlextLdifUtilitiesServer": ".server",
+        "FlextLdifUtilitiesServersOud": ".flext_ldif_servers_oud_utilities",
         "FlextLdifUtilitiesTransformers": ".transformers",
         "FlextLdifUtilitiesValidation": ".validation",
         "FlextLdifUtilitiesWriter": ".writer",

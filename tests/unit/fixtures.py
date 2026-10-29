@@ -7,15 +7,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 import pytest
 
 from flext_ldif import FlextLdif, services
 from tests import c, ldif, m, p, u
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 def _parse_fixture_entries(

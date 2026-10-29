@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Internal package for entry.
+"""Flext Ldif. Utilities. Entry package.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from flext_ldif._utilities._entry.validation import (
         FlextLdifUtilitiesEntryValidation,
     )
+
 
 __all__: tuple[str, ...] = (
     "FlextLdifUtilitiesEntryAccess",

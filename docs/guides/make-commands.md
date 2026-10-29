@@ -129,9 +129,9 @@ Run each required operation explicitly from the workspace root:
 ```bash
 make setup
 make gen
-make mod
-make fix
 make fmt
+make fix
+make mod
 make build
 # Exercise the selected public consumer before the final tests.
 make check
@@ -164,7 +164,8 @@ rewrites them.
 
 `make help` is the complete live inventory. The approved common surface is
 `setup`, `upg`, `gen`, `mod`, `fix`, `fmt`, `check`, `tests`, `help`, `build` and
-`clean` (ADR-003). Repository-owned product commands join it only through their declared
+`clean` (ADR-003).
+Repository-owned product commands join it only through their declared
 extension owner. No compatibility alias preserves a retired common verb.
 
 The ordinary dispatcher executes each declared `pre-<verb>` hook, handler and
@@ -262,14 +263,46 @@ modification use the same source authority, typed plans, engines and publisher;
 neither recursively invokes another public verb. A generated file is changed
 through its generating owner, never by a second repair or formatting writer.
 
+**Accepted contract, implementation pending (2026-10-28, `flext-pipol`).**
+Within one repository invocation, unchanged source observations are read and
+parsed once. One native workspace model feeds every planning surface and
+refreshes changed resources and dependent facts incrementally in the same
+engine (ADR-018
+single-read, single-batch publication).
+Each small transaction stages and validates a complete dependency closure.
+The existing publication owner provides atomic visibility to cooperating
+Make/Rope readers through a common barrier, not operating-system atomicity
+across multiple files. A reader enters before bootstrap imports or any live
+configuration/source observation and stays protected for later lazy reads,
+unless it consumes an independent pinned candidate.
+
+Publication, index retirement, modes, directory effects, fast validation,
+incremental model/cache refresh and durable completion share that barrier.
+Acquire multiple scope locks in canonical physical-root order. Staged
+subprocess validators must not reacquire their parent's live barrier.
+The publisher's durable operational record rejects readers after an
+interruption until recovery is proved; process death releasing the lock
+does not establish consistency. This record is neither a tracker nor a new
+semantic index. Failure preserves its first cause and reverses only
+authenticated effects owned by that transaction, guarded against external
+edits. Shared WIP and completed independent transactions remain intact.
+
+The fast transaction validation budget is at most five seconds; total Make
+wall time remains at most sixty seconds, including barrier waits, staging,
+publication, incremental refresh and recovery. Existing performance policy
+owns these budgets; frozen lint/type policy is unchanged. A fast result
+never replaces full slice gates or public-consumer proof. These requirements
+are not receipts of current implementation or successful recovery.
+
 New-project generation consumes the target's own explicit project, integration,
 kind and provenance declarations. Workspace membership comes only from
 `.gitmodules`. Its Git/worktree is prepared before generation; a missing
 `pyproject.toml` in an established repository is a failure, not scaffold intent.
 Generation never initializes remotes or creates an artificial commit.
 
-Each implementation slice reconciles its README, guides, AGENTS, ADRs, tracker
-and relevant canonical skills before code changes. Prove the public operation in
+Each implementation slice reconciles its README, guides, AGENTS, ADRs, tracker,
+existing plan files and relevant canonical skills, rules and commands before
+code changes. Prove the public operation in
 the real consumer before changing tests. Tests then validate observable behavior
 without mocks, implementation-shaped assertions, tautologies, copied
 configuration values or fallback execution.
@@ -410,13 +443,16 @@ and use the existing guarded atomic writer.
 
 Each operation runs once for its selected inputs. Its own admission and publication
 checks remain necessary; they do not authorize a hidden global gate pass. Repeat only
-after relevant inputs change or to prove a fixed point. Normalizing bytes owned by a
-generator remains part of its single publisher, not another formatter over authored
-sources.
+after relevant inputs change or to prove a fixed point. The accepted gate-clean
+contract requires templates and renderers to produce final STRICT bytes directly;
+publication must not repair or format generated output afterward. Existing
+post-render cleanup is pending removal, not implementation proof.
 
 ### Prerequisite and Full Check Execution
 
-`make check` runs as one `flext-infra workspace check` process (ADR-004). Its captured checker
+`make check` runs as one `flext-infra workspace check` process
+(ADR-004).
+Its captured checker
 first executes the declared `make.check_prerequisite_gates` across the complete
 selected composition. Ruff and Pyrefly are the prerequisites: every selected
 repository must finish both without errors before any remaining gate runs.
@@ -565,14 +601,9 @@ the CLI, never the shared base or an implicitly selected latest run.
 
 Root `make check` checks the root and governed members through the existing
 `--scope all` checker selection. A standalone checkout selects its own repository.
-Run a member's standard verb from the workspace root with
-`make -f <member>/Makefile <verb>`, for example:
-
-```bash
-make -f flext-meltano/Makefile check
-make -f flext-meltano/Makefile tests
-make -f flext-meltano/Makefile build
-```
+The approved campaign uses selector-free public verbs from the workspace root.
+Missing governed-member coverage is corrected at the existing dispatcher
+owner, not through a member Makefile or a new selector.
 
 The source template
 `flext-infra/src/flext_infra/templates/project/base/Makefile.j2`, in its derived-paths
@@ -580,7 +611,7 @@ and repository-root sections, binds `PROJECT_ROOT` to the selected Makefile's
 checkout rather than CWD. Attached members share the containing workspace's runtime
 environment. Standalone checkouts and member worktrees without a containing
 superproject own their runtime environment and run `make <verb>` from their own
-root. Selecting the member Makefile adds no project selector or alternate dispatcher.
+root.
 Manifest exclusions remain authoritative. Generated Make surfaces and documentation
 are changed at their template or configuration owner, then regenerated with `make gen`.
 
@@ -641,7 +672,12 @@ targets, pending effects and source/output identities. Repeated generation must 
 relevant artifact effects; routine receipt/archive publication is evidence, not source
 drift. An exit-zero invocation or a sample of unchanged files is insufficient: bounded
 observations do not cover every generated artifact. Repeated `mod`, `fix`
-and `fmt` also require zero relevant effects. A later effective change invalidates the
+and `fmt` also require zero relevant effects. Generated projections are
+gate-clean by construction (ADR-028
+Decision 8):
+`make gen` followed directly by `make check` is green and `make fmt` / `make fix`
+are no-ops, with zero post-adjustment, manual or automated — the engine never
+runs a fixer or formatter over its own output. A later effective change invalidates the
 affected runtime and gate receipts and requires their renewed validation, never a hidden
 retry or a whole-workspace quiet window.
 

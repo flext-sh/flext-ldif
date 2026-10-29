@@ -9,14 +9,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING, Annotated, ClassVar, Final, cast
+from collections.abc import Callable, Mapping, Sequence
+from typing import Annotated, ClassVar, Final, cast
 
 from flext_ldif import FlextLdifModels
 from tests import c, m, p, t, tm
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 
 class TestsFlextLdifSchemaExpectations(FlextLdifModels.BaseModel):

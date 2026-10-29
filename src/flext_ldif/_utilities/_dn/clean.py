@@ -10,7 +10,7 @@ from collections.abc import MutableMapping, MutableSequence
 from typing import overload
 
 from flext_ldif import FlextLdifModels, c
-from flext_ldif._utilities._dn.parse import FlextLdifUtilitiesDNParse
+from flext_ldif._utilities._dn import FlextLdifUtilitiesDNParse
 
 
 class FlextLdifUtilitiesDNClean:

@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Internal package for attribute.
+"""Flext Ldif. Utilities. Attribute package.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -17,13 +17,12 @@ if TYPE_CHECKING:
         FlextLdifUtilitiesAttributeValidation,
     )
 
+
 __all__: tuple[str, ...] = ("FlextLdifUtilitiesAttributeValidation",)
 
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({
-        "FlextLdifUtilitiesAttributeValidation": ".validation",
-    }),
+    MappingProxyType({"FlextLdifUtilitiesAttributeValidation": ".validation"}),
     public_exports=__all__,
 )
