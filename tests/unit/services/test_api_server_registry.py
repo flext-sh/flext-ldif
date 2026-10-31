@@ -10,6 +10,7 @@ from pathlib import PurePath
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_core import FlextRegistry
 
 from flext_ldif import FlextLdif, services
 from flext_ldif.servers import FlextLdifServersRfc
@@ -196,7 +197,7 @@ class TestsFlextLdifApiServerRegistry:
             services.FlextLdifServer.model_validate({})
         with pytest.raises(ValueError, match="registry"):
             m.Ldif.RegistryPortOptions.model_validate({field_name: m.Ldif.Statistics()})
-        registry = u.build_registry()
+        registry = FlextRegistry.create()
         ports = m.Ldif.RegistryPortOptions(registry=registry)
         tm.that(ports.registry is registry)
         tm.that(field_name not in ports.model_dump())
@@ -208,7 +209,7 @@ class TestsFlextLdifApiServerRegistry:
     @staticmethod
     def test_incompatible_stored_payload_fails_lookup_without_fallback() -> None:
         """An invalid stored dialect never causes a fresh dialect to be built."""
-        registry = u.build_registry()
+        registry = FlextRegistry.create()
         route = c.Ldif.ServerTypes.RFC.value
         payload = m.Ldif.Statistics()
         tm.ok(registry.register_plugin(c.Ldif.SERVERS, route, payload))

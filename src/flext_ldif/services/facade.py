@@ -9,6 +9,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Self
 
+from flext_core import FlextRegistry
+
 from flext_ldif import c, m, p, t, u
 from flext_ldif.servers import (
     FlextLdifServersAd,
@@ -64,7 +66,7 @@ class FlextLdifFacade(
     """
 
     registry: t.Port[p.Registry] = m.Field(
-        default_factory=u.build_registry,
+        default_factory=FlextRegistry.create,
         exclude=True,
         description="Instance-scoped dialect registry composed by the facade",
     )
