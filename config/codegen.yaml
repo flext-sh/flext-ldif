@@ -1,5 +1,6 @@
 Infra:
   codegen:
     repository:
+      kind: internal_flext
       examples_module: examples.complete_workflow
       namespace_scan_dirs: []
