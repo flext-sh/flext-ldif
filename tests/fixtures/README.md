@@ -107,7 +107,7 @@ tm.that(tm.ok(u.Ldif.extract_from_definition(definition)), eq="2.5.4.3")
 
 <!-- pytest-markdown-docs: next-code-block: ignore -->
 
-```python notest
+```python
 from tests import c, r
 from tests import FixtureValidator
 
@@ -155,7 +155,7 @@ Run fixture coverage report:
 
 <!-- pytest-markdown-docs: next-code-block: ignore -->
 
-```python notest
+```python
 from tests import c, r
 from tests import FixtureCoverageReport
 

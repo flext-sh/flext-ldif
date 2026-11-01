@@ -55,7 +55,7 @@ Extensive refactoring required
 
 **File**: `~/flext/flext-ldif/src/flext_ldif/servers/base.py`
 
-```{.python .notest}
+```python
 from __future__ import annotations
 
 from collections.abc import (
