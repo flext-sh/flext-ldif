@@ -47,15 +47,11 @@ class FlextLdifProtocolsBase:
     class Settings(p.Cli.Settings, Protocol):
         """MRO-composed settings contract with the LDIF namespace.
 
-        The ``Ldif`` branch mirrors the concrete ``FlextLdifSettings.Ldif``
-        field: settings branches carry their config namespace's capitalized
-        name (``settings.Ldif.*``), so the structural contract repeats it.
+        The ``Ldif`` attribute mirrors the concrete ``FlextLdifSettings.Ldif``
+        field, so the structural contract repeats its name and shape.
         """
 
-        @property
-        def Ldif(self) -> FlextLdifProtocolsBase.LdifSettings:
-            """LDIF settings branch consumed without replacing its owner."""
-            ...
+        Ldif: FlextLdifProtocolsBase.LdifSettings
 
     @runtime_checkable
     class ValidationService(Protocol):
