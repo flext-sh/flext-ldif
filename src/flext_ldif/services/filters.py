@@ -107,6 +107,8 @@ class FlextLdifFilters(s[p.Ldif.Response]):
         cls,
         entries: MutableSequence[m.Ldif.Entry],
         allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
+        *,
+        logger: p.Logger,
     ) -> p.Result[MutableSequence[m.Ldif.Entry]]:
         """Filter schema entries by allowed OIDs.
 
@@ -123,14 +125,14 @@ class FlextLdifFilters(s[p.Ldif.Response]):
                 for entry in entries
                 if cls._should_include_entry(entry, allowed_oid_map)
             ]
-            cls._get_or_create_logger().debug(
+            logger.debug(
                 "Filtered schema entries by OIDs",
                 total_entries=len(entries),
                 filtered_count=len(filtered),
             )
             return r[MutableSequence[m.Ldif.Entry]].ok(filtered)
         except c.Ldif.EXC_LDIF_PARSE as e:
-            cls._get_or_create_logger().exception(
+            logger.exception(
                 "Failed to filter schema entries by OIDs",
             )
             return r[MutableSequence[m.Ldif.Entry]].fail_op("Schema OID filter", e)

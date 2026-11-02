@@ -107,8 +107,8 @@ class TestsFlextLdifRelaxed:
         """
         return FlextLdifServersRelaxed.Acl()
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def entry_server(
         acl_server: FlextLdifServersRelaxed.Acl,
     ) -> FlextLdifServersRelaxedEntry:

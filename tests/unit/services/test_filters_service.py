@@ -305,6 +305,7 @@ class TestsFlextLdifFiltersService:
         return FlextLdifFilters.filter_schema_by_oids(
             entries=[entry],
             allowed_oids=whitelist,
+            logger=u.fetch_logger(__name__),
         )
 
     def test_schema_by_oids_keeps_entry_matching_whitelist(self) -> None:
@@ -335,6 +336,7 @@ class TestsFlextLdifFiltersService:
         result = FlextLdifFilters.filter_schema_by_oids(
             entries=[entry],
             allowed_oids=empty_whitelist,
+            logger=u.fetch_logger(__name__),
         )
 
         tm.ok(result.success)

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence, Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextvars import copy_context
 
 from flext_ldif import m, p, r, s, t, u
 
@@ -52,7 +53,8 @@ class FlextLdifProcessing(s[p.Ldif.Response]):
             max_workers_actual = min(len(entries), validated_options.max_workers)
             with ThreadPoolExecutor(max_workers=max_workers_actual) as executor:
                 futures = [
-                    executor.submit(self._process_entry, entry) for entry in entries
+                    executor.submit(copy_context().run, self._process_entry, entry)
+                    for entry in entries
                 ]
                 results = [future.result() for future in as_completed(futures)]
             return r[MutableSequence[p.Ldif.ProcessingResult]].ok(results)

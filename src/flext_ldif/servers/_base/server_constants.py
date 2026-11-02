@@ -8,10 +8,10 @@ from __future__ import annotations
 
 
 class FlextLdifConstantsServersBase:
-    """Thin namespace: declarations live in _constants parts.
+    """Base server namespace; shared constants belong to ``_constants``.
 
-    Nao herda do facade de constants (flext_cli_c): a heranca puxava os
-    type-sets do nucleo (PRIMITIVES_TYPES e demais) para dentro do
-    namespace Ldif, e o codemod de type-set os redescobria em
-    c.Ldif.* como duplicados de c.* ("type set declared twice").
+    Keep upstream facade type sets outside the LDIF domain namespace.
     """
+
+
+__all__: list[str] = ["FlextLdifConstantsServersBase"]

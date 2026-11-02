@@ -18,8 +18,8 @@ from flext_ldif.services import FlextLdifCategorizationRules, FlextLdifFilters
 class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
     """Forbidden-attribute, whitelist-OID, and base-DN filtering helpers."""
 
-    @staticmethod
     def _ensure_entry_model(
+        self,
         value: t.JsonValue | m.BaseModel | m.Ldif.Entry,
     ) -> m.Ldif.Entry | None:
         if isinstance(value, m.Ldif.Entry):
@@ -29,7 +29,7 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
             if validation_result.success:
                 validated: m.Ldif.Entry = validation_result.value
                 return validated
-            FlextLdifCategorizationFiltering._get_or_create_logger().warning(
+            self.logger.warning(
                 "Failed to coerce BaseModel to Entry",
                 error=validation_result.error,
                 error_type="ValidationError",
@@ -60,8 +60,8 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
                 excluded.append(entry)
         return (included, excluded)
 
-    @staticmethod
     def _append_rejected_entries(
+        self,
         filtered: m.Ldif.FlexibleCategories,
         rejected_entries: MutableSequence[m.Ldif.Entry],
     ) -> None:
@@ -77,7 +77,7 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
             entry_model
             for rejected_raw_item in [*existing_rejected_raw, *rejected_entries]
             if (
-                entry_model := FlextLdifCategorizationFiltering._ensure_entry_model(
+                entry_model := self._ensure_entry_model(
                     rejected_raw_item,
                 )
             )
@@ -158,8 +158,7 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
                     entry_model
                     for entry_raw in entries
                     if (
-                        entry_model
-                        := FlextLdifCategorizationFiltering._ensure_entry_model(
+                        entry_model := self._ensure_entry_model(
                             entry_raw,
                         )
                     )
@@ -198,14 +197,13 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
                     entry_model
                     for entry_raw in entries
                     if (
-                        entry_model
-                        := FlextLdifCategorizationFiltering._ensure_entry_model(
+                        entry_model := self._ensure_entry_model(
                             entry_raw,
                         )
                     )
                     is not None
                 ]
-        FlextLdifCategorizationFiltering._append_rejected_entries(
+        self._append_rejected_entries(
             filtered,
             all_excluded_entries,
         )
@@ -227,6 +225,7 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
         result = FlextLdifFilters.filter_schema_by_oids(
             entries=schema_entries,
             allowed_oids=sw_rules,
+            logger=self.logger,
         )
         if result.success:
             filtered = result.map_or(None)

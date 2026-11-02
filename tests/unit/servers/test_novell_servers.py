@@ -31,8 +31,8 @@ class TestsFlextLdifNovellServers:
         """
         return FlextLdifServersNovell()
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def schema_server(
         novell_server: FlextLdifServersNovell,
     ) -> FlextLdifServersNovell.Schema:
@@ -45,8 +45,8 @@ class TestsFlextLdifNovellServers:
         server = novell_server.schema_server
         return tm.instance(server, FlextLdifServersNovell.Schema)
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def acl_server(
         novell_server: FlextLdifServersNovell,
     ) -> FlextLdifServersNovell.Acl:
@@ -59,8 +59,8 @@ class TestsFlextLdifNovellServers:
         server = novell_server.acl_server
         return tm.instance(server, FlextLdifServersNovell.Acl)
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def entry_server(
         novell_server: FlextLdifServersNovell,
     ) -> FlextLdifServersNovell.Entry:
