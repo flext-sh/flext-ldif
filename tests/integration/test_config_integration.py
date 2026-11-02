@@ -22,7 +22,7 @@ from collections.abc import Sequence
 
 import pytest
 
-from tests import TestsFlextLdifSettings, c, ldif, s, tm
+from tests import TestsFlextLdifSettings, c, ldif, p, s, tm
 
 # Expected DN observable in CONFIG_BASIC_ENTRY.
 _BASIC_DN = "cn=Test,dc=example,dc=com"

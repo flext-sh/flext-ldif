@@ -9,7 +9,7 @@ from __future__ import annotations
 import base64
 from collections.abc import Mapping, MutableSequence
 
-from flext_ldif import c, u
+from flext_ldif import c, p, u
 
 
 class FlextLdifServersEntryLineEmitter:

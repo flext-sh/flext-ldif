@@ -12,8 +12,8 @@ from typing import Annotated, ClassVar
 
 from flext_tests import m as flext_tests_m
 
-from flext_ldif import m, p
-from tests import p, t
+from flext_ldif import m
+from tests import t
 
 
 class TestsFlextLdifModels(flext_tests_m, m):
@@ -25,7 +25,7 @@ class TestsFlextLdifModels(flext_tests_m, m):
         class _Frozen(m.BaseModel):
             """Base for every frozen test model in this namespace."""
 
-            model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+            model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         class _CanHandleCase(_Frozen):
             """Shared fields for can_handle-style detection cases."""

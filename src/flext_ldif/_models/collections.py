@@ -16,7 +16,7 @@ from collections.abc import (
 )
 from typing import Annotated, ClassVar
 
-from flext_cli import m, p
+from flext_cli import m
 
 from flext_ldif import t
 from flext_ldif._models import FlextLdifModelsDomainsEntries
@@ -26,7 +26,7 @@ class FlextLdifModelsCollections:
     class DynamicCounts(m.RootModel[t.IntMapping]):
         """Strict integer counts exposed through native mapping views."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
             strict=True,
             frozen=True,
         )

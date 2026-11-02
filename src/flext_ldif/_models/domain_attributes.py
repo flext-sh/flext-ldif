@@ -9,9 +9,9 @@ from __future__ import annotations
 from collections.abc import KeysView, MutableMapping, MutableSequence, ValuesView
 from typing import Annotated, ClassVar, Self
 
-from flext_cli import m, p
+from flext_cli import m
 
-from flext_ldif import c, p, t
+from flext_ldif import c, t
 
 
 class FlextLdifModelsDomainAttributes:
@@ -20,7 +20,7 @@ class FlextLdifModelsDomainAttributes:
     class Attributes(m.ArbitraryTypesModel):
         """LDIF attributes container - simplified dict-like interface."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
             validate_assignment=True,
             extra="forbid",
             use_enum_values=True,

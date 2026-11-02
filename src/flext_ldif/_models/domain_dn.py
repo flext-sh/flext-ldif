@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping, MutableSequence, Sequence
 from typing import Annotated, ClassVar, Self, override
 
-from flext_cli import m, p
+from flext_cli import m
 
 from flext_ldif import c, p, r, t
 
@@ -133,7 +133,7 @@ class FlextLdifModelsDomainDN:
     class DN(m.Value):
         """Distinguished Name value."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
             strict=True,
             frozen=True,
             extra="forbid",

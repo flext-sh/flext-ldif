@@ -14,9 +14,9 @@ from __future__ import annotations
 from collections.abc import MutableMapping, MutableSequence
 from typing import Annotated, ClassVar
 
-from flext_core import m, p
+from flext_core import m
 
-from flext_ldif import FlextLdifShared, c, p, t
+from flext_ldif import FlextLdifShared, c, t
 from flext_ldif._models import (
     FlextLdifModelsAclConvert,
     FlextLdifModelsDomainAttributes,
@@ -30,7 +30,7 @@ class FlextLdifModelsDomainMetadata:
     class CommentedAttributeValues(m.RootModel[t.StrSequenceMapping]):
         """Original text values retained by attribute name for LDIF comments."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(strict=True, frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(strict=True, frozen=True)
         root: Annotated[
             t.StrSequenceMapping,
             m.Field(description="Original comment values indexed by attribute name"),

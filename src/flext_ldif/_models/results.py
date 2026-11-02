@@ -10,7 +10,7 @@ from collections.abc import MutableSequence
 from pathlib import Path
 from typing import Annotated, ClassVar
 
-from flext_cli import m, p
+from flext_cli import m
 
 from flext_ldif import c, p, t
 from flext_ldif._models import (
@@ -40,7 +40,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
     class MigrationPipelineOptions(m.ArbitraryTypesModel):
         """Validated configuration consumed by the migration service."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(use_enum_values=False)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(use_enum_values=False)
 
         input_dir: Path | None = m.Field(
             default=None,
@@ -260,7 +260,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
         ] = ""
 
     class WriteResponse(Response):
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
             str_strip_whitespace=False,
         )
 

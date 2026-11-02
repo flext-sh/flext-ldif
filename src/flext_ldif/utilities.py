@@ -7,8 +7,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TypeAlias
-
 from flext_cli import u as flext_cli_u
 
 from flext_ldif._utilities._lazy import FlextLdifUtilitiesLazyMeta
@@ -27,7 +25,6 @@ from flext_ldif._utilities.metadata import FlextLdifUtilitiesMetadata
 from flext_ldif._utilities.object_class import FlextLdifUtilitiesObjectClass
 from flext_ldif._utilities.oid import FlextLdifUtilitiesOID
 from flext_ldif._utilities.parser import FlextLdifUtilitiesParser
-from flext_ldif._utilities.pipeline import FlextLdifUtilitiesPipeline
 from flext_ldif._utilities.schema import FlextLdifUtilitiesSchema
 from flext_ldif._utilities.server import FlextLdifUtilitiesServer
 from flext_ldif._utilities.transformers import FlextLdifUtilitiesTransformers
@@ -62,8 +59,6 @@ class FlextLdifUtilities(
     The root inherits the core ``find`` Result contract. LDIF's optional-item
     ``find`` belongs only to ``Ldif`` and must not enter the root MRO.
     """
-
-    FlextLdifUtilitiesPipeline: TypeAlias = FlextLdifUtilitiesPipeline
 
 
 u = FlextLdifUtilities

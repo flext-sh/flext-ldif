@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from flext_ldif import c, m
+from flext_ldif import c, m, p
 
 
 class FlextLdifServersOidAclRender:

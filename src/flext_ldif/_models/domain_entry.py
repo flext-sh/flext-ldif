@@ -10,7 +10,7 @@ from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
 from typing import Annotated, ClassVar, Self, override
 
-from flext_cli import m, p
+from flext_cli import m
 
 from flext_ldif import c, e, p, r, t
 from flext_ldif._models import (
@@ -35,7 +35,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
 
         """
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
             strict=True,
             use_enum_values=False,
             validate_default=True,

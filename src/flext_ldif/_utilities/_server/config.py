@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from flext_ldif import FlextLdifShared, c, m
+from flext_ldif import FlextLdifShared, c, m, p
 
 
 class FlextLdifUtilitiesServerConfig:

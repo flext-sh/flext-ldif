@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from flext_ldif import t, u
+from flext_ldif import p, t, u
 from flext_ldif.servers._oid import FlextLdifServersOidEntryBoolean
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import MutableMapping, MutableSequence
 
-from flext_ldif import c, u
+from flext_ldif import c, p, u
 
 
 class FlextLdifServersBaseExecuteParams:
