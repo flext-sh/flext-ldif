@@ -61,7 +61,7 @@ class FlextLdifServersBaseEntry(s[t.Ldif.EntryPayload], FlextLdifServerMethodsMi
         )
         if isinstance(format_options_raw, Mapping):
             try:
-                normalized_payload = t.Cli.JSON_MAPPING_ADAPTER.validate_python(
+                normalized_payload = u.Cli.JSON_MAPPING_ADAPTER.validate_python(
                     format_options_raw,
                 )
                 serialized = u.Cli.json_dumps(dict(normalized_payload)).unwrap()

@@ -54,7 +54,7 @@ class FlextLdifMetadataJsonCore:
         value = metadata.get(metadata_key)
         if isinstance(value, Mapping) and isinstance(item_data, Mapping):
             merged_value = dict(
-                t.Cli.JSON_MAPPING_ADAPTER.validate_python({
+                u.Cli.JSON_MAPPING_ADAPTER.validate_python({
                     inner_key: u.normalize_to_json_value(inner_value)
                     for inner_key, inner_value in value.items()
                 }),
