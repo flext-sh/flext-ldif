@@ -734,3 +734,7 @@ For critical production issues:
 
 This troubleshooting guide provides comprehensive solutions for common FLEXT-LDIF issues
 while maintaining integration with FLEXT ecosystem support patterns.
+
+### Immutable rule-view serialization
+
+`CategoryRules.category_markers` and `WhitelistRules.schema_oid_filters` expose immutable mapping views. Their Pydantic computed-field serializers now render those views as dictionaries for model dumps while preserving immutable property access. Previously JSON serialization raised `PydanticSerializationError` and Python dumps emitted serializer warnings for `mappingproxy`. The real-model reproduction now serializes both fields without warnings. The regression test is `tests/unit/test_rules_serialization.py`; its native pytest run remains unverified until the separate LDIF facade schema failure is fixed.
