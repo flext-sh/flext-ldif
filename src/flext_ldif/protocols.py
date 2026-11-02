@@ -16,6 +16,27 @@ from flext_ldif._protocols import (
     FlextLdifProtocolsLdap3,
     FlextLdifProtocolsValues,
 )
+from flext_ldif._protocols.generated_models_basemodel import (
+    FlextLdifProtocolsGeneratedModelsBaseModel,
+)
+from flext_ldif._protocols.generated_models_ldif_aclentryconversion import (
+    FlextLdifLdifProtocolsGeneratedModelsAclEntryConversion,
+)
+from flext_ldif._protocols.generated_models_ldif_entrydetectionmarkers import (
+    FlextLdifLdifProtocolsGeneratedModelsEntryDetectionMarkers,
+)
+from flext_ldif._protocols.generated_models_ldif_entrystatistics import (
+    FlextLdifLdifProtocolsGeneratedModelsEntryStatistics,
+)
+from flext_ldif._protocols.generated_models_ldif_schemaelement import (
+    FlextLdifLdifProtocolsGeneratedModelsSchemaElement,
+)
+from flext_ldif._protocols.generated_models_ldif_servermetadata import (
+    FlextLdifLdifProtocolsGeneratedModelsServerMetadata,
+)
+from flext_ldif._protocols.generated_models_ldif_validationmetadata import (
+    FlextLdifLdifProtocolsGeneratedModelsValidationMetadata,
+)
 
 
 class FlextLdifProtocols(flext_cli_p):
@@ -27,6 +48,13 @@ class FlextLdifProtocols(flext_cli_p):
         FlextLdifProtocolsLdap3,
         FlextLdifProtocolsValues,
         FlextLdifProtocolsClient,
+        FlextLdifProtocolsGeneratedModelsBaseModel,
+        FlextLdifLdifProtocolsGeneratedModelsAclEntryConversion,
+        FlextLdifLdifProtocolsGeneratedModelsEntryDetectionMarkers,
+        FlextLdifLdifProtocolsGeneratedModelsEntryStatistics,
+        FlextLdifLdifProtocolsGeneratedModelsSchemaElement,
+        FlextLdifLdifProtocolsGeneratedModelsServerMetadata,
+        FlextLdifLdifProtocolsGeneratedModelsValidationMetadata,
     ):
         """LDIF-specific structural protocol namespace.
 

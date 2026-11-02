@@ -70,6 +70,41 @@ class FlextLdifProtocolsBase:
             ...
 
     @runtime_checkable
+    class OidAclConversion(Protocol):
+        """Public OID-to-OUD ACL conversion capability."""
+
+        def parse_oid_acl_line(
+            self, dn: str, line: str
+        ) -> p.Result[FlextLdifModels.Ldif.OidAclRule]: ...
+
+        def convert_subject_to_oud(
+            self,
+            subject: FlextLdifModels.Ldif.OidAclSubject,
+        ) -> p.Result[FlextLdifModels.Ldif.AciAllow]: ...
+
+        def convert_permissions(
+            self,
+            permissions: t.StrSequence,
+            *,
+            is_entry: bool,
+        ) -> p.Result[t.StrSequence]: ...
+
+        def regex_to_wildcard(self, value: str) -> str: ...
+
+        def in_scope(self, dn: str, base_dn: str) -> bool: ...
+
+        def high_level_containers(self, base_dn: str) -> frozenset[str]: ...
+
+        def build_aci_rule(
+            self,
+            rule: FlextLdifModels.Ldif.OidAclRule,
+            *,
+            base_dn: str = "",
+        ) -> p.Result[FlextLdifModels.Ldif.AciRule]: ...
+
+        def render_aci_string(self, aci: FlextLdifModels.Ldif.AciRule) -> str: ...
+
+    @runtime_checkable
     class ServerDetectionService(Protocol):
         """Contract for LDIF server type detection helpers."""
 

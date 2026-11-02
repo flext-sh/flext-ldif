@@ -18,20 +18,15 @@ from flext_tests import u as flext_tests_u
 
 from flext_ldif import u as flext_ldif_u
 from tests import c, m, p, t
-from tests._utilities import (
-    TestsFlextLdifEntryBuildersMixin,
-    TestsFlextLdifLdapClientMixin,
-    TestsFlextLdifSchemaExpectations,
-    TestsSchemaAclAssertionsMixin,
-)
+from tests._utilities import TestsFlextLdifLdapClient, TestsSchemaAclAssertionsMixin
 
 
 class TestsFlextLdifUtilities(flext_tests_u, flext_ldif_u):
     """Project test utility namespace extension."""
 
     class Tests(
-        TestsFlextLdifEntryBuildersMixin,
-        TestsFlextLdifLdapClientMixin,
+        TestsFlextLdifEntryBuilders,
+        TestsFlextLdifLdapClient,
         TestsSchemaAclAssertionsMixin,
         flext_tests_u.Tests,
     ):
@@ -144,7 +139,6 @@ class TestsFlextLdifUtilities(flext_tests_u, flext_ldif_u):
 
 u = TestsFlextLdifUtilities
 __all__: list[str] = [
-    "TestsFlextLdifSchemaExpectations",
     "TestsFlextLdifUtilities",
     "u",
 ]

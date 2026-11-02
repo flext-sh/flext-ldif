@@ -41,6 +41,7 @@ from flext_ldif.services import (
     FlextLdifValidation,
     FlextLdifWriter,
 )
+from flext_ldif.services.oid_acl import FlextLdifOidAcl
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -48,6 +49,7 @@ if TYPE_CHECKING:
 
 class FlextLdifFacade(
     FlextLdifAcl,
+    FlextLdifOidAcl,
     FlextLdifCategorization,
     FlextLdifTransformer,
     FlextLdifDetector,

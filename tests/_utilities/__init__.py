@@ -13,8 +13,8 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from tests._utilities.utilities_entries import TestsFlextLdifEntryBuildersMixin
-    from tests._utilities.utilities_ldap import TestsFlextLdifLdapClientMixin
+    from tests._utilities.utilities_entries import TestsFlextLdifEntryBuilders
+    from tests._utilities.utilities_ldap import TestsFlextLdifLdapClient
     from tests._utilities.utilities_schema import (
         PARSE_DISPATCH,
         TestsFlextLdifSchemaExpectations,
@@ -26,8 +26,8 @@ if TYPE_CHECKING:
 
 __all__: tuple[str, ...] = (
     "PARSE_DISPATCH",
-    "TestsFlextLdifEntryBuildersMixin",
-    "TestsFlextLdifLdapClientMixin",
+    "TestsFlextLdifEntryBuilders",
+    "TestsFlextLdifLdapClient",
     "TestsFlextLdifSchemaExpectations",
     "TestsSchemaAclAssertionsMixin",
     "assert_field_eq",
@@ -39,8 +39,8 @@ install_lazy_exports(
     globals(),
     MappingProxyType({
         "PARSE_DISPATCH": ".utilities_schema",
-        "TestsFlextLdifEntryBuildersMixin": ".utilities_entries",
-        "TestsFlextLdifLdapClientMixin": ".utilities_ldap",
+        "TestsFlextLdifEntryBuilders": ".utilities_entries",
+        "TestsFlextLdifLdapClient": ".utilities_ldap",
         "TestsFlextLdifSchemaExpectations": ".utilities_schema",
         "TestsSchemaAclAssertionsMixin": ".utilities_schema",
         "assert_field_eq": ".utilities_schema",

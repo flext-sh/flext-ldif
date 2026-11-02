@@ -8,15 +8,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from collections.abc import (
+    MutableMapping as collections_abc_MutableMapping,
+    MutableSequence as collections_abc_MutableSequence,
+)
+from typing import Protocol, runtime_checkable
 
-if TYPE_CHECKING:
-    from collections.abc import (
-        MutableMapping as collections_abc_MutableMapping,
-        MutableSequence as collections_abc_MutableSequence,
-    )
-
-    from flext_ldif import c as flext_ldif_c
+from flext_ldif import c as flext_ldif_c
 
 
 class FlextLdifLdifProtocolsGeneratedModelsValidationMetadata:

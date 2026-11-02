@@ -21,7 +21,7 @@ from flext_ldif._constants import (
 
 
 class FlextLdifConstantsServers:
-    """Server-family constants composed into the server constants classes."""
+    """Nested server-family aliases; flattened parts belong to ``c.Ldif``."""
 
     Base = FlextLdifConstantsServersBase
     Rfc = FlextLdifConstantsServersRfc

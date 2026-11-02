@@ -18,11 +18,11 @@ from flext_ldif._constants import (
     FlextLdifConstantsServers,
     FlextLdifConstantsStrEnums,
 )
-from flext_ldif.servers._base import FlextLdifConstantsServersBase
-from flext_ldif.servers._oid import FlextLdifConstantsServersOid
-from flext_ldif.servers._oud import FlextLdifConstantsServersOud
-from flext_ldif.servers._relaxed import FlextLdifConstantsServersRelaxed
-from flext_ldif.servers._rfc import FlextLdifConstantsServersRfc
+from flext_ldif._constants.servers_base import FlextLdifConstantsServersBase
+from flext_ldif._constants.servers_oid import FlextLdifConstantsServersOid
+from flext_ldif._constants.servers_oud import FlextLdifConstantsServersOud
+from flext_ldif._constants.servers_relaxed import FlextLdifConstantsServersRelaxed
+from flext_ldif._constants.servers_rfc import FlextLdifConstantsServersRfc
 
 
 class FlextLdifConstants(flext_cli_c):
@@ -33,14 +33,14 @@ class FlextLdifConstants(flext_cli_c):
         FlextLdifConstantsBase,
         FlextLdifConstantsBaseParts,
         FlextLdifConstantsServers,
+        FlextLdifConstantsStrEnums,
+        FlextLdifConstantsEnums,
+        FlextLdifConstantsAclConvertOud,
         FlextLdifConstantsServersBase,
         FlextLdifConstantsServersOid,
         FlextLdifConstantsServersOud,
         FlextLdifConstantsServersRelaxed,
         FlextLdifConstantsServersRfc,
-        FlextLdifConstantsStrEnums,
-        FlextLdifConstantsEnums,
-        FlextLdifConstantsAclConvertOud,
     ):
         """LDIF domain constants namespace."""
 

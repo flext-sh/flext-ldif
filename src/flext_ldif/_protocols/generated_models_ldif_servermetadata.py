@@ -8,22 +8,22 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import (
+    MutableMapping as collections_abc_MutableMapping,
+    MutableSequence as collections_abc_MutableSequence,
+)
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
+import pydantic
+
+from flext_ldif import c as flext_ldif_c
+from flext_ldif._protocols import FlextLdifProtocolsBase
+
 if TYPE_CHECKING:
-    from collections.abc import (
-        MutableMapping as collections_abc_MutableMapping,
-        MutableSequence as collections_abc_MutableSequence,
-    )
-
-    import pydantic
-
-    from flext_ldif import c as flext_ldif_c
     from flext_ldif._protocols import (
         FlextLdifLdifProtocolsGeneratedModelsAclEntryConversion,
         FlextLdifLdifProtocolsGeneratedModelsEntryStatistics,
         FlextLdifLdifProtocolsGeneratedModelsValidationMetadata,
-        FlextLdifProtocolsBase,
     )
 
 
@@ -40,8 +40,7 @@ class FlextLdifLdifProtocolsGeneratedModelsServerMetadata:
         rfc_warnings: collections_abc_MutableSequence[str]
         conversion_notes: collections_abc_MutableMapping[str, pydantic.JsonValue]
         attribute_transformations: collections_abc_MutableMapping[
-            str,
-            FlextLdifProtocolsBase.AttributeTransformation,
+            str, FlextLdifProtocolsBase.AttributeTransformation
         ]
         server_specific_data: collections_abc_MutableMapping[str, pydantic.JsonValue]
         original_server_type: flext_ldif_c.Ldif.ServerTypes | None

@@ -1,7 +1,7 @@
 """LDAP client connectivity and shared-container test helpers.
 
 Focused utility module split out of ``tests.utilities``; the public surface is
-re-exported through ``tests.utilities`` (see ``TestsFlextLdifLdapClientMixin``).
+re-exported through ``tests.utilities`` (see ``TestsFlextLdifLdapClient``).
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from types import ModuleType
 
 
-class TestsFlextLdifLdapClientMixin:
+class TestsFlextLdifLdapClient:
     """Helpers that drive the optional real-directory LDAP client.
 
     The real-directory tests drive a live LDAP server through the FLEXT LDAP
@@ -152,7 +152,7 @@ class TestsFlextLdifLdapClientMixin:
             The resulting ``p.Ldap3Connection``.
 
         """
-        client = TestsFlextLdifLdapClientMixin.require_ldap_client()
+        client = TestsFlextLdifLdapClient.require_ldap_client()
         create = client.FlextLdapUtilities.Ldap.create_connection
         if receive_timeout is None:
             connection: p.Ldap3Connection = create(
@@ -267,4 +267,4 @@ class TestsFlextLdifLdapClientMixin:
         )
 
 
-__all__: list[str] = ["TestsFlextLdifLdapClientMixin"]
+__all__: list[str] = ["TestsFlextLdifLdapClient"]
