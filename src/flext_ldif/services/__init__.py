@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 from flext_core.lazy import install_lazy_exports
@@ -38,6 +37,7 @@ if TYPE_CHECKING:
     from flext_ldif.services.facade import FlextLdifFacade
     from flext_ldif.services.filters import FlextLdifFilters
     from flext_ldif.services.migration import FlextLdifMigrationPipeline
+    from flext_ldif.services.oid_acl import FlextLdifOidAcl
     from flext_ldif.services.parser import FlextLdifParser
     from flext_ldif.services.pipeline import FlextLdifProcessingPipeline
     from flext_ldif.services.processing import FlextLdifProcessing
@@ -68,6 +68,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifFacade",
     "FlextLdifFilters",
     "FlextLdifMigrationPipeline",
+    "FlextLdifOidAcl",
     "FlextLdifParser",
     "FlextLdifProcessing",
     "FlextLdifProcessingPipeline",
@@ -81,7 +82,7 @@ __all__: tuple[str, ...] = (
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({
+    {
         "FlextLdifAcl": ".acl",
         "FlextLdifAnalysis": ".analysis",
         "FlextLdifCategorization": ".categorization",
@@ -101,6 +102,7 @@ install_lazy_exports(
         "FlextLdifFacade": ".facade",
         "FlextLdifFilters": ".filters",
         "FlextLdifMigrationPipeline": ".migration",
+        "FlextLdifOidAcl": ".oid_acl",
         "FlextLdifParser": ".parser",
         "FlextLdifProcessing": ".processing",
         "FlextLdifProcessingPipeline": ".pipeline",
@@ -109,6 +111,6 @@ install_lazy_exports(
         "FlextLdifTransformer": ".transformers",
         "FlextLdifValidation": ".validation",
         "FlextLdifWriter": ".writer",
-    }),
+    },
     public_exports=__all__,
 )

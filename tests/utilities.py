@@ -18,17 +18,19 @@ from flext_tests import u as flext_tests_u
 
 from flext_ldif import u as flext_ldif_u
 from tests import c, m, p, t
-from tests._utilities import TestsFlextLdifLdapClient, TestsSchemaAclAssertionsMixin
+from tests._utilities.utilities_entries import TestsFlextLdifEntryBuilders
+from tests._utilities.utilities_ldap import TestsFlextLdifLdapClient
+from tests._utilities.utilities_schema import TestsSchemaAclAssertionsMixin
 
 
 class TestsFlextLdifUtilities(flext_tests_u, flext_ldif_u):
     """Project test utility namespace extension."""
 
     class Tests(
+        flext_tests_u.Tests,
         TestsFlextLdifEntryBuilders,
         TestsFlextLdifLdapClient,
         TestsSchemaAclAssertionsMixin,
-        flext_tests_u.Tests,
     ):
         """Flat test utility namespace for flext-ldif."""
 

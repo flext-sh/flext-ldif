@@ -13,20 +13,22 @@ from __future__ import annotations
 
 from flext_cli import m as flext_cli_m
 
-from flext_ldif._models import (
-    FlextLdifModelsBases,
-    FlextLdifModelsCollections,
-    FlextLdifModelsComposite,
-    FlextLdifModelsConfig,
+from flext_ldif._models.base import FlextLdifModelsBases
+from flext_ldif._models.collections import FlextLdifModelsCollections
+from flext_ldif._models.composite import FlextLdifModelsComposite
+from flext_ldif._models.config import FlextLdifModelsConfig
+from flext_ldif._models.domain_entries import FlextLdifModelsDomainsEntries
+from flext_ldif._models.domain_entry_change_value import (
     FlextLdifModelsDomainEntryChangeOperationValue,
-    FlextLdifModelsDomainEntryControl,
-    FlextLdifModelsDomainEntryStatistics,
-    FlextLdifModelsDomainsEntries,
-    FlextLdifModelsEvents,
-    FlextLdifModelsProcessing,
-    FlextLdifModelsResults,
-    FlextLdifModelsSettings,
 )
+from flext_ldif._models.domain_entry_control import FlextLdifModelsDomainEntryControl
+from flext_ldif._models.domain_entry_statistics import (
+    FlextLdifModelsDomainEntryStatistics,
+)
+from flext_ldif._models.events import FlextLdifModelsEvents
+from flext_ldif._models.processing import FlextLdifModelsProcessing
+from flext_ldif._models.results import FlextLdifModelsResults
+from flext_ldif._models.settings import FlextLdifModelsSettings
 
 
 class FlextLdifModels(flext_cli_m):

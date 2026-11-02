@@ -11,11 +11,12 @@ from functools import partial
 from typing import Self, override
 
 from flext_ldif import c, m, p, r, s, u
+from flext_ldif._protocols.values import FlextLdifProtocolsValues
 from flext_ldif.services import FlextLdifTransformer
 
 
 class FlextLdifProcessingPipeline(
-    s[Sequence[p.Ldif.Entry]],
+    s[Sequence[FlextLdifProtocolsValues.Entry]],
     m.Ldif.RegistryPortOptions,
     m.Ldif.ProcessingPipelineOptions,
 ):

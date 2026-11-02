@@ -1,5 +1,9 @@
 # Constants Pattern Guide
 
+Resolve dialect-specific constants through the public server registry. The
+OID and OUD ACL attribute names belong to their respective server profiles;
+the shared `c.Ldif` namespace does not declare `Oid` or `Oud` wrappers.
+
 <!-- TOC START -->
 
 - [RFC.Constants (Base)](#rfcconstants-base)

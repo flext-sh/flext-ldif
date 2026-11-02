@@ -11,6 +11,7 @@ from collections.abc import Callable, MutableSequence
 from typing import Annotated, ClassVar, override
 
 from flext_ldif import c, m, p, r, s, t, u
+from flext_ldif._protocols.domain import FlextLdifProtocolsDomain
 from flext_ldif.servers._base import FlextLdifServerMethods
 
 
@@ -36,7 +37,7 @@ class FlextLdifServersBaseSchemaAcl(
         m.Field(description="Server priority (lower number = higher priority)"),
     ] = 0
     parent_server: Annotated[
-        t.Port[p.Ldif.ServerServer] | None,
+        t.Port[FlextLdifProtocolsDomain.ServerServer] | None,
         m.Field(
             exclude=True,
             repr=False,

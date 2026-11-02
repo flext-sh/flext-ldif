@@ -310,7 +310,9 @@ class TestsFlextLdifRegistryWrites:
         """OID metadata and explicitly selected ACL handling survive file writes."""
         api = FlextLdif()
         acl = "access to entry by * (browse)"
-        source_attribute = c.Ldif.Oid.ACL_ATTRIBUTE_NAME
+        oid = api.resolve_server_constants(c.Ldif.ServerTypes.OID).unwrap()
+        oud = api.resolve_server_constants(c.Ldif.ServerTypes.OUD).unwrap()
+        source_attribute = oid.ACL_ATTRIBUTE_NAME
         parsed = api.parse_string(
             "dn: cn=synthetic\nobjectClass: person\n"
             f"cn: synthetic\nsn: Sample\n{source_attribute}: {acl}\n\n",
@@ -328,7 +330,7 @@ class TestsFlextLdifRegistryWrites:
                 comment_acl_in_non_acl_phases=comment_acl,
                 acl_attribute_names=frozenset({
                     source_attribute,
-                    c.Ldif.Oud.ACL_ATTRIBUTE_NAME,
+                    oud.ACL_ATTRIBUTE_NAME,
                 }),
             ),
         ).unwrap()

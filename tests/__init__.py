@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 from flext_core.lazy import install_lazy_exports
@@ -23,11 +22,7 @@ if TYPE_CHECKING:
     from tests.protocols import TestsFlextLdifProtocols, TestsFlextLdifProtocolsLdap, p
     from tests.settings import TestsFlextLdifSettings
     from tests.typings import TestsFlextLdifTypes, t
-    from tests.utilities import (
-        TestsFlextLdifSchemaExpectations,
-        TestsFlextLdifUtilities,
-        u,
-    )
+    from tests.utilities import TestsFlextLdifUtilities, u
 
 
 __all__: tuple[str, ...] = (
@@ -36,7 +31,6 @@ __all__: tuple[str, ...] = (
     "TestsFlextLdifModels",
     "TestsFlextLdifProtocols",
     "TestsFlextLdifProtocolsLdap",
-    "TestsFlextLdifSchemaExpectations",
     "TestsFlextLdifServiceBase",
     "TestsFlextLdifSettings",
     "TestsFlextLdifTypes",
@@ -66,13 +60,12 @@ __all__: tuple[str, ...] = (
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({
+    {
         "TestsFlextLdifConstants": ".constants",
         "TestsFlextLdifConstantsLdap": ".constants_ldap",
         "TestsFlextLdifModels": ".models",
         "TestsFlextLdifProtocols": ".protocols",
         "TestsFlextLdifProtocolsLdap": ".protocols",
-        "TestsFlextLdifSchemaExpectations": ".utilities",
         "TestsFlextLdifServiceBase": ".base",
         "TestsFlextLdifSettings": ".settings",
         "TestsFlextLdifTypes": ".typings",
@@ -97,6 +90,6 @@ install_lazy_exports(
         "tm": "flext_tests",
         "u": ".utilities",
         "x": "flext_tests",
-    }),
+    },
     public_exports=__all__,
 )
