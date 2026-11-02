@@ -34,7 +34,7 @@ class TestsFlextLdifSimpleLdap:
         ldap_connection: p.Ldap3Connection,
         base_dn: str,
         username: str,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Create a person entry in LDAP and return it as an ``m.Ldif.Entry``.
 
         The ldap3 connection is the external boundary; the returned value is the
@@ -67,7 +67,7 @@ class TestsFlextLdifSimpleLdap:
         }
         entry_result = m.Ldif.Entry.create(dn=entry_dn, attributes=attrs)
         tm.ok(entry_result)
-        entry: m.Ldif.Entry = entry_result.unwrap()
+        entry: p.Ldif.Entry = entry_result.unwrap()
         return entry
 
     @staticmethod

@@ -36,7 +36,7 @@ class FlextLdifSettings(FlextCliSettings, FlextSettings):
             m.Field(description="Enable strict LDIF validation rules"),
         ] = True
 
-    model_config: ClassVar[m.SettingsConfigDict] = m.SettingsConfigDict(
+    model_config: ClassVar[p.SettingsConfigDict] = m.SettingsConfigDict(
         env_prefix="FLEXT_LDIF_",
         extra="ignore",
     )

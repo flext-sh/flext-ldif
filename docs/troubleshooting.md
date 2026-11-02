@@ -148,7 +148,7 @@ import psutil
 from flext_ldif import FlextLdifModels, ldif, m, p, r, u
 
 
-def process_large_file_safely(file_path: str) -> p.Result[m.Dict]:
+def process_large_file_safely(file_path: str) -> p.Result[p.Dict]:
     """Process large LDIF files with memory management."""
     # Check available memory
     available_memory_gb = psutil.virtual_memory().available / (1024**3)
@@ -158,7 +158,7 @@ def process_large_file_safely(file_path: str) -> p.Result[m.Dict]:
     u.Cli.print(f"Available memory: {available_memory_gb:.2f} GB")
 
     if file_size_gb > available_memory_gb * 0.5:
-        return r[m.Dict].fail(
+        return r[p.Dict].fail(
             f"File too large for available memory. "
             f"File: {file_size_gb:.2f}GB, Available: {available_memory_gb:.2f}GB",
         )
@@ -198,7 +198,7 @@ def _iter_chunks(
         yield current_chunk
 
 
-def chunk_process_file(file_path: str, chunk_size: int = 10000) -> p.Result[m.Dict]:
+def chunk_process_file(file_path: str, chunk_size: int = 10000) -> p.Result[p.Dict]:
     """Process file in chunks to manage memory."""
     results: dict[str, int] = {"total_entries": 0, "processed_chunks": 0}
 
@@ -210,9 +210,9 @@ def chunk_process_file(file_path: str, chunk_size: int = 10000) -> p.Result[m.Di
                     results["total_entries"] += len(current_chunk)
                     results["processed_chunks"] += 1
     except OSError as e:
-        return r[m.Dict].fail(f"Chunk processing failed: {e}")
+        return r[p.Dict].fail(f"Chunk processing failed: {e}")
 
-    return r[m.Dict].ok(results)
+    return r[p.Dict].ok(results)
 
 
 def process_chunk(chunk_entries: list[str]) -> p.Result[bool]:
@@ -367,7 +367,7 @@ ignore_unknown_attributes=True, # Skip unknown attributes
 buffer_size=32768, # Larger buffer for I/O
 )
 
-def process_with_optimization(file_path: str) -> p.Result[m.Dict]:
+def process_with_optimization(file_path: str) -> p.Result[p.Dict]:
 """Process LDIF with performance optimizations."""
 settings = optimize_processing_config()
 api = ldif(settings=settings)

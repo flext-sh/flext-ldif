@@ -40,9 +40,9 @@ class FlextLdifServersOidAclWrite(
 
     def _authorize_write_permissions(
         self,
-        acl_subject: m.Ldif.AclSubject | t.MutableConfigurationMapping,
-        acl_permissions: m.Ldif.AclPermissions | t.MutableBoolMapping | None,
-        metadata: m.Ldif.ServerMetadata
+        acl_subject: p.Ldif.AclSubject | t.MutableConfigurationMapping,
+        acl_permissions: p.Ldif.AclPermissions | t.MutableBoolMapping | None,
+        metadata: p.Ldif.ServerMetadata
         | MutableMapping[
             str,
             t.Ldif.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
@@ -57,7 +57,7 @@ class FlextLdifServersOidAclWrite(
         """
         subject_dict = self._normalize_to_dict(acl_subject)
         subject_public = m.Ldif.AclSubject.model_validate(subject_dict)
-        metadata_public: m.Ldif.ServerMetadata | None = None
+        metadata_public: p.Ldif.ServerMetadata | None = None
         if metadata:
             try:
                 metadata_public = m.Ldif.ServerMetadata.model_validate(metadata)
@@ -77,7 +77,7 @@ class FlextLdifServersOidAclWrite(
     @override
     def _write_acl(
         self,
-        acl_data: m.Ldif.Acl,
+        acl_data: p.Ldif.Acl,
         _format_option: str | None = None,
     ) -> p.Result[str]:
         """Write ACL to OID orclaci format (Phase 2: Denormalization).

@@ -32,10 +32,10 @@ class FlextLdifServersRfcAcl(
     ) -> Self: ...
 
     @overload
-    def __call__(self, data: str, *, operation: str | None = None) -> m.Ldif.Acl: ...
+    def __call__(self, data: str, *, operation: str | None = None) -> p.Ldif.Acl: ...
 
     @overload
-    def __call__(self, data: m.Ldif.Acl, *, operation: str | None = None) -> str: ...
+    def __call__(self, data: p.Ldif.Acl, *, operation: str | None = None) -> str: ...
 
     @overload
     def __call__(
@@ -43,7 +43,7 @@ class FlextLdifServersRfcAcl(
         data: str | m.Ldif.Acl | None = None,
         *,
         operation: str | None = None,
-    ) -> m.Ldif.Acl | str: ...
+    ) -> p.Ldif.Acl | str: ...
 
     def __call__(
         self,
@@ -105,7 +105,7 @@ class FlextLdifServersRfcAcl(
         result = self.execute(data=narrowed_data, operation=narrowed_operation)
         if isinstance(result.value, str):
             return result.value
-        acl: m.Ldif.Acl = m.Ldif.Acl.model_validate(result.value)
+        acl: p.Ldif.Acl = m.Ldif.Acl.model_validate(result.value)
         return acl
 
     @override
@@ -133,7 +133,7 @@ class FlextLdifServersRfcAcl(
         return True
 
     @override
-    def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
+    def can_handle_attribute(self, attribute: p.Ldif.SchemaAttribute) -> bool:
         """Decline schema attribute handling for the ACL server.
 
         Args:
@@ -147,7 +147,7 @@ class FlextLdifServersRfcAcl(
         return False
 
     @override
-    def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
+    def can_handle_objectclass(self, objectclass: p.Ldif.SchemaObjectClass) -> bool:
         """Decline objectClass handling for the ACL server.
 
         Args:
@@ -213,7 +213,7 @@ class FlextLdifServersRfcAcl(
         return (permission, None)
 
     @override
-    def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+    def _parse_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
         """Parse an RFC-compliant ACL line.
 
         Wraps the raw line in an ACL model that preserves the original text.
@@ -226,7 +226,7 @@ class FlextLdifServersRfcAcl(
 
         """
         if not acl_line or not acl_line.strip():
-            return r[m.Ldif.Acl].fail("ACL line must be a non-empty string.")
+            return r[p.Ldif.Acl].fail("ACL line must be a non-empty string.")
         server_type_str = self._get_server_type()
         server_type_value = u.Ldif.normalize_server_type(server_type_str)
         # mro-wgwh.5 (agent: kimi-coder) — model_construct bypass removed: plain
@@ -239,7 +239,7 @@ class FlextLdifServersRfcAcl(
                 extensions={"original_format": acl_line},
             ),
         )
-        return r[m.Ldif.Acl].ok(acl_model)
+        return r[p.Ldif.Acl].ok(acl_model)
 
     @staticmethod
     def _preserve_unsupported_feature(
@@ -266,7 +266,7 @@ class FlextLdifServersRfcAcl(
         return False
 
     @override
-    def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+    def _write_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
         """Write an ACL to RFC-compliant string format.
 
         Emits the preserved raw line when present, otherwise a bare

@@ -19,7 +19,7 @@ class ExamplesFlextLdifUtilities(flext_ldif_u):
     """Utility functions for flextldif."""
 
     @staticmethod
-    def create_user_entry(index: int, *, sn: str | None = None) -> m.Ldif.Entry:
+    def create_user_entry(index: int, *, sn: str | None = None) -> p.Ldif.Entry:
         """Create a person entry for example workflows.
 
         Returns:

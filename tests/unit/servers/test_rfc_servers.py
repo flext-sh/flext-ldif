@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from flext_ldif import FlextLdif
 from flext_ldif.servers import FlextLdifServersRfc
-from tests import c, m, tm
+from tests import c, p, tm
 
 
 class TestsFlextLdifRfcServers:
@@ -28,7 +28,7 @@ class TestsFlextLdifRfcServers:
     LDIF_RECORD = "dn: cn=alice,dc=example,dc=com\nobjectclass: person\ncn: alice\n"
 
     @classmethod
-    def _parsed_attribute(cls) -> m.Ldif.SchemaAttribute:
+    def _parsed_attribute(cls) -> p.Ldif.SchemaAttribute:
         return (
             FlextLdifServersRfc
             .Schema()
@@ -37,7 +37,7 @@ class TestsFlextLdifRfcServers:
         )
 
     @classmethod
-    def _parsed_objectclass(cls) -> m.Ldif.SchemaObjectClass:
+    def _parsed_objectclass(cls) -> p.Ldif.SchemaObjectClass:
         return (
             FlextLdifServersRfc
             .Schema()

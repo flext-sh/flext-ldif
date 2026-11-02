@@ -14,7 +14,7 @@ from collections.abc import MutableMapping
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from examples import create_entry_or_none, ldif, m, p, r, t, u
+from examples import create_entry_or_none, ldif, p, r, t, u
 
 if TYPE_CHECKING:
     from flext_ldif import FlextLdif
@@ -64,14 +64,14 @@ class ExamplesFlextLdifSchemaMigration:
             (source_dir / f"legacy_{i}.ldif").write_text(entry_text)
 
     @staticmethod
-    def _parse_source_entries(api: FlextLdif, source_dir: Path) -> list[m.Ldif.Entry]:
+    def _parse_source_entries(api: FlextLdif, source_dir: Path) -> list[p.Ldif.Entry]:
         """Parse every legacy LDIF file in the source directory.
 
         Returns:
-            The resulting ``list[m.Ldif.Entry]``.
+            The resulting ``list[p.Ldif.Entry]``.
 
         """
-        all_entries: list[m.Ldif.Entry] = []
+        all_entries: list[p.Ldif.Entry] = []
         for ldif_file in source_dir.glob("*.ldif"):
             parse_result = api.parse_ldif(ldif_file)
             if parse_result.success:
@@ -80,7 +80,7 @@ class ExamplesFlextLdifSchemaMigration:
         return all_entries
 
     @staticmethod
-    def _migrated_dn(ldif_entry: m.Ldif.Entry) -> str:
+    def _migrated_dn(ldif_entry: p.Ldif.Entry) -> str:
         """Resolve the DN string of a parsed entry.
 
         Returns:
@@ -93,7 +93,7 @@ class ExamplesFlextLdifSchemaMigration:
         return entry_dn.value if hasattr(entry_dn, "value") else str(entry_dn)
 
     @staticmethod
-    def _migrate_entry(ldif_entry: m.Ldif.Entry) -> m.Ldif.Entry | None:
+    def _migrate_entry(ldif_entry: p.Ldif.Entry) -> p.Ldif.Entry | None:
         """Migrate one entry, renaming ``emailAddress`` to the modern ``mail``.
 
         Returns:
@@ -115,7 +115,7 @@ class ExamplesFlextLdifSchemaMigration:
     @staticmethod
     def _validation_summary(
         api: FlextLdif,
-        entries: list[m.Ldif.Entry],
+        entries: list[p.Ldif.Entry],
     ) -> p.Result[t.JsonMapping]:
         """Validate entries and summarize the report through the declared path.
 
@@ -159,7 +159,7 @@ class ExamplesFlextLdifSchemaMigration:
         )
         if pre_summary.success:
             migration_results["pre_migration_validation"] = dict(pre_summary.unwrap())
-        migrated_entries: list[m.Ldif.Entry] = []
+        migrated_entries: list[p.Ldif.Entry] = []
         for ldif_entry in all_entries:
             migrated = ExamplesFlextLdifSchemaMigration._migrate_entry(ldif_entry)
             if migrated is not None:

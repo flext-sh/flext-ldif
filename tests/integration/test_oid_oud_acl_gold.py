@@ -28,7 +28,7 @@ import pytest
 
 from flext_ldif import FlextLdif
 from flext_ldif.servers import FlextLdifServersOidAclPipeline
-from tests import c, m, tm
+from tests import c, m, p, tm
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -42,7 +42,7 @@ class TestsFlextLdifOidOudAclGold:
 
     @staticmethod
     def _outcome_rows(
-        entries: Sequence[m.Ldif.Entry],
+        entries: Sequence[p.Ldif.Entry],
     ) -> list[tuple[str, int, int, int, int]]:
         """Count outcome kinds for each emitted aci, first occurrence only.
 

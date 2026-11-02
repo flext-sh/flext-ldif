@@ -117,23 +117,23 @@ class FlextLdifConversionSchemaEntry(
         self,
         source_server: p.Ldif.ServerServer,
         target_server: p.Ldif.ServerServer,
-        entry: m.Ldif.Entry,
-    ) -> p.Result[m.Ldif.Entry]:
+        entry: p.Ldif.Entry,
+    ) -> p.Result[p.Ldif.Entry]:
         """Convert schema definition attributes embedded in a schema entry.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[p.Ldif.Entry]``.
 
         """
         if entry.attributes is None or not u.Ldif.detects_schema_entry(entry):
-            return r[m.Ldif.Entry].ok(entry)
+            return r[p.Ldif.Entry].ok(entry)
         schema_pair = self._resolve_schema_pair(source_server, target_server)
         if schema_pair.failure:
-            return r[m.Ldif.Entry].from_failure(schema_pair)
+            return r[p.Ldif.Entry].from_failure(schema_pair)
         source_schema, target_schema = schema_pair.value
         schema_fields = self._schema_fields_to_convert(entry)
         if not schema_fields:
-            return r[m.Ldif.Entry].ok(entry)
+            return r[p.Ldif.Entry].ok(entry)
         converted_fields_result = r[tuple[str, list[str]]].traverse(
             schema_fields,
             lambda field: self._convert_one_schema_field(
@@ -143,8 +143,8 @@ class FlextLdifConversionSchemaEntry(
             ),
         )
         if converted_fields_result.failure:
-            return r[m.Ldif.Entry].from_failure(converted_fields_result)
-        return r[m.Ldif.Entry].ok(
+            return r[p.Ldif.Entry].from_failure(converted_fields_result)
+        return r[p.Ldif.Entry].ok(
             self._entry_with_converted_fields(entry, converted_fields_result.value),
         )
 
@@ -182,7 +182,7 @@ class FlextLdifConversionSchemaEntry(
 
     @staticmethod
     def _schema_fields_to_convert(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
     ) -> list[tuple[str, c.Ldif.SchemaItemKind, MutableSequence[str]]]:
         """Collect the schema-definition fields present in one entry.
 
@@ -233,9 +233,9 @@ class FlextLdifConversionSchemaEntry(
 
     @staticmethod
     def _entry_with_converted_fields(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         converted_fields: Sequence[tuple[str, list[str]]],
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Rebuild the entry with converted schema fields applied.
 
         Returns:

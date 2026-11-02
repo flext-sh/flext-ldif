@@ -231,8 +231,8 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         @override
         def _transform_attribute_for_write(
             self,
-            attr_data: m.Ldif.SchemaAttribute,
-        ) -> m.Ldif.SchemaAttribute:
+            attr_data: p.Ldif.SchemaAttribute,
+        ) -> p.Ldif.SchemaAttribute:
             """Transform an attribute before writing.
 
             Args:
@@ -247,8 +247,8 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
         @override
         def _transform_objectclass_for_write(
             self,
-            oc_data: m.Ldif.SchemaObjectClass,
-        ) -> m.Ldif.SchemaObjectClass:
+            oc_data: p.Ldif.SchemaObjectClass,
+        ) -> p.Ldif.SchemaObjectClass:
             """Transform an objectClass before writing.
 
             Args:
@@ -298,7 +298,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             subject_value: str,
             access: str,
             acl_line: str,
-        ) -> m.Ldif.Acl:
+        ) -> p.Ldif.Acl:
             """Build an OpenLDAP Acl model from parsed components.
 
             Args:
@@ -338,7 +338,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             )
 
         @override
-        def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+        def _parse_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
             """Parse an OpenLDAP 2.x ACL definition.
 
             Args:
@@ -351,9 +351,9 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             try:
                 return self._parse_openldap_acl(acl_line)
             except c.Ldif.EXC_LDIF_PARSE as e:
-                return r[m.Ldif.Acl].fail_op("OpenLDAP 2.x ACL parsing", e)
+                return r[p.Ldif.Acl].fail_op("OpenLDAP 2.x ACL parsing", e)
 
-        def _parse_openldap_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+        def _parse_openldap_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
             """Parse OpenLDAP 2.x ACL content.
 
             Args:
@@ -367,7 +367,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             acl_content = self._strip_acl_prefix_and_index(acl_line)
             what, attributes = self._parse_what_clause(acl_content)
             if what is None:
-                return r[m.Ldif.Acl].fail(
+                return r[p.Ldif.Acl].fail(
                     "OpenLDAP 2.x ACL has no 'to <what> by <who> <access>' "
                     f"clause: {acl_line!r}",
                 )
@@ -379,7 +379,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 access,
                 acl_line,
             )
-            return r[m.Ldif.Acl].ok(acl)
+            return r[p.Ldif.Acl].ok(acl)
 
         @staticmethod
         def _parse_by_clauses(acl_content: str) -> tuple[str, str]:
@@ -466,7 +466,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             return acl_content
 
         @override
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+        def _write_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
             """Write ACL data to the OpenLDAP 2.x string format.
 
             Args:
@@ -482,7 +482,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                 return r[str].fail_op("OpenLDAP 2.x ACL write", e)
 
         @staticmethod
-        def _write_openldap_acl(acl_data: m.Ldif.Acl) -> p.Result[str]:
+        def _write_openldap_acl(acl_data: p.Ldif.Acl) -> p.Result[str]:
             """Write OpenLDAP 2.x ACL content.
 
             Args:
@@ -564,7 +564,7 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
             normalize_to: str | None = None
             return {"preserve_case": True, "normalize_to": normalize_to}
 
-        def _inject_validation_rules(self, entry: m.Ldif.Entry) -> m.Ldif.Entry:
+        def _inject_validation_rules(self, entry: p.Ldif.Entry) -> p.Ldif.Entry:
             """Inject OpenLDAP-specific validation rules into Entry metadata.
 
             Args:

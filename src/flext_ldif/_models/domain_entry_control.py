@@ -25,7 +25,7 @@ class FlextLdifModelsDomainEntryControl:
         control payload is optional; a modify value is not).
         """
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(use_enum_values=False)
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(use_enum_values=False)
 
         control_type: Annotated[
             str,

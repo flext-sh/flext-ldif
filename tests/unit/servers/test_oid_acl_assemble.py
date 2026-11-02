@@ -23,12 +23,12 @@ from flext_ldif.servers import (
     FlextLdifServersOidAclPipeline,
     FlextLdifServersOidAclRender,
 )
-from tests import c, m, tm, u
+from tests import c, m, p, tm, u
 
 _KIND = c.Ldif.AclSubjectOutcomeKind
 
 
-def _acl_entry(attributes: Mapping[str, Sequence[str]]) -> m.Ldif.Entry:
+def _acl_entry(attributes: Mapping[str, Sequence[str]]) -> p.Ldif.Entry:
     """Build one real entry at the shared ACL test DN.
 
     Returns:
@@ -44,17 +44,17 @@ class TestsFlextLdifOidAclAssemble:
     # ---- helpers -------------------------------------------------------
 
     @staticmethod
-    def _build(dn: str, line: str) -> m.Ldif.AciRule:
+    def _build(dn: str, line: str) -> p.Ldif.AciRule:
         """Parse an OID line then build the OUD AciRule (parse → build).
 
         Returns:
             The resulting ``m.Ldif.AciRule``.
 
         """
-        rule: m.Ldif.OidAclRule = FlextLdifServersOidAclConvert.parse_oid_acl_line(
+        rule: p.Ldif.OidAclRule = FlextLdifServersOidAclConvert.parse_oid_acl_line(
             dn, line
         ).unwrap()
-        aci_rule: m.Ldif.AciRule = FlextLdifServersOidAclAssemble.build_aci_rule(
+        aci_rule: p.Ldif.AciRule = FlextLdifServersOidAclAssemble.build_aci_rule(
             rule
         ).unwrap()
         return aci_rule
@@ -183,7 +183,7 @@ class TestsFlextLdifOidAclAssemble:
         ],
     )
     def test_render_aci_string_matches_oud_oracle(
-        aci: m.Ldif.AciRule,
+        aci: p.Ldif.AciRule,
         expected: str,
     ) -> None:
         """Test render aci string matches oud oracle."""

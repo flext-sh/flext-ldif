@@ -15,7 +15,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif.servers import FlextLdifServersNovell
-from tests import c, m, tm, u
+from tests import c, m, p, tm, u
 
 
 class TestsFlextLdifNovellServers:
@@ -80,7 +80,7 @@ class TestsFlextLdifNovellServers:
         "test_case", u.Tests.server_attribute_test_cases(c.Tests.NOVELL)
     )
     def test_can_handle_attribute_matches_expected_verdict(
-        test_case: m.Tests.AttributeTestCase,
+        test_case: p.Tests.AttributeTestCase,
         schema_server: FlextLdifServersNovell.Schema,
     ) -> None:
         """Novell attribute definitions are recognised, RFC ones are not."""
@@ -149,7 +149,7 @@ class TestsFlextLdifNovellServers:
         u.Tests.objectclass_test_cases(c.Tests.NOVELL_OBJECTCLASS_CASE_ROWS),
     )
     def test_can_handle_objectclass_matches_expected_verdict(
-        test_case: m.Tests.ObjectClassTestCase,
+        test_case: p.Tests.ObjectClassTestCase,
         schema_server: FlextLdifServersNovell.Schema,
     ) -> None:
         """Novell objectClass definitions are recognised, RFC ones are not."""
@@ -279,7 +279,7 @@ class TestsFlextLdifNovellServers:
         ids=lambda tc: tc.scenario,
     )
     def test_can_handle_entry_matches_expected_verdict(
-        test_case: m.Tests.EntryTestCase,
+        test_case: p.Tests.EntryTestCase,
         entry_server: FlextLdifServersNovell.Entry,
     ) -> None:
         """Novell entries (by DN marker, attribute, or objectClass) are detected."""

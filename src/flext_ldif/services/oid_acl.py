@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import m, p, t
+from flext_ldif import p, t
 from flext_ldif.servers import (
     FlextLdifServersOidAclAssemble,
     FlextLdifServersOidAclConvert,
@@ -19,7 +19,7 @@ class FlextLdifOidAcl:
     """Expose OID ACL conversion through the public LDIF facade."""
 
     @staticmethod
-    def parse_oid_acl_line(dn: str, line: str) -> p.Result[m.Ldif.OidAclRule]:
+    def parse_oid_acl_line(dn: str, line: str) -> p.Result[p.Ldif.OidAclRule]:
         """Parse one OID ACL attribute line into its typed rule.
 
         Returns:
@@ -30,8 +30,8 @@ class FlextLdifOidAcl:
 
     @staticmethod
     def convert_subject_to_oud(
-        subject: m.Ldif.OidAclSubject,
-    ) -> p.Result[m.Ldif.AciAllow]:
+        subject: p.Ldif.OidAclSubject,
+    ) -> p.Result[p.Ldif.AciAllow]:
         """Convert one OID subject into an OUD ACI allow clause.
 
         Returns:
@@ -79,10 +79,10 @@ class FlextLdifOidAcl:
 
     @staticmethod
     def build_aci_rule(
-        rule: m.Ldif.OidAclRule,
+        rule: p.Ldif.OidAclRule,
         *,
         base_dn: str = "",
-    ) -> p.Result[m.Ldif.AciRule]:
+    ) -> p.Result[p.Ldif.AciRule]:
         """Build one OUD ACI rule from a parsed OID ACL rule.
 
         Returns:
@@ -92,7 +92,7 @@ class FlextLdifOidAcl:
         return FlextLdifServersOidAclAssemble.build_aci_rule(rule, base_dn=base_dn)
 
     @staticmethod
-    def render_aci_string(aci: m.Ldif.AciRule) -> str:
+    def render_aci_string(aci: p.Ldif.AciRule) -> str:
         """Render a typed OUD ACI rule as an ``aci:`` attribute line.
 
         Returns:

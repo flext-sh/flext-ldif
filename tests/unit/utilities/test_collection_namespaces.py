@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests import c, m, tm, u
+from tests import c, m, p, tm, u
 
 
 class TestsFlextLdifCollectionNamespaces:
@@ -35,7 +35,7 @@ class TestsFlextLdifCollectionNamespaces:
     @staticmethod
     def test_change_operation_remains_a_callable_model_type() -> None:
         """The type alias preserves normal runtime model construction."""
-        operation: m.Ldif.ChangeOperation = m.Ldif.ChangeOperation(
+        operation: p.Ldif.ChangeOperation = m.Ldif.ChangeOperation(
             operation=c.Ldif.ChangeOperation.REPLACE,
             attribute="description",
             values=[],

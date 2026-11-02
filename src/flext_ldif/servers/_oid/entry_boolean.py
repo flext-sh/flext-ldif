@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import MutableMapping, MutableSequence, Sequence
 
-from flext_ldif import c, m, t, u
+from flext_ldif import c, p, t, u
 from flext_ldif.servers._oid import (
     FlextLdifConstantsServersOid,
     FlextLdifServersOidEntryMetadata,
@@ -160,7 +160,7 @@ class FlextLdifServersOidEntryBoolean(
         )
         return True
 
-    def _restore_boolean_values_to_oid(self, entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
+    def _restore_boolean_values_to_oid(self, entry_data: p.Ldif.Entry) -> p.Ldif.Entry:
         """Restore OID boolean format from RFC format (RFC → OID: TRUE/FALSE → 0/1).
 
         Returns:
@@ -195,9 +195,9 @@ class FlextLdifServersOidEntryBoolean(
         entry_metadata: t.MutableJsonMapping | None = None
         if entry_data.attributes and entry_data.attributes.metadata:
             entry_metadata = entry_data.attributes.metadata
-        copied: m.Ldif.Entry = entry_data.model_copy(
+        copied: p.Ldif.Entry = entry_data.model_copy(
             update={
-                "attributes": m.Ldif.Attributes.model_validate({
+                "attributes": p.Ldif.Attributes.model_validate({
                     "attributes": restored_attrs,
                     "attribute_metadata": entry_data.attributes.attribute_metadata
                     if entry_data.attributes

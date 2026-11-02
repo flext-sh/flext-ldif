@@ -55,7 +55,7 @@ class ExamplesFlextLdifBasicUsage:
     BASE_DN: Final[str] = "ou=People,dc=example,dc=com"
 
     @classmethod
-    def _build_entry(cls, index: int) -> m.Ldif.Entry:
+    def _build_entry(cls, index: int) -> p.Ldif.Entry:
         """Build one canonical LDIF entry for batch examples.
 
         Returns:
@@ -96,11 +96,11 @@ class ExamplesFlextLdifBasicUsage:
         source: str | Path,
         *,
         server_type: str | None = None,
-    ) -> p.Result[list[m.Ldif.Entry]]:
+    ) -> p.Result[list[p.Ldif.Entry]]:
         """Parse and validate LDIF input through the public facade only.
 
         Returns:
-            The resulting ``p.Result[list[m.Ldif.Entry]]``.
+            The resulting ``p.Result[list[p.Ldif.Entry]]``.
 
         """
         match source:
@@ -119,14 +119,14 @@ class ExamplesFlextLdifBasicUsage:
         )
 
     @classmethod
-    def batch_transform(cls) -> p.Result[list[m.Ldif.Entry]]:
+    def batch_transform(cls) -> p.Result[list[p.Ldif.Entry]]:
         """DRY batch transformation - returns created entries.
 
         Returns:
-            The resulting ``p.Result[list[m.Ldif.Entry]]``.
+            The resulting ``p.Result[list[p.Ldif.Entry]]``.
 
         """
-        entries: list[m.Ldif.Entry] = [cls._build_entry(index) for index in range(10)]
+        entries: list[p.Ldif.Entry] = [cls._build_entry(index) for index in range(10)]
         return ldif.validate_entries(entries).map(lambda _: entries)
 
     @classmethod
@@ -155,7 +155,7 @@ class ExamplesFlextLdifBasicUsage:
             ),
         )
 
-    def context_pipeline(self) -> p.Result[list[m.Ldif.Entry]]:
+    def context_pipeline(self) -> p.Result[list[p.Ldif.Entry]]:
         """Context-aware processing with correlation tracking.
 
         Returns:
@@ -170,7 +170,7 @@ class ExamplesFlextLdifBasicUsage:
                 ),
             )
 
-    def process_pipeline(self) -> p.Result[list[m.Ldif.Entry]]:
+    def process_pipeline(self) -> p.Result[list[p.Ldif.Entry]]:
         """DRY railway: detect -> parse -> validate.
 
         Python 3.13+ Features:
@@ -179,7 +179,7 @@ class ExamplesFlextLdifBasicUsage:
         - PEP 695 type aliases for better readability
 
         Returns:
-            r with parsed and validated list[m.Ldif.Entry] or error.
+            r with parsed and validated list[p.Ldif.Entry] or error.
 
         """
         return self._resolve_server_type(self.SAMPLE_LDIF).flat_map(

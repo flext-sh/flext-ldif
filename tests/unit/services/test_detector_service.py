@@ -10,12 +10,10 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tests import c, m, tm, u
+from tests import c, m, p, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-from tests import p
 
 
 class TestsFlextLdifDetectorService:

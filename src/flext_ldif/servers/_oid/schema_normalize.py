@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar
 
-from flext_ldif import c, m, p, u
+from flext_ldif import c, p, u
 from flext_ldif.servers._oid import FlextLdifConstantsServersOid
 from flext_ldif.servers._rfc import FlextLdifServersRfcSchema
 
@@ -21,8 +21,8 @@ class FlextLdifServersOidSchemaNormalize(FlextLdifServersRfcSchema):
 
     def _normalize_oid_attribute(
         self,
-        attr: m.Ldif.SchemaAttribute,
-    ) -> m.Ldif.SchemaAttribute:
+        attr: p.Ldif.SchemaAttribute,
+    ) -> p.Ldif.SchemaAttribute:
         """Normalize OID-specific schema attribute fields.
 
         Returns:
@@ -56,8 +56,8 @@ class FlextLdifServersOidSchemaNormalize(FlextLdifServersRfcSchema):
 
     def _normalize_oid_objectclass(
         self,
-        oc: m.Ldif.SchemaObjectClass,
-    ) -> m.Ldif.SchemaObjectClass:
+        oc: p.Ldif.SchemaObjectClass,
+    ) -> p.Ldif.SchemaObjectClass:
         """Normalize OID-specific objectClass fields.
 
         Returns:
@@ -91,7 +91,7 @@ class FlextLdifServersOidSchemaNormalize(FlextLdifServersRfcSchema):
             if v
         }
         if update_dict:
-            updated_oc: m.Ldif.SchemaObjectClass = oc.model_copy(update=update_dict)
+            updated_oc: p.Ldif.SchemaObjectClass = oc.model_copy(update=update_dict)
             return updated_oc
         return oc
 
@@ -112,7 +112,7 @@ class FlextLdifServersOidSchemaNormalize(FlextLdifServersRfcSchema):
 
     @staticmethod
     def _normalize_auxiliary_typo(
-        oc_data: m.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
         original_format_str: str,
     ) -> str | None:
         """Normalize AUXILLARY typo to AUXILIARY.
@@ -146,7 +146,7 @@ class FlextLdifServersOidSchemaNormalize(FlextLdifServersRfcSchema):
                 return None
 
     @staticmethod
-    def _normalize_sup_from_model(oc_data: m.Ldif.SchemaObjectClass) -> str | (
+    def _normalize_sup_from_model(oc_data: p.Ldif.SchemaObjectClass) -> str | (
         MutableSequence[str] | None
     ):
         """Normalize SUP from objectClass model.
@@ -205,8 +205,8 @@ class FlextLdifServersOidSchemaNormalize(FlextLdifServersRfcSchema):
 
     @staticmethod
     def _transform_case_ignore_substrings(
-        attr_data: m.Ldif.SchemaAttribute,
-    ) -> m.Ldif.SchemaAttribute:
+        attr_data: p.Ldif.SchemaAttribute,
+    ) -> p.Ldif.SchemaAttribute:
         """Transform caseIgnoreSubstringsMatch from EQUALITY to SUBSTR.
 
         Returns:
@@ -243,7 +243,7 @@ class FlextLdifServersOidSchemaNormalize(FlextLdifServersRfcSchema):
                 transformed.metadata.extensions[c.Ldif.SCHEMA_ORIGINAL_FORMAT] = (
                     original_format
                 )
-            transformed_attr: m.Ldif.SchemaAttribute = transformed
+            transformed_attr: p.Ldif.SchemaAttribute = transformed
             return transformed_attr
         return attr_data
 

@@ -24,7 +24,7 @@ def _schema_attribute(
     name: str,
     desc: str,
     syntax: str,
-) -> m.Ldif.SchemaAttribute:
+) -> p.Ldif.SchemaAttribute:
     """Build a minimal RFC attribute model with every optional field unset.
 
     Returns:
@@ -176,7 +176,7 @@ class TestsFlextLdifRelaxed:
     ) -> None:
         """Test parse_attribute stores original definition for recovery."""
         original = "( 1.2.3.4 NAME 'test' SYNTAX 1.2.3 )"
-        parsed: m.Ldif.SchemaAttribute = tm.ok(schema_server.parse_attribute(original))
+        parsed: p.Ldif.SchemaAttribute = tm.ok(schema_server.parse_attribute(original))
         metadata = tm.not_none(parsed.metadata)
         tm.that(metadata.extensions.get("original_format"), eq=original)
 
@@ -282,14 +282,14 @@ class TestsFlextLdifRelaxed:
         bad_input: str,
     ) -> None:
         """Test relaxed mode recovers from binary content if OID present."""
-        parsed: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
+        parsed: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
         if parse_type == "attribute":
-            attribute_result: p.Result[m.Ldif.SchemaAttribute] = (
+            attribute_result: p.Result[p.Ldif.SchemaAttribute] = (
                 schema_server.parse_attribute(bad_input)
             )
             parsed = tm.ok(attribute_result)
         else:
-            objectclass_result: p.Result[m.Ldif.SchemaObjectClass] = (
+            objectclass_result: p.Result[p.Ldif.SchemaObjectClass] = (
                 schema_server.parse_objectclass(bad_input)
             )
             parsed = tm.ok(objectclass_result)
@@ -325,7 +325,7 @@ class TestsFlextLdifRelaxed:
         expected_success: bool,
     ) -> None:
         """Test relaxed fallback requires an OID to recover binary definitions."""
-        result: p.Result[m.Ldif.SchemaAttribute] | p.Result[m.Ldif.SchemaObjectClass]
+        result: p.Result[p.Ldif.SchemaAttribute] | p.Result[p.Ldif.SchemaObjectClass]
         if parse_type == "attribute":
             result = schema_server.parse_attribute(definition)
         else:

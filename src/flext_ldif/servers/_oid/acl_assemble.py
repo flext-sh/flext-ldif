@@ -30,7 +30,7 @@ class FlextLdifServersOidAclAssemble:
         AciRule with empty ``allows`` + outcomes (caller skips emitting).
         """
 
-        def __init__(self, rule: m.Ldif.OidAclRule, base_dn: str) -> None:
+        def __init__(self, rule: p.Ldif.OidAclRule, base_dn: str) -> None:
             """Bind the rule, scope, and converted-subject accumulators."""
             self._rule = rule
             self._base_dn = base_dn
@@ -50,19 +50,19 @@ class FlextLdifServersOidAclAssemble:
                 c.Ldif.SUBJECT_ANYONE,
                 c.Ldif.DIRECTORY_MANAGER_DN,
             }
-            self._allows: list[m.Ldif.AciAllow] = []
-            self._outcomes: list[m.Ldif.AclSubjectOutcome] = []
+            self._allows: list[p.Ldif.AciAllow] = []
+            self._outcomes: list[p.Ldif.AclSubjectOutcome] = []
             self._has_anyone = False
             self._found_deny_all = False
 
-        def assemble(self) -> p.Result[m.Ldif.AciRule]:
+        def assemble(self) -> p.Result[p.Ldif.AciRule]:
             """Run the subject conversion pass and build the final AciRule.
 
             An unknown permission token surfaces as ``r.fail`` (never a silent
             partial result).
 
             Returns:
-                The resulting ``p.Result[m.Ldif.AciRule]``.
+                The resulting ``p.Result[p.Ldif.AciRule]``.
 
             """
             kind = c.Ldif.AclSubjectOutcomeKind
@@ -72,15 +72,15 @@ class FlextLdifServersOidAclAssemble:
                     continue
                 step_result = self._process_subject(subject)
                 if step_result.failure:
-                    return r[m.Ldif.AciRule].from_failure(step_result)
-            return r[m.Ldif.AciRule].ok(self._build_rule())
+                    return r[p.Ldif.AciRule].from_failure(step_result)
+            return r[p.Ldif.AciRule].ok(self._build_rule())
 
         def _record(
             self,
-            subject: m.Ldif.OidAclSubject,
+            subject: p.Ldif.OidAclSubject,
             kind: c.Ldif.AclSubjectOutcomeKind,
             *,
-            allow: m.Ldif.AciAllow | None = None,
+            allow: p.Ldif.AciAllow | None = None,
             wildcard_rewritten: bool = False,
             display_value: str = "",
         ) -> p.Result[bool]:
@@ -106,7 +106,7 @@ class FlextLdifServersOidAclAssemble:
             )
             return r[bool].ok(value=True)
 
-        def _process_subject(self, subject: m.Ldif.OidAclSubject) -> p.Result[bool]:
+        def _process_subject(self, subject: p.Ldif.OidAclSubject) -> p.Result[bool]:
             """Convert one subject clause, appending its allow and outcome.
 
             Returns:
@@ -153,8 +153,8 @@ class FlextLdifServersOidAclAssemble:
 
         def _append_allow(
             self,
-            subject: m.Ldif.OidAclSubject,
-            bind: m.Ldif.AciAllow,
+            subject: p.Ldif.OidAclSubject,
+            bind: p.Ldif.AciAllow,
             *,
             wildcard_rewritten: bool,
             display_value: str,
@@ -189,7 +189,7 @@ class FlextLdifServersOidAclAssemble:
                 wildcard_rewritten=wildcard_rewritten,
             )
 
-        def _build_rule(self) -> m.Ldif.AciRule:
+        def _build_rule(self) -> p.Ldif.AciRule:
             """Derive the acl name and assemble the final OUD AciRule.
 
             Returns:
@@ -253,17 +253,17 @@ class FlextLdifServersOidAclAssemble:
     @classmethod
     def build_aci_rule(
         cls,
-        rule: m.Ldif.OidAclRule,
+        rule: p.Ldif.OidAclRule,
         *,
         base_dn: str = "",
-    ) -> p.Result[m.Ldif.AciRule]:
+    ) -> p.Result[p.Ldif.AciRule]:
         """Assemble a parsed OID rule into one OUD :class:`m.Ldif.AciRule`.
 
         Subject conversion, deny-fallback, scope filtering and acl-name
         derivation live in the nested ``_RuleAssembler``.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.AciRule]``.
+            The resulting ``p.Result[p.Ldif.AciRule]``.
 
         """
         return cls._RuleAssembler(rule, base_dn).assemble()

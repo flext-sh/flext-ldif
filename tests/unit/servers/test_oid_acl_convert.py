@@ -3,7 +3,7 @@
 Exercises the PUBLIC contract of
 :class:`flext_ldif.servers._oid.acl_convert.FlextLdifServersOidAclConvert`:
 
-* ``parse_oid_acl_line`` returns ``r[m.Ldif.OidAclRule]`` — success carries the
+* ``parse_oid_acl_line`` returns ``r[p.Ldif.OidAclRule]`` — success carries the
   typed rule, malformation surfaces as a failure with a descriptive error.
 * ``parse_subject`` maps one ``by <subject> (perms)`` clause to a typed
   ``m.Ldif.OidAclSubject`` value object.
@@ -21,7 +21,7 @@ from __future__ import annotations
 import pytest
 
 from flext_ldif.servers import FlextLdifServersOidAclConvert
-from tests import c, m, tm
+from tests import c, m, p, tm
 
 _DN: str = "dc=ctbc"
 
@@ -41,7 +41,7 @@ class TestsFlextLdifOidAclConvert:
             "(browse,add,delete) by * (browse,noadd,nodelete)"
         )
 
-        rule: m.Ldif.OidAclRule = tm.ok(
+        rule: p.Ldif.OidAclRule = tm.ok(
             FlextLdifServersOidAclConvert.parse_oid_acl_line(_DN, line)
         )
 
@@ -63,7 +63,7 @@ class TestsFlextLdifOidAclConvert:
         """Test rule preserves raw line for round trip."""
         line = "orclaci: access to entry by * (browse)"
 
-        rule: m.Ldif.OidAclRule = tm.ok(
+        rule: p.Ldif.OidAclRule = tm.ok(
             FlextLdifServersOidAclConvert.parse_oid_acl_line(_DN, line)
         )
 
@@ -88,7 +88,7 @@ class TestsFlextLdifOidAclConvert:
         expected_attrs: str,
     ) -> None:
         """Test target clause shapes map to public target fields."""
-        rule: m.Ldif.OidAclRule = tm.ok(
+        rule: p.Ldif.OidAclRule = tm.ok(
             FlextLdifServersOidAclConvert.parse_oid_acl_line(
                 _DN, f"orclaci: access to {content}"
             ),
@@ -105,7 +105,7 @@ class TestsFlextLdifOidAclConvert:
             "filter=(objectclass=person) by self (read,write)"
         )
 
-        rule: m.Ldif.OidAclRule = tm.ok(
+        rule: p.Ldif.OidAclRule = tm.ok(
             FlextLdifServersOidAclConvert.parse_oid_acl_line(_DN, line)
         )
 
@@ -119,7 +119,7 @@ class TestsFlextLdifOidAclConvert:
         """Test orclentrylevelaci line records its acl type."""
         line = "orclentrylevelaci: access to entry by dnattr=(manager) (browse)"
 
-        rule: m.Ldif.OidAclRule = tm.ok(
+        rule: p.Ldif.OidAclRule = tm.ok(
             FlextLdifServersOidAclConvert.parse_oid_acl_line(_DN, line)
         )
 

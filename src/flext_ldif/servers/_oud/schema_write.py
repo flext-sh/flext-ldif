@@ -20,7 +20,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar
 
-from flext_ldif import c, m, p, r, t, u
+from flext_ldif import c, p, r, t, u
 from flext_ldif._models import FlextLdifModelsDomainEntryChangeOperationValue
 
 
@@ -37,10 +37,10 @@ class FlextLdifServersOudSchemaWrite:
     @classmethod
     def normalize_schema_definitions_for_write(
         cls,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         *,
         registry: p.Registry,
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Canonicalize schema definitions through the source→OUD write cycle.
 
         Non-schema entries and definitions already in OUD-canonical form pass
@@ -48,14 +48,14 @@ class FlextLdifServersOudSchemaWrite:
         the write loudly.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[p.Ldif.Entry]``.
 
         """
         if not cls.carries_schema_definitions(entry):
-            return r[m.Ldif.Entry].ok(entry)
+            return r[p.Ldif.Entry].ok(entry)
         servers_result = cls._resolve_write_schema_servers(entry, registry=registry)
         if servers_result.failure:
-            return r[m.Ldif.Entry].from_failure(servers_result)
+            return r[p.Ldif.Entry].from_failure(servers_result)
         source_schema, target_schema = servers_result.value
         attributes_result = cls._normalize_schema_attributes(
             entry,
@@ -63,7 +63,7 @@ class FlextLdifServersOudSchemaWrite:
             target_schema,
         )
         if attributes_result.failure:
-            return r[m.Ldif.Entry].from_failure(attributes_result)
+            return r[p.Ldif.Entry].from_failure(attributes_result)
         return cls._normalize_schema_change_operations(
             attributes_result.value,
             source_schema,
@@ -71,7 +71,7 @@ class FlextLdifServersOudSchemaWrite:
         )
 
     @classmethod
-    def carries_schema_definitions(cls, entry: m.Ldif.Entry) -> bool:
+    def carries_schema_definitions(cls, entry: p.Ldif.Entry) -> bool:
         """Detect schema definition values in attributes or change operations.
 
         Returns:
@@ -94,7 +94,7 @@ class FlextLdifServersOudSchemaWrite:
 
     @staticmethod
     def _resolve_write_schema_servers(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         *,
         registry: p.Registry,
     ) -> p.Result[tuple[p.Ldif.SchemaServer, p.Ldif.SchemaServer]]:
@@ -139,18 +139,18 @@ class FlextLdifServersOudSchemaWrite:
     @classmethod
     def _normalize_schema_attributes(
         cls,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         source_schema: p.Ldif.SchemaServer,
         target_schema: p.Ldif.SchemaServer,
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Re-serialize schema definition attribute values for OUD.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[p.Ldif.Entry]``.
 
         """
         if entry.attributes is None:
-            return r[m.Ldif.Entry].ok(entry)
+            return r[p.Ldif.Entry].ok(entry)
         normalized_values: t.MutableStrSequenceMapping = {}
         for attr_name, values in entry.attributes.attributes.items():
             if attr_name.lower() not in cls._SCHEMA_DEFINITION_ATTRS:
@@ -164,12 +164,12 @@ class FlextLdifServersOudSchemaWrite:
                     target_schema=target_schema,
                 )
                 if normalized_result.failure:
-                    return r[m.Ldif.Entry].from_failure(normalized_result)
+                    return r[p.Ldif.Entry].from_failure(normalized_result)
                 new_values.append(normalized_result.value)
             if new_values != list(values):
                 normalized_values[attr_name] = new_values
         if not normalized_values:
-            return r[m.Ldif.Entry].ok(entry)
+            return r[p.Ldif.Entry].ok(entry)
         merged_attributes: t.MutableStrSequenceMapping = dict(
             entry.attributes.attributes.items(),
         )
@@ -181,10 +181,10 @@ class FlextLdifServersOudSchemaWrite:
             ).items()
             if attr_name.lower() not in normalized_values
         }
-        return r[m.Ldif.Entry].ok(
+        return r[p.Ldif.Entry].ok(
             entry.model_copy(
                 update={
-                    "attributes": m.Ldif.Attributes.model_validate({
+                    "attributes": p.Ldif.Attributes.model_validate({
                         "attributes": merged_attributes,
                         "attribute_metadata": pruned_metadata,
                         "metadata": entry.attributes.metadata,
@@ -196,19 +196,19 @@ class FlextLdifServersOudSchemaWrite:
     @classmethod
     def _normalize_schema_change_operations(
         cls,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         source_schema: p.Ldif.SchemaServer,
         target_schema: p.Ldif.SchemaServer,
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Re-serialize schema definition values inside modify blocks.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[p.Ldif.Entry]``.
 
         """
         if not entry.change_operations:
-            return r[m.Ldif.Entry].ok(entry)
-        normalized_operations: MutableSequence[m.Ldif.ChangeOperation] = []
+            return r[p.Ldif.Entry].ok(entry)
+        normalized_operations: MutableSequence[p.Ldif.ChangeOperation] = []
         changed = False
         for change_operation in entry.change_operations:
             if change_operation.attribute.lower() not in cls._SCHEMA_DEFINITION_ATTRS:
@@ -225,7 +225,7 @@ class FlextLdifServersOudSchemaWrite:
                     target_schema=target_schema,
                 )
                 if normalized_result.failure:
-                    return r[m.Ldif.Entry].from_failure(normalized_result)
+                    return r[p.Ldif.Entry].from_failure(normalized_result)
                 if normalized_result.value != value_data.value:
                     changed = True
                 new_values.append(
@@ -241,8 +241,8 @@ class FlextLdifServersOudSchemaWrite:
                 change_operation.model_copy(update={"values": new_values}),
             )
         if not changed:
-            return r[m.Ldif.Entry].ok(entry)
-        return r[m.Ldif.Entry].ok(
+            return r[p.Ldif.Entry].ok(entry)
+        return r[p.Ldif.Entry].ok(
             entry.model_copy(update={"change_operations": normalized_operations}),
         )
 

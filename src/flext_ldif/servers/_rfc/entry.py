@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import ClassVar, override
 
-from flext_ldif import m, p, r, t, u
+from flext_ldif import p, r, t, u
 from flext_ldif.servers._base import FlextLdifServersBaseEntry
 
 
@@ -23,7 +23,7 @@ class FlextLdifServersRfcEntry(
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     @override
-    def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
+    def can_handle_attribute(self, attribute: p.Ldif.SchemaAttribute) -> bool:
         """Check if this server can handle a schema attribute.
 
         Returns:
@@ -34,7 +34,7 @@ class FlextLdifServersRfcEntry(
         return False
 
     @override
-    def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
+    def can_handle_objectclass(self, objectclass: p.Ldif.SchemaObjectClass) -> bool:
         """Check if this server can handle a schema objectClass.
 
         Returns:
@@ -45,24 +45,24 @@ class FlextLdifServersRfcEntry(
         return False
 
     @override
-    def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+    def _hook_post_parse_entry(self, entry: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
         """Run hook after parsing an entry.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[p.Ldif.Entry]``.
 
         """
-        return r[m.Ldif.Entry].ok(entry)
+        return r[p.Ldif.Entry].ok(entry)
 
     @override
-    def _hook_pre_write_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+    def _hook_pre_write_entry(self, entry: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
         """Run hook before writing an entry.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[p.Ldif.Entry]``.
 
         """
-        return r[m.Ldif.Entry].ok(entry)
+        return r[p.Ldif.Entry].ok(entry)
 
     @override
     def _normalize_attribute_name(self, attr_name: str) -> str:
@@ -82,14 +82,14 @@ class FlextLdifServersRfcEntry(
     def _parse_entry_from_lines(
         self,
         lines: MutableSequence[str],
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Parse one unfolded LDIF record using the shared RFC utility.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[p.Ldif.Entry]``.
 
         """
-        parsed: p.Result[m.Ldif.Entry] = u.Ldif.parse_ldif_record(lines)
+        parsed: p.Result[p.Ldif.Entry] = u.Ldif.parse_ldif_record(lines)
         return parsed
 
     @override
@@ -113,34 +113,34 @@ class FlextLdifServersRfcEntry(
     def _parse_content(
         self,
         ldif_content: str,
-    ) -> p.Result[MutableSequence[m.Ldif.Entry]]:
+    ) -> p.Result[MutableSequence[p.Ldif.Entry]]:
         """Parse raw LDIF content string into Entry models.
 
         Returns:
-            The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
+            The resulting ``p.Result[MutableSequence[p.Ldif.Entry]]``.
 
         """
         if not ldif_content or not ldif_content.strip():
-            return r[MutableSequence[m.Ldif.Entry]].ok([])
+            return r[MutableSequence[p.Ldif.Entry]].ok([])
         try:
             return self._parse_ldif_records(ldif_content)
         except ValueError as exc:
             FlextLdifServersRfcEntry._module_logger.exception(
                 "Failed to parse LDIF content",
             )
-            return r[MutableSequence[m.Ldif.Entry]].fail_op("Processing", exc)
+            return r[MutableSequence[p.Ldif.Entry]].fail_op("Processing", exc)
 
     def _parse_ldif_records(
         self,
         ldif_content: str,
-    ) -> p.Result[MutableSequence[m.Ldif.Entry]]:
+    ) -> p.Result[MutableSequence[p.Ldif.Entry]]:
         """Parse all LDIF records from non-empty content.
 
         Returns:
-            The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
+            The resulting ``p.Result[MutableSequence[p.Ldif.Entry]]``.
 
         """
-        entries: MutableSequence[m.Ldif.Entry] = []
+        entries: MutableSequence[p.Ldif.Entry] = []
         for record_lines in u.Ldif.split_ldif_records(ldif_content):
             result = self._parse_entry_from_lines(record_lines)
             if result.success:
@@ -150,7 +150,7 @@ class FlextLdifServersRfcEntry(
                 "Skipping invalid entry block",
                 error=result.error or "",
             )
-        return r[MutableSequence[m.Ldif.Entry]].ok(entries)
+        return r[MutableSequence[p.Ldif.Entry]].ok(entries)
 
 
 __all__: list[str] = ["FlextLdifServersRfcEntry"]

@@ -39,7 +39,7 @@ class FlextLdifFilters(s[p.Ldif.Response]):
     @classmethod
     def _extract_allowed_oids(
         cls,
-        allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
+        allowed_oids: p.Ldif.WhitelistRules | t.FrozensetMapping,
     ) -> t.FrozensetMapping:
         """Extract allowed OID sets keyed by canonical schema attribute names.
 
@@ -77,8 +77,8 @@ class FlextLdifFilters(s[p.Ldif.Response]):
     @classmethod
     def _should_include_entry(
         cls,
-        entry: m.Ldif.Entry,
-        allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
+        entry: p.Ldif.Entry,
+        allowed_oids: p.Ldif.WhitelistRules | t.FrozensetMapping,
     ) -> bool:
         """Check if entry should be included based on OID filters.
 
@@ -105,22 +105,22 @@ class FlextLdifFilters(s[p.Ldif.Response]):
     @classmethod
     def filter_schema_by_oids(
         cls,
-        entries: MutableSequence[m.Ldif.Entry],
-        allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
+        entries: MutableSequence[p.Ldif.Entry],
+        allowed_oids: p.Ldif.WhitelistRules | t.FrozensetMapping,
         *,
         logger: p.Logger,
-    ) -> p.Result[MutableSequence[m.Ldif.Entry]]:
+    ) -> p.Result[MutableSequence[p.Ldif.Entry]]:
         """Filter schema entries by allowed OIDs.
 
         Returns:
-            The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
+            The resulting ``p.Result[MutableSequence[p.Ldif.Entry]]``.
 
         """
         try:
             allowed_oid_map = cls._extract_allowed_oids(allowed_oids)
             if not any(allowed_oid_map.values()):
-                return r[MutableSequence[m.Ldif.Entry]].ok(entries)
-            filtered: MutableSequence[m.Ldif.Entry] = [
+                return r[MutableSequence[p.Ldif.Entry]].ok(entries)
+            filtered: MutableSequence[p.Ldif.Entry] = [
                 entry
                 for entry in entries
                 if cls._should_include_entry(entry, allowed_oid_map)
@@ -130,27 +130,27 @@ class FlextLdifFilters(s[p.Ldif.Response]):
                 total_entries=len(entries),
                 filtered_count=len(filtered),
             )
-            return r[MutableSequence[m.Ldif.Entry]].ok(filtered)
+            return r[MutableSequence[p.Ldif.Entry]].ok(filtered)
         except c.Ldif.EXC_LDIF_PARSE as e:
             logger.exception(
                 "Failed to filter schema entries by OIDs",
             )
-            return r[MutableSequence[m.Ldif.Entry]].fail_op("Schema OID filter", e)
+            return r[MutableSequence[p.Ldif.Entry]].fail_op("Schema OID filter", e)
 
     @classmethod
     def filter_entry_attributes(
         cls,
-        entry: m.Ldif.Entry | p.Ldif.Entry,
+        entry: p.Ldif.Entry,
         forbidden_attrs: Sequence[str],
         forbidden_ocs: Sequence[str],
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Strip forbidden attributes and objectClasses from an entry.
 
         Returns:
             The resulting ``m.Ldif.Entry``.
 
         """
-        filtered_entry: m.Ldif.Entry = u.Ldif.as_entry(entry)
+        filtered_entry: p.Ldif.Entry = u.Ldif.as_entry(entry)
         if entry.attributes and forbidden_attrs:
             attrs_dict = entry.attributes.attributes
             forbidden_set = {attr.lower() for attr in forbidden_attrs}
@@ -163,7 +163,7 @@ class FlextLdifFilters(s[p.Ldif.Response]):
                 }
                 filtered_entry = filtered_entry.model_copy(
                     update={
-                        "attributes": m.Ldif.Attributes.model_validate({
+                        "attributes": p.Ldif.Attributes.model_validate({
                             "attributes": filtered_attrs,
                         }),
                     },
@@ -190,7 +190,7 @@ class FlextLdifFilters(s[p.Ldif.Response]):
                     updated.pop(oc_key, None)
                 filtered_entry = filtered_entry.model_copy(
                     update={
-                        "attributes": m.Ldif.Attributes.model_validate({
+                        "attributes": p.Ldif.Attributes.model_validate({
                             "attributes": updated,
                         }),
                     },
@@ -200,9 +200,9 @@ class FlextLdifFilters(s[p.Ldif.Response]):
     @classmethod
     def filter_schema_attribute_values(
         cls,
-        entry: m.Ldif.Entry,
-        allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
-    ) -> m.Ldif.Entry:
+        entry: p.Ldif.Entry,
+        allowed_oids: p.Ldif.WhitelistRules | t.FrozensetMapping,
+    ) -> p.Ldif.Entry:
         """Filter schema OIDs in content attributes and structured modify values.
 
         Returns:
@@ -232,7 +232,7 @@ class FlextLdifFilters(s[p.Ldif.Response]):
                 updated_attrs[attr_name] = filtered
             else:
                 del updated_attrs[attr_name]
-        operations: list[m.Ldif.ChangeOperation] = []
+        operations: list[p.Ldif.ChangeOperation] = []
         for operation in entry.change_operations:
             oid_set = allowed_value_oids.get(operation.attribute.casefold())
             if oid_set is None:

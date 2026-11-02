@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from flext_ldif import c, m, t, u
+from flext_ldif import c, m, p, t, u
 
 
 class FlextLdifServersOudAclExtract:
@@ -19,9 +19,9 @@ class FlextLdifServersOudAclExtract:
 
     @staticmethod
     def comment_acl_attributes(
-        entry_data: m.Ldif.Entry,
+        entry_data: p.Ldif.Entry,
         acl_attribute_names: t.Ldif.AclAttributeNames,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Comment out ACL attributes by removing them from attributes dict and.
 
         # storing in metadata.
@@ -121,19 +121,19 @@ class FlextLdifServersOudAclExtract:
 
     @staticmethod
     def update_metadata_with_commented_acls(
-        metadata: m.Ldif.ServerMetadata,
+        metadata: p.Ldif.ServerMetadata,
         acl_attribute_names: t.Ldif.AclAttributeNames,
         commented_acl_values: t.MutableStrSequenceMapping,
         hidden_attrs: set[str],
         entry_attributes_dict: t.MutableStrSequenceMapping,
-    ) -> m.Ldif.ServerMetadata:
+    ) -> p.Ldif.ServerMetadata:
         """Update metadata with commented ACL information.
 
         Returns:
             The resulting ``m.Ldif.ServerMetadata``.
 
         """
-        metadata_typed: m.Ldif.ServerMetadata = metadata
+        metadata_typed: p.Ldif.ServerMetadata = metadata
         current_extensions: t.Ldif.MutableMetadataInputMapping = (
             dict(metadata_typed.extensions) if metadata_typed.extensions else {}
         )

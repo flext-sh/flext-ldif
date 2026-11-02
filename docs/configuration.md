@@ -54,7 +54,7 @@ FLEXT-LDIF provides flexible configuration management through multiple layers:
 Core configuration class with validation:
 
 from **future** import annotations
-from flext_ldif import m, u
+from flext_ldif import m, p, u
 
 class Config(m.BaseModel):
 """LDIF processing configuration with Pydantic validation."""

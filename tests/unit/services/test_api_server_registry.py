@@ -196,7 +196,7 @@ class TestsFlextLdifApiServerRegistry:
         with pytest.raises(ValueError, match="registry"):
             services.FlextLdifServer.model_validate({})
         with pytest.raises(ValueError, match="registry"):
-            m.Ldif.RegistryPortOptions.model_validate({field_name: m.Ldif.Statistics()})
+            m.Ldif.RegistryPortOptions.model_validate({field_name: p.Ldif.Statistics()})
         registry = FlextRegistry.create()
         ports = m.Ldif.RegistryPortOptions(registry=registry)
         tm.that(ports.registry is registry)

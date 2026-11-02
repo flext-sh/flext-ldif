@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
 
-from flext_ldif import c, m, p, r, u
+from flext_ldif import c, p, r, u
 
 if TYPE_CHECKING:
     from flext_ldif.servers._base import (
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 class FlextLdifServersEntryWriteBodyEmitter:
     """Emit changetype-specific entry bodies during LDIF serialization."""
 
-    _entry: m.Ldif.Entry
+    _entry: p.Ldif.Entry
     _lines: FlextLdifServersEntryLineEmitter
     _options: FlextLdifServersEntryWriteOptions
 
@@ -54,7 +54,7 @@ class FlextLdifServersEntryWriteBodyEmitter:
     def _emit_change_operation(
         self,
         output_lines: MutableSequence[str],
-        change_operation: m.Ldif.ChangeOperation,
+        change_operation: p.Ldif.ChangeOperation,
     ) -> None:
         """Emit one LDIF change operation with its values."""
         output_lines.append(
@@ -132,7 +132,7 @@ class FlextLdifServersEntryWriteBodyEmitter:
 
     def emit_changetype_body(
         self,
-        entry_data: m.Ldif.Entry,
+        entry_data: p.Ldif.Entry,
         output_lines: MutableSequence[str],
     ) -> p.Result[str]:
         """Emit the changetype line and dispatch the matching entry body.

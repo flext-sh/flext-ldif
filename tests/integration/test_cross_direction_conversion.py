@@ -2,7 +2,7 @@
 
 Every assertion targets observable public contract only:
 - server ``parse_*`` / ``write_*`` returning ``r[T]`` outcomes and their values,
-- ``FlextLdifConversion.convert_model`` returning ``r[m.Ldif.Entry]``,
+- ``FlextLdifConversion.convert_model`` returning ``r[p.Ldif.Entry]``,
 - public model fields (``.syntax``, ``.equality``) and written schema text.
 
 No private attribute/method access, no internal-collaborator spying,
@@ -54,12 +54,12 @@ def _assert_definition_roundtrip(
     target_schema = _resolve_schema_server(registry, target)
     parse: Callable[
         [str],
-        p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass],
+        p.Result[p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass],
     ] = getattr(source_schema, parse_method)
     parse_result = parse(definition)
     tm.ok(parse_result)
     write: Callable[
-        [m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass],
+        [p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass],
         p.Result[str],
     ] = getattr(
         target_schema,

@@ -27,7 +27,7 @@ class FlextLdifServersOudTransform:
     @staticmethod
     def determine_attribute_order(
         attr_names: MutableSequence[str],
-        format_options: m.Ldif.WriteFormatOptions | None,
+        format_options: p.Ldif.WriteFormatOptions | None,
     ) -> MutableSequence[str]:
         """Order attribute names according to the format options.
 
@@ -46,13 +46,13 @@ class FlextLdifServersOudTransform:
 
     @staticmethod
     def _hook_pre_write_entry_static(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         validate_aci_macros: Callable[[str], r[bool]],
         correct_rfc_syntax_in_attributes: Callable[
             [t.Ldif.AttributeDict],
             r[t.Ldif.AttributeDict],
         ],
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Validate ACI macros and correct RFC syntax before writing.
 
         Args:
@@ -75,7 +75,7 @@ class FlextLdifServersOudTransform:
             validate_aci_macros,
         )
         if aci_validation_error:
-            return r[m.Ldif.Entry].fail(aci_validation_error)
+            return r[p.Ldif.Entry].fail(aci_validation_error)
         return FlextLdifServersOudTransform.correct_syntax_and_return_entry(
             entry,
             attrs_dict,
@@ -83,7 +83,7 @@ class FlextLdifServersOudTransform:
         )
 
     @staticmethod
-    def _is_schema_entry(entry: m.Ldif.Entry) -> bool:
+    def _is_schema_entry(entry: p.Ldif.Entry) -> bool:
         """Schema-entry classification of an entry.
 
         Args:
@@ -97,7 +97,7 @@ class FlextLdifServersOudTransform:
         return is_schema_entry
 
     @staticmethod
-    def normalize_acl_dns(entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
+    def normalize_acl_dns(entry_data: p.Ldif.Entry) -> p.Ldif.Entry:
         """Normalize and filter DNs inside ACL attribute values.
 
         Rewrites ``userdn``/``groupdn`` DN references in ACI values against
@@ -138,7 +138,7 @@ class FlextLdifServersOudTransform:
         return entry_data
 
     @staticmethod
-    def restore_entry_from_metadata(entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
+    def restore_entry_from_metadata(entry_data: p.Ldif.Entry) -> p.Ldif.Entry:
         """Restore the original DN and attributes from metadata.
 
         Args:
@@ -158,7 +158,7 @@ class FlextLdifServersOudTransform:
         )
 
     @staticmethod
-    def _dn_restored_entry(entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
+    def _dn_restored_entry(entry_data: p.Ldif.Entry) -> p.Ldif.Entry:
         """Restore the original DN from entry metadata extensions.
 
         Args:
@@ -183,15 +183,15 @@ class FlextLdifServersOudTransform:
         )
         if should_restore_dn:
             return entry_data.model_copy(
-                update={"dn": m.Ldif.DN(value=original_dn_value)},
+                update={"dn": p.Ldif.DN(value=original_dn_value)},
             )
         return entry_data
 
     @staticmethod
     def _attributes_restored_entry(
-        entry_data: m.Ldif.Entry,
-        metadata: m.Ldif.ServerMetadata,
-    ) -> m.Ldif.Entry:
+        entry_data: p.Ldif.Entry,
+        metadata: p.Ldif.ServerMetadata,
+    ) -> p.Ldif.Entry:
         """Restore original attribute names and values from metadata.
 
         Args:
@@ -227,13 +227,13 @@ class FlextLdifServersOudTransform:
 
     @staticmethod
     def apply_syntax_corrections(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         corrected_data: MutableMapping[
             str,
             t.Ldif.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
         ],
         syntax_corrections: MutableSequence[str] | t.MutableStrMapping | None,
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Apply corrected attributes to the entry before writing.
 
         Args:
@@ -248,7 +248,7 @@ class FlextLdifServersOudTransform:
         """
         corrected_attrs_raw = corrected_data.get("corrected_attributes")
         if not isinstance(corrected_attrs_raw, Mapping):
-            return r[m.Ldif.Entry].ok(entry)
+            return r[p.Ldif.Entry].ok(entry)
         attrs_for_model: t.MutableStrSequenceMapping = {}
         for raw_key, raw_value in corrected_attrs_raw.items():
             if isinstance(raw_value, list):
@@ -265,17 +265,17 @@ class FlextLdifServersOudTransform:
             entry_dn=str(entry.dn) if entry.dn else "",
             corrections_count=len(syntax_corrections) if syntax_corrections else 0,
         )
-        return r[m.Ldif.Entry].ok(corrected_entry)
+        return r[p.Ldif.Entry].ok(corrected_entry)
 
     @staticmethod
     def correct_syntax_and_return_entry(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         attrs_dict: t.Ldif.AttributeDict,
         correct_rfc_syntax_in_attributes: Callable[
             [t.Ldif.AttributeDict],
             r[t.Ldif.AttributeDict],
         ],
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Correct RFC syntax issues in the entry attributes.
 
         Args:
@@ -289,7 +289,7 @@ class FlextLdifServersOudTransform:
         """
         corrected_result = correct_rfc_syntax_in_attributes(attrs_dict)
         if corrected_result.failure:
-            return r[m.Ldif.Entry].from_failure(corrected_result)
+            return r[p.Ldif.Entry].from_failure(corrected_result)
         corrected_data = corrected_result.unwrap()
         corrected_data_typed: MutableMapping[
             str,
@@ -312,7 +312,7 @@ class FlextLdifServersOudTransform:
                 corrected_data_typed,
                 syntax_corrections_typed,
             )
-        return r[m.Ldif.Entry].ok(entry)
+        return r[p.Ldif.Entry].ok(entry)
 
 
 __all__: list[str] = ["FlextLdifServersOudTransform"]

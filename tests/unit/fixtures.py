@@ -12,14 +12,14 @@ from pathlib import Path
 import pytest
 
 from flext_ldif import FlextLdif, services
-from tests import c, ldif, m, p, u
+from tests import c, ldif, p, u
 
 
 def _parse_fixture_entries(
     api: p.Ldif.LdifClient,
     fixture_content: str,
     error_msg: str,
-) -> Sequence[m.Ldif.Entry]:
+) -> Sequence[p.Ldif.Entry]:
     """Parse one fixture's LDIF text into Entry models.
 
     Args:
@@ -31,11 +31,11 @@ def _parse_fixture_entries(
         Parsed entries in fixture order.
 
     """
-    parse_response: m.Ldif.ParseResponse = u.Tests.assert_success(
+    parse_response: p.Ldif.ParseResponse = u.Tests.assert_success(
         api.parse_ldif(fixture_content),
         error_msg=error_msg,
     )
-    entries: Sequence[m.Ldif.Entry] = parse_response.entries
+    entries: Sequence[p.Ldif.Entry] = parse_response.entries
     return entries
 
 
@@ -124,7 +124,7 @@ def oid_integration_fixture() -> str:
 def oid_entries(
     api: p.Ldif.LdifClient,
     oid_entries_fixture: str,
-) -> Sequence[m.Ldif.Entry]:
+) -> Sequence[p.Ldif.Entry]:
     """Parse the OID entries fixture into Entry models.
 
     Args:
@@ -194,7 +194,7 @@ def oud_integration_fixture() -> str:
 def oud_entries(
     api: p.Ldif.LdifClient,
     oud_entries_fixture: str,
-) -> Sequence[m.Ldif.Entry]:
+) -> Sequence[p.Ldif.Entry]:
     """Parse the OUD entries fixture into Entry models.
 
     Args:

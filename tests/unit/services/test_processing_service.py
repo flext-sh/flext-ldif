@@ -20,7 +20,7 @@ class TestsFlextLdifProcessingService:
     """Cover batch/parallel processing through the public facade only."""
 
     @staticmethod
-    def _entry(dn: str) -> m.Ldif.Entry:
+    def _entry(dn: str) -> p.Ldif.Entry:
         return u.Tests.create_real_entry(
             dn=dn,
             attributes=c.Tests.PROCESSING_ATTRS,

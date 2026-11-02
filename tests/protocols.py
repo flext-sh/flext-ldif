@@ -40,7 +40,7 @@ class TestsFlextLdifProtocolsLdap(p):
         def ldap3_to_ldif_entry(
             self,
             ldap3_entry: TestsFlextLdifProtocolsLdap.Ldap3Entry,
-        ) -> p.Result[m.Ldif.Entry]:
+        ) -> p.Result[p.Ldif.Entry]:
             """Convert one ldap3 entry into the LDIF entry model."""
             ...
 
@@ -78,7 +78,7 @@ class TestsFlextLdifProtocols(
 
             def _write_attribute(
                 self,
-                attr_data: m.Ldif.SchemaAttribute,
+                attr_data: p.Ldif.SchemaAttribute,
             ) -> p.Result[str]:
                 """Serialize an attribute definition."""
                 ...
@@ -89,7 +89,7 @@ class TestsFlextLdifProtocols(
 
             def _write_objectclass(
                 self,
-                oc_data: m.Ldif.SchemaObjectClass,
+                oc_data: p.Ldif.SchemaObjectClass,
             ) -> p.Result[str]:
                 """Serialize an objectClass definition."""
                 ...
@@ -98,7 +98,7 @@ class TestsFlextLdifProtocols(
         class WriteAclServer(Protocol):
             """Server exposing Apache ACL writer helper."""
 
-            def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+            def _write_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
                 """Serialize an ACL definition."""
                 ...
 
@@ -106,7 +106,7 @@ class TestsFlextLdifProtocols(
         class ParseAclServer(Protocol):
             """Server exposing ACL parse helper with test models."""
 
-            def parse_server(self, value: str) -> p.Result[m.Ldif.Acl]:
+            def parse_server(self, value: str) -> p.Result[p.Ldif.Acl]:
                 """Parse ACL content into the test model."""
                 ...
 
@@ -114,7 +114,7 @@ class TestsFlextLdifProtocols(
         class WriteAclContentServer(Protocol):
             """Server exposing ACL write helper with test models."""
 
-            def write(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+            def write(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
                 """Write ACL content from the test model."""
                 ...
 

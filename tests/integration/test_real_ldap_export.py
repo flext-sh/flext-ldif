@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-from tests import m, p
+from tests import p
 
 
 @pytest.fixture
@@ -52,15 +52,15 @@ class TestsFlextLdifRealLdapExport:
     @staticmethod
     def _to_ldif_entries(
         ldap3_entries: Sequence[p.Ldap3Entry],
-    ) -> list[m.Ldif.Entry]:
+    ) -> list[p.Ldif.Entry]:
         """Convert ldap3 search results into ldif entries via the public adapter.
 
         Returns:
-            The resulting ``list[m.Ldif.Entry]``.
+            The resulting ``list[p.Ldif.Entry]``.
 
         """
         adapter = u.Tests.create_ldap_entry_adapter()
-        entries: list[m.Ldif.Entry] = []
+        entries: list[p.Ldif.Entry] = []
         for ldap3_entry in ldap3_entries:
             result = adapter.ldap3_to_ldif_entry(ldap3_entry)
             tm.ok(result)

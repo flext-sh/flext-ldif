@@ -25,11 +25,11 @@ class ExamplesFlextLdifEntryOperations:
     """DRY entry operations: intelligent builders + railway composition."""
 
     @staticmethod
-    def advanced_filtering() -> p.Result[MutableSequence[m.Ldif.Entry]]:
+    def advanced_filtering() -> p.Result[MutableSequence[p.Ldif.Entry]]:
         """DRY advanced filtering: type-safe predicates + composition.
 
         Returns:
-            The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
+            The resulting ``p.Result[MutableSequence[p.Ldif.Entry]]``.
 
         """
         return ExamplesFlextLdifEntryOperations.intelligent_builders().map(
@@ -44,11 +44,11 @@ class ExamplesFlextLdifEntryOperations:
         )
 
     @staticmethod
-    def batch_processing() -> p.Result[MutableSequence[m.Ldif.Entry]]:
+    def batch_processing() -> p.Result[MutableSequence[p.Ldif.Entry]]:
         """DRY batch processing: validate entries pipeline.
 
         Returns:
-            The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
+            The resulting ``p.Result[MutableSequence[p.Ldif.Entry]]``.
 
         """
         api = ldif()
@@ -57,14 +57,14 @@ class ExamplesFlextLdifEntryOperations:
         )
 
     @staticmethod
-    def intelligent_builders() -> p.Result[MutableSequence[m.Ldif.Entry]]:
+    def intelligent_builders() -> p.Result[MutableSequence[p.Ldif.Entry]]:
         """DRY intelligent builders: auto-detect types from attributes.
 
         Returns:
-            The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
+            The resulting ``p.Result[MutableSequence[p.Ldif.Entry]]``.
 
         """
-        created_entries: list[m.Ldif.Entry] = []
+        created_entries: list[p.Ldif.Entry] = []
         people_data: list[tuple[str, str, str, str]] = [
             ("Alice Johnson", "Johnson", "alice@example.com", "+1-555-0101"),
             ("Bob Smith", "Smith", "bob@example.com", "+1-555-0102"),
@@ -88,6 +88,6 @@ class ExamplesFlextLdifEntryOperations:
             created_entries.append(entry)
 
         if not created_entries:
-            return r[MutableSequence[m.Ldif.Entry]].fail("No entries were created")
+            return r[MutableSequence[p.Ldif.Entry]].fail("No entries were created")
 
-        return r[MutableSequence[m.Ldif.Entry]].ok(created_entries)
+        return r[MutableSequence[p.Ldif.Entry]].ok(created_entries)

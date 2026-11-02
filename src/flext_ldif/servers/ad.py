@@ -146,7 +146,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             "lastlogontimestamp",
             "pwdlastset",
         ])
-        ENTRY_DETECTION: ClassVar[m.Ldif.EntryDetectionMarkers] = (
+        ENTRY_DETECTION: ClassVar[p.Ldif.EntryDetectionMarkers] = (
             m.Ldif.EntryDetectionMarkers(
                 dn_markers=DETECTION_DN_MARKERS,
                 objectclass_names=DETECTION_OBJECTCLASS_NAMES,
@@ -156,7 +156,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         DETECTION_MICROSOFT_ACTIVE_DIRECTORY: ClassVar[str] = (
             "microsoft active directory"
         )
-        ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+        ATTRIBUTE_PATTERN_SETTINGS: ClassVar[p.Ldif.ServerPatternsConfig] = (
             m.Ldif.ServerPatternsConfig(
                 oid_pattern=DETECTION_OID_PATTERN,
                 attr_names=DETECTION_ATTRIBUTE_NAMES,
@@ -164,7 +164,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 match_definition_text=True,
             )
         )
-        OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+        OBJECTCLASS_PATTERN_SETTINGS: ClassVar[p.Ldif.ServerPatternsConfig] = (
             m.Ldif.ServerPatternsConfig(
                 oid_pattern=DETECTION_OID_PATTERN,
                 attr_names=DETECTION_OBJECTCLASS_NAMES,
@@ -179,8 +179,8 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         """Active Directory schema server."""
 
         _NORMALIZE_OBJECTCLASS: ClassVar[bool] = True
-        _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
-        _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
+        _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[p.Ldif.ServerPatternsConfig]
+        _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[p.Ldif.ServerPatternsConfig]
 
     class Acl(FlextLdifServersRfcAcl):
         """Active Directory ACL server handling nTSecurityDescriptor entries."""
@@ -210,11 +210,11 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             )
 
         @override
-        def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+        def _parse_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
             """Parse nTSecurityDescriptor values and expose best-effort SDDL.
 
             Returns:
-                The resulting ``p.Result[m.Ldif.Acl]``.
+                The resulting ``p.Result[p.Ldif.Acl]``.
 
             """
             return self._parse_dialect_acl(
@@ -224,7 +224,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             )
 
         @override
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+        def _write_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
             """Write ACL data to RFC-compliant string format.
 
             Returns:
@@ -237,16 +237,16 @@ class FlextLdifServersAd(FlextLdifServersRfc):
                 "Active Directory ACL write",
             )
 
-        def _parse_ad_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+        def _parse_ad_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
             """Parse Active Directory ACL content.
 
             Returns:
-                The resulting ``p.Result[m.Ldif.Acl]``.
+                The resulting ``p.Result[p.Ldif.Acl]``.
 
             """
             line = acl_line.strip()
             if not line:
-                return r[m.Ldif.Acl].fail("Empty ACL line cannot be parsed")
+                return r[p.Ldif.Acl].fail("Empty ACL line cannot be parsed")
             attr_name, _, remainder = line.partition(":")
             attr_name = (
                 attr_name.strip() or FlextLdifServersAd.Constants.ACL_ATTRIBUTE_NAME
@@ -258,7 +258,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             raw_value = remainder
             decoded_result = self._decode_sddl(raw_value, is_base64=is_base64)
             if decoded_result.failure:
-                return r[m.Ldif.Acl].from_failure(decoded_result)
+                return r[p.Ldif.Acl].from_failure(decoded_result)
             acl_model = m.Ldif.Acl(
                 name=attr_name,
                 target=m.Ldif.AclTarget(
@@ -275,7 +275,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             )
             if acl_model.metadata:
                 acl_model.metadata.extensions["original_format"] = acl_line
-            return r[m.Ldif.Acl].ok(acl_model)
+            return r[p.Ldif.Acl].ok(acl_model)
 
         @staticmethod
         def _decode_sddl(raw_value: str, *, is_base64: bool) -> p.Result[str]:
@@ -310,7 +310,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
             return r[str].ok(decoded)
 
         @staticmethod
-        def _write_ad_acl(acl_data: m.Ldif.Acl) -> p.Result[str]:
+        def _write_ad_acl(acl_data: p.Ldif.Acl) -> p.Result[str]:
             """Write Active Directory ACL content.
 
             Returns:

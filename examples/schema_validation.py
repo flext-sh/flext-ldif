@@ -20,7 +20,7 @@ class ExamplesFlextLdifSchemaValidation:
 
     @staticmethod
     def _append_created_entry(
-        entries: list[m.Ldif.Entry],
+        entries: list[p.Ldif.Entry],
         dn: str,
         attributes: t.MutableAttributeMapping,
     ) -> None:
@@ -30,14 +30,14 @@ class ExamplesFlextLdifSchemaValidation:
             entries.append(entry_result.unwrap())
 
     @staticmethod
-    def _generate_test_entries() -> list[m.Ldif.Entry]:
+    def _generate_test_entries() -> list[p.Ldif.Entry]:
         """Generate the valid and invalid test entries for validation.
 
         Returns:
-            The resulting ``list[m.Ldif.Entry]``.
+            The resulting ``list[p.Ldif.Entry]``.
 
         """
-        test_entries: list[m.Ldif.Entry] = []
+        test_entries: list[p.Ldif.Entry] = []
         for i in range(30):
             if i % 3 == 0:
                 attrs: t.MutableAttributeMapping = {

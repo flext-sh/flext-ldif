@@ -18,10 +18,10 @@ import pytest
 
 from flext_ldif import FlextLdif
 from flext_ldif.services import FlextLdifParser, FlextLdifServer, FlextLdifWriter
-from tests import c, m, tm
+from tests import c, m, p, tm
 
 
-def _has_schema_attrs(entry: m.Ldif.Entry) -> bool:
+def _has_schema_attrs(entry: p.Ldif.Entry) -> bool:
     """Return True when an entry publicly exposes schema attribute/objectclass keys."""
     if entry.attributes is None:
         return False

@@ -16,7 +16,7 @@ from typing import cast
 
 import pytest
 
-from tests import m, t, tm, u
+from tests import m, p, t, tm, u
 
 SOURCE = "dc=example,dc=invalid"
 TARGET = "dc=r123,dc=algar,dc=local"
@@ -25,7 +25,7 @@ TARGET = "dc=r123,dc=algar,dc=local"
 def _entry(
     dn: str,
     attributes: Mapping[str, Sequence[str]] | None = None,
-) -> m.Ldif.Entry:
+) -> p.Ldif.Entry:
     """Build a minimal LDIF entry model for transform tests.
 
     Returns:

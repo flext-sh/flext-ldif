@@ -113,7 +113,7 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWrite):
     def _finalize_aci(
         self,
         current_aci: MutableSequence[str],
-        acls: MutableSequence[m.Ldif.Acl],
+        acls: MutableSequence[p.Ldif.Acl],
     ) -> None:
         """Parse and add accumulated ACI to ACL list."""
         if current_aci:
@@ -123,15 +123,15 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWrite):
                 acls.append(result.value)
 
     @staticmethod
-    def _parse_aci_format(acl_line: str) -> p.Result[m.Ldif.Acl]:
+    def _parse_aci_format(acl_line: str) -> p.Result[p.Ldif.Acl]:
         """Parse RFC 4876 ACI format using utility with OUD-specific settings.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Acl]``.
+            The resulting ``p.Result[p.Ldif.Acl]``.
 
         """
         settings = u.resolve_parser_config()
-        result: p.Result[m.Ldif.Acl] = u.Ldif.parse_aci(acl_line, settings)
+        result: p.Result[p.Ldif.Acl] = u.Ldif.parse_aci(acl_line, settings)
         if not result.success:
             return result
         acl = result.value
@@ -158,15 +158,15 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWrite):
             "metadata": new_metadata,
         }
         acl_updated = acl.model_copy(update=update_dict)
-        acl_result: m.Ldif.Acl = acl_updated
-        return r[m.Ldif.Acl].ok(acl_result)
+        acl_result: p.Ldif.Acl = acl_updated
+        return r[p.Ldif.Acl].ok(acl_result)
 
     @override
-    def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+    def _parse_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
         """Parse Oracle OUD ACL string to RFC-compliant internal model.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Acl]``.
+            The resulting ``p.Result[p.Ldif.Acl]``.
 
         """
         normalized = acl_line.strip()
@@ -191,11 +191,11 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWrite):
         return self._parse_ds_privilege_name(normalized)
 
     @staticmethod
-    def _parse_ds_privilege_name(privilege_name: str) -> p.Result[m.Ldif.Acl]:
+    def _parse_ds_privilege_name(privilege_name: str) -> p.Result[p.Ldif.Acl]:
         """Parse OUD ds-privilege-name format (simple privilege names).
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Acl]``.
+            The resulting ``p.Result[p.Ldif.Acl]``.
 
         """
         try:
@@ -221,12 +221,12 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWrite):
                     },
                 ),
             )
-            return r[m.Ldif.Acl].ok(acl_model)
+            return r[p.Ldif.Acl].ok(acl_model)
         except c.Ldif.EXC_LDIF_PARSE as e:
             FlextLdifServersOudAcl._module_logger.exception(
                 "Failed to parse OUD ds-privilege-name",
             )
-            return r[m.Ldif.Acl].fail(
+            return r[p.Ldif.Acl].fail(
                 f"Failed to parse OUD ds-privilege-name: {e}",
                 exception=e,
             )

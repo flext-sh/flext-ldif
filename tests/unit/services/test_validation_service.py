@@ -10,12 +10,11 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tests import c, tm, u
+from tests import c, p, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-from tests import p
 
 _INVALID_DESCRIPTORS: tuple[str, ...] = ("invalid name", "", " ", "has space")
 

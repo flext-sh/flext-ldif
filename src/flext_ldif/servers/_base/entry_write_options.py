@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableSequence
 
-from flext_ldif import c, m, t, u
+from flext_ldif import c, p, t, u
 
 
 class FlextLdifServersEntryWriteOptions:
@@ -16,8 +16,8 @@ class FlextLdifServersEntryWriteOptions:
 
     def __init__(
         self,
-        entry_data: m.Ldif.Entry,
-        format_options: m.Ldif.WriteFormatOptions | None,
+        entry_data: p.Ldif.Entry,
+        format_options: p.Ldif.WriteFormatOptions | None,
     ) -> None:
         """Resolve write options, metadata extensions, and effective values."""
         fold_long_lines = True
@@ -59,7 +59,7 @@ class FlextLdifServersEntryWriteOptions:
 
     @staticmethod
     def _entry_metadata_extensions(
-        entry_data: m.Ldif.Entry,
+        entry_data: p.Ldif.Entry,
     ) -> t.Ldif.MutableMetadataMapping:
         """Read the entry metadata extensions mapping when present.
 

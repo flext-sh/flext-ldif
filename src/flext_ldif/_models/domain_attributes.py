@@ -20,7 +20,7 @@ class FlextLdifModelsDomainAttributes:
     class Attributes(m.ArbitraryTypesModel):
         """LDIF attributes container - simplified dict-like interface."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(
             validate_assignment=True,
             extra="forbid",
             use_enum_values=True,

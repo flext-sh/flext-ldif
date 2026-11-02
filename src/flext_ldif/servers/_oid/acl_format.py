@@ -91,7 +91,7 @@ class FlextLdifServersOidAclFormat(FlextLdifServersRfcAcl):
 
     @staticmethod
     def _normalize_permissions_to_dict(
-        permissions: m.Ldif.AclPermissions | t.MutableBoolMapping | None,
+        permissions: p.Ldif.AclPermissions | t.MutableBoolMapping | None,
     ) -> t.MutableBoolMapping:
         """Normalize permissions to dict for formatting.
 
@@ -119,7 +119,7 @@ class FlextLdifServersOidAclFormat(FlextLdifServersRfcAcl):
 
     @staticmethod
     def _normalize_to_dict(
-        value: m.Ldif.AclSubject
+        value: p.Ldif.AclSubject
         | m.Ldif.ServerMetadata
         | t.MutableConfigurationMapping
         | MutableMapping[
@@ -175,7 +175,7 @@ class FlextLdifServersOidAclFormat(FlextLdifServersRfcAcl):
 
     def _build_metadata_extensions(
         self,
-        metadata: m.Ldif.ServerMetadata
+        metadata: p.Ldif.ServerMetadata
         | MutableMapping[
             str,
             t.Ldif.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,
@@ -197,7 +197,7 @@ class FlextLdifServersOidAclFormat(FlextLdifServersRfcAcl):
 
     @staticmethod
     def _extract_extensions_dict(
-        metadata: m.Ldif.ServerMetadata
+        metadata: p.Ldif.ServerMetadata
         | MutableMapping[
             str,
             t.Ldif.Scalar | MutableSequence[str] | t.MutableAttributeMapping | None,

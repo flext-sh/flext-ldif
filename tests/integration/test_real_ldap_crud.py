@@ -48,7 +48,7 @@ class TestsFlextLdifRealLdapCrud:
     @staticmethod
     def _add_entry(
         ldap_connection: p.Ldap3Connection,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
     ) -> None:
         """Store an entry in LDAP using only its public model surface."""
         attrs = dict(entry.attributes_dict)
@@ -140,7 +140,7 @@ class TestsFlextLdifRealLdapCrud:
         make_test_username: Callable[[str], str],
     ) -> None:
         """A batch built via the API validates and stores as valid entries."""
-        entries: list[m.Ldif.Entry] = []
+        entries: list[p.Ldif.Entry] = []
         for i in range(20):
             username = make_test_username(f"BatchUser{i}")
             result = m.Ldif.Entry.create(
@@ -191,7 +191,7 @@ class TestsFlextLdifRealLdapCrud:
         source_count = len(ldap_connection.entries)
         tm.that(source_count > 0, msg="No entries found in LDAP")
 
-        entries: list[m.Ldif.Entry] = []
+        entries: list[p.Ldif.Entry] = []
         for ldap_entry in ldap_connection.entries:
             attrs: t.MutableAttributeMapping = {
                 name: [

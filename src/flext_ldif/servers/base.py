@@ -25,11 +25,11 @@ class FlextLdifServersBase(
     FlextLdifServersBaseMro,
     FlextLdifServersBaseExecuteParams,
     FlextLdifServersBaseIo,
-    s[m.Ldif.Entry],
+    s[p.Ldif.Entry],
 ):
     """Base class for LDIF/LDAP server servers built on `s`."""
 
-    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+    model_config: ClassVar[p.ConfigDict] = m.ConfigDict(
         arbitrary_types_allowed=True,
         extra="forbid",
     )
@@ -148,27 +148,27 @@ class FlextLdifServersBase(
     def __call__(
         self,
         ldif_text: str | None = None,
-        entries: MutableSequence[m.Ldif.Entry] | None = None,
+        entries: MutableSequence[p.Ldif.Entry] | None = None,
         operation: str | None = None,
-    ) -> m.Ldif.Entry | str: ...
+    ) -> p.Ldif.Entry | str: ...
 
     @overload
     def __call__(
         self,
-        *args: str | MutableSequence[m.Ldif.Entry] | None,
+        *args: str | MutableSequence[p.Ldif.Entry] | None,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
         registry: p.Registry | None = None,
-        **fields: t.JsonValue | MutableSequence[m.Ldif.Entry],
+        **fields: t.JsonValue | MutableSequence[p.Ldif.Entry],
     ) -> Self | m.Ldif.Entry | str: ...
 
     def __call__(
         self,
-        *args: str | MutableSequence[m.Ldif.Entry] | None,
+        *args: str | MutableSequence[p.Ldif.Entry] | None,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
         registry: p.Registry | None = None,
-        **fields: t.JsonValue | MutableSequence[m.Ldif.Entry],
+        **fields: t.JsonValue | MutableSequence[p.Ldif.Entry],
     ) -> Self | m.Ldif.Entry | str:
         """Callable interface - use as processor.
 
@@ -199,7 +199,7 @@ class FlextLdifServersBase(
             return cast("Self", configured)
         execute_kwargs: MutableMapping[
             str,
-            str | int | bool | MutableSequence[m.Ldif.Entry],
+            str | int | bool | MutableSequence[p.Ldif.Entry],
         ] = {}
         ldif_text_raw = fields.get("ldif_text")
         if ldif_text_raw is not None:
@@ -207,7 +207,7 @@ class FlextLdifServersBase(
             execute_kwargs["ldif_text"] = validated_ldif_text
         entries_raw = fields.get("entries")
         if entries_raw is not None:
-            validated_entries: MutableSequence[m.Ldif.Entry] = u.Ldif.as_entries(
+            validated_entries: MutableSequence[p.Ldif.Entry] = u.Ldif.as_entries(
                 entries_raw,
             )
             execute_kwargs["entries"] = validated_entries
@@ -218,15 +218,15 @@ class FlextLdifServersBase(
         self._absorb_positional_args(args, execute_kwargs)
         ldif_text, entries, operation = self._extract_execute_params(execute_kwargs)
         result = self.execute(ldif_text=ldif_text, entries=entries, operation=operation)
-        as_entry: m.Ldif.Entry = u.Ldif.as_entry(result.unwrap())
+        as_entry: p.Ldif.Entry = u.Ldif.as_entry(result.unwrap())
         return as_entry
 
     @staticmethod
     def _absorb_positional_args(
-        args: tuple[str | MutableSequence[m.Ldif.Entry] | None, ...],
+        args: tuple[str | MutableSequence[p.Ldif.Entry] | None, ...],
         execute_kwargs: MutableMapping[
             str,
-            str | int | bool | MutableSequence[m.Ldif.Entry],
+            str | int | bool | MutableSequence[p.Ldif.Entry],
         ],
     ) -> None:
         """Absorb up to three positional arguments into the execute kwargs."""
@@ -250,33 +250,33 @@ class FlextLdifServersBase(
         self,
         *,
         ldif_text: str | None = None,
-        entries: MutableSequence[m.Ldif.Entry] | None = None,
+        entries: MutableSequence[p.Ldif.Entry] | None = None,
         operation: str | None = None,
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Execute server operation with auto-detection.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[p.Ldif.Entry]``.
 
         """
-        result: p.Result[m.Ldif.Entry]
+        result: p.Result[p.Ldif.Entry]
         if operation == "parse":
             if ldif_text is None:
-                result = r[m.Ldif.Entry].fail("Parse operation requires ldif_text")
+                result = r[p.Ldif.Entry].fail("Parse operation requires ldif_text")
             else:
                 result = self._execute_parse(ldif_text)
         elif operation == "write":
             if not entries:
-                result = r[m.Ldif.Entry].fail("Write operation requires entries")
+                result = r[p.Ldif.Entry].fail("Write operation requires entries")
             else:
-                result = r[m.Ldif.Entry].ok(entries[0])
+                result = r[p.Ldif.Entry].ok(entries[0])
         elif ldif_text is not None:
             result = self._execute_parse(ldif_text)
         elif entries:
             first_entry = entries[0]
-            result = r[m.Ldif.Entry].ok(first_entry)
+            result = r[p.Ldif.Entry].ok(first_entry)
         else:
-            result = r[m.Ldif.Entry].fail("No valid parameters")
+            result = r[p.Ldif.Entry].fail("No valid parameters")
         return result
 
     Acl: ClassVar[type[FlextLdifServersBaseSchemaAcl]]

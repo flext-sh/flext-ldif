@@ -472,7 +472,7 @@ class TestsFlextLdifMigrationPipelineFileAndProcessing:
         """Normalization flags with a process_config execute successfully."""
         transform_config = m.Ldif.TransformConfig.model_validate({
             field: True,
-            "process_config": m.Ldif.ProcessConfig(),
+            "process_config": p.Ldif.ProcessConfig(),
         })
         tm.ok(
             services.FlextLdifProcessingPipeline(

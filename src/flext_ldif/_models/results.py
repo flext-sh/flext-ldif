@@ -40,7 +40,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
     class MigrationPipelineOptions(m.ArbitraryTypesModel):
         """Validated configuration consumed by the migration service."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(use_enum_values=False)
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(use_enum_values=False)
 
         input_dir: Path | None = m.Field(
             default=None,
@@ -260,7 +260,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
         ] = ""
 
     class WriteResponse(Response):
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(
             str_strip_whitespace=False,
         )
 

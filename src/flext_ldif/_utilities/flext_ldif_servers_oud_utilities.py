@@ -15,7 +15,7 @@ class FlextLdifUtilitiesServersOud:
     """Oracle Unified Directory-specific utilities."""
 
     @staticmethod
-    def resolve_parser_config() -> m.Ldif.AciParserConfig:
+    def resolve_parser_config() -> p.Ldif.AciParserConfig:
         """Create AciParserConfig for OUD ACL parsing.
 
         Returns:
@@ -23,7 +23,7 @@ class FlextLdifUtilitiesServersOud:
 
         """
         constants = FlextLdifConstantsServersOud
-        config: m.Ldif.AciParserConfig = m.Ldif.AciParserConfig.model_validate({
+        config: p.Ldif.AciParserConfig = m.Ldif.AciParserConfig.model_validate({
             "server_type": c.Ldif.ServerTypes.OUD,
             "aci_prefix": "aci:",
             "version_acl_pattern": constants.ACL_VERSION_ACL_PATTERN,

@@ -159,7 +159,7 @@ class FlextLdifFacade(
     def categorization(
         self,
         *,
-        options: m.Ldif.MigrateOptions | None = None,
+        options: p.Ldif.MigrateOptions | None = None,
         base_dn: str | None = None,
         server_type: str = c.Ldif.ServerTypes.RFC.value,
     ) -> p.Ldif.CategorizationService:
@@ -226,9 +226,9 @@ class FlextLdifFacade(
 
     @staticmethod
     def filter_schema_attribute_values(
-        entry: m.Ldif.Entry,
-        allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
-    ) -> m.Ldif.Entry:
+        entry: p.Ldif.Entry,
+        allowed_oids: p.Ldif.WhitelistRules | t.FrozensetMapping,
+    ) -> p.Ldif.Entry:
         """Expose schema-attribute OID filtering through the facade DSL.
 
         Args:

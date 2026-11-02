@@ -21,7 +21,7 @@ class FlextLdifServersOudAclWrite(FlextLdifServersOudAclSubject):
 
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
-    def _build_aci_permissions(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+    def _build_aci_permissions(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
         """Build ACI permissions clause from ACL model.
 
         Returns:
@@ -44,8 +44,8 @@ class FlextLdifServersOudAclWrite(FlextLdifServersOudAclSubject):
 
     def _permissions_from_extensions(
         self,
-        acl_data: m.Ldif.Acl,
-    ) -> m.Ldif.AclPermissions | None:
+        acl_data: p.Ldif.Acl,
+    ) -> p.Ldif.AclPermissions | None:
         """Rebuild permissions from acl_target_permissions metadata extensions.
 
         Returns:
@@ -107,8 +107,8 @@ class FlextLdifServersOudAclWrite(FlextLdifServersOudAclSubject):
 
     @staticmethod
     def _supported_oud_permissions(
-        perms: m.Ldif.AclPermissions,
-        acl_data: m.Ldif.Acl,
+        perms: p.Ldif.AclPermissions,
+        acl_data: p.Ldif.Acl,
     ) -> MutableSequence[str]:
         """List OUD-supported permission tokens active on the ACL model.
 
@@ -151,7 +151,7 @@ class FlextLdifServersOudAclWrite(FlextLdifServersOudAclSubject):
             filtered_ops.append("write")
         return filtered_ops
 
-    def _build_aci_target(self, acl_data: m.Ldif.Acl) -> str:
+    def _build_aci_target(self, acl_data: p.Ldif.Acl) -> str:
         """Build ACI target clause from ACL model.
 
         Returns:
@@ -168,8 +168,8 @@ class FlextLdifServersOudAclWrite(FlextLdifServersOudAclSubject):
 
     def _target_from_extensions(
         self,
-        acl_data: m.Ldif.Acl,
-    ) -> m.Ldif.AclTarget | None:
+        acl_data: p.Ldif.Acl,
+    ) -> p.Ldif.AclTarget | None:
         """Rebuild the ACL target from acl_target_target metadata extensions.
 
         Returns:
@@ -206,7 +206,7 @@ class FlextLdifServersOudAclWrite(FlextLdifServersOudAclSubject):
         })
 
     @staticmethod
-    def _should_use_raw_acl(acl_data: m.Ldif.Acl) -> bool:
+    def _should_use_raw_acl(acl_data: p.Ldif.Acl) -> bool:
         """Check if raw_acl should be used as-is.
 
         Returns:
@@ -220,7 +220,7 @@ class FlextLdifServersOudAclWrite(FlextLdifServersOudAclSubject):
         return raw_acl_str.startswith(acl_aci_prefix)
 
     @override
-    def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+    def _write_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
         """Write RFC-compliant ACL model to OUD ACI string (internal).
 
         Returns:
@@ -238,7 +238,7 @@ class FlextLdifServersOudAclWrite(FlextLdifServersOudAclSubject):
                 exception=e,
             )
 
-    def _write_oud_aci(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+    def _write_oud_aci(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
         """Build an OUD ACI string from the canonical ACL model.
 
         Returns:

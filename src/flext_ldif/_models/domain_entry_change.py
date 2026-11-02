@@ -21,7 +21,7 @@ class FlextLdifModelsDomainEntryChangeOperation:
     class ChangeOperation(m.Value):
         """Structured RFC 2849 modify operation block."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(use_enum_values=False)
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(use_enum_values=False)
 
         operation: Annotated[
             c.Ldif.ChangeOperation,

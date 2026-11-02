@@ -24,7 +24,7 @@ class FlextLdifServersRfcSchemaWrite(
 
     def _build_attribute_parts(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
     ) -> MutableSequence[str]:
         """Build the RFC attribute definition parts for writing.
 
@@ -46,7 +46,7 @@ class FlextLdifServersRfcSchemaWrite(
 
     def _build_objectclass_parts(
         self,
-        oc_data: m.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
     ) -> MutableSequence[str]:
         """Build the RFC objectClass definition parts for writing.
 
@@ -69,7 +69,7 @@ class FlextLdifServersRfcSchemaWrite(
     @staticmethod
     def _ensure_x_origin(
         output_str: str,
-        metadata: m.Ldif.ServerMetadata | None,
+        metadata: p.Ldif.ServerMetadata | None,
     ) -> str:
         """Append the X-ORIGIN extension from metadata when missing.
 
@@ -124,8 +124,8 @@ class FlextLdifServersRfcSchemaWrite(
     @override
     def _transform_attribute_for_write(
         self,
-        attr_data: m.Ldif.SchemaAttribute,
-    ) -> m.Ldif.SchemaAttribute:
+        attr_data: p.Ldif.SchemaAttribute,
+    ) -> p.Ldif.SchemaAttribute:
         """Transform an attribute before writing.
 
         Args:
@@ -140,8 +140,8 @@ class FlextLdifServersRfcSchemaWrite(
     @override
     def _transform_objectclass_for_write(
         self,
-        oc_data: m.Ldif.SchemaObjectClass,
-    ) -> m.Ldif.SchemaObjectClass:
+        oc_data: p.Ldif.SchemaObjectClass,
+    ) -> p.Ldif.SchemaObjectClass:
         """Transform an objectClass before writing.
 
         Args:
@@ -154,7 +154,7 @@ class FlextLdifServersRfcSchemaWrite(
         return oc_data
 
     @override
-    def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
+    def _write_attribute(self, attr_data: p.Ldif.SchemaAttribute) -> p.Result[str]:
         """Write an attribute definition to RFC-compliant format.
 
         Args:
@@ -167,7 +167,7 @@ class FlextLdifServersRfcSchemaWrite(
         return self._write_schema_item(attr_data)
 
     @override
-    def _write_objectclass(self, oc_data: m.Ldif.SchemaObjectClass) -> p.Result[str]:
+    def _write_objectclass(self, oc_data: p.Ldif.SchemaObjectClass) -> p.Result[str]:
         """Write an objectClass definition to RFC-compliant format.
 
         Args:
@@ -181,7 +181,7 @@ class FlextLdifServersRfcSchemaWrite(
 
     def _write_schema_item(
         self,
-        data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        data: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> p.Result[str]:
         """Write a schema item to RFC-compliant format.
 
@@ -208,7 +208,7 @@ class FlextLdifServersRfcSchemaWrite(
 
     def _write_schema_item_core(
         self,
-        data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        data: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> p.Result[str]:
         """Write a schema item after server-specific transforms.
 

@@ -267,25 +267,25 @@ from flext_ldif import ldif, m, p, r
 
 
 # Good: Process small files directly
-def process_small_ldif(file_path: str) -> p.Result[m.Dict]:
+def process_small_ldif(file_path: str) -> p.Result[p.Dict]:
     """Process LDIF files under 100MB."""
     api = ldif()
     return api.parse_file(file_path)
 
 
 # Consider: External tools for large files
-def process_large_ldif(file_path: str) -> p.Result[m.Dict]:
+def process_large_ldif(file_path: str) -> p.Result[p.Dict]:
     """Process large LDIF files using external tools."""
     # Use grep, awk, or other streaming tools
     # Then process results with FLEXT-LDIF
 
 
 # Monitor: Memory usage for production systems
-def process_with_monitoring(file_path: str) -> p.Result[m.Dict]:
+def process_with_monitoring(file_path: str) -> p.Result[p.Dict]:
     """Process LDIF with memory monitoring."""
     file_size = pathlib.Path(file_path).stat().st_size
     if file_size > 100 * 1024 * 1024:  # 100MB
-        return r[m.Dict].fail("File too large for current implementation")
+        return r[p.Dict].fail("File too large for current implementation")
 
     return process_small_ldif(file_path)
 ```

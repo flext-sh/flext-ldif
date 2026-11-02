@@ -22,7 +22,7 @@ class FlextLdifServersOidAclRender:
     """Render an assembled OUD :class:`m.Ldif.AciRule` to its string form."""
 
     @staticmethod
-    def render_bind(allow: m.Ldif.AciAllow) -> str:
+    def render_bind(allow: p.Ldif.AciAllow) -> str:
         """Render one allow clause's bind-rule in canonical OUD form.
 
         Returns:
@@ -41,7 +41,7 @@ class FlextLdifServersOidAclRender:
         return bind
 
     @staticmethod
-    def target_parts(aci: m.Ldif.AciRule) -> Sequence[str]:
+    def target_parts(aci: p.Ldif.AciRule) -> Sequence[str]:
         """Assemble the ACI target clauses (attr/filter/scope) in OUD order.
 
         Returns:
@@ -66,7 +66,7 @@ class FlextLdifServersOidAclRender:
         return tuple(parts)
 
     @classmethod
-    def render_aci_string(cls, aci: m.Ldif.AciRule) -> str:
+    def render_aci_string(cls, aci: p.Ldif.AciRule) -> str:
         """Render an :class:`m.Ldif.AciRule` to its OUD ``aci:`` line.
 
         Allows are grouped by identical permission set (first-seen order); each

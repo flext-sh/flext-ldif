@@ -95,7 +95,7 @@ class FlextLdifUtilitiesServerConfig:
     @staticmethod
     def validation_rule_flags(
         server_type: str | c.Ldif.ServerTypes,
-    ) -> m.Ldif.ServerValidationRules:
+    ) -> p.Ldif.ServerValidationRules:
         """Resolve validation-rule booleans from the canonical server capability map.
 
         Returns:

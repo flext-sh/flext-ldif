@@ -87,7 +87,7 @@ class FlextLdifConversionMetadata(s[p.Ldif.Response]):
 
     @staticmethod
     def _analyze_metadata_for_conversion(
-        source_metadata: m.Ldif.ServerMetadata | t.MutableJsonMapping | None,
+        source_metadata: p.Ldif.ServerMetadata | t.MutableJsonMapping | None,
         target_server_type: str,
     ) -> MutableMapping[str, t.Ldif.MetadataAnalysisDetail]:
         """Analyze source metadata for intelligent conversion to target server.
@@ -138,11 +138,11 @@ class FlextLdifConversionMetadata(s[p.Ldif.Response]):
 
     @staticmethod
     def _update_entry_metadata(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         validated_server_type: c.Ldif.ServerTypes,
         conversion_analysis: str | None,
         source_server_name: str,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Update entry metadata for conversion (internal helper).
 
         Returns:

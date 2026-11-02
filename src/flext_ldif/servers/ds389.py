@@ -75,7 +75,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         ])
         SCHEMA_ATTRIBUTE_NAME_REGEX: ClassVar[str] = "NAME\\s+['\\\"]([\\w-]+)['\\\"]"
         SCHEMA_OBJECTCLASS_NAME_REGEX: ClassVar[str] = "NAME\\s+['\\\"](\\w+)['\\\"]"
-        ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+        ATTRIBUTE_PATTERN_SETTINGS: ClassVar[p.Ldif.ServerPatternsConfig] = (
             m.Ldif.ServerPatternsConfig(
                 oid_pattern=DETECTION_OID_PATTERN,
                 attr_prefixes=DETECTION_ATTRIBUTE_PREFIXES,
@@ -83,7 +83,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 use_prefix_match=True,
             )
         )
-        OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+        OBJECTCLASS_PATTERN_SETTINGS: ClassVar[p.Ldif.ServerPatternsConfig] = (
             m.Ldif.ServerPatternsConfig(
                 oid_pattern=DETECTION_OID_PATTERN,
                 attr_names=DETECTION_OBJECTCLASS_NAMES,
@@ -95,7 +95,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             "cn=monitor",
             "cn=changelog",
         ])
-        ENTRY_DETECTION: ClassVar[m.Ldif.EntryDetectionMarkers] = (
+        ENTRY_DETECTION: ClassVar[p.Ldif.EntryDetectionMarkers] = (
             m.Ldif.EntryDetectionMarkers(
                 dn_markers=DETECTION_DN_MARKERS,
                 objectclass_names=DETECTION_OBJECTCLASS_NAMES,
@@ -171,14 +171,14 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
         """Schema servers for Red Hat / 389 Directory Server."""
 
         _NORMALIZE_OBJECTCLASS: ClassVar[bool] = True
-        _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
-        _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
+        _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[p.Ldif.ServerPatternsConfig]
+        _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[p.Ldif.ServerPatternsConfig]
 
     class Acl(FlextLdifServersRfcAcl):
         """389 Directory Server ACI server."""
 
         @staticmethod
-        def _resolve_acl_targetattr(target: m.Ldif.AclTarget | None) -> str:
+        def _resolve_acl_targetattr(target: p.Ldif.AclTarget | None) -> str:
             """Resolve target attributes to a formatted string.
 
             Args:
@@ -196,7 +196,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             return FlextLdifServersDs389.Constants.ACL_WILDCARD_ATTRIBUTE
 
         @staticmethod
-        def _resolve_acl_userdn(subject: m.Ldif.AclSubject | None) -> str:
+        def _resolve_acl_userdn(subject: p.Ldif.AclSubject | None) -> str:
             """Resolve the subject to a userdn string.
 
             Args:
@@ -283,7 +283,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
         @staticmethod
         def _extract_acl_permissions(
-            permissions_data: m.Ldif.AclPermissions | None,
+            permissions_data: p.Ldif.AclPermissions | None,
         ) -> MutableSequence[str]:
             """Extract permission names from Permissions model flags.
 
@@ -312,7 +312,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             return permissions
 
         @override
-        def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+        def _parse_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
             """Parse a 389 DS ACI definition.
 
             Args:
@@ -329,7 +329,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             )
 
         @override
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+        def _write_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
             """Write ACL data to the 389 DS string format.
 
             Args:
@@ -345,7 +345,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 "389 Directory Server ACL write",
             )
 
-        def _parse_ds389_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+        def _parse_ds389_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
             """Parse 389 DS ACI content into a canonical ACL.
 
             Args:
@@ -402,7 +402,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 metadata=metadata,
                 raw_acl=acl_line,
             )
-            return r[m.Ldif.Acl].ok(acl)
+            return r[p.Ldif.Acl].ok(acl)
 
         @staticmethod
         def _parse_target_attributes(content: str) -> MutableSequence[str]:
@@ -467,7 +467,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             )
             return anonymous_subject
 
-        def _write_ds389_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+        def _write_ds389_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
             """Write 389 DS ACL content.
 
             Args:
@@ -514,7 +514,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 entry_dn, attributes, constants.ENTRY_DETECTION
             )
 
-        def process_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+        def process_entry(self, entry: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
             """Normalize a 389 DS entry and attach metadata.
 
             Args:
@@ -527,14 +527,14 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             try:
                 return self._process_ds389_entry(entry)
             except c.EXC_BASIC_TYPE as exc:
-                return r[m.Ldif.Entry].fail(
+                return r[p.Ldif.Entry].fail(
                     FlextLdifServersDs389.Constants.ERROR_ENTRY_PROCESSING_FAILED.format(
                         exc=exc,
                     ),
                 )
 
         @staticmethod
-        def _process_ds389_entry(entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+        def _process_ds389_entry(entry: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
             """Normalize a 389 DS entry and attach metadata.
 
             Args:
@@ -545,7 +545,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
 
             """
             if not entry.attributes or not entry.dn:
-                return r[m.Ldif.Entry].ok(entry)
+                return r[p.Ldif.Entry].ok(entry)
             attributes: t.MutableStrSequenceMapping = {**entry.attributes.attributes}
             dn_lower = entry.dn.value.lower()
             metadata = entry.metadata or m.Ldif.ServerMetadata(
@@ -560,7 +560,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
                 attributes=m.Ldif.Attributes.model_validate({"attributes": attributes}),
                 metadata=metadata,
             )
-            return r[m.Ldif.Entry].ok(processed_entry)
+            return r[p.Ldif.Entry].ok(processed_entry)
 
     # The 389DS dialect schema settings are owned by ``Constants`` and bound
     # here in the owner class body: a nested class body cannot reference the

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping, MutableSequence
 
-from flext_ldif import c, m, t, u
+from flext_ldif import c, p, t, u
 from flext_ldif.servers._oid import FlextLdifConstantsServersOid
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
@@ -58,7 +58,7 @@ class FlextLdifServersOidEntryMetadata(FlextLdifServersRfcEntry):
 
     @staticmethod
     def _boolean_conversions_container(
-        entry_data: m.Ldif.Entry,
+        entry_data: p.Ldif.Entry,
     ) -> t.MutableJsonMapping | None:
         """Read the boolean-conversions mapping from entry metadata extensions.
 
@@ -111,7 +111,7 @@ class FlextLdifServersOidEntryMetadata(FlextLdifServersRfcEntry):
 
     @staticmethod
     def _parse_metadata_boolean_flags(
-        entry_data: m.Ldif.Entry,
+        entry_data: p.Ldif.Entry,
     ) -> MutableMapping[str, t.MutableAttributeMapping]:
         """Extract boolean conversions from entry metadata.
 
@@ -137,7 +137,7 @@ class FlextLdifServersOidEntryMetadata(FlextLdifServersRfcEntry):
 
     @staticmethod
     def _extract_original_extensions(
-        original_entry: m.Ldif.Entry,
+        original_entry: p.Ldif.Entry,
     ) -> t.Ldif.MutableMetadataMapping:
         """Extract compatible extensions from original entry metadata.
 

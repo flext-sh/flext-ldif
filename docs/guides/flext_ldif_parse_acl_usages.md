@@ -188,8 +188,8 @@ from collections.abc import (
 
 
 def _transform_categories(
-    self, categorized: Mapping[str, Sequence[m.Dict]]
-) -> p.Result[Mapping[str, Sequence[m.Dict]]]:
+    self, categorized: Mapping[str, Sequence[p.Dict]]
+) -> p.Result[Mapping[str, Sequence[p.Dict]]]:
     """Transform ACL entries using OID→OUD pipeline.
 
     Uses parse()

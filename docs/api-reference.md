@@ -322,7 +322,7 @@ def get_entry_statistics(
 Perform comprehensive analysis of LDIF entries.
 
 ```text
-def analyze_entries(self, entries: Sequence[FlextLdifModels.Entry]) -> p.Result[m.Dict]:
+def analyze_entries(self, entries: Sequence[FlextLdifModels.Entry]) -> p.Result[p.Dict]:
     """Perform comprehensive entry analysis.
 
     Args:
@@ -610,7 +610,7 @@ from collections.abc import (
     Sequence,
 )
 
-from flext_ldif import m, t
+from flext_ldif import m, p, t
 
 
 class Factory:
@@ -618,7 +618,7 @@ class Factory:
 
     @staticmethod
     def create(
-        data: m.Dict | str, attributes: Mapping[str, t.StringList] | None = None
+        data: p.Dict | str, attributes: Mapping[str, t.StringList] | None = None
     ) -> Entry:
         """Create LDIF entry with validation."""
 
@@ -796,7 +796,7 @@ if result.success:
 ```text
 def process_enterprise_directory(
     input_file: Path, output_file: Path
-) -> p.Result[m.Dict]:
+) -> p.Result[p.Dict]:
     """Process enterprise directory with complete pipeline."""
     api = ldif(FlextLdifModels.Config(strict_validation=True))
 
@@ -828,7 +828,7 @@ def process_enterprise_directory(
 ### Batch Processing
 
 ```text
-def process_multiple_files(file_paths: Sequence[Path]) -> p.Result[m.Dict]:
+def process_multiple_files(file_paths: Sequence[Path]) -> p.Result[p.Dict]:
     """Process multiple LDIF files in batch."""
     api = ldif()
     all_entries = []
@@ -841,9 +841,9 @@ def process_multiple_files(file_paths: Sequence[Path]) -> p.Result[m.Dict]:
             all_entries.extend(entries)
             processing_stats[str(file_path)] = len(entries)
         else:
-            return r[m.Dict].fail(f"Failed to process {file_path}: {result.error}")
+            return r[p.Dict].fail(f"Failed to process {file_path}: {result.error}")
 
-    return r[m.Dict].ok({
+    return r[p.Dict].ok({
         "total_entries": len(all_entries),
         "file_stats": processing_stats,
         "entries": all_entries,
@@ -915,7 +915,7 @@ class RfcSchemaParserService:
 
         """
 
-    def execute(self) -> p.Result[m.Dict]:
+    def execute(self) -> p.Result[p.Dict]:
         """Execute RFC-compliant schema parsing with servers.
 
         Returns:
@@ -1009,7 +1009,7 @@ pipeline = FlextLdifMigrationPipeline(
 )
 
 # Execute migration: source -> RFC -> target
-result: p.Result[m.Ldif.MigrationPipelineResult] = pipeline.execute()
+result: p.Result[p.Ldif.MigrationPipelineResult] = pipeline.execute()
 ```
 
 **Example Usage**:

@@ -9,7 +9,7 @@ from __future__ import annotations
 import base64
 from collections.abc import Mapping, MutableSequence
 
-from flext_ldif import c, m, u
+from flext_ldif import c, u
 
 
 class FlextLdifServersEntryLineEmitter:
@@ -17,7 +17,7 @@ class FlextLdifServersEntryLineEmitter:
 
     def __init__(
         self,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         *,
         normalize_attribute_names: bool,
         use_original_acl_format_as_name: bool,
@@ -73,7 +73,7 @@ class FlextLdifServersEntryLineEmitter:
         return f"{effective_name}: {effective_value}"
 
     @staticmethod
-    def control_line(control: m.Ldif.Control) -> str:
+    def control_line(control: p.Ldif.Control) -> str:
         """Serialize RFC 2849 control line.
 
         Returns:

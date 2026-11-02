@@ -80,8 +80,8 @@ class TestsFlextLdifRealLdapRoundtrip:
     @staticmethod
     def _write_parse_entry(
         flext_api: p.Ldif.LdifClient,
-        source_entry: m.Ldif.Entry,
-    ) -> m.Ldif.Entry:
+        source_entry: p.Ldif.Entry,
+    ) -> p.Ldif.Entry:
         """Serialize one entry to LDIF and parse the LDIF text back (boundary).
 
         Returns:

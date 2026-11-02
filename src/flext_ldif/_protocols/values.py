@@ -14,7 +14,7 @@ from flext_cli import p, t
 from flext_ldif._protocols import FlextLdifProtocolsBase
 
 if TYPE_CHECKING:
-    from flext_ldif import c, m
+    from flext_ldif import c
 
 
 @runtime_checkable
@@ -136,7 +136,7 @@ class FlextLdifProtocolsValues(Protocol):
         """Parsed LDIF batch response."""
 
         @property
-        def entries(self) -> Sequence[m.Ldif.Entry]: ...
+        def entries(self) -> Sequence[p.Ldif.Entry]: ...
 
         @property
         def detected_server_type(self) -> str | None: ...
@@ -149,7 +149,7 @@ class FlextLdifProtocolsValues(Protocol):
         def entry_count(self) -> int: ...
 
         @property
-        def entries(self) -> Sequence[m.Ldif.Entry]: ...
+        def entries(self) -> Sequence[p.Ldif.Entry]: ...
 
         @property
         def stats(self) -> FlextLdifProtocolsBase.Statistics: ...

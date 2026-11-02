@@ -23,14 +23,14 @@ class ExamplesFlextLdifSchemaBatches:
     """Batched schema operations example namespace."""
 
     @staticmethod
-    def _core_attribute_entries() -> list[m.Ldif.Entry]:
+    def _core_attribute_entries() -> list[p.Ldif.Entry]:
         """Build the core attribute-type schema entries.
 
         Returns:
-            The resulting ``list[m.Ldif.Entry]``.
+            The resulting ``list[p.Ldif.Entry]``.
 
         """
-        core_attrs: list[m.Ldif.Entry] = []
+        core_attrs: list[p.Ldif.Entry] = []
         core_attribute_definitions: Sequence[tuple[str, str, str, bool]] = [
             ("cn", "Common Name", "1.3.6.1.4.1.1466.115.121.1.15", False),
             ("sn", "Surname", "1.3.6.1.4.1.1466.115.121.1.15", False),
@@ -62,11 +62,11 @@ class ExamplesFlextLdifSchemaBatches:
         return core_attrs
 
     @staticmethod
-    def _object_class_entries() -> list[m.Ldif.Entry]:
+    def _object_class_entries() -> list[p.Ldif.Entry]:
         """Build the object-class schema entries.
 
         Returns:
-            The resulting ``list[m.Ldif.Entry]``.
+            The resulting ``list[p.Ldif.Entry]``.
 
         """
         oc_definitions: Sequence[tuple[str, str, str, list[str], list[str]]] = [
@@ -98,7 +98,7 @@ class ExamplesFlextLdifSchemaBatches:
     @staticmethod
     def _validated_batch_results(
         api: FlextLdif,
-        schema_batches: list[tuple[str, list[m.Ldif.Entry]]],
+        schema_batches: list[tuple[str, list[p.Ldif.Entry]]],
     ) -> tuple[MutableMapping[str, t.JsonValue], int]:
         """Validate each non-empty batch and collect per-batch results.
 
@@ -134,7 +134,7 @@ class ExamplesFlextLdifSchemaBatches:
 
         """
         api = ldif()
-        schema_batches: list[tuple[str, list[m.Ldif.Entry]]] = [
+        schema_batches: list[tuple[str, list[p.Ldif.Entry]]] = [
             (
                 "core_attributes",
                 ExamplesFlextLdifSchemaBatches._core_attribute_entries(),

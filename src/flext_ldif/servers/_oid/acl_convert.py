@@ -20,7 +20,7 @@ class FlextLdifServersOidAclConvert:
     """Parse OID ACL lines into typed :class:`m.Ldif.OidAclRule` value objects."""
 
     @staticmethod
-    def subject_matcher_catalog() -> m.Ldif.AclSubjectMatcherCatalog:
+    def subject_matcher_catalog() -> p.Ldif.AclSubjectMatcherCatalog:
         """Return the typed subject matcher catalog for OID by-clause parsing."""
         return m.Ldif.AclSubjectMatcherCatalog(
             matchers=(
@@ -86,7 +86,7 @@ class FlextLdifServersOidAclConvert:
         return tuple(token.strip() for token in raw.split(",") if token.strip())
 
     @staticmethod
-    def _subject_modifiers(subject_str: str) -> m.Ldif.OidAclSubjectModifiers:
+    def _subject_modifiers(subject_str: str) -> p.Ldif.OidAclSubjectModifiers:
         bindmode = ""
         bindipfilter = ""
         added_object_constraint = ""
@@ -110,7 +110,7 @@ class FlextLdifServersOidAclConvert:
         )
 
     @classmethod
-    def parse_subject(cls, subject_str: str) -> m.Ldif.OidAclSubject:
+    def parse_subject(cls, subject_str: str) -> p.Ldif.OidAclSubject:
         """Identify one ``by <subject> (perms)`` clause as a typed subject.
 
         Returns ``subject_type="unknown"`` when no matcher applies (the caller
@@ -255,24 +255,24 @@ class FlextLdifServersOidAclConvert:
         ))
 
     @classmethod
-    def parse_oid_acl_line(cls, dn: str, line: str) -> p.Result[m.Ldif.OidAclRule]:
+    def parse_oid_acl_line(cls, dn: str, line: str) -> p.Result[p.Ldif.OidAclRule]:
         """Parse one full ``orclaci:``/``orclentrylevelaci:`` line into a rule.
 
         Malformation (wrong prefix, missing ``access to``, unknown target, or no
         recognizable subjects) surfaces as ``r.fail`` — never a silent drop.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.OidAclRule]``.
+            The resulting ``p.Result[p.Ldif.OidAclRule]``.
 
         """
         line = line.strip()
         header = cls._parse_acl_header(line)
         if header.failure:
-            return r[m.Ldif.OidAclRule].from_failure(header)
+            return r[p.Ldif.OidAclRule].from_failure(header)
         acl_type, content = header.value
         parsed_target = cls._parse_acl_target_and_filter(content)
         if parsed_target.failure:
-            return r[m.Ldif.OidAclRule].from_failure(parsed_target)
+            return r[p.Ldif.OidAclRule].from_failure(parsed_target)
         target_type, target_attrs, target_filter, content = parsed_target.value
         subjects = tuple(
             subject
@@ -280,8 +280,8 @@ class FlextLdifServersOidAclConvert:
             if (subject := cls.parse_subject(raw.group(0))).subject_type != "unknown"
         )
         if not subjects:
-            return r[m.Ldif.OidAclRule].fail(f"No subjects in ACL: {content[:40]!r}")
-        return r[m.Ldif.OidAclRule].ok(
+            return r[p.Ldif.OidAclRule].fail(f"No subjects in ACL: {content[:40]!r}")
+        return r[p.Ldif.OidAclRule].ok(
             m.Ldif.OidAclRule(
                 dn=dn,
                 acl_type=acl_type,

@@ -17,15 +17,15 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering):
 
     def categorize_entries(
         self,
-        entries: MutableSequence[m.Ldif.Entry],
-    ) -> p.Result[m.Ldif.FlexibleCategories]:
+        entries: MutableSequence[p.Ldif.Entry],
+    ) -> p.Result[p.Ldif.FlexibleCategories]:
         """Categorize entries into 6 categories.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.FlexibleCategories]``.
+            The resulting ``p.Result[p.Ldif.FlexibleCategories]``.
 
         """
-        category_lists: MutableMapping[str, list[m.Ldif.Entry]] = {
+        category_lists: MutableMapping[str, list[p.Ldif.Entry]] = {
             category: [] for category in c.Ldif.CATEGORY_BUCKET_ORDER
         }
 
@@ -61,12 +61,12 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering):
                     category=cat,
                     entries_count=len(cat_entries),
                 )
-        return r[m.Ldif.FlexibleCategories].ok(categories)
+        return r[p.Ldif.FlexibleCategories].ok(categories)
 
     def categorize_entry(
         self,
-        entry: m.Ldif.Entry,
-        rules: m.Ldif.CategoryRules | t.MutableJsonMapping | None = None,
+        entry: p.Ldif.Entry,
+        rules: p.Ldif.CategoryRules | t.MutableJsonMapping | None = None,
         server_type: str | None = None,
     ) -> tuple[str, str | None]:
         """Categorize single entry using provided or instance categorization rules.
@@ -125,21 +125,21 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering):
 
     def validate_dns(
         self,
-        entries: MutableSequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
-    ) -> p.Result[MutableSequence[m.Ldif.Entry]]:
+        entries: MutableSequence[p.Ldif.Entry] | m.Ldif.ParseResponse,
+    ) -> p.Result[MutableSequence[p.Ldif.Entry]]:
         """Validate and normalize all DNs to RFC 4514.
 
         Returns:
-            The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
+            The resulting ``p.Result[MutableSequence[p.Ldif.Entry]]``.
 
         """
         normalized_entries = u.Ldif.as_entries(entries)
 
-        def validate_entry(entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+        def validate_entry(entry: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
             """Validate and normalize entry DN.
 
             Returns:
-                The resulting ``p.Result[m.Ldif.Entry]``.
+                The resulting ``p.Result[p.Ldif.Entry]``.
 
             """
             dn_str = str(entry.dn) if entry.dn else ""
@@ -158,7 +158,7 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering):
                     "Entry DN failed RFC 4514 validation",
                     entry_dn=dn_str,
                 )
-                return r[m.Ldif.Entry].fail_op("DN validation", dn_str[:80])
+                return r[p.Ldif.Entry].fail_op("DN validation", dn_str[:80])
             norm_result = u.Ldif.norm(dn_str)
             normalized_dn = norm_result.map_or(None)
             if normalized_dn is None:
@@ -175,14 +175,14 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering):
                 self.rejection_tracker[
                     c.Ldif.RejectionTrackerKey.INVALID_DN_RFC4514
                 ].append(rejected_entry)
-                return r[m.Ldif.Entry].fail_op(
+                return r[p.Ldif.Entry].fail_op(
                     "DN normalization",
                     norm_result.error or c.Ldif.ERR_UNKNOWN,
                 )
             dn_obj = m.Ldif.DN(value=normalized_dn)
-            return r[m.Ldif.Entry].ok(entry.model_copy(update={"dn": dn_obj}))
+            return r[p.Ldif.Entry].ok(entry.model_copy(update={"dn": dn_obj}))
 
-        validated: MutableSequence[m.Ldif.Entry] = [
+        validated: MutableSequence[p.Ldif.Entry] = [
             validation_result.value
             for entry in normalized_entries
             if (validation_result := validate_entry(entry)).success
@@ -211,7 +211,7 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering):
                 sample_count=len(sample_rejected_dns),
                 rejected_dns_preview=", ".join(sample_rejected_dns),
             )
-        return r[MutableSequence[m.Ldif.Entry]].ok(validated)
+        return r[MutableSequence[p.Ldif.Entry]].ok(validated)
 
 
 __all__: list[str] = ["FlextLdifCategorization"]

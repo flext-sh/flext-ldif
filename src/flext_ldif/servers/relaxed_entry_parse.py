@@ -43,7 +43,7 @@ class FlextLdifServersRelaxedEntryParse(FlextLdifServersRfcEntry):
     def _adapted_parse_entry_relaxed(
         self,
         entry_content: str,
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Parse one entry block in relaxed mode.
 
         Args:
@@ -55,7 +55,7 @@ class FlextLdifServersRelaxedEntryParse(FlextLdifServersRfcEntry):
         """
         dn, attrs = self._scan_relaxed_entry_lines(entry_content)
         if not dn:
-            return r[m.Ldif.Entry].fail("No DN found in entry")
+            return r[p.Ldif.Entry].fail("No DN found in entry")
         return self._parse_entry(dn, attrs)
 
     @classmethod
@@ -128,7 +128,7 @@ class FlextLdifServersRelaxedEntryParse(FlextLdifServersRfcEntry):
     def _parse_content(
         self,
         ldif_content: str,
-    ) -> p.Result[MutableSequence[m.Ldif.Entry]]:
+    ) -> p.Result[MutableSequence[p.Ldif.Entry]]:
         """Parse raw LDIF content into entry models.
 
         Falls back to relaxed parsing when the RFC baseline fails.
@@ -154,7 +154,7 @@ class FlextLdifServersRelaxedEntryParse(FlextLdifServersRfcEntry):
                 "Failed to parse content",
                 server_type=self._get_server_type(),
             )
-            return r[MutableSequence[m.Ldif.Entry]].fail(
+            return r[MutableSequence[p.Ldif.Entry]].fail(
                 f"Failed to parse content: {error}",
                 exception=error,
             )
@@ -162,7 +162,7 @@ class FlextLdifServersRelaxedEntryParse(FlextLdifServersRfcEntry):
     def _parse_relaxed_content(
         self,
         ldif_content: str,
-    ) -> p.Result[MutableSequence[m.Ldif.Entry]]:
+    ) -> p.Result[MutableSequence[p.Ldif.Entry]]:
         """Parse raw LDIF content with relaxed record splitting.
 
         Blank-line-separated blocks are parsed individually; failed blocks
@@ -175,7 +175,7 @@ class FlextLdifServersRelaxedEntryParse(FlextLdifServersRfcEntry):
             Result carrying the successfully parsed entries.
 
         """
-        entries: MutableSequence[m.Ldif.Entry] = []
+        entries: MutableSequence[p.Ldif.Entry] = []
         raw_entries = ldif_content.strip().split("\n\n")
         successful = 0
         failed = 0
@@ -200,7 +200,7 @@ class FlextLdifServersRelaxedEntryParse(FlextLdifServersRfcEntry):
             successful=successful,
             failed=failed,
         )
-        return r[MutableSequence[m.Ldif.Entry]].ok(entries)
+        return r[MutableSequence[p.Ldif.Entry]].ok(entries)
 
     @staticmethod
     def _prepare_relaxed_raw_entry(raw_entry: str) -> str | None:
@@ -228,7 +228,7 @@ class FlextLdifServersRelaxedEntryParse(FlextLdifServersRfcEntry):
         self,
         entry_dn: str,
         entry_attrs: MutableMapping[str, MutableSequence[str | bytes]],
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Parse one entry with best-effort relaxed handling.
 
         Args:
@@ -243,13 +243,13 @@ class FlextLdifServersRelaxedEntryParse(FlextLdifServersRfcEntry):
             return self._parse_relaxed_entry(entry_dn, entry_attrs)
         except c.Ldif.EXC_LDIF_PARSE as e:
             self.logger.debug("Relaxed entry creation failed: %s", e)
-            return r[m.Ldif.Entry].fail(f"Failed to parse entry: {e}", exception=e)
+            return r[p.Ldif.Entry].fail(f"Failed to parse entry: {e}", exception=e)
 
     def _parse_relaxed_entry(
         self,
         entry_dn: str,
         entry_attrs: MutableMapping[str, MutableSequence[str | bytes]],
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Build an entry model from relaxed raw entry components.
 
         Args:
@@ -261,7 +261,7 @@ class FlextLdifServersRelaxedEntryParse(FlextLdifServersRfcEntry):
 
         """
         if not entry_dn or not entry_dn.strip():
-            return r[m.Ldif.Entry].fail("Entry DN cannot be empty")
+            return r[p.Ldif.Entry].fail("Entry DN cannot be empty")
         effective_dn = m.Ldif.DN.model_validate({
             "value": entry_dn.strip(),
             "metadata": {},
@@ -277,7 +277,7 @@ class FlextLdifServersRelaxedEntryParse(FlextLdifServersRfcEntry):
             changetype=None,
             metadata=self._build_relaxed_entry_metadata(entry_dn, entry_attrs),
         )
-        return r[m.Ldif.Entry].ok(entry)
+        return r[p.Ldif.Entry].ok(entry)
 
     @staticmethod
     def _decode_relaxed_attributes(
@@ -312,7 +312,7 @@ class FlextLdifServersRelaxedEntryParse(FlextLdifServersRfcEntry):
     def _build_relaxed_entry_metadata(
         entry_dn: str,
         entry_attrs: MutableMapping[str, MutableSequence[str | bytes]],
-    ) -> m.Ldif.ServerMetadata:
+    ) -> p.Ldif.ServerMetadata:
         """Build relaxed-mode metadata for a parsed entry.
 
         Preserves the original DN line and objectClass attribute casing.
@@ -337,7 +337,7 @@ class FlextLdifServersRelaxedEntryParse(FlextLdifServersRfcEntry):
             encoding=None,
             trailing_info=None,
         )
-        metadata: m.Ldif.ServerMetadata = m.Ldif.ServerMetadata.model_validate({
+        metadata: p.Ldif.ServerMetadata = m.Ldif.ServerMetadata.model_validate({
             "server_type": "relaxed",
             "original_format_details": format_details,
             "original_attribute_case": original_attribute_case,

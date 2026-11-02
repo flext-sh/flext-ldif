@@ -30,7 +30,7 @@ class FlextLdifConversionSchema(s[p.Ldif.Response], ABC):
         self,
         source_server: p.Ldif.ServerServer,
         target_server: p.Ldif.ServerServer,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
     ) -> p.Result[t.Ldif.ConvertedModel]:
         """Convert an entry through the concrete conversion facade."""
         ...
@@ -39,7 +39,7 @@ class FlextLdifConversionSchema(s[p.Ldif.Response], ABC):
         self,
         source_server: p.Ldif.ServerServer,
         target_server: p.Ldif.ServerServer,
-        item: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        item: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         source_schema: p.Ldif.SchemaServer,
         target_schema: p.Ldif.SchemaServer,
     ) -> p.Result[t.Ldif.ConvertedModel]:
@@ -100,7 +100,7 @@ class FlextLdifConversionSchema(s[p.Ldif.Response], ABC):
 
     def _write_schema_source_value(
         self,
-        item: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        item: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         source_schema: p.Ldif.SchemaServer,
     ) -> p.Result[tuple[str, str, str]]:
         """Write the schema item in source format.
@@ -130,7 +130,7 @@ class FlextLdifConversionSchema(s[p.Ldif.Response], ABC):
         source_server: p.Ldif.ServerServer,
         field_name: str,
         source_value: str,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Build the synthetic schema entry that carries one written definition.
 
         Returns:
@@ -141,8 +141,8 @@ class FlextLdifConversionSchema(s[p.Ldif.Response], ABC):
             lambda: u.Ldif.normalize_server_type(source_server.server_type),
         ).map_or(None)
         return m.Ldif.Entry.model_validate({
-            "dn": m.Ldif.DN(value="cn=schema,dc=example,dc=com", metadata={}),
-            "attributes": m.Ldif.Attributes.model_validate({
+            "dn": p.Ldif.DN(value="cn=schema,dc=example,dc=com", metadata={}),
+            "attributes": p.Ldif.Attributes.model_validate({
                 "attributes": {field_name: [source_value]},
                 "attribute_metadata": {},
                 "metadata": None,
@@ -202,7 +202,7 @@ class FlextLdifConversionSchema(s[p.Ldif.Response], ABC):
         return r[t.Ldif.ConvertedModel].ok(validated.value)
 
     @staticmethod
-    def _validate_parsed_schema[T: m.Ldif.SchemaElement](
+    def _validate_parsed_schema[T: p.Ldif.SchemaElement](
         parse_result: p.Result[T],
         model_cls: type[T],
     ) -> p.Result[T]:

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests import c, ldif, m, p, t, tm
+from tests import c, ldif, p, t, tm
 
 
 class TestsFlextLdifAclMetadataPreservation:
@@ -31,7 +31,7 @@ class TestsFlextLdifAclMetadataPreservation:
         return ldif()
 
     @staticmethod
-    def _extensions(entry: m.Ldif.Entry) -> t.JsonMapping:
+    def _extensions(entry: p.Ldif.Entry) -> t.JsonMapping:
         """Read validated public metadata extensions without copying them.
 
         Returns:
@@ -46,7 +46,7 @@ class TestsFlextLdifAclMetadataPreservation:
         api: p.Ldif.LdifClient,
         ldif_text: str,
         server_type: str,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Parse LDIF that must yield exactly one entry; assert the r[T] success.
 
         Returns:
@@ -55,10 +55,10 @@ class TestsFlextLdifAclMetadataPreservation:
         """
         result = api.parse_ldif(ldif_text, server_type=server_type)
         tm.ok(result)
-        response: m.Ldif.ParseResponse = result.unwrap()
+        response: p.Ldif.ParseResponse = result.unwrap()
         entries = response.entries
         tm.that(len(entries), eq=1)
-        entry: m.Ldif.Entry = entries[0]
+        entry: p.Ldif.Entry = entries[0]
         return entry
 
     # -- OID ACL feature preservation ------------------------------------

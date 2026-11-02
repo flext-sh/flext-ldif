@@ -27,7 +27,7 @@ class FlextLdifConfig(FlextCliConfig):
     class ConfigNamespace(m.BaseModel):
         """Open, frozen namespace exposing every configured LDIF domain."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(
             extra="allow",
             frozen=True,
         )

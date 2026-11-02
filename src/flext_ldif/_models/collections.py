@@ -26,7 +26,7 @@ class FlextLdifModelsCollections:
     class DynamicCounts(m.RootModel[t.IntMapping]):
         """Strict integer counts exposed through native mapping views."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(
             strict=True,
             frozen=True,
         )

@@ -118,7 +118,7 @@ class FlextLdifServersBaseSchemaAcl(
         return raw_acl.strip()
 
     @abstractmethod
-    def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
+    def can_handle_attribute(self, attribute: p.Ldif.SchemaAttribute) -> bool:
         """Check whether this ACL server is aware of an attribute definition.
 
         Args:
@@ -133,7 +133,7 @@ class FlextLdifServersBaseSchemaAcl(
         raise NotImplementedError(msg)
 
     @abstractmethod
-    def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
+    def can_handle_objectclass(self, objectclass: p.Ldif.SchemaObjectClass) -> bool:
         """Check whether this ACL server is aware of an objectClass definition.
 
         Args:
@@ -151,7 +151,7 @@ class FlextLdifServersBaseSchemaAcl(
         self,
         original_format: str,
         extensions: t.Ldif.MetadataInputMapping | None = None,
-    ) -> m.Ldif.ServerMetadata:
+    ) -> p.Ldif.ServerMetadata:
         """Create server metadata tagged with this server's type.
 
         Args:
@@ -207,7 +207,7 @@ class FlextLdifServersBaseSchemaAcl(
     def format_acl_value(
         self,
         acl_value: str,
-        acl_metadata: m.Ldif.AclWriteMetadata,
+        acl_metadata: p.Ldif.AclWriteMetadata,
         *,
         use_original_format_as_name: bool = False,
     ) -> p.Result[str]:
@@ -250,7 +250,7 @@ class FlextLdifServersBaseSchemaAcl(
                         result = r[str].ok(formatted_value)
         return result
 
-    def parse_server(self, value: str) -> p.Result[m.Ldif.Acl]:
+    def parse_server(self, value: str) -> p.Result[p.Ldif.Acl]:
         """Parse one server-specific ACL line into the canonical Acl model.
 
         Args:
@@ -262,7 +262,7 @@ class FlextLdifServersBaseSchemaAcl(
         """
         return self._parse_acl(value)
 
-    def parse_input(self, acl_text: str) -> p.Result[m.Ldif.Acl]:
+    def parse_input(self, acl_text: str) -> p.Result[p.Ldif.Acl]:
         """Parse raw ACL text through the server-specific parser.
 
         Args:
@@ -274,7 +274,7 @@ class FlextLdifServersBaseSchemaAcl(
         """
         return self.parse_server(acl_text)
 
-    def write(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+    def write(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
         """Serialize the Acl model back to its string format.
 
         Args:
@@ -307,7 +307,7 @@ class FlextLdifServersBaseSchemaAcl(
         if isinstance(value, str):
             return value
         try:
-            acl: m.Ldif.Acl = m.Ldif.Acl.model_validate(value)
+            acl: p.Ldif.Acl = m.Ldif.Acl.model_validate(value)
         except c.ValidationError as exc:
             FlextLdifServersBaseSchemaAcl._module_logger.warning(
                 "Failed to coerce value to ACL model",
@@ -366,7 +366,7 @@ class FlextLdifServersBaseSchemaAcl(
             return r[t.Ldif.AclPayload].ok(parse_result.value)
         return r[t.Ldif.AclPayload].from_failure(parse_result)
 
-    def _execute_acl_write(self, data: m.Ldif.Acl) -> p.Result[t.Ldif.AclPayload]:
+    def _execute_acl_write(self, data: p.Ldif.Acl) -> p.Result[t.Ldif.AclPayload]:
         """Execute the ACL write operation.
 
         Args:
@@ -463,7 +463,7 @@ class FlextLdifServersBaseSchemaAcl(
         return r[tuple[t.Ldif.RegexPattern, str]].ok((pattern, replacement_template))
 
     @staticmethod
-    def _hook_post_parse_acl(acl: m.Ldif.Acl) -> p.Result[m.Ldif.Acl]:
+    def _hook_post_parse_acl(acl: p.Ldif.Acl) -> p.Result[p.Ldif.Acl]:
         """Run the post-parse hook on a freshly parsed ACL.
 
         Args:
@@ -473,10 +473,10 @@ class FlextLdifServersBaseSchemaAcl(
             Typed result carrying the (possibly adjusted) ACL model.
 
         """
-        return r[m.Ldif.Acl].ok(acl)
+        return r[p.Ldif.Acl].ok(acl)
 
     @abstractmethod
-    def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+    def _parse_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
         """Parse a server-specific ACL definition (internal, required).
 
         Args:
@@ -493,9 +493,9 @@ class FlextLdifServersBaseSchemaAcl(
     @staticmethod
     def _parse_dialect_acl(
         acl_line: str,
-        parser: Callable[[str], p.Result[m.Ldif.Acl]],
+        parser: Callable[[str], p.Result[p.Ldif.Acl]],
         context: str,
-    ) -> p.Result[m.Ldif.Acl]:
+    ) -> p.Result[p.Ldif.Acl]:
         """Parse through one dialect parser, converting typed parse errors.
 
         Args:
@@ -510,12 +510,12 @@ class FlextLdifServersBaseSchemaAcl(
         try:
             return parser(acl_line)
         except c.EXC_BASIC_TYPE as exc:
-            return r[m.Ldif.Acl].fail_op(context, exc)
+            return r[p.Ldif.Acl].fail_op(context, exc)
 
     @staticmethod
     def _write_dialect_acl(
-        acl_data: m.Ldif.Acl,
-        writer: Callable[[m.Ldif.Acl], p.Result[str]],
+        acl_data: p.Ldif.Acl,
+        writer: Callable[[p.Ldif.Acl], p.Result[str]],
         context: str,
     ) -> p.Result[str]:
         """Write through one dialect writer, converting typed write errors.
@@ -589,7 +589,7 @@ class FlextLdifServersBaseSchemaAcl(
         raise NotImplementedError(msg)
 
     @abstractmethod
-    def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+    def _write_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
         """Write ACL data to the RFC-compliant string format (internal).
 
         Args:

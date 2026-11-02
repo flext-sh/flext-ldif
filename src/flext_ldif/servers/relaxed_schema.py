@@ -18,9 +18,9 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
 
     def _enhance_schema_item_metadata(
         self,
-        schema_item: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        schema_item: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         original_definition: str,
-    ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
+    ) -> p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
         """Attach relaxed-mode metadata to a parsed schema item.
 
         Args:
@@ -52,9 +52,9 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
 
     def _enhance_objectclass_metadata(
         self,
-        objectclass: m.Ldif.SchemaObjectClass,
+        objectclass: p.Ldif.SchemaObjectClass,
         original_definition: str,
-    ) -> m.Ldif.SchemaObjectClass:
+    ) -> p.Ldif.SchemaObjectClass:
         """Attach relaxed-mode metadata to a parsed objectClass.
 
         Args:
@@ -162,7 +162,7 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
     def _parse_attribute(
         self,
         attr_definition: str,
-    ) -> p.Result[m.Ldif.SchemaAttribute]:
+    ) -> p.Result[p.Ldif.SchemaAttribute]:
         """Parse an attribute definition with best-effort relaxed handling.
 
         Delegates to the RFC baseline first; on failure, falls back to lenient
@@ -176,7 +176,7 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
 
         """
         if not attr_definition or not attr_definition.strip():
-            return r[m.Ldif.SchemaAttribute].fail(
+            return r[p.Ldif.SchemaAttribute].fail(
                 "Attribute definition cannot be empty",
             )
         parent_result = super()._parse_attribute(attr_definition)
@@ -186,7 +186,7 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
                 schema_item=attribute,
                 original_definition=attr_definition,
             )
-            return r[m.Ldif.SchemaAttribute].ok(attribute)
+            return r[p.Ldif.SchemaAttribute].ok(attribute)
         self.logger.debug(
             "RFC parser failed, using best-effort parsing: %s",
             parent_result.error,
@@ -195,7 +195,7 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
             return self._parse_relaxed_attribute(attr_definition)
         except c.Ldif.EXC_LDIF_PARSE as e:
             self.logger.debug("Relaxed attribute parse exception: %s", e)
-            return r[m.Ldif.SchemaAttribute].fail(
+            return r[p.Ldif.SchemaAttribute].fail(
                 f"Failed to parse attribute definition: {e}",
                 exception=e,
             )
@@ -203,7 +203,7 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
     def _parse_relaxed_attribute(
         self,
         attr_definition: str,
-    ) -> p.Result[m.Ldif.SchemaAttribute]:
+    ) -> p.Result[p.Ldif.SchemaAttribute]:
         """Parse an attribute definition using relaxed fallback rules.
 
         Builds a minimal attribute from the extracted OID and NAME clause when
@@ -218,7 +218,7 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
         """
         oid = self._extract_oid_with_fallback_patterns(attr_definition)
         if not oid:
-            return r[m.Ldif.SchemaAttribute].fail(
+            return r[p.Ldif.SchemaAttribute].fail(
                 "Cannot extract OID from attribute definition",
             )
         name_match = FlextLdifConstantsServersRelaxed.SCHEMA_NAME_RE.search(
@@ -232,7 +232,7 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
                 "schema_source_server": "relaxed",
             },
         })
-        return r[m.Ldif.SchemaAttribute].ok(
+        return r[p.Ldif.SchemaAttribute].ok(
             m.Ldif.SchemaAttribute(name=name, oid=oid, metadata=metadata),
         )
 
@@ -240,7 +240,7 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
     def _parse_objectclass(
         self,
         oc_definition: str,
-    ) -> p.Result[m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[p.Ldif.SchemaObjectClass]:
         """Parse an objectClass definition with best-effort relaxed handling.
 
         Delegates to the RFC baseline first; on failure, falls back to lenient
@@ -254,13 +254,13 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
 
         """
         if not oc_definition or not oc_definition.strip():
-            return r[m.Ldif.SchemaObjectClass].fail(
+            return r[p.Ldif.SchemaObjectClass].fail(
                 "ObjectClass definition cannot be empty",
             )
         parent_result = super()._parse_objectclass(oc_definition)
         if parent_result.success:
             objectclass = parent_result.value
-            return r[m.Ldif.SchemaObjectClass].ok(
+            return r[p.Ldif.SchemaObjectClass].ok(
                 self._enhance_objectclass_metadata(objectclass, oc_definition),
             )
         self.logger.debug(
@@ -272,7 +272,7 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
     def _parse_objectclass_relaxed(
         self,
         oc_definition: str,
-    ) -> p.Result[m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[p.Ldif.SchemaObjectClass]:
         """Parse an objectClass definition using relaxed fallback rules.
 
         Builds a minimal objectClass from the extracted OID, NAME, DESC, SUP,
@@ -287,7 +287,7 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
         """
         oid = self._extract_oid_with_fallback_patterns(oc_definition)
         if not oid:
-            return r[m.Ldif.SchemaObjectClass].fail(
+            return r[p.Ldif.SchemaObjectClass].fail(
                 "Failed to extract OID from objectClass definition",
             )
         name = u.Ldif.extract_optional_field(
@@ -314,7 +314,7 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
             },
         })
         objectclass_name = name or oid
-        return r[m.Ldif.SchemaObjectClass].ok(
+        return r[p.Ldif.SchemaObjectClass].ok(
             m.Ldif.SchemaObjectClass.model_validate({
                 "name": objectclass_name,
                 "oid": oid,
@@ -329,7 +329,7 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
 
     @staticmethod
     def _relaxed_original_output(
-        schema_data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        schema_data: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> str | None:
         """Return the preserved original-format text for a relaxed schema item.
 
@@ -355,7 +355,7 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
         return None
 
     @override
-    def _write_attribute(self, attr_data: m.Ldif.SchemaAttribute) -> p.Result[str]:
+    def _write_attribute(self, attr_data: p.Ldif.SchemaAttribute) -> p.Result[str]:
         """Write an attribute definition, preserving its original text.
 
         Delegates to the RFC baseline first; on failure, emits the preserved
@@ -383,7 +383,7 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
     @override
     def _write_objectclass(
         self,
-        oc_data: m.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
     ) -> p.Result[str]:
         """Write an objectClass definition, preserving its original text.
 

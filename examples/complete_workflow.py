@@ -57,13 +57,13 @@ def server_migration_workflow() -> None:
 def entry_building_and_processing_workflow() -> None:
     """Run an entry building and processing workflow."""
     api: p.Ldif.LdifClient = ldif
-    created: list[m.Ldif.Entry] = [
+    created: list[p.Ldif.Entry] = [
         ExamplesFlextLdifUtilities.create_user_entry(idx, sn="User") for idx in range(2)
     ]
     if not created:
         return
 
-    persons: MutableSequence[m.Ldif.Entry] = [
+    persons: MutableSequence[p.Ldif.Entry] = [
         e
         for e in created
         if e.attributes is not None and "person" in e.attributes["objectClass"]
@@ -73,7 +73,7 @@ def entry_building_and_processing_workflow() -> None:
 
 def schema_driven_workflow() -> None:
     """Run a schema driven workflow."""
-    entries: list[m.Ldif.Entry] = []
+    entries: list[p.Ldif.Entry] = []
     for idx in range(5):
         entry = m.Ldif.Entry(
             dn=m.Ldif.DN(value=f"cn=Schema User {idx},ou=People,dc=example,dc=com"),
@@ -111,7 +111,7 @@ def acl_processing_workflow() -> None:
 def batch_processing_workflow() -> None:
     """Run a batch processing workflow."""
     api: p.Ldif.LdifClient = ldif
-    entries: list[m.Ldif.Entry] = []
+    entries: list[p.Ldif.Entry] = []
     for idx in range(10):
         entry = m.Ldif.Entry(
             dn=m.Ldif.DN(value=f"cn=BatchUser{idx},ou=People,dc=example,dc=com"),

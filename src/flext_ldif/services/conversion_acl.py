@@ -27,7 +27,7 @@ class FlextLdifConversionAcl(
         self,
         source_server: p.Ldif.ServerServer,
         target_server: p.Ldif.ServerServer,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
     ) -> p.Result[t.Ldif.ConvertedModel]:
         """Convert an entry through the concrete conversion facade."""
         ...
@@ -36,7 +36,7 @@ class FlextLdifConversionAcl(
         self,
         source_server: p.Ldif.ServerServer,
         target_server: p.Ldif.ServerServer,
-        acl: m.Ldif.Acl,
+        acl: p.Ldif.Acl,
     ) -> p.Result[t.Ldif.ConvertedModel]:
         """Convert Acl model via Entry RFC + Metadata pipeline.
 
@@ -53,7 +53,7 @@ class FlextLdifConversionAcl(
         self,
         source_server: p.Ldif.ServerServer,
         target_server: p.Ldif.ServerServer,
-        acl: m.Ldif.Acl,
+        acl: p.Ldif.Acl,
     ) -> p.Result[t.Ldif.ConvertedModel]:
         """Convert ACL model through an RFC entry bridge.
 
@@ -101,9 +101,9 @@ class FlextLdifConversionAcl(
 
     @staticmethod
     def _build_acl_conversion_entry(
-        acl: m.Ldif.Acl,
+        acl: p.Ldif.Acl,
         source_server_type: c.Ldif.ServerTypes | None,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Build the RFC entry carrier used for ACL conversion.
 
         Returns:
@@ -121,33 +121,33 @@ class FlextLdifConversionAcl(
             ),
             metadata=entry_metadata,
         )
-        entry: m.Ldif.Entry = entry_result.unwrap()
+        entry: p.Ldif.Entry = entry_result.unwrap()
         return entry
 
     @staticmethod
     def _entry_to_acl(
         target_server: p.Ldif.ServerServer,
         converted_entry: t.Ldif.ConvertedModel,
-    ) -> p.Result[m.Ldif.Acl]:
+    ) -> p.Result[p.Ldif.Acl]:
         """Extract and parse the converted ACL from an entry carrier.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Acl]``.
+            The resulting ``p.Result[p.Ldif.Acl]``.
 
         """
         if not isinstance(converted_entry, m.Ldif.Entry):
-            return r[m.Ldif.Acl].fail(
+            return r[p.Ldif.Acl].fail(
                 "Entry conversion returned unexpected type: "
                 f"{type(converted_entry).__name__}",
             )
         if converted_entry.metadata is None or not converted_entry.metadata.acls:
-            return r[m.Ldif.Acl].fail("Converted entry has no ACLs in metadata.acls")
+            return r[p.Ldif.Acl].fail("Converted entry has no ACLs in metadata.acls")
         return (
-            r[m.Ldif.Acl]
+            r[p.Ldif.Acl]
             .from_result(
                 target_server.acl_server.parse_server(converted_entry.metadata.acls[0]),
             )
-            .flat_map(r[m.Ldif.Acl].ok)
+            .flat_map(r[p.Ldif.Acl].ok)
         )
 
 

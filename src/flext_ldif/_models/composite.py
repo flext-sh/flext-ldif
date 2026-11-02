@@ -20,7 +20,7 @@ class FlextLdifModelsComposite:
     class Stats(m.BaseModel):
         """Write statistics for batch content operations."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(validate_default=True)
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(validate_default=True)
         total_entries: Annotated[t.NonNegativeInt, m.Field()] = 0
         successful: Annotated[t.NonNegativeInt, m.Field()] = 0
         failed: Annotated[t.NonNegativeInt, m.Field()] = 0

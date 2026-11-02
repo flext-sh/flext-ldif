@@ -22,7 +22,7 @@ class FlextLdifModelsSettingsProcessing:
     class ProcessConfig(m.StrictModel):
         """Configuration for processing operations."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(use_enum_values=False)
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(use_enum_values=False)
 
         @m.field_validator("source_server", "target_server", mode="before")
         @classmethod
