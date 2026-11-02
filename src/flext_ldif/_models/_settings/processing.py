@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar, Self
 
-from flext_core import m
+from flext_core import m, p
 
 from flext_ldif import FlextLdifShared, t
 from flext_ldif._constants import FlextLdifConstantsEnums

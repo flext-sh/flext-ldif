@@ -12,7 +12,7 @@ from typing import Annotated, ClassVar
 
 from flext_tests import m as flext_tests_m
 
-from flext_ldif import m
+from flext_ldif import m, p
 from tests import p, t
 
 

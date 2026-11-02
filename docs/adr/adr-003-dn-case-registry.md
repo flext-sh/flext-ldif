@@ -40,7 +40,7 @@ or a constructor. This retains Pydantic's native port validation without enablin
 arbitrary types on the service model.
 
 ```python
-from flext_ldif import m
+from flext_ldif import m, p
 
 # Tracks canonical DN case for migration consistency (first-seen wins).
 registry = m.Ldif.DnRegistry()

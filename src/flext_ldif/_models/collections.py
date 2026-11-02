@@ -16,7 +16,7 @@ from collections.abc import (
 )
 from typing import Annotated, ClassVar
 
-from flext_cli import m
+from flext_cli import m, p
 
 from flext_ldif import t
 from flext_ldif._models import FlextLdifModelsDomainsEntries

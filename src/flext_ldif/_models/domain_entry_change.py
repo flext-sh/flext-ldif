@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import Annotated, ClassVar
 
-from flext_cli import m
+from flext_cli import m, p
 
 from flext_ldif import c
 from flext_ldif._models import FlextLdifModelsDomainEntryChangeOperationValue

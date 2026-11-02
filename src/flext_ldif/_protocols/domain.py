@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 from flext_cli import p, t
 
 if TYPE_CHECKING:
-    from flext_ldif import m
+    from flext_ldif import m, p
     from flext_ldif._protocols import FlextLdifProtocolsBase
 
 

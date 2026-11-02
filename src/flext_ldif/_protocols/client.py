@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from os import PathLike
     from pathlib import Path
 
-    from flext_ldif import m
+    from flext_ldif import m, p
 
 
 @runtime_checkable

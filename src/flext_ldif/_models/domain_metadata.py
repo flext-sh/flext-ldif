@@ -14,9 +14,9 @@ from __future__ import annotations
 from collections.abc import MutableMapping, MutableSequence
 from typing import Annotated, ClassVar
 
-from flext_core import m
+from flext_core import m, p
 
-from flext_ldif import FlextLdifShared, c, t
+from flext_ldif import FlextLdifShared, c, p, t
 from flext_ldif._models import (
     FlextLdifModelsAclConvert,
     FlextLdifModelsDomainAttributes,

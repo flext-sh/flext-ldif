@@ -74,7 +74,7 @@ class FlextApiSettings(FlextSettings):
 ```python
 from __future__ import annotations
 
-from flext_cli import FlextCliCli, FlextCliSettings, m, t
+from flext_cli import FlextCliCli, FlextCliSettings, m, p, t
 
 settings = FlextCliSettings.fetch_global()
 
@@ -171,7 +171,7 @@ the public facade as shown above. A corrected handler consumes its declared inpu
 and returns its value:
 
 ```python
-from flext_cli import m
+from flext_cli import m, p
 
 
 class GreetInput(m.BaseModel):

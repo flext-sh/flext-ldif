@@ -9,9 +9,9 @@ from __future__ import annotations
 from collections.abc import KeysView, MutableMapping, MutableSequence, ValuesView
 from typing import Annotated, ClassVar, Self
 
-from flext_cli import m
+from flext_cli import m, p
 
-from flext_ldif import c, t
+from flext_ldif import c, p, t
 
 
 class FlextLdifModelsDomainAttributes:
