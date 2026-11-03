@@ -21,7 +21,7 @@ class FlextLdifProtocolsSettingsAcl:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class AciLineFormatConfig(FlextCliProtocols.Model, Protocol):
+    class AciLineFormatConfig(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -55,7 +55,7 @@ class FlextLdifProtocolsSettingsAcl:
             ...
 
     @runtime_checkable
-    class AciParserConfig(FlextCliProtocols.Model, Protocol):
+    class AciParserConfig(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -126,7 +126,7 @@ class FlextLdifProtocolsSettingsAcl:
             ...
 
     @runtime_checkable
-    class AclMetadataConfig(FlextCliProtocols.Model, Protocol):
+    class AclMetadataConfig(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

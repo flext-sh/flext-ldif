@@ -21,7 +21,7 @@ class FlextLdifProtocolsSettingsProcessing:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class ProcessConfig(FlextCliProtocols.Model, Protocol):
+    class ProcessConfig(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         batch_size: int
@@ -59,7 +59,7 @@ class FlextLdifProtocolsSettingsProcessing:
             ...
 
     @runtime_checkable
-    class TransformConfig(FlextCliProtocols.Model, Protocol):
+    class TransformConfig(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

@@ -25,7 +25,7 @@ class FlextLdifProtocolsDomainAcl:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class AclPermissions(FlextCliProtocols.Model, Protocol):
+    class AclPermissions(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         read: bool
@@ -46,14 +46,14 @@ class FlextLdifProtocolsDomainAcl:
         no_self_write: bool
 
     @runtime_checkable
-    class AclTarget(FlextCliProtocols.Model, Protocol):
+    class AclTarget(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         target_dn: str
         attributes: MutableSequence[str]
 
     @runtime_checkable
-    class AclSubject(FlextCliProtocols.Model, Protocol):
+    class AclSubject(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -99,7 +99,7 @@ class FlextLdifProtocolsDomainAcl:
             ...
 
     @runtime_checkable
-    class AclWriteMetadata(FlextCliProtocols.Model, Protocol):
+    class AclWriteMetadata(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -127,7 +127,7 @@ class FlextLdifProtocolsDomainAcl:
             ...
 
     @runtime_checkable
-    class PermissionMappingConfig(FlextCliProtocols.Model, Protocol):
+    class PermissionMappingConfig(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

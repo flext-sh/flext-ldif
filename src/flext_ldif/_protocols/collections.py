@@ -33,7 +33,7 @@ class FlextLdifProtocolsCollections:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class DynamicCounts(FlextCliProtocols.Model, Protocol):
+    class DynamicCounts(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -70,7 +70,7 @@ class FlextLdifProtocolsCollections:
             ...
 
     @runtime_checkable
-    class SchemaContent(FlextCliProtocols.Model, Protocol):
+    class SchemaContent(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -88,7 +88,7 @@ class FlextLdifProtocolsCollections:
             ...
 
     @runtime_checkable
-    class FlexibleCategories(FlextCliProtocols.Model, Protocol):
+    class FlexibleCategories(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

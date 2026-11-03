@@ -22,7 +22,7 @@ class FlextLdifProtocolsDomainEntryStatistics:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class EntryStatisticsLifecycle(FlextCliProtocols.Model, Protocol):
+    class EntryStatisticsLifecycle(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -61,7 +61,7 @@ class FlextLdifProtocolsDomainEntryStatistics:
             ...
 
     @runtime_checkable
-    class EntryStatisticsChanges(FlextCliProtocols.Model, Protocol):
+    class EntryStatisticsChanges(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -105,7 +105,7 @@ class FlextLdifProtocolsDomainEntryStatistics:
             ...
 
     @runtime_checkable
-    class EntryStatisticsOutcome(FlextCliProtocols.Model, Protocol):
+    class EntryStatisticsOutcome(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

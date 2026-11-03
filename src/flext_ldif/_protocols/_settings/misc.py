@@ -20,7 +20,7 @@ class FlextLdifProtocolsSettingsMisc:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class LogContextExtras(FlextCliProtocols.Model, Protocol):
+    class LogContextExtras(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -54,7 +54,7 @@ class FlextLdifProtocolsSettingsMisc:
             ...
 
     @runtime_checkable
-    class RdnProcessingConfig(FlextCliProtocols.Model, Protocol):
+    class RdnProcessingConfig(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         current_attr: str

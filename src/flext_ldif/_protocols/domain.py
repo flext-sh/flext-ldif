@@ -21,7 +21,7 @@ class FlextLdifProtocolsDomain(Protocol):
     """Service-level LDIF contracts and server capabilities."""
 
     @runtime_checkable
-    class ServerServer(p.Model, Protocol):
+    class ServerServer(p.BaseModel, Protocol):
         """Structured server contract used by services and tests."""
 
         server_type: ClassVar[str]

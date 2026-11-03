@@ -374,7 +374,7 @@ class FlextLdifProtocolsBase:
             ...
 
     @runtime_checkable
-    class RegistryPortOptions(FlextCliProtocols.Model, Protocol):
+    class RegistryPortOptions(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

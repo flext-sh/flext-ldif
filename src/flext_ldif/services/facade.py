@@ -81,7 +81,7 @@ class FlextLdifFacade(
         settings_type: p.SettingsType | None = None,
         settings_overrides: t.JsonMapping | None = None,
         initial_context: p.Context | None = None,
-        **fields: t.ModelInput[p.Model] | Sequence[p.Model],
+        **fields: t.ModelInput[p.BaseModel] | Sequence[p.BaseModel],
     ) -> None:
         """Compose isolated registry/runtime dependencies and builtin dialects.
 
@@ -130,7 +130,7 @@ class FlextLdifFacade(
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
         registry: p.Registry | None = None,
-        **fields: t.ModelInput[p.Model] | Sequence[p.Model],
+        **fields: t.ModelInput[p.BaseModel] | Sequence[p.BaseModel],
     ) -> Self:
         """Return a configured facade instance while keeping the DSL alias callable.
 
@@ -252,7 +252,7 @@ class FlextLdifFacade(
         target_server: str | c.Ldif.ServerTypes | None = None,
         base_dn: str = "",
         runtime_settings: p.Ldif.Settings | None = None,
-        **fields: t.ModelInput[p.Model] | Sequence[p.Model],
+        **fields: t.ModelInput[p.BaseModel] | Sequence[p.BaseModel],
     ) -> p.Ldif.ProcessingPipeline:
         """Create a processing pipeline from explicit config or server pair.
 

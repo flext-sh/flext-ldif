@@ -27,7 +27,7 @@ class FlextLdifProtocolsDomainMetadata:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class CommentedAttributeValues(FlextCliProtocols.Model, Protocol):
+    class CommentedAttributeValues(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -36,7 +36,7 @@ class FlextLdifProtocolsDomainMetadata:
             ...
 
     @runtime_checkable
-    class ValidationMetadata(FlextCliProtocols.Model, Protocol):
+    class ValidationMetadata(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -72,7 +72,7 @@ class FlextLdifProtocolsDomainMetadata:
             ...
 
     @runtime_checkable
-    class WriteOptions(FlextCliProtocols.Model, Protocol):
+    class WriteOptions(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -106,7 +106,7 @@ class FlextLdifProtocolsDomainMetadata:
             ...
 
     @runtime_checkable
-    class FormatDetails(FlextCliProtocols.Model, Protocol):
+    class FormatDetails(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -137,7 +137,7 @@ class FlextLdifProtocolsDomainMetadata:
             ...
 
     @runtime_checkable
-    class SchemaFormatDetails(FlextCliProtocols.Model, Protocol):
+    class SchemaFormatDetails(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -181,7 +181,7 @@ class FlextLdifProtocolsDomainMetadata:
             ...
 
     @runtime_checkable
-    class ServerMetadata(FlextCliProtocols.Model, Protocol):
+    class ServerMetadata(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

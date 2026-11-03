@@ -22,7 +22,7 @@ class FlextLdifProtocolsSettingsCriteria:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class ServerPatternsConfig(FlextCliProtocols.Model, Protocol):
+    class ServerPatternsConfig(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -78,7 +78,7 @@ class FlextLdifProtocolsSettingsCriteria:
             ...
 
     @runtime_checkable
-    class EntryDetectionMarkers(FlextCliProtocols.Model, Protocol):
+    class EntryDetectionMarkers(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -102,7 +102,7 @@ class FlextLdifProtocolsSettingsCriteria:
             ...
 
     @runtime_checkable
-    class EntryCriteriaConfig(FlextCliProtocols.Model, Protocol):
+    class EntryCriteriaConfig(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -138,7 +138,7 @@ class FlextLdifProtocolsSettingsCriteria:
             ...
 
     @runtime_checkable
-    class EntryParseMetadataConfig(FlextCliProtocols.Model, Protocol):
+    class EntryParseMetadataConfig(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

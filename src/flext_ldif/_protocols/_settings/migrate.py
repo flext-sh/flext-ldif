@@ -24,7 +24,7 @@ class FlextLdifProtocolsSettingsMigrate:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class WriteFormatLayout(FlextCliProtocols.Model, Protocol):
+    class WriteFormatLayout(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -114,7 +114,7 @@ class FlextLdifProtocolsSettingsMigrate:
             ...
 
     @runtime_checkable
-    class WriteFormatAnnotations(FlextCliProtocols.Model, Protocol):
+    class WriteFormatAnnotations(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -199,7 +199,7 @@ class FlextLdifProtocolsSettingsMigrate:
             ...
 
     @runtime_checkable
-    class WriteFormatAclOrdering(FlextCliProtocols.Model, Protocol):
+    class WriteFormatAclOrdering(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -315,7 +315,7 @@ class FlextLdifProtocolsSettingsMigrate:
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class MigrateOptions(FlextCliProtocols.Model, Protocol):
+    class MigrateOptions(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

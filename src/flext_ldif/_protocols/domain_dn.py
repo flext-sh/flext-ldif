@@ -23,7 +23,7 @@ class FlextLdifProtocolsDomainDn:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class DNStatistics(FlextCliProtocols.Model, Protocol):
+    class DNStatistics(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -117,7 +117,7 @@ class FlextLdifProtocolsDomainDn:
             ...
 
     @runtime_checkable
-    class DN(FlextCliProtocols.Model, Protocol):
+    class DN(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -131,7 +131,7 @@ class FlextLdifProtocolsDomainDn:
             ...
 
     @runtime_checkable
-    class DnRegistry(FlextCliProtocols.Model, Protocol):
+    class DnRegistry(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         def clear(self) -> None:

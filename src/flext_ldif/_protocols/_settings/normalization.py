@@ -17,7 +17,7 @@ class FlextLdifProtocolsSettingsNormalization:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class DnNormalizationConfig(FlextCliProtocols.Model, Protocol):
+    class DnNormalizationConfig(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -51,7 +51,7 @@ class FlextLdifProtocolsSettingsNormalization:
             ...
 
     @runtime_checkable
-    class AttrNormalizationConfig(FlextCliProtocols.Model, Protocol):
+    class AttrNormalizationConfig(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

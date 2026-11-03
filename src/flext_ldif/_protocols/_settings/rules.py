@@ -22,7 +22,7 @@ class FlextLdifProtocolsSettingsRules:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class CategoryRules(FlextCliProtocols.Model, Protocol):
+    class CategoryRules(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -71,7 +71,7 @@ class FlextLdifProtocolsSettingsRules:
             ...
 
     @runtime_checkable
-    class WhitelistRules(FlextCliProtocols.Model, Protocol):
+    class WhitelistRules(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

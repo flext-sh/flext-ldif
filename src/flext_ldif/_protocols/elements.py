@@ -23,7 +23,7 @@ class FlextLdifProtocolsElements:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class SchemaElement(FlextCliProtocols.Model, Protocol):
+    class SchemaElement(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -47,7 +47,7 @@ class FlextLdifProtocolsElements:
             ...
 
     @runtime_checkable
-    class AclElement(FlextCliProtocols.Model, Protocol):
+    class AclElement(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

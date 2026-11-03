@@ -17,7 +17,7 @@ class FlextLdifProtocolsSettingsValidation:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class ServerValidationRules(FlextCliProtocols.Model, Protocol):
+    class ServerValidationRules(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

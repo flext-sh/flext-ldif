@@ -22,7 +22,7 @@ from tests import m, tm
     ],
 )
 def test_rule_views_remain_immutable_and_serialize(
-    rules: p.Model,
+    rules: p.BaseModel,
     field: str,
 ) -> None:
     """Serialize the real computed view without mutating the model contract."""

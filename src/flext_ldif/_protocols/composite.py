@@ -21,7 +21,7 @@ class FlextLdifProtocolsComposite:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class Stats(FlextCliProtocols.Model, Protocol):
+    class Stats(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         total_entries: t.NonNegativeInt
@@ -29,7 +29,7 @@ class FlextLdifProtocolsComposite:
         failed: t.NonNegativeInt
 
     @runtime_checkable
-    class OidAclMetadataConfig(FlextCliProtocols.Model, Protocol):
+    class OidAclMetadataConfig(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         acl_line: str

@@ -23,7 +23,7 @@ class FlextLdifProtocolsProcessing:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class ProcessingPipelineOptions(FlextCliProtocols.Model, Protocol):
+    class ProcessingPipelineOptions(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -39,14 +39,14 @@ class FlextLdifProtocolsProcessing:
             ...
 
     @runtime_checkable
-    class ProcessingResult(FlextCliProtocols.Model, Protocol):
+    class ProcessingResult(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         dn: str
         attributes: t.MutableStrSequenceMapping
 
     @runtime_checkable
-    class ProcessEntriesOptions(FlextCliProtocols.Model, Protocol):
+    class ProcessEntriesOptions(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         processor_name: Literal["transform", "validate"]

@@ -22,7 +22,7 @@ class FlextLdifProtocolsAclConvert:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class OidAclSubject(FlextCliProtocols.Model, Protocol):
+    class OidAclSubject(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -56,7 +56,7 @@ class FlextLdifProtocolsAclConvert:
             ...
 
     @runtime_checkable
-    class OidAclRule(FlextCliProtocols.Model, Protocol):
+    class OidAclRule(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -95,7 +95,7 @@ class FlextLdifProtocolsAclConvert:
             ...
 
     @runtime_checkable
-    class AciAllow(FlextCliProtocols.Model, Protocol):
+    class AciAllow(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -124,7 +124,7 @@ class FlextLdifProtocolsAclConvert:
             ...
 
     @runtime_checkable
-    class AclSubjectOutcome(FlextCliProtocols.Model, Protocol):
+    class AclSubjectOutcome(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -162,7 +162,7 @@ class FlextLdifProtocolsAclConvert:
             ...
 
     @runtime_checkable
-    class AciRule(FlextCliProtocols.Model, Protocol):
+    class AciRule(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -208,7 +208,7 @@ class FlextLdifProtocolsAclConvert:
             ...
 
     @runtime_checkable
-    class AclEntryConversion(FlextCliProtocols.Model, Protocol):
+    class AclEntryConversion(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -222,7 +222,7 @@ class FlextLdifProtocolsAclConvert:
             ...
 
     @runtime_checkable
-    class AciAllowGroup(FlextCliProtocols.Model, Protocol):
+    class AciAllowGroup(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -246,7 +246,7 @@ class FlextLdifProtocolsAclConvert:
             ...
 
     @runtime_checkable
-    class AciAllowGroups(FlextCliProtocols.Model, Protocol):
+    class AciAllowGroups(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -261,7 +261,7 @@ class FlextLdifProtocolsAclConvert:
             ...
 
     @runtime_checkable
-    class AclSubjectMatcher(FlextCliProtocols.Model, Protocol):
+    class AclSubjectMatcher(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         pattern: t.RegexPattern
@@ -270,7 +270,7 @@ class FlextLdifProtocolsAclConvert:
         perms_group: int
 
     @runtime_checkable
-    class AclSubjectMatcherCatalog(FlextCliProtocols.Model, Protocol):
+    class AclSubjectMatcherCatalog(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -281,7 +281,7 @@ class FlextLdifProtocolsAclConvert:
             ...
 
     @runtime_checkable
-    class OidAclSubjectModifiers(FlextCliProtocols.Model, Protocol):
+    class OidAclSubjectModifiers(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

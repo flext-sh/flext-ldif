@@ -22,7 +22,7 @@ class FlextLdifProtocolsDomainAttributes:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class Attributes(FlextCliProtocols.Model, Protocol):
+    class Attributes(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         attributes: t.MutableStrSequenceMapping
@@ -80,7 +80,7 @@ class FlextLdifProtocolsDomainAttributes:
             ...
 
     @runtime_checkable
-    class AttributeTransformation(FlextCliProtocols.Model, Protocol):
+    class AttributeTransformation(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

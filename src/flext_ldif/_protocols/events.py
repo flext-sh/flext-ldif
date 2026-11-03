@@ -23,7 +23,7 @@ class FlextLdifProtocolsEvents:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class DnEventConfig(FlextCliProtocols.Model, Protocol):
+    class DnEventConfig(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         dn_operation: str
@@ -34,7 +34,7 @@ class FlextLdifProtocolsEvents:
         parse_components: t.MutableStrPairSequence | None
 
     @runtime_checkable
-    class ConversionEventConfig(FlextCliProtocols.Model, Protocol):
+    class ConversionEventConfig(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         conversion_operation: str
@@ -47,7 +47,7 @@ class FlextLdifProtocolsEvents:
         error_details: MutableSequence[str] | None
 
     @runtime_checkable
-    class DnEvent(FlextCliProtocols.Model, Protocol):
+    class DnEvent(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -72,7 +72,7 @@ class FlextLdifProtocolsEvents:
         component_count: int
 
     @runtime_checkable
-    class ConversionEvent(FlextCliProtocols.Model, Protocol):
+    class ConversionEvent(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

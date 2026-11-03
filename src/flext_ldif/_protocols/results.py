@@ -30,7 +30,7 @@ class FlextLdifProtocolsResults:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class WriteRequest(FlextCliProtocols.Model, Protocol):
+    class WriteRequest(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -46,7 +46,7 @@ class FlextLdifProtocolsResults:
             ...
 
     @runtime_checkable
-    class MigrationPipelineOptions(FlextCliProtocols.Model, Protocol):
+    class MigrationPipelineOptions(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         input_dir: Path | None
@@ -78,7 +78,7 @@ class FlextLdifProtocolsResults:
             ...
 
     @runtime_checkable
-    class MigrationSummary(FlextCliProtocols.Model, Protocol):
+    class MigrationSummary(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -104,7 +104,7 @@ class FlextLdifProtocolsResults:
             ...
 
     @runtime_checkable
-    class MigrationPipelineResult(FlextCliProtocols.Model, Protocol):
+    class MigrationPipelineResult(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -148,7 +148,7 @@ class FlextLdifProtocolsResults:
             ...
 
     @runtime_checkable
-    class ValidationResult(FlextCliProtocols.Model, Protocol):
+    class ValidationResult(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -182,7 +182,7 @@ class FlextLdifProtocolsResults:
             ...
 
     @runtime_checkable
-    class ServerDetectionResult(FlextCliProtocols.Model, Protocol):
+    class ServerDetectionResult(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -223,7 +223,7 @@ class FlextLdifProtocolsResults:
             ...
 
     @runtime_checkable
-    class EntriesStatistics(FlextCliProtocols.Model, Protocol):
+    class EntriesStatistics(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -246,7 +246,7 @@ class FlextLdifProtocolsResults:
             ...
 
     @runtime_checkable
-    class Response(FlextCliProtocols.Model, Protocol):
+    class Response(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

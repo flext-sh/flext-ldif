@@ -20,7 +20,7 @@ class FlextLdifProtocolsDomainEntryControl:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class Control(FlextCliProtocols.Model, Protocol):
+    class Control(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
