@@ -16,7 +16,7 @@ class FlextLdifEntries(s[p.Ldif.Response]):
     """Entry operations with strict contracts."""
 
     entries: Annotated[
-        MutableSequence[p.Ldif.Entry],
+        MutableSequence[Annotated[p.Ldif.Entry, t.schema_for_model(m.Ldif.Entry)]],
         m.Field(
             default_factory=list,
             exclude=True,

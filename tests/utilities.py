@@ -18,9 +18,11 @@ from flext_tests import u as flext_tests_u
 
 from flext_ldif import u as flext_ldif_u
 from tests import c, m, p, t
-from tests._utilities.utilities_entries import TestsFlextLdifEntryBuilders
-from tests._utilities.utilities_ldap import TestsFlextLdifLdapClient
-from tests._utilities.utilities_schema import TestsSchemaAclAssertionsMixin
+from tests._utilities import (
+    TestsFlextLdifEntryBuilders,
+    TestsFlextLdifLdapClient,
+    TestsSchemaAclAssertionsMixin,
+)
 
 
 class TestsFlextLdifUtilities(flext_tests_u, flext_ldif_u):

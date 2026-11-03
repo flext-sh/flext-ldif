@@ -15,7 +15,7 @@ from typing import Annotated
 
 from flext_core import m
 
-from flext_ldif import c, t
+from flext_ldif import c, p, t
 
 
 class FlextLdifModelsAclConvert:
@@ -69,7 +69,13 @@ class FlextLdifModelsAclConvert:
             m.Field(description="LDAP filter expression, if present"),
         ] = None
         subjects: Annotated[
-            tuple[FlextLdifModelsAclConvert.OidAclSubject, ...],
+            tuple[
+                Annotated[
+                    p.Ldif.OidAclSubject,
+                    t.schema_for_model(FlextLdifModelsAclConvert.OidAclSubject),
+                ],
+                ...,
+            ],
             m.Field(description="Parsed by-clause subjects"),
         ] = ()
         raw_line: Annotated[str, m.Field(description="Original raw OID ACL line")] = ""

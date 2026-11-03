@@ -13,7 +13,7 @@ from flext_tests import p as flext_tests_p
 from flext_ldif import p
 
 if TYPE_CHECKING:
-    from tests import m, p
+    from tests import m
 
 
 class TestsFlextLdifProtocolsLdap(p):
