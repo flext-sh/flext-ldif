@@ -14,7 +14,7 @@ from flext_cli import FlextCliProtocols
 
 if TYPE_CHECKING:
     from flext_ldif._constants import FlextLdifConstantsBaseParts
-    from flext_ldif._protocols import FlextLdifProtocolsValues
+    from flext_ldif._protocols._settings import FlextLdifProtocolsSettingsNormalization
 
 
 class FlextLdifProtocolsSettingsProcessing:
@@ -24,20 +24,9 @@ class FlextLdifProtocolsSettingsProcessing:
     class ProcessConfig(FlextCliProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def batch_size(self) -> int:
-            """Number of entries to process per batch."""
-            ...
-
-        @property
-        def timeout_seconds(self) -> int:
-            """Maximum processing time in seconds."""
-            ...
-
-        @property
-        def max_retries(self) -> int:
-            """Maximum retry attempts on failure."""
-            ...
+        batch_size: int
+        timeout_seconds: int
+        max_retries: int
 
         @property
         def source_server(
@@ -53,20 +42,19 @@ class FlextLdifProtocolsSettingsProcessing:
             """Target LDAP server type identifier."""
             ...
 
-        @property
-        def base_dn(self) -> str:
-            """Migration base DN for OID→OUD ACL scope filtering."""
-            ...
+        base_dn: str
 
         @property
-        def dn_config(self) -> FlextLdifProtocolsValues.DnNormalizationConfig | None:
+        def dn_config(
+            self,
+        ) -> FlextLdifProtocolsSettingsNormalization.DnNormalizationConfig | None:
             """DN normalization configuration."""
             ...
 
         @property
         def attr_config(
             self,
-        ) -> FlextLdifProtocolsValues.AttrNormalizationConfig | None:
+        ) -> FlextLdifProtocolsSettingsNormalization.AttrNormalizationConfig | None:
             """Attribute normalization configuration."""
             ...
 
@@ -100,7 +88,9 @@ class FlextLdifProtocolsSettingsProcessing:
             ...
 
         @property
-        def process_config(self) -> FlextLdifProtocolsValues.ProcessConfig | None:
+        def process_config(
+            self,
+        ) -> FlextLdifProtocolsSettingsProcessing.ProcessConfig | None:
             """Processing configuration for batch operations."""
             ...
 

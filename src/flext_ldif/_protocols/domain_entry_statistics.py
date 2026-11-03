@@ -15,14 +15,14 @@ from flext_cli import FlextCliProtocols
 
 if TYPE_CHECKING:
     from flext_ldif import t
-    from flext_ldif._protocols import FlextLdifProtocolsBase
+    from flext_ldif._protocols import FlextLdifProtocolsDomainDn
 
 
 class FlextLdifProtocolsDomainEntryStatistics:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class EntryStatistics(FlextCliProtocols.Model, Protocol):
+    class EntryStatisticsLifecycle(FlextCliProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -59,6 +59,10 @@ class FlextLdifProtocolsDomainEntryStatistics:
         def rejection_reason(self) -> str | None:
             """Human-readable rejection reason."""
             ...
+
+    @runtime_checkable
+    class EntryStatisticsChanges(FlextCliProtocols.Model, Protocol):
+        """Structural data contract projected from the owning model."""
 
         @property
         def attributes_added(self) -> MutableSequence[str]:
@@ -100,8 +104,12 @@ class FlextLdifProtocolsDomainEntryStatistics:
             """Count of server transformations applied."""
             ...
 
+    @runtime_checkable
+    class EntryStatisticsOutcome(FlextCliProtocols.Model, Protocol):
+        """Structural data contract projected from the owning model."""
+
         @property
-        def dn_statistics(self) -> FlextLdifProtocolsBase.DNStatistics | None:
+        def dn_statistics(self) -> FlextLdifProtocolsDomainDn.DNStatistics | None:
             """DN transformation statistics (if applicable)."""
             ...
 
@@ -135,6 +143,15 @@ class FlextLdifProtocolsDomainEntryStatistics:
             """Confidence score for category assignment."""
             ...
 
+    @runtime_checkable
+    class EntryStatistics(
+        EntryStatisticsOutcome,
+        EntryStatisticsChanges,
+        EntryStatisticsLifecycle,
+        Protocol,
+    ):
+        """Structural data contract projected from the owning model."""
+
         @property
         def dn_was_transformed(self) -> bool:
             """Whether DN underwent transformation."""
@@ -158,14 +175,6 @@ class FlextLdifProtocolsDomainEntryStatistics:
         @property
         def total_attribute_changes(self) -> int:
             """Total count of attribute modifications."""
-            ...
-
-        def add_error(self, error: str) -> Self:
-            """Add error message."""
-            ...
-
-        def add_warning(self, warning: str) -> Self:
-            """Add warning message."""
             ...
 
         def mark_filtered(self, filter_type: str, *, passed: bool) -> Self:

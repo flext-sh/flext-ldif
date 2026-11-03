@@ -76,99 +76,130 @@ class FlextLdifModelsResultsStatistics:
             m.Field(description="Entries written to output"),
         ] = 0
 
-    class Statistics(m.FrozenModel):
+    class StatisticsEntryCounts(m.FrozenModel):
+        """Entry counts of one LDIF operation by outcome and kind."""
+
         total_entries: Annotated[
             t.NonNegativeInt,
             m.Field(description="Total number of entries processed"),
         ] = 0
+
         processed_entries: Annotated[
             t.NonNegativeInt,
             m.Field(description="Entries successfully processed"),
         ] = 0
+
         failed_entries: Annotated[
             t.NonNegativeInt,
             m.Field(description="Entries that failed processing"),
         ] = 0
+
         schema_entries: Annotated[
             t.NonNegativeInt,
             m.Field(description="Count of schema definition entries"),
         ] = 0
+
         data_entries: Annotated[
             t.NonNegativeInt,
             m.Field(description="Count of data entries"),
         ] = 0
+
         hierarchy_entries: Annotated[
             t.NonNegativeInt,
             m.Field(description="Count of organizational hierarchy entries"),
         ] = 0
+
         user_entries: Annotated[
             t.NonNegativeInt,
             m.Field(description="Count of user entries"),
         ] = 0
+
         group_entries: Annotated[
             t.NonNegativeInt,
             m.Field(description="Count of group entries"),
         ] = 0
+
         acl_entries: Annotated[
             t.NonNegativeInt,
             m.Field(description="Count of ACL entries"),
         ] = 0
+
         rejected_entries: Annotated[
             t.NonNegativeInt,
             m.Field(description="Entries rejected by filter rules"),
         ] = 0
+
+    class StatisticsSchemaAcl(m.FrozenModel):
+        """Schema and ACL extraction counts of one LDIF operation."""
+
         schema_attributes: Annotated[
             t.NonNegativeInt,
             m.Field(description="Count of schema attributes parsed"),
         ] = 0
+
         schema_objectclasses: Annotated[
             t.NonNegativeInt,
             m.Field(description="Count of schema object classes parsed"),
         ] = 0
+
         acls_extracted: Annotated[
             t.NonNegativeInt,
             m.Field(description="ACLs successfully extracted"),
         ] = 0
+
         acls_failed: Annotated[
             t.NonNegativeInt,
             m.Field(description="ACLs that failed extraction"),
         ] = 0
+
         acl_attribute_name: Annotated[
             str | None,
             m.Field(description="Name of the ACL attribute used for extraction"),
         ] = None
+
+    class StatisticsRun(m.FrozenModel):
+        """Parse outcome, output and timing of one LDIF operation."""
+
         parse_errors: Annotated[
             t.NonNegativeInt,
             m.Field(description="Count of parse errors encountered"),
         ] = 0
+
         detected_server_type: Annotated[
             c.Ldif.ServerTypes | None,
             m.Field(description="LDAP server type detected from LDIF content"),
         ] = None
+
         entries_written: Annotated[
             t.NonNegativeInt,
             m.Field(description="Entries written to output"),
         ] = 0
+
         output_file: Annotated[
             str | None,
             m.Field(description="Path to the output file"),
         ] = None
+
         file_size_bytes: Annotated[
             t.NonNegativeInt,
             m.Field(description="Output file size in bytes"),
         ] = 0
+
         encoding: Annotated[
             c.Ldif.Encoding,
             m.Field(description="Character encoding used for output"),
         ] = c.Ldif.Encoding.UTF8
+
         processing_duration: Annotated[
             t.NonNegativeFloat,
             m.Field(description="Total processing duration in seconds"),
         ] = 0.0
+
         rejection_reasons: FlextLdifModelsCollections.DynamicCounts = m.Field(
             default_factory=FlextLdifModelsCollections.DynamicCounts,
             description="Counts of entries rejected by reason category",
         )
+
         events: MutableSequence[
             FlextLdifModelsEvents.ConversionEvent | FlextLdifModelsEvents.DnEvent
         ] = m.Field(
@@ -178,6 +209,11 @@ class FlextLdifModelsResultsStatistics:
             description="Domain events emitted during processing",
         )
 
+    class Statistics(
+        StatisticsRun,
+        StatisticsSchemaAcl,
+        StatisticsEntryCounts,
+    ):
         @m.computed_field
         @property
         def failure_rate(self) -> float:

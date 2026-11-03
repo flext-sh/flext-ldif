@@ -18,10 +18,7 @@ from flext_ldif._protocols import FlextLdifProtocolsElements
 if TYPE_CHECKING:
     from flext_ldif import t
     from flext_ldif._constants import FlextLdifConstantsBaseParts
-    from flext_ldif._protocols import (
-        FlextLdifLdifProtocolsGeneratedModelsServerMetadata,
-        FlextLdifProtocolsBase,
-    )
+    from flext_ldif._protocols import FlextLdifProtocolsDomainMetadata
 
 
 class FlextLdifProtocolsDomainAcl:
@@ -31,99 +28,29 @@ class FlextLdifProtocolsDomainAcl:
     class AclPermissions(FlextCliProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def read(self) -> bool:
-            """Read permission."""
-            ...
-
-        @property
-        def write(self) -> bool:
-            """Write permission."""
-            ...
-
-        @property
-        def add(self) -> bool:
-            """Add permission."""
-            ...
-
-        @property
-        def delete(self) -> bool:
-            """Delete permission."""
-            ...
-
-        @property
-        def search(self) -> bool:
-            """Search permission."""
-            ...
-
-        @property
-        def compare(self) -> bool:
-            """Compare permission."""
-            ...
-
-        @property
-        def self_write(self) -> bool:
-            """Self-write permission (OID, OUD)."""
-            ...
-
-        @property
-        def proxy(self) -> bool:
-            """Proxy permission (OID, OUD, 389DS)."""
-            ...
-
-        @property
-        def browse(self) -> bool:
-            """Browse permission (OID) - maps to read+search."""
-            ...
-
-        @property
-        def auth(self) -> bool:
-            """Auth permission (OID) - authentication access."""
-            ...
-
-        @property
-        def all(self) -> bool:
-            """All permissions (compound permission)."""
-            ...
-
-        @property
-        def no_write(self) -> bool:
-            """Deny write permission (OID)."""
-            ...
-
-        @property
-        def no_add(self) -> bool:
-            """Deny add permission (OID)."""
-            ...
-
-        @property
-        def no_delete(self) -> bool:
-            """Deny delete permission (OID)."""
-            ...
-
-        @property
-        def no_browse(self) -> bool:
-            """Deny browse permission (OID)."""
-            ...
-
-        @property
-        def no_self_write(self) -> bool:
-            """Deny self-write permission (OID)."""
-            ...
+        read: bool
+        write: bool
+        add: bool
+        delete: bool
+        search: bool
+        compare: bool
+        self_write: bool
+        proxy: bool
+        browse: bool
+        auth: bool
+        all: bool
+        no_write: bool
+        no_add: bool
+        no_delete: bool
+        no_browse: bool
+        no_self_write: bool
 
     @runtime_checkable
     class AclTarget(FlextCliProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def target_dn(self) -> str:
-            """Target DN pattern."""
-            ...
-
-        @property
-        def attributes(self) -> MutableSequence[str]:
-            """Target attributes."""
-            ...
+        target_dn: str
+        attributes: MutableSequence[str]
 
     @runtime_checkable
     class AclSubject(FlextCliProtocols.Model, Protocol):
@@ -136,49 +63,34 @@ class FlextLdifProtocolsDomainAcl:
             """Subject type (user, group, etc.)."""
             ...
 
-        @property
-        def subject_value(self) -> str:
-            """Subject value/pattern."""
-            ...
+        subject_value: str
 
     @runtime_checkable
     class Acl(FlextLdifProtocolsElements.AclElement, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def name(self) -> str:
-            """ACL name."""
-            ...
+        name: str
 
         @property
-        def target(self) -> FlextLdifProtocolsBase.AclTarget | None:
+        def target(self) -> FlextLdifProtocolsDomainAcl.AclTarget | None:
             """ACL target specification."""
             ...
 
         @property
-        def subject(self) -> FlextLdifProtocolsBase.AclSubject | None:
+        def subject(self) -> FlextLdifProtocolsDomainAcl.AclSubject | None:
             """ACL subject specification."""
             ...
 
         @property
-        def permissions(self) -> FlextLdifProtocolsBase.AclPermissions | None:
+        def permissions(self) -> FlextLdifProtocolsDomainAcl.AclPermissions | None:
             """ACL permission flags."""
             ...
 
-        @property
-        def raw_line(self) -> str:
-            """Original raw ACL line from LDIF."""
-            ...
+        raw_line: str
+        raw_acl: str
 
         @property
-        def raw_acl(self) -> str:
-            """Original ACL string from LDIF."""
-            ...
-
-        @property
-        def metadata(
-            self,
-        ) -> FlextLdifLdifProtocolsGeneratedModelsServerMetadata.ServerMetadata | None:
+        def metadata(self) -> FlextLdifProtocolsDomainMetadata.ServerMetadata | None:
             """Server-specific metadata for ACL processing."""
             ...
 
@@ -219,12 +131,12 @@ class FlextLdifProtocolsDomainAcl:
         """Structural data contract projected from the owning model."""
 
         @property
-        def original_acl(self) -> FlextLdifProtocolsBase.Acl:
+        def original_acl(self) -> FlextLdifProtocolsDomainAcl.Acl:
             """Original ACL model."""
             ...
 
         @property
-        def converted_acl(self) -> FlextLdifProtocolsBase.Acl:
+        def converted_acl(self) -> FlextLdifProtocolsDomainAcl.Acl:
             """Converted ACL model (modified in-place)."""
             ...
 

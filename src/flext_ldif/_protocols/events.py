@@ -28,26 +28,10 @@ class FlextLdifProtocolsEvents:
 
         dn_operation: str
         input_dn: str
-
-        @property
-        def output_dn(self) -> str | None:
-            """Resulting DN after operation."""
-            ...
-
-        @property
-        def operation_duration_ms(self) -> float:
-            """Operation duration in milliseconds."""
-            ...
-
-        @property
-        def validation_result(self) -> bool | None:
-            """Whether the DN passed validation."""
-            ...
-
-        @property
-        def parse_components(self) -> t.MutableStrPairSequence | None:
-            """Parsed RDN components as (attribute, value) pairs."""
-            ...
+        output_dn: str | None
+        operation_duration_ms: float
+        validation_result: bool | None
+        parse_components: t.MutableStrPairSequence | None
 
     @runtime_checkable
     class ConversionEventConfig(FlextCliProtocols.Model, Protocol):
@@ -57,26 +41,10 @@ class FlextLdifProtocolsEvents:
         source_format: str
         target_format: str
         items_processed: int
-
-        @property
-        def items_converted(self) -> int:
-            """Items successfully converted."""
-            ...
-
-        @property
-        def items_failed(self) -> int:
-            """Items that failed conversion."""
-            ...
-
-        @property
-        def conversion_duration_ms(self) -> float:
-            """Conversion duration in milliseconds."""
-            ...
-
-        @property
-        def error_details(self) -> MutableSequence[str] | None:
-            """Error messages for failed items."""
-            ...
+        items_converted: int
+        items_failed: int
+        conversion_duration_ms: float
+        error_details: MutableSequence[str] | None
 
     @runtime_checkable
     class DnEvent(FlextCliProtocols.Model, Protocol):
@@ -87,15 +55,8 @@ class FlextLdifProtocolsEvents:
             """Immutable event discriminator for union routing."""
             ...
 
-        @property
-        def event_type(self) -> t.NonEmptyStr:
-            """Domain event type identifier for subscriber routing."""
-            ...
-
-        @property
-        def aggregate_id(self) -> t.NonEmptyStr:
-            """Identifier of the aggregate root that produced this event."""
-            ...
+        event_type: t.NonEmptyStr
+        aggregate_id: t.NonEmptyStr
 
         @property
         def data(self) -> p.ConfigMap:
@@ -104,31 +65,11 @@ class FlextLdifProtocolsEvents:
 
         dn_operation: str
         input_dn: str
-
-        @property
-        def output_dn(self) -> str | None:
-            """Resulting DN after operation."""
-            ...
-
-        @property
-        def dn_duration_ms(self) -> float:
-            """DN operation duration in milliseconds."""
-            ...
-
-        @property
-        def validation_result(self) -> bool | None:
-            """Whether the DN passed validation."""
-            ...
-
-        @property
-        def has_output(self) -> bool:
-            """Whether the operation produced output."""
-            ...
-
-        @property
-        def component_count(self) -> int:
-            """Number of RDN components in the DN."""
-            ...
+        output_dn: str | None
+        dn_duration_ms: float
+        validation_result: bool | None
+        has_output: bool
+        component_count: int
 
     @runtime_checkable
     class ConversionEvent(FlextCliProtocols.Model, Protocol):
@@ -139,15 +80,8 @@ class FlextLdifProtocolsEvents:
             """Immutable event discriminator for union routing."""
             ...
 
-        @property
-        def event_type(self) -> t.NonEmptyStr:
-            """Domain event type identifier for subscriber routing."""
-            ...
-
-        @property
-        def aggregate_id(self) -> t.NonEmptyStr:
-            """Identifier of the aggregate root that produced this event."""
-            ...
+        event_type: t.NonEmptyStr
+        aggregate_id: t.NonEmptyStr
 
         @property
         def data(self) -> p.ConfigMap:
@@ -157,36 +91,12 @@ class FlextLdifProtocolsEvents:
         conversion_operation: str
         source_format: str
         target_format: str
-
-        @property
-        def items_converted(self) -> int:
-            """Items successfully converted."""
-            ...
-
-        @property
-        def items_failed(self) -> int:
-            """Items that failed conversion."""
-            ...
-
-        @property
-        def conversion_duration_ms(self) -> float:
-            """Conversion duration in milliseconds."""
-            ...
-
-        @property
-        def error_details(self) -> MutableSequence[str] | None:
-            """Error messages for failed items."""
-            ...
-
-        @property
-        def conversion_success_rate(self) -> float:
-            """Percentage of items successfully converted."""
-            ...
-
-        @property
-        def throughput_items_per_sec(self) -> float:
-            """Conversion throughput in items per second."""
-            ...
+        items_converted: int
+        items_failed: int
+        conversion_duration_ms: float
+        error_details: MutableSequence[str] | None
+        conversion_success_rate: float
+        throughput_items_per_sec: float
 
 
 __all__: list[str] = [

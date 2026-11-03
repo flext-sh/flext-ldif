@@ -16,7 +16,6 @@ from flext_cli import FlextCliProtocols
 if TYPE_CHECKING:
     from flext_ldif import t
     from flext_ldif._constants import FlextLdifConstantsAclConvert
-    from flext_ldif._protocols import FlextLdifProtocolsValues
 
 
 class FlextLdifProtocolsAclConvert:
@@ -86,7 +85,7 @@ class FlextLdifProtocolsAclConvert:
             ...
 
         @property
-        def subjects(self) -> tuple[FlextLdifProtocolsValues.OidAclSubject, ...]:
+        def subjects(self) -> tuple[FlextLdifProtocolsAclConvert.OidAclSubject, ...]:
             """Parsed by-clause subjects."""
             ...
 
@@ -129,7 +128,7 @@ class FlextLdifProtocolsAclConvert:
         """Structural data contract projected from the owning model."""
 
         @property
-        def subject(self) -> FlextLdifProtocolsValues.OidAclSubject:
+        def subject(self) -> FlextLdifProtocolsAclConvert.OidAclSubject:
             """The OID subject exactly as parsed."""
             ...
 
@@ -139,7 +138,7 @@ class FlextLdifProtocolsAclConvert:
             ...
 
         @property
-        def allow(self) -> FlextLdifProtocolsValues.AciAllow | None:
+        def allow(self) -> FlextLdifProtocolsAclConvert.AciAllow | None:
             """Final allow clause of a GRANTED subject."""
             ...
 
@@ -192,7 +191,7 @@ class FlextLdifProtocolsAclConvert:
             ...
 
         @property
-        def allows(self) -> tuple[FlextLdifProtocolsValues.AciAllow, ...]:
+        def allows(self) -> tuple[FlextLdifProtocolsAclConvert.AciAllow, ...]:
             """allow() clauses."""
             ...
 
@@ -213,7 +212,7 @@ class FlextLdifProtocolsAclConvert:
         """Structural data contract projected from the owning model."""
 
         @property
-        def rules(self) -> tuple[FlextLdifProtocolsValues.AciRule, ...]:
+        def rules(self) -> tuple[FlextLdifProtocolsAclConvert.AciRule, ...]:
             """Assembled aci rules in OID line order."""
             ...
 
@@ -256,7 +255,7 @@ class FlextLdifProtocolsAclConvert:
             ...
 
         def with_allow(
-            self, allow: FlextLdifProtocolsValues.AciAllow, bind: str
+            self, allow: FlextLdifProtocolsAclConvert.AciAllow, bind: str
         ) -> FlextLdifProtocolsAclConvert.AciAllowGroups:
             """Return grouped allow state with one rendered bind rule appended."""
             ...
@@ -265,32 +264,19 @@ class FlextLdifProtocolsAclConvert:
     class AclSubjectMatcher(FlextCliProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def pattern(self) -> t.RegexPattern:
-            """Compiled by-clause matcher from c.Ldif."""
-            ...
-
-        @property
-        def subj_type(self) -> str:
-            """Subject keyword this matcher yields."""
-            ...
-
-        @property
-        def value_group(self) -> int | str:
-            """Capture-group index OR literal subject value."""
-            ...
-
-        @property
-        def perms_group(self) -> int:
-            """Capture-group index of the permission tokens."""
-            ...
+        pattern: t.RegexPattern
+        subj_type: str
+        value_group: int | str
+        perms_group: int
 
     @runtime_checkable
     class AclSubjectMatcherCatalog(FlextCliProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
-        def matchers(self) -> tuple[FlextLdifProtocolsValues.AclSubjectMatcher, ...]:
+        def matchers(
+            self,
+        ) -> tuple[FlextLdifProtocolsAclConvert.AclSubjectMatcher, ...]:
             """OID by-clause subject matchers in priority order."""
             ...
 

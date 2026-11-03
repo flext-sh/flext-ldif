@@ -19,9 +19,11 @@ if TYPE_CHECKING:
     from flext_ldif import t
     from flext_ldif._constants import FlextLdifConstantsBaseParts
     from flext_ldif._protocols import (
-        FlextLdifLdifProtocolsGeneratedModelsServerMetadata,
-        FlextLdifProtocolsBase,
-        FlextLdifProtocolsValues,
+        FlextLdifProtocolsDomainAttributes,
+        FlextLdifProtocolsDomainDn,
+        FlextLdifProtocolsDomainEntryChange,
+        FlextLdifProtocolsDomainEntryControl,
+        FlextLdifProtocolsDomainMetadata,
     )
     from flext_ldif._typings import FlextLdifTypesBase
 
@@ -39,7 +41,7 @@ class FlextLdifProtocolsDomainEntry:
             ...
 
         @property
-        def dn(self) -> FlextLdifProtocolsBase.DN | None:
+        def dn(self) -> FlextLdifProtocolsDomainDn.DN | None:
             """Structural member projected from the owning model.
 
             Distinguished Name of the entry (REQUIRED per RFC 2849 § 2). Allows None
@@ -49,7 +51,7 @@ class FlextLdifProtocolsDomainEntry:
             ...
 
         @property
-        def attributes(self) -> FlextLdifProtocolsBase.Attributes | None:
+        def attributes(self) -> FlextLdifProtocolsDomainAttributes.Attributes | None:
             """Structural member projected from the owning model.
 
             Entry attributes container (REQUIRED per RFC 2849 § 2). Allows None for
@@ -69,14 +71,14 @@ class FlextLdifProtocolsDomainEntry:
             ...
 
         @property
-        def controls(self) -> Sequence[FlextLdifProtocolsValues.Control]:
+        def controls(self) -> Sequence[FlextLdifProtocolsDomainEntryControl.Control]:
             """RFC 2849 control lines associated with the record."""
             ...
 
         @property
         def change_operations(
             self,
-        ) -> Sequence[FlextLdifProtocolsValues.ChangeOperation]:
+        ) -> Sequence[FlextLdifProtocolsDomainEntryChange.ChangeOperation]:
             """Structured modify operation blocks for changetype=modify."""
             ...
 
@@ -91,30 +93,13 @@ class FlextLdifProtocolsDomainEntry:
             """
             ...
 
-        @property
-        def newrdn(self) -> str | None:
-            """RFC 2849 newrdn field for moddn/modrdn records."""
-            ...
+        newrdn: str | None
+        deleteoldrdn: bool | None
+        newsuperior: str | None
+        raw_record_lines: MutableSequence[str]
 
         @property
-        def deleteoldrdn(self) -> bool | None:
-            """RFC 2849 deleteoldrdn field for moddn/modrdn records."""
-            ...
-
-        @property
-        def newsuperior(self) -> str | None:
-            """RFC 2849 newsuperior field for moddn/modrdn records."""
-            ...
-
-        @property
-        def raw_record_lines(self) -> MutableSequence[str]:
-            """Original unfolded LDIF lines for loss-aware round-trip."""
-            ...
-
-        @property
-        def metadata(
-            self,
-        ) -> FlextLdifLdifProtocolsGeneratedModelsServerMetadata.ServerMetadata | None:
+        def metadata(self) -> FlextLdifProtocolsDomainMetadata.ServerMetadata | None:
             """Structural member projected from the owning model.
 
             Server-specific metadata for processing data, ACLs, statistics,

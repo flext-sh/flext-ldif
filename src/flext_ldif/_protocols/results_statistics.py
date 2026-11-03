@@ -16,7 +16,10 @@ from flext_cli import FlextCliProtocols
 if TYPE_CHECKING:
     from flext_ldif import t
     from flext_ldif._constants import FlextLdifConstantsBaseParts
-    from flext_ldif._protocols import FlextLdifProtocolsBase
+    from flext_ldif._protocols import (
+        FlextLdifProtocolsCollections,
+        FlextLdifProtocolsEvents,
+    )
 
 
 class FlextLdifProtocolsResultsStatistics:
@@ -112,7 +115,7 @@ class FlextLdifProtocolsResultsStatistics:
             ...
 
     @runtime_checkable
-    class Statistics(FlextCliProtocols.Model, Protocol):
+    class StatisticsEntryCounts(FlextCliProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -165,6 +168,10 @@ class FlextLdifProtocolsResultsStatistics:
             """Entries rejected by filter rules."""
             ...
 
+    @runtime_checkable
+    class StatisticsSchemaAcl(FlextCliProtocols.Model, Protocol):
+        """Structural data contract projected from the owning model."""
+
         @property
         def schema_attributes(self) -> t.NonNegativeInt:
             """Count of schema attributes parsed."""
@@ -189,6 +196,10 @@ class FlextLdifProtocolsResultsStatistics:
         def acl_attribute_name(self) -> str | None:
             """Name of the ACL attribute used for extraction."""
             ...
+
+    @runtime_checkable
+    class StatisticsRun(FlextCliProtocols.Model, Protocol):
+        """Structural data contract projected from the owning model."""
 
         @property
         def parse_errors(self) -> t.NonNegativeInt:
@@ -230,7 +241,7 @@ class FlextLdifProtocolsResultsStatistics:
             ...
 
         @property
-        def rejection_reasons(self) -> FlextLdifProtocolsBase.DynamicCounts:
+        def rejection_reasons(self) -> FlextLdifProtocolsCollections.DynamicCounts:
             """Counts of entries rejected by reason category."""
             ...
 
@@ -238,10 +249,16 @@ class FlextLdifProtocolsResultsStatistics:
         def events(
             self,
         ) -> Sequence[
-            FlextLdifProtocolsBase.ConversionEvent | FlextLdifProtocolsBase.DnEvent
+            FlextLdifProtocolsEvents.ConversionEvent | FlextLdifProtocolsEvents.DnEvent
         ]:
             """Domain events emitted during processing."""
             ...
+
+    @runtime_checkable
+    class Statistics(
+        StatisticsRun, StatisticsSchemaAcl, StatisticsEntryCounts, Protocol
+    ):
+        """Structural data contract projected from the owning model."""
 
         @property
         def failure_rate(self) -> float:

@@ -114,7 +114,7 @@ class FlextLdifProtocolsSettingsCriteria:
         def objectclass_mode(
             self,
         ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.EntryCriteriaMode:
-            """ "any" (has any) or "all" (has all)."""
+            """Match mode: "any" (has any) or "all" (has all)."""
             ...
 
         @property

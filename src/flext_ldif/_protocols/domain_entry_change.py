@@ -15,7 +15,7 @@ from flext_cli import FlextCliProtocols
 
 if TYPE_CHECKING:
     from flext_ldif._constants import FlextLdifConstantsBaseParts
-    from flext_ldif._protocols import FlextLdifProtocolsValues
+    from flext_ldif._protocols import FlextLdifProtocolsDomainEntryChangeValue
 
 
 class FlextLdifProtocolsDomainEntryChange:
@@ -38,7 +38,9 @@ class FlextLdifProtocolsDomainEntryChange:
             ...
 
         @property
-        def values(self) -> Sequence[FlextLdifProtocolsValues.ChangeOperationValue]:
+        def values(
+            self,
+        ) -> Sequence[FlextLdifProtocolsDomainEntryChangeValue.ChangeOperationValue]:
             """Decoded values in the block."""
             ...
 

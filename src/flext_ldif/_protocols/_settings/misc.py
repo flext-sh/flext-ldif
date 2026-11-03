@@ -57,25 +57,10 @@ class FlextLdifProtocolsSettingsMisc:
     class RdnProcessingConfig(FlextCliProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def current_attr(self) -> str:
-            """Current attribute name."""
-            ...
-
-        @property
-        def current_val(self) -> str:
-            """Current value."""
-            ...
-
-        @property
-        def in_value(self) -> bool:
-            """Whether parser is inside the value portion."""
-            ...
-
-        @property
-        def pairs(self) -> t.MutableStrPairSequence:
-            """Accumulated (attr, value) pairs."""
-            ...
+        current_attr: str
+        current_val: str
+        in_value: bool
+        pairs: t.MutableStrPairSequence
 
 
 __all__: list[str] = [

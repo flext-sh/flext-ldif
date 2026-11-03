@@ -113,7 +113,7 @@ class FlextLdifModelsSettingsCriteria:
         ] = None
         objectclass_mode: Annotated[
             c.Ldif.EntryCriteriaMode,
-            m.Field(description='"any" (has any) or "all" (has all)'),
+            m.Field(description='Match mode: "any" (has any) or "all" (has all)'),
         ] = c.Ldif.EntryCriteriaMode.ANY
         required_attrs: Annotated[
             MutableSequence[str] | None,

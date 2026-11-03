@@ -214,7 +214,7 @@ class FlextLdifModelsAclConvert:
 
         def with_allow(
             self,
-            allow: FlextLdifModelsAclConvert.AciAllow,
+            allow: p.Ldif.AciAllow,
             bind: str,
         ) -> FlextLdifModelsAclConvert.AciAllowGroups:
             """Return grouped allow state with one rendered bind rule appended."""

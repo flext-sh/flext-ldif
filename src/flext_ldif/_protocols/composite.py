@@ -24,91 +24,28 @@ class FlextLdifProtocolsComposite:
     class Stats(FlextCliProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def total_entries(self) -> t.NonNegativeInt:
-            """Structural member projected from the owning model."""
-            ...
-
-        @property
-        def successful(self) -> t.NonNegativeInt:
-            """Structural member projected from the owning model."""
-            ...
-
-        @property
-        def failed(self) -> t.NonNegativeInt:
-            """Structural member projected from the owning model."""
-            ...
+        total_entries: t.NonNegativeInt
+        successful: t.NonNegativeInt
+        failed: t.NonNegativeInt
 
     @runtime_checkable
     class OidAclMetadataConfig(FlextCliProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def acl_line(self) -> str:
-            """Structural member projected from the owning model."""
-            ...
-
-        @property
-        def oid_subject_type(self) -> str:
-            """Structural member projected from the owning model."""
-            ...
-
-        @property
-        def rfc_subject_type(self) -> str:
-            """Structural member projected from the owning model."""
-            ...
-
-        @property
-        def oid_subject_value(self) -> str:
-            """Structural member projected from the owning model."""
-            ...
-
-        @property
-        def perms_dict(self) -> t.MutableBoolMapping:
-            """Structural member projected from the owning model."""
-            ...
-
-        @property
-        def target_dn(self) -> str:
-            """Structural member projected from the owning model."""
-            ...
-
+        acl_line: str
+        oid_subject_type: str
+        rfc_subject_type: str
+        oid_subject_value: str
+        perms_dict: t.MutableBoolMapping
+        target_dn: str
         target_attrs: MutableSequence[str]
-
-        @property
-        def acl_filter(self) -> str:
-            """Structural member projected from the owning model."""
-            ...
-
-        @property
-        def acl_constraint(self) -> str:
-            """Structural member projected from the owning model."""
-            ...
-
-        @property
-        def bindmode(self) -> str:
-            """Structural member projected from the owning model."""
-            ...
-
-        @property
-        def deny_group_override(self) -> bool:
-            """Structural member projected from the owning model."""
-            ...
-
-        @property
-        def append_to_all(self) -> bool:
-            """Structural member projected from the owning model."""
-            ...
-
-        @property
-        def bind_ip_filter(self) -> str:
-            """Structural member projected from the owning model."""
-            ...
-
-        @property
-        def constrain_to_added_object(self) -> str:
-            """Structural member projected from the owning model."""
-            ...
+        acl_filter: str
+        acl_constraint: str
+        bindmode: str
+        deny_group_override: bool
+        append_to_all: bool
+        bind_ip_filter: str
+        constrain_to_added_object: str
 
 
 __all__: list[str] = [

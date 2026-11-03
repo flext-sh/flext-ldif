@@ -57,10 +57,7 @@ class FlextLdifProtocolsElements:
             """LDAP server type (oid, oud, openldap, rfc, etc.)."""
             ...
 
-        @property
-        def validation_violations(self) -> MutableSequence[str]:
-            """Validation violations recorded while normalizing ACL data."""
-            ...
+        validation_violations: MutableSequence[str]
 
         @property
         def validation_metadata(self) -> p.ConfigMap | None:

@@ -19,7 +19,304 @@ from flext_ldif._models._settings import FlextLdifModelsSettingsRules
 class FlextLdifModelsSettingsMigrate:
     """LDIF settings mix-in: migrate."""
 
-    class WriteFormatOptions(m.Value):
+    class WriteFormatLayout(m.Value):
+        """Line, ordering and encoding layout of written LDIF."""
+
+        line_width: Annotated[
+            int,
+            m.Field(
+                ge=10,
+                le=100000,
+                description="Maximum line width before folding (RFC 2849 recommends "
+                "76). Only used if fold_long_lines=True.",
+            ),
+        ] = c.Ldif.DEFAULT_LINE_WIDTH
+
+        respect_attribute_order: Annotated[
+            bool,
+            m.Field(
+                description="If True, writes attributes in the order specified in "
+                "Entry.metadata.",
+            ),
+        ] = True
+
+        sort_attributes: Annotated[
+            bool,
+            m.Field(
+                description="If True, sorts attributes alphabetically. Overridden by "
+                "respect_attribute_order.",
+            ),
+        ] = False
+
+        write_hidden_attributes_as_comments: Annotated[
+            bool,
+            m.Field(
+                description="If True, attributes marked as 'hidden' in metadata will "
+                "be written as comments.",
+            ),
+        ] = False
+
+        write_metadata_as_comments: Annotated[
+            bool,
+            m.Field(
+                description="If True, the entry's main metadata will be written as a "
+                "commented block.",
+            ),
+        ] = False
+
+        include_version_header: Annotated[
+            bool,
+            m.Field(description="If True, includes the LDIF version header in output."),
+        ] = True
+
+        include_timestamps: Annotated[
+            bool,
+            m.Field(
+                description="If True, includes timestamp comments for when entries "
+                "were written.",
+            ),
+        ] = False
+
+        base64_encode_binary: Annotated[
+            bool,
+            m.Field(
+                description="If True, automatically base64 encodes binary attribute "
+                "values.",
+            ),
+        ] = False
+
+        fold_long_lines: Annotated[
+            bool,
+            m.Field(
+                description="If True, folds lines longer than line_width according to "
+                "RFC 2849.",
+            ),
+        ] = True
+
+        restore_original_format: Annotated[
+            bool,
+            m.Field(
+                description=(
+                    "If True, restores original LDIF format from metadata for "
+                    "perfect round-trip. When enabled, uses "
+                    "entry.metadata.original_strings['entry_original_ldif'] to "
+                    "write the exact original format, preserving all minimal "
+                    "differences (spacing, case, punctuation, quotes, etc.). "
+                    "CRITICAL for zero data loss."
+                ),
+            ),
+        ] = False
+
+        write_empty_values: Annotated[
+            bool,
+            m.Field(
+                description="If True, writes attributes with empty values. If False, "
+                "omits them.",
+            ),
+        ] = True
+
+    class WriteFormatAnnotations(m.Value):
+        """Comments, headers and change records added to written LDIF."""
+
+        normalize_attribute_names: Annotated[
+            bool,
+            m.Field(description="If True, normalizes attribute names to lowercase."),
+        ] = False
+
+        include_dn_comments: Annotated[
+            bool,
+            m.Field(
+                description="If True, includes DN explanation comments for complex "
+                "entries.",
+            ),
+        ] = False
+
+        write_removed_attributes_as_comments: Annotated[
+            bool,
+            m.Field(
+                description="If True, writes removed attributes as comments in LDIF "
+                "output.",
+            ),
+        ] = False
+
+        write_migration_header: Annotated[
+            bool,
+            m.Field(
+                description="If True, writes migration metadata header at the start of "
+                "LDIF file.",
+            ),
+        ] = False
+
+        migration_header_template: Annotated[
+            str | None,
+            m.Field(
+                description="Jinja2 template string for migration header. If None, "
+                "uses default template.",
+            ),
+        ] = None
+
+        write_rejection_reasons: Annotated[
+            bool,
+            m.Field(
+                description="If True, writes rejection reasons as comments for "
+                "rejected entries.",
+            ),
+        ] = False
+
+        include_removal_statistics: Annotated[
+            bool,
+            m.Field(
+                description="If True, includes statistics about removed attributes in "
+                "headers.",
+            ),
+        ] = False
+
+        ldif_changetype: Annotated[
+            str | None,
+            m.Field(
+                description="If set to 'modify', writes entries in LDIF modify format "
+                "(changetype: modify). Otherwise uses add format.",
+            ),
+        ] = None
+
+        ldif_modify_operation: Annotated[
+            str,
+            m.Field(
+                description="LDIF modify operation: 'add' or 'replace'. Used when "
+                "ldif_changetype='modify'. Default 'add' for schema/ACL phases.",
+            ),
+        ] = "add"
+
+        write_original_entry_as_comment: Annotated[
+            bool,
+            m.Field(
+                description="If True, writes original source entry as commented LDIF "
+                "block before converted entry.",
+            ),
+        ] = False
+
+        entry_category: Annotated[
+            str | None,
+            m.Field(
+                description="Migration category (e.g., 'hierarchy', 'users', 'groups', "
+                "'acl'). Used for phase-specific formatting.",
+            ),
+        ] = None
+
+    class WriteFormatAclOrdering(m.Value):
+        """ACL handling, attribute ordering and markers of written LDIF."""
+
+        acl_attribute_names: Annotated[
+            t.Ldif.AclAttributeNames,
+            m.Field(
+                description="Set of ACL attribute names (e.g., {'orclaci', "
+                "'orclentrylevelaci'}). Used to identify ACL attributes.",
+            ),
+        ] = m.Field(default_factory=frozenset[str])
+
+        comment_acl_in_non_acl_phases: Annotated[
+            bool,
+            m.Field(
+                description="If True, ACL attributes are written as comments when "
+                "entry_category != 'acl'.",
+            ),
+        ] = True
+
+        use_rfc_attribute_order: Annotated[
+            bool,
+            m.Field(
+                description="If True, writes attributes in RFC 2849 orderClass first "
+                "after DN, then remaining attributes alphabetically. DN is always "
+                "first (handled automatically by writer).",
+            ),
+        ] = False
+
+        rfc_order_priority_attributes: Annotated[
+            MutableSequence[str],
+            m.Field(
+                description="Attributes to write first after DN, in order. Default: "
+                "['objectClass']. Remaining attributes sorted alphabetically.",
+            ),
+        ] = m.Field(default_factory=lambda: ["objectClass"])
+
+        sort_objectclass_values: Annotated[
+            bool,
+            m.Field(
+                description="If True, sorts objectClass values with 'top' first, "
+                "followed by other objectClasses in alphabetical order. This "
+                "ensures proper objectClass hierarchy ordering in LDIF output.",
+            ),
+        ] = False
+
+        write_transformation_comments: Annotated[
+            bool,
+            m.Field(
+                description=(
+                    "If True, writes transformation comments with tags before "
+                    "modified attributes. Tags: [REMOVED], [RENAMED], "
+                    "[TRANSFORMED]. Example: '# [REMOVED] oldattr: value' or "
+                    "'# [RENAMED] old -> new: value'."
+                ),
+            ),
+        ] = False
+
+        use_original_acl_format_as_name: Annotated[
+            bool,
+            m.Field(
+                description=(
+                    "If True and entry_category='acl', uses the original ACL "
+                    "format from metadata (ACL_ORIGINAL_FORMAT) as the ACI name "
+                    "instead of generated name. Control characters are sanitized "
+                    "(ASCII < 0x20 or > 0x7E replaced with spaces, double quotes "
+                    "removed). Useful for OID→OUD migration to preserve original "
+                    "ACL context as the new ACI name."
+                ),
+            ),
+        ] = False
+
+        include_entry_markers: Annotated[
+            bool,
+            m.Field(
+                description=(
+                    "If True, includes entry type markers as comments before "
+                    "each entry. Markers indicate entry category (e.g., "
+                    "'# === USER ENTRY ===' or '# === GROUP ENTRY ==='). "
+                    "Useful for visual separation in large files."
+                ),
+            ),
+        ] = False
+
+        entry_marker_template: Annotated[
+            str | None,
+            m.Field(
+                description="Custom Jinja2 template for entry markers. Variables: "
+                "entry_type, dn, entry_index. If None, uses default format '# === "
+                "{entry_type} ==='.",
+            ),
+        ] = None
+
+        include_statistics_summary: Annotated[
+            bool,
+            m.Field(
+                description="If True, includes a statistics summary in the file header "
+                "showing entry counts by category and other migration metadata.",
+            ),
+        ] = False
+
+        statistics_categories: Annotated[
+            t.MutableIntMapping,
+            m.Field(
+                description="Dictionary of category names to entry counts for "
+                "statistics summary. Example: {'users': 150, 'groups': 25, 'acl': "
+                "42}.",
+            ),
+        ] = m.Field(default_factory=dict[str, int])
+
+    class WriteFormatOptions(
+        WriteFormatAclOrdering,
+        WriteFormatAnnotations,
+        WriteFormatLayout,
+    ):
         """Formatting options for LDIF serialization.
 
         .. deprecated:: 0.9.0
@@ -55,258 +352,6 @@ class FlextLdifModelsSettingsMigrate:
         Provides detailed control over the output format, including line width
         for folding, and whether to respect attribute ordering from metadata.
         """
-
-        line_width: Annotated[
-            int,
-            m.Field(
-                ge=10,
-                le=100000,
-                description="Maximum line width before folding (RFC 2849 recommends "
-                "76). Only used if fold_long_lines=True.",
-            ),
-        ] = c.Ldif.DEFAULT_LINE_WIDTH
-        respect_attribute_order: Annotated[
-            bool,
-            m.Field(
-                description="If True, writes attributes in the order specified in "
-                "Entry.metadata.",
-            ),
-        ] = True
-        sort_attributes: Annotated[
-            bool,
-            m.Field(
-                description="If True, sorts attributes alphabetically. Overridden by "
-                "respect_attribute_order.",
-            ),
-        ] = False
-        write_hidden_attributes_as_comments: Annotated[
-            bool,
-            m.Field(
-                description="If True, attributes marked as 'hidden' in metadata will "
-                "be written as comments.",
-            ),
-        ] = False
-        write_metadata_as_comments: Annotated[
-            bool,
-            m.Field(
-                description="If True, the entry's main metadata will be written as a "
-                "commented block.",
-            ),
-        ] = False
-        include_version_header: Annotated[
-            bool,
-            m.Field(description="If True, includes the LDIF version header in output."),
-        ] = True
-        include_timestamps: Annotated[
-            bool,
-            m.Field(
-                description="If True, includes timestamp comments for when entries "
-                "were written.",
-            ),
-        ] = False
-        base64_encode_binary: Annotated[
-            bool,
-            m.Field(
-                description="If True, automatically base64 encodes binary attribute "
-                "values.",
-            ),
-        ] = False
-        fold_long_lines: Annotated[
-            bool,
-            m.Field(
-                description="If True, folds lines longer than line_width according to "
-                "RFC 2849.",
-            ),
-        ] = True
-        restore_original_format: Annotated[
-            bool,
-            m.Field(
-                description=(
-                    "If True, restores original LDIF format from metadata for "
-                    "perfect round-trip. When enabled, uses "
-                    "entry.metadata.original_strings['entry_original_ldif'] to "
-                    "write the exact original format, preserving all minimal "
-                    "differences (spacing, case, punctuation, quotes, etc.). "
-                    "CRITICAL for zero data loss."
-                ),
-            ),
-        ] = False
-        write_empty_values: Annotated[
-            bool,
-            m.Field(
-                description="If True, writes attributes with empty values. If False, "
-                "omits them.",
-            ),
-        ] = True
-        normalize_attribute_names: Annotated[
-            bool,
-            m.Field(description="If True, normalizes attribute names to lowercase."),
-        ] = False
-        include_dn_comments: Annotated[
-            bool,
-            m.Field(
-                description="If True, includes DN explanation comments for complex "
-                "entries.",
-            ),
-        ] = False
-        write_removed_attributes_as_comments: Annotated[
-            bool,
-            m.Field(
-                description="If True, writes removed attributes as comments in LDIF "
-                "output.",
-            ),
-        ] = False
-        write_migration_header: Annotated[
-            bool,
-            m.Field(
-                description="If True, writes migration metadata header at the start of "
-                "LDIF file.",
-            ),
-        ] = False
-        migration_header_template: Annotated[
-            str | None,
-            m.Field(
-                description="Jinja2 template string for migration header. If None, "
-                "uses default template.",
-            ),
-        ] = None
-        write_rejection_reasons: Annotated[
-            bool,
-            m.Field(
-                description="If True, writes rejection reasons as comments for "
-                "rejected entries.",
-            ),
-        ] = False
-        include_removal_statistics: Annotated[
-            bool,
-            m.Field(
-                description="If True, includes statistics about removed attributes in "
-                "headers.",
-            ),
-        ] = False
-        ldif_changetype: Annotated[
-            str | None,
-            m.Field(
-                description="If set to 'modify', writes entries in LDIF modify format "
-                "(changetype: modify). Otherwise uses add format.",
-            ),
-        ] = None
-        ldif_modify_operation: Annotated[
-            str,
-            m.Field(
-                description="LDIF modify operation: 'add' or 'replace'. Used when "
-                "ldif_changetype='modify'. Default 'add' for schema/ACL phases.",
-            ),
-        ] = "add"
-        write_original_entry_as_comment: Annotated[
-            bool,
-            m.Field(
-                description="If True, writes original source entry as commented LDIF "
-                "block before converted entry.",
-            ),
-        ] = False
-        entry_category: Annotated[
-            str | None,
-            m.Field(
-                description="Migration category (e.g., 'hierarchy', 'users', 'groups', "
-                "'acl'). Used for phase-specific formatting.",
-            ),
-        ] = None
-        acl_attribute_names: Annotated[
-            t.Ldif.AclAttributeNames,
-            m.Field(
-                description="Set of ACL attribute names (e.g., {'orclaci', "
-                "'orclentrylevelaci'}). Used to identify ACL attributes.",
-            ),
-        ] = m.Field(default_factory=frozenset[str])
-        comment_acl_in_non_acl_phases: Annotated[
-            bool,
-            m.Field(
-                description="If True, ACL attributes are written as comments when "
-                "entry_category != 'acl'.",
-            ),
-        ] = True
-        use_rfc_attribute_order: Annotated[
-            bool,
-            m.Field(
-                description="If True, writes attributes in RFC 2849 orderClass first "
-                "after DN, then remaining attributes alphabetically. DN is always "
-                "first (handled automatically by writer).",
-            ),
-        ] = False
-        rfc_order_priority_attributes: Annotated[
-            MutableSequence[str],
-            m.Field(
-                description="Attributes to write first after DN, in order. Default: "
-                "['objectClass']. Remaining attributes sorted alphabetically.",
-            ),
-        ] = m.Field(default_factory=lambda: ["objectClass"])
-        sort_objectclass_values: Annotated[
-            bool,
-            m.Field(
-                description="If True, sorts objectClass values with 'top' first, "
-                "followed by other objectClasses in alphabetical order. This "
-                "ensures proper objectClass hierarchy ordering in LDIF output.",
-            ),
-        ] = False
-        write_transformation_comments: Annotated[
-            bool,
-            m.Field(
-                description=(
-                    "If True, writes transformation comments with tags before "
-                    "modified attributes. Tags: [REMOVED], [RENAMED], "
-                    "[TRANSFORMED]. Example: '# [REMOVED] oldattr: value' or "
-                    "'# [RENAMED] old -> new: value'."
-                ),
-            ),
-        ] = False
-        use_original_acl_format_as_name: Annotated[
-            bool,
-            m.Field(
-                description=(
-                    "If True and entry_category='acl', uses the original ACL "
-                    "format from metadata (ACL_ORIGINAL_FORMAT) as the ACI name "
-                    "instead of generated name. Control characters are sanitized "
-                    "(ASCII < 0x20 or > 0x7E replaced with spaces, double quotes "
-                    "removed). Useful for OID→OUD migration to preserve original "
-                    "ACL context as the new ACI name."
-                ),
-            ),
-        ] = False
-        include_entry_markers: Annotated[
-            bool,
-            m.Field(
-                description=(
-                    "If True, includes entry type markers as comments before "
-                    "each entry. Markers indicate entry category (e.g., "
-                    "'# === USER ENTRY ===' or '# === GROUP ENTRY ==='). "
-                    "Useful for visual separation in large files."
-                ),
-            ),
-        ] = False
-        entry_marker_template: Annotated[
-            str | None,
-            m.Field(
-                description="Custom Jinja2 template for entry markers. Variables: "
-                "entry_type, dn, entry_index. If None, uses default format '# === "
-                "{entry_type} ==='.",
-            ),
-        ] = None
-        include_statistics_summary: Annotated[
-            bool,
-            m.Field(
-                description="If True, includes a statistics summary in the file header "
-                "showing entry counts by category and other migration metadata.",
-            ),
-        ] = False
-        statistics_categories: Annotated[
-            t.MutableIntMapping,
-            m.Field(
-                description="Dictionary of category names to entry counts for "
-                "statistics summary. Example: {'users': 150, 'groups': 25, 'acl': "
-                "42}.",
-            ),
-        ] = m.Field(default_factory=dict[str, int])
 
     class MigrateOptions(m.Value):
         """Options for FlextLdif.migrate() operation.

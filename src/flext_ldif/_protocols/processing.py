@@ -15,7 +15,8 @@ from flext_cli import FlextCliProtocols
 
 if TYPE_CHECKING:
     from flext_ldif import t
-    from flext_ldif._protocols import FlextLdifProtocolsValues
+    from flext_ldif._protocols import FlextLdifProtocolsDomainEntry
+    from flext_ldif._protocols._settings import FlextLdifProtocolsSettingsProcessing
 
 
 class FlextLdifProtocolsProcessing:
@@ -26,12 +27,14 @@ class FlextLdifProtocolsProcessing:
         """Structural data contract projected from the owning model."""
 
         @property
-        def transform_config(self) -> FlextLdifProtocolsValues.TransformConfig | None:
+        def transform_config(
+            self,
+        ) -> FlextLdifProtocolsSettingsProcessing.TransformConfig | None:
             """Transformation configuration for the ordered entry pipeline."""
             ...
 
         @property
-        def entries_input(self) -> Sequence[FlextLdifProtocolsValues.Entry] | None:
+        def entries_input(self) -> Sequence[FlextLdifProtocolsDomainEntry.Entry] | None:
             """Entry batch supplied to the processing pipeline."""
             ...
 
@@ -39,39 +42,17 @@ class FlextLdifProtocolsProcessing:
     class ProcessingResult(FlextCliProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def dn(self) -> str:
-            """Distinguished name of the processed entry."""
-            ...
-
-        @property
-        def attributes(self) -> t.MutableStrSequenceMapping:
-            """LDAP attributes as name -> list of values."""
-            ...
+        dn: str
+        attributes: t.MutableStrSequenceMapping
 
     @runtime_checkable
     class ProcessEntriesOptions(FlextCliProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def processor_name(self) -> Literal["transform", "validate"]:
-            """Canonical processor name for entry handling."""
-            ...
-
-        @property
-        def parallel(self) -> bool:
-            """Enable thread-pool execution mode."""
-            ...
-
-        @property
-        def batch_size(self) -> int:
-            """Batch size for sequential processing."""
-            ...
-
-        @property
-        def max_workers(self) -> int:
-            """Maximum thread workers for parallel mode."""
-            ...
+        processor_name: Literal["transform", "validate"]
+        parallel: bool
+        batch_size: int
+        max_workers: int
 
 
 __all__: list[str] = [

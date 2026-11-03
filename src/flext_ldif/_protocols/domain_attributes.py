@@ -25,20 +25,9 @@ class FlextLdifProtocolsDomainAttributes:
     class Attributes(FlextCliProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def attributes(self) -> t.MutableStrSequenceMapping:
-            """Attribute name to values list."""
-            ...
-
-        @property
-        def attribute_metadata(self) -> MutableMapping[str, t.MutableAttributeMapping]:
-            """Metadata for each attribute, like category or hidden status."""
-            ...
-
-        @property
-        def metadata(self) -> t.MutableJsonMapping | None:
-            """Metadata for preserving ordering and formats."""
-            ...
+        attributes: t.MutableStrSequenceMapping
+        attribute_metadata: MutableMapping[str, t.MutableAttributeMapping]
+        metadata: t.MutableJsonMapping | None
 
         def __getitem__(self, key: str) -> MutableSequence[str]:
             """Get attribute values by name (case-sensitive LDAP)."""

@@ -23,7 +23,10 @@ from flext_cli import FlextCliProtocols
 
 if TYPE_CHECKING:
     from flext_ldif import t
-    from flext_ldif._protocols import FlextLdifProtocolsBase, FlextLdifProtocolsValues
+    from flext_ldif._protocols import (
+        FlextLdifProtocolsDomainEntry,
+        FlextLdifProtocolsDomainSchema,
+    )
 
 
 class FlextLdifProtocolsCollections:
@@ -71,12 +74,16 @@ class FlextLdifProtocolsCollections:
         """Structural data contract projected from the owning model."""
 
         @property
-        def attributes(self) -> Sequence[FlextLdifProtocolsBase.SchemaAttribute]:
+        def attributes(
+            self,
+        ) -> Sequence[FlextLdifProtocolsDomainSchema.SchemaAttribute]:
             """Schema attribute definitions extracted from LDIF."""
             ...
 
         @property
-        def object_classes(self) -> Sequence[FlextLdifProtocolsBase.SchemaObjectClass]:
+        def object_classes(
+            self,
+        ) -> Sequence[FlextLdifProtocolsDomainSchema.SchemaObjectClass]:
             """Schema object class definitions extracted from LDIF."""
             ...
 
@@ -85,20 +92,22 @@ class FlextLdifProtocolsCollections:
         """Structural data contract projected from the owning model."""
 
         @property
-        def categories(self) -> Mapping[str, Sequence[FlextLdifProtocolsValues.Entry]]:
+        def categories(
+            self,
+        ) -> Mapping[str, Sequence[FlextLdifProtocolsDomainEntry.Entry]]:
             """Category name to grouped LDIF entries mapping."""
             ...
 
         def __getitem__(
             self, category: str
-        ) -> MutableSequence[FlextLdifProtocolsValues.Entry]:
+        ) -> MutableSequence[FlextLdifProtocolsDomainEntry.Entry]:
             """Structural member projected from the owning model."""
             ...
 
         def __setitem__(
             self,
             category: str,
-            entries: MutableSequence[FlextLdifProtocolsValues.Entry],
+            entries: MutableSequence[FlextLdifProtocolsDomainEntry.Entry],
         ) -> None:
             """Structural member projected from the owning model."""
             ...
@@ -106,7 +115,7 @@ class FlextLdifProtocolsCollections:
         def add_entries(
             self,
             category: str,
-            entries: MutableSequence[FlextLdifProtocolsValues.Entry],
+            entries: MutableSequence[FlextLdifProtocolsDomainEntry.Entry],
         ) -> None:
             """Structural member projected from the owning model."""
             ...
@@ -117,7 +126,7 @@ class FlextLdifProtocolsCollections:
 
         def items(
             self,
-        ) -> Iterator[tuple[str, MutableSequence[FlextLdifProtocolsValues.Entry]]]:
+        ) -> Iterator[tuple[str, MutableSequence[FlextLdifProtocolsDomainEntry.Entry]]]:
             """Structural member projected from the owning model."""
             ...
 
@@ -128,12 +137,14 @@ class FlextLdifProtocolsCollections:
         def get(
             self,
             category: str,
-            default: MutableSequence[FlextLdifProtocolsValues.Entry] | None = None,
-        ) -> MutableSequence[FlextLdifProtocolsValues.Entry]:
+            default: MutableSequence[FlextLdifProtocolsDomainEntry.Entry] | None = None,
+        ) -> MutableSequence[FlextLdifProtocolsDomainEntry.Entry]:
             """Structural member projected from the owning model."""
             ...
 
-        def values(self) -> Iterator[MutableSequence[FlextLdifProtocolsValues.Entry]]:
+        def values(
+            self,
+        ) -> Iterator[MutableSequence[FlextLdifProtocolsDomainEntry.Entry]]:
             """Structural member projected from the owning model."""
             ...
 

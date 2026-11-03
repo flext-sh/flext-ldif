@@ -16,7 +16,6 @@ from flext_cli import FlextCliProtocols
 if TYPE_CHECKING:
     from flext_ldif import t
     from flext_ldif._constants import FlextLdifConstantsBaseParts
-    from flext_ldif._protocols import FlextLdifProtocolsBase
     from flext_ldif._protocols._settings import FlextLdifProtocolsSettingsRules
     from flext_ldif._typings import FlextLdifTypesDomain
 
@@ -25,7 +24,7 @@ class FlextLdifProtocolsSettingsMigrate:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class WriteFormatOptions(FlextCliProtocols.Model, Protocol):
+    class WriteFormatLayout(FlextCliProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -114,6 +113,10 @@ class FlextLdifProtocolsSettingsMigrate:
             """
             ...
 
+    @runtime_checkable
+    class WriteFormatAnnotations(FlextCliProtocols.Model, Protocol):
+        """Structural data contract projected from the owning model."""
+
         @property
         def normalize_attribute_names(self) -> bool:
             """If True, normalizes attribute names to lowercase."""
@@ -194,6 +197,10 @@ class FlextLdifProtocolsSettingsMigrate:
             for phase-specific formatting.
             """
             ...
+
+    @runtime_checkable
+    class WriteFormatAclOrdering(FlextCliProtocols.Model, Protocol):
+        """Structural data contract projected from the owning model."""
 
         @property
         def acl_attribute_names(self) -> FlextLdifTypesDomain.AclAttributeNames:
@@ -302,6 +309,12 @@ class FlextLdifProtocolsSettingsMigrate:
             ...
 
     @runtime_checkable
+    class WriteFormatOptions(
+        WriteFormatAclOrdering, WriteFormatAnnotations, WriteFormatLayout, Protocol
+    ):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
     class MigrateOptions(FlextCliProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
@@ -372,7 +385,9 @@ class FlextLdifProtocolsSettingsMigrate:
             ...
 
         @property
-        def format_options(self) -> FlextLdifProtocolsBase.WriteFormatOptions | None:
+        def format_options(
+            self,
+        ) -> FlextLdifProtocolsSettingsMigrate.WriteFormatOptions | None:
             """LDIF formatting applied to the migrated output."""
             ...
 

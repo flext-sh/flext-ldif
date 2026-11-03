@@ -18,11 +18,12 @@ if TYPE_CHECKING:
     from flext_ldif import t
     from flext_ldif._constants import FlextLdifConstantsBaseParts
     from flext_ldif._protocols import (
-        FlextLdifProtocolsBase,
         FlextLdifProtocolsCollections,
+        FlextLdifProtocolsDomainAcl,
+        FlextLdifProtocolsDomainEntry,
         FlextLdifProtocolsResultsStatistics,
-        FlextLdifProtocolsValues,
     )
+    from flext_ldif._protocols._settings import FlextLdifProtocolsSettingsMigrate
 
 
 class FlextLdifProtocolsResults:
@@ -33,12 +34,14 @@ class FlextLdifProtocolsResults:
         """Structural data contract projected from the owning model."""
 
         @property
-        def entries(self) -> Sequence[FlextLdifProtocolsValues.Entry]:
+        def entries(self) -> Sequence[FlextLdifProtocolsDomainEntry.Entry]:
             """Owned LDIF entries supplied for serialization."""
             ...
 
         @property
-        def format_options(self) -> FlextLdifProtocolsBase.WriteFormatOptions | None:
+        def format_options(
+            self,
+        ) -> FlextLdifProtocolsSettingsMigrate.WriteFormatOptions | None:
             """Optional explicit LDIF formatting options."""
             ...
 
@@ -68,7 +71,9 @@ class FlextLdifProtocolsResults:
         sort_entries_hierarchically: bool
 
         @property
-        def format_options(self) -> FlextLdifProtocolsBase.WriteFormatOptions | None:
+        def format_options(
+            self,
+        ) -> FlextLdifProtocolsSettingsMigrate.WriteFormatOptions | None:
             """LDIF formatting applied to the written output."""
             ...
 
@@ -108,12 +113,12 @@ class FlextLdifProtocolsResults:
             ...
 
         @property
-        def entries(self) -> Sequence[FlextLdifProtocolsValues.Entry]:
+        def entries(self) -> Sequence[FlextLdifProtocolsDomainEntry.Entry]:
             """Migrated LDIF entries."""
             ...
 
         @property
-        def stats(self) -> FlextLdifProtocolsBase.Statistics:
+        def stats(self) -> FlextLdifProtocolsResultsStatistics.Statistics:
             """Migration processing statistics."""
             ...
 
@@ -193,7 +198,7 @@ class FlextLdifProtocolsResults:
             ...
 
         @property
-        def scores(self) -> FlextLdifProtocolsBase.DynamicCounts:
+        def scores(self) -> FlextLdifProtocolsCollections.DynamicCounts:
             """Per-server-type detection scores."""
             ...
 
@@ -227,12 +232,16 @@ class FlextLdifProtocolsResults:
             ...
 
         @property
-        def object_class_distribution(self) -> FlextLdifProtocolsBase.DynamicCounts:
+        def object_class_distribution(
+            self,
+        ) -> FlextLdifProtocolsCollections.DynamicCounts:
             """Distribution of objectClass values across entries."""
             ...
 
         @property
-        def server_type_distribution(self) -> FlextLdifProtocolsBase.DynamicCounts:
+        def server_type_distribution(
+            self,
+        ) -> FlextLdifProtocolsCollections.DynamicCounts:
             """Distribution of detected server types across entries."""
             ...
 
@@ -241,7 +250,7 @@ class FlextLdifProtocolsResults:
         """Structural data contract projected from the owning model."""
 
         @property
-        def statistics(self) -> FlextLdifProtocolsBase.Statistics:
+        def statistics(self) -> FlextLdifProtocolsResultsStatistics.Statistics:
             """Canonical LDIF service statistics payload."""
             ...
 
@@ -250,7 +259,7 @@ class FlextLdifProtocolsResults:
         """Structural data contract projected from the owning model."""
 
         @property
-        def entries(self) -> Sequence[FlextLdifProtocolsValues.Entry]:
+        def entries(self) -> Sequence[FlextLdifProtocolsDomainEntry.Entry]:
             """Parsed LDIF entries."""
             ...
 
@@ -266,7 +275,7 @@ class FlextLdifProtocolsResults:
         """Structural data contract projected from the owning model."""
 
         @property
-        def acls(self) -> Sequence[FlextLdifProtocolsBase.Acl]:
+        def acls(self) -> Sequence[FlextLdifProtocolsDomainAcl.Acl]:
             """Extracted ACL models."""
             ...
 
@@ -280,7 +289,7 @@ class FlextLdifProtocolsResults:
             ...
 
         @property
-        def matched_acl(self) -> FlextLdifProtocolsBase.Acl | None:
+        def matched_acl(self) -> FlextLdifProtocolsDomainAcl.Acl | None:
             """ACL rule that matched the evaluation."""
             ...
 
