@@ -30,7 +30,10 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering):
         }
 
         for entry in entries:
-            category, match_reason = self.categorize_entry(entry)
+            category, match_reason = self.categorize_entry(
+                entry,
+                rules=self.categorization_rules,
+            )
             is_rejected = category == c.Ldif.Category.REJECTED
             updated_entry = u.Ldif.update_entry_statistics(
                 entry,

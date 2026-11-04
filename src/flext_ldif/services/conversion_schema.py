@@ -141,8 +141,8 @@ class FlextLdifConversionSchema(s[p.Ldif.Response], ABC):
             lambda: u.Ldif.normalize_server_type(source_server.server_type),
         ).map_or(None)
         return m.Ldif.Entry.model_validate({
-            "dn": p.Ldif.DN(value="cn=schema,dc=example,dc=com", metadata={}),
-            "attributes": p.Ldif.Attributes.model_validate({
+            "dn": m.Ldif.DN(value="cn=schema,dc=example,dc=com", metadata={}),
+            "attributes": m.Ldif.Attributes.model_validate({
                 "attributes": {field_name: [source_value]},
                 "attribute_metadata": {},
                 "metadata": None,

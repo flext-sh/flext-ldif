@@ -203,8 +203,8 @@ class FlextLdifCategorizationRules(FlextLdifServer):
             The resulting ``MutableSequence[str]``.
 
         """
-        if constants is None:
-            return list(c.Ldif.DEFAULT_CATEGORIZATION_PRIORITY)
+        if constants is None or not constants.CATEGORIZATION_PRIORITY:
+            return [cat.value for cat in c.Ldif.DEFAULT_CATEGORIZATION_PRIORITY]
         return [
             item
             for item in constants.CATEGORIZATION_PRIORITY
@@ -312,7 +312,7 @@ class FlextLdifCategorizationRules(FlextLdifServer):
             return r[p.Ldif.CategoryRules].ok(self._normalize_initial_category_rules())
         return r[p.Ldif.CategoryRules].from_result(
             u.try_(
-                lambda: p.Ldif.CategoryRules.model_validate(rules),
+                lambda: m.Ldif.CategoryRules.model_validate(rules),
                 catch=(
                     ValueError,
                     KeyError,

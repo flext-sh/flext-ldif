@@ -157,7 +157,7 @@ class FlextLdifConversionEntry(
         if transformed_attributes is not None:
             converted_entry = converted_entry.model_copy(
                 update={
-                    "attributes": p.Ldif.Attributes.model_validate({
+                    "attributes": m.Ldif.Attributes.model_validate({
                         "attributes": transformed_attributes,
                         "attribute_metadata": {},
                         "metadata": None,
@@ -199,7 +199,7 @@ class FlextLdifConversionEntry(
         if transformed_dn is None:
             return converted_entry
         updated_entry: p.Ldif.Entry = converted_entry.model_copy(
-            update={"dn": p.Ldif.DN(value=transformed_dn, metadata={})},
+            update={"dn": m.Ldif.DN(value=transformed_dn, metadata={})},
         )
         return updated_entry
 

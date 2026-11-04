@@ -126,7 +126,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             if not acl.metadata:
                 acl_with_metadata: p.Ldif.Acl = acl.model_copy(
                     update={
-                        "metadata": p.Ldif.ServerMetadata.model_validate({
+                        "metadata": m.Ldif.ServerMetadata.model_validate({
                             "server_type": self._get_server_type(),
                             "extensions": {"original_format": acl_line.strip()},
                         }),
@@ -154,24 +154,24 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             """
             relaxed_acl: p.Ldif.Acl = m.Ldif.Acl.model_validate({
                 "name": FlextLdifConstantsServersRelaxed.ACL_DEFAULT_NAME,
-                "target": p.Ldif.AclTarget.model_validate({
+                "target": m.Ldif.AclTarget.model_validate({
                     "target_dn": (
                         FlextLdifConstantsServersRelaxed.ACL_DEFAULT_TARGET_DN
                     ),
                     "attributes": [],
                 }),
-                "subject": p.Ldif.AclSubject.model_validate({
+                "subject": m.Ldif.AclSubject.model_validate({
                     "subject_type": "all",
                     "subject_value": (
                         FlextLdifConstantsServersRelaxed.ACL_DEFAULT_SUBJECT_VALUE
                     ),
                 }),
-                "permissions": p.Ldif.AclPermissions.model_validate({}),
+                "permissions": m.Ldif.AclPermissions.model_validate({}),
                 "server_type": self._get_server_type(),
                 "validation_violations": [],
                 "raw_line": acl_line,
                 "raw_acl": acl_line,
-                "metadata": p.Ldif.ServerMetadata.model_validate({
+                "metadata": m.Ldif.ServerMetadata.model_validate({
                     "server_type": self._get_server_type(),
                     "extensions": {"original_format": acl_line.strip()},
                 }),

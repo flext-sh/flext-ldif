@@ -163,7 +163,7 @@ class FlextLdifFilters(s[p.Ldif.Response]):
                 }
                 filtered_entry = filtered_entry.model_copy(
                     update={
-                        "attributes": p.Ldif.Attributes.model_validate({
+                        "attributes": m.Ldif.Attributes.model_validate({
                             "attributes": filtered_attrs,
                         }),
                     },
@@ -190,7 +190,7 @@ class FlextLdifFilters(s[p.Ldif.Response]):
                     updated.pop(oc_key, None)
                 filtered_entry = filtered_entry.model_copy(
                     update={
-                        "attributes": p.Ldif.Attributes.model_validate({
+                        "attributes": m.Ldif.Attributes.model_validate({
                             "attributes": updated,
                         }),
                     },

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import MutableMapping, MutableSequence, Sequence
 
-from flext_ldif import c, p, t, u
+from flext_ldif import c, m, p, t, u
 from flext_ldif.servers._oid import (
     FlextLdifConstantsServersOid,
     FlextLdifServersOidEntryMetadata,
@@ -197,7 +197,7 @@ class FlextLdifServersOidEntryBoolean(
             entry_metadata = entry_data.attributes.metadata
         copied: p.Ldif.Entry = entry_data.model_copy(
             update={
-                "attributes": p.Ldif.Attributes.model_validate({
+                "attributes": m.Ldif.Attributes.model_validate({
                     "attributes": restored_attrs,
                     "attribute_metadata": entry_data.attributes.attribute_metadata
                     if entry_data.attributes

@@ -79,7 +79,7 @@ class FlextLdifMigrationPipeline(
             m.Ldif.MigrationPipelineResult.model_validate({
                 "entries": all_entries,
                 "output_files": output_files,
-                "stats": p.Ldif.Statistics(
+                "stats": m.Ldif.Statistics(
                     total_entries=total_processed,
                     processed_entries=total_migrated,
                 ),
@@ -240,7 +240,7 @@ class FlextLdifMigrationPipeline(
         outcome = m.Ldif.MigrationPipelineResult.model_validate({
             "entries": ordered,
             "output_files": [str(output_path)],
-            "stats": p.Ldif.Statistics(
+            "stats": m.Ldif.Statistics(
                 total_entries=len(entries),
                 processed_entries=len(migrated),
             ),

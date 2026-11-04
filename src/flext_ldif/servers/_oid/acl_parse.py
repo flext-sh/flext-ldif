@@ -251,17 +251,17 @@ class FlextLdifServersOidAclParse(FlextLdifServersOidAclSubject):
         )
         acl_model = m.Ldif.Acl.model_validate({
             "name": FlextLdifConstantsServersRfc.ACL_ATTRIBUTE_NAME,
-            "target": p.Ldif.AclTarget.model_validate({
+            "target": m.Ldif.AclTarget.model_validate({
                 "target_dn": target_dn,
                 "attributes": target_attrs or [],
             }),
-            "subject": p.Ldif.AclSubject.model_validate({
+            "subject": m.Ldif.AclSubject.model_validate({
                 "subject_type": str(rfc_subject_type),
                 "subject_value": rfc_subject_value,
             }),
-            "permissions": p.Ldif.AclPermissions(**rfc_compliant_perms),
+            "permissions": m.Ldif.AclPermissions(**rfc_compliant_perms),
             "server_type": server_type,
-            "metadata": p.Ldif.ServerMetadata.model_validate({
+            "metadata": m.Ldif.ServerMetadata.model_validate({
                 "server_type": server_type,
                 "extensions": extensions,
             }),

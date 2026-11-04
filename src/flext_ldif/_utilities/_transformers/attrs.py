@@ -29,7 +29,7 @@ class FlextLdifUtilitiesTransformersAttrs:
         current = entry.attributes
         return entry.model_copy(
             update={
-                "attributes": p.Ldif.Attributes.model_validate({
+                "attributes": m.Ldif.Attributes.model_validate({
                     "attributes": attributes,
                     "attribute_metadata": (
                         current.attribute_metadata if current is not None else {}
@@ -67,7 +67,7 @@ class FlextLdifUtilitiesTransformersAttrs:
         )
         if needs_update:
             update_dict: MutableMapping[str, m.Ldif.Attributes] = {
-                "attributes": p.Ldif.Attributes.model_validate({
+                "attributes": m.Ldif.Attributes.model_validate({
                     "attributes": new_attrs,
                 }),
             }

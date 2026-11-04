@@ -20,7 +20,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar
 
-from flext_ldif import c, p, r, t, u
+from flext_ldif import c, m, p, r, t, u
 from flext_ldif._models import FlextLdifModelsDomainEntryChangeOperationValue
 
 
@@ -184,7 +184,7 @@ class FlextLdifServersOudSchemaWrite:
         return r[p.Ldif.Entry].ok(
             entry.model_copy(
                 update={
-                    "attributes": p.Ldif.Attributes.model_validate({
+                    "attributes": m.Ldif.Attributes.model_validate({
                         "attributes": merged_attributes,
                         "attribute_metadata": pruned_metadata,
                         "metadata": entry.attributes.metadata,

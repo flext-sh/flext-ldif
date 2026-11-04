@@ -183,7 +183,7 @@ class FlextLdifServersOudTransform:
         )
         if should_restore_dn:
             return entry_data.model_copy(
-                update={"dn": p.Ldif.DN(value=original_dn_value)},
+                update={"dn": m.Ldif.DN(value=original_dn_value)},
             )
         return entry_data
 

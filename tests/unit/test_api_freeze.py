@@ -73,7 +73,7 @@ METADATA_STRING_SYMBOLS: tuple[TestsFlextLdifTypingsUnit.PublicSymbol, ...] = (
 )
 
 # Facade alias -> canonical owner name. Aliases MUST be the *same object* so that
-# `isinstance(x, flext_ldif.m.Entry)` and `flext_ldif.FlextLdifModels.Entry`
+# `isinstance(x, m.Entry)` and `flext_ldif.FlextLdifModels.Entry`
 # agree for every consumer.
 FACADE_ALIAS_OWNERS: tuple[
     tuple[
