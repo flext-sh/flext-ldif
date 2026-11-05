@@ -155,7 +155,7 @@ objectClass: top
 objectClass: person
 cn: boolean
 sn: Boolean
-orclIsEnabled: 1
+orclIsVisible: 1
 """
         result = api.parse_ldif(oid_boolean_entry, server_type=c.Tests.OID)
         tm.ok(result)

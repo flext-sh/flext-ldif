@@ -253,9 +253,13 @@ class FlextLdifConstantsServersOid:
 
     ACL_TARGET_PATTERN: ClassVar[str] = "access to (entry | attr=\\(([^)]+)\\))"
 
-    ACL_FILTER_PATTERN: ClassVar[str] = "filter=(\\([^)]*(?:\\([^)]*\\)[^)]*)*\\))"
+    ACL_FILTER_PATTERN: ClassVar[str] = (
+        rf"filter=(\({FlextLdifConstantsBase.LDAP_FILTER_BODY_PATTERN}\))"
+    )
 
-    ACL_CONSTRAINT_PATTERN: ClassVar[str] = "added_object_constraint=\\(([^)]+)\\)"
+    ACL_CONSTRAINT_PATTERN: ClassVar[str] = (
+        rf"added_object_constraint=\(({FlextLdifConstantsBase.LDAP_FILTER_BODY_PATTERN})\)"
+    )
 
     ACL_BINDMODE_PATTERN: ClassVar[str] = "(?i)bindmode\\s*=\\s*\\(([^)]+)\\)"
 

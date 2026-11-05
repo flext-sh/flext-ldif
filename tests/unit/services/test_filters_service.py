@@ -90,6 +90,45 @@ class TestsFlextLdifFiltersService:
         tm.ok(c.Tests.NAME_OBJECTCLASS in remaining)
 
     @staticmethod
+    def _entry_with_option_descriptions() -> p.Ldif.Entry:
+        return u.Tests.create_real_entry(
+            dn=c.Tests.FILTERS_DN_USER,
+            attributes={
+                c.Tests.NAME_OBJECTCLASS: [c.Tests.NAME_TOP, c.Tests.NAME_PERSON],
+                c.Tests.NAME_CN: [c.Tests.ATTR_VALUE_USER],
+                **{
+                    description: [c.Tests.FILTERS_OPTION_VALUE]
+                    for description in c.Tests.FILTERS_OPTION_DESCRIPTIONS
+                },
+            },
+        )
+
+    @classmethod
+    def test_forbidden_type_removes_every_option_description(cls) -> None:
+        """A forbidden type removes all of its option subtypes (RFC 4512 § 2.5)."""
+        result = ldif.filter_entry_attributes(
+            cls._entry_with_option_descriptions(),
+            [c.Tests.FILTERS_OPTION_TYPE],
+            [],
+        )
+
+        remaining = set(tm.not_none(result.attributes).attributes)
+        tm.ok(remaining.isdisjoint(c.Tests.FILTERS_OPTION_DESCRIPTIONS))
+        tm.ok(c.Tests.NAME_CN in remaining)
+
+    @classmethod
+    def test_type_prefix_does_not_remove_option_descriptions(cls) -> None:
+        """Only the exact type matches; a shorter prefix removes nothing."""
+        result = ldif.filter_entry_attributes(
+            cls._entry_with_option_descriptions(),
+            [c.Tests.FILTERS_OPTION_TYPE_PREFIX],
+            [],
+        )
+
+        remaining = set(tm.not_none(result.attributes).attributes)
+        tm.ok(set(c.Tests.FILTERS_OPTION_DESCRIPTIONS) <= remaining)
+
+    @staticmethod
     def test_removes_forbidden_objectclass_values(
         regular_entry: p.Ldif.Entry,
     ) -> None:

@@ -210,6 +210,27 @@ class TestsFlextLdifOidAclConvert:
         tm.that(subject.added_object_constraint, eq="objectClass=person")
 
     @staticmethod
+    def test_nested_constraint_filter_keeps_permissions() -> None:
+        """Test a nested constraint filter stays one value before the perms."""
+        line = (
+            'orclentrylevelaci: access to entry by group="cn=admins,dc=ctbc" '
+            "added_object_constraint=(|(objectclass=orclNetService)"
+            "(objectclass=orclNetServiceAlias)) (add)"
+        )
+
+        rule: p.Ldif.OidAclRule = tm.ok(
+            FlextLdifServersOidAclConvert.parse_oid_acl_line(_DN, line)
+        )
+
+        subject = rule.subjects[0]
+        tm.that(subject.subject_type, eq="group")
+        tm.that(subject.permissions, eq=("add",))
+        tm.that(
+            subject.added_object_constraint,
+            eq="|(objectclass=orclNetService)(objectclass=orclNetServiceAlias)",
+        )
+
+    @staticmethod
     def test_unrecognized_subject_yields_unknown_type() -> None:
         """Test unrecognized subject yields unknown type."""
         subject = FlextLdifServersOidAclConvert.parse_subject("by nonsense clause")

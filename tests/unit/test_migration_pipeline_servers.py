@@ -91,7 +91,7 @@ class TestsFlextLdifMigrationPipelineServers:
             cn_value=c.Tests.ATTR_VALUE_TEST,
             sn=c.Tests.NAME_SN,
             sn_value=c.Tests.ATTR_VALUE_TEST,
-            attr_enabled=c.Tests.ATTR_ORCL_IS_ENABLED,
+            attr_flag=c.Tests.ATTR_ORCL_IS_VISIBLE,
             attr_locked=c.Tests.ATTR_ORCL_ACCOUNT_LOCKED,
             val_true=input_true,
             val_false=input_false,
@@ -110,7 +110,7 @@ class TestsFlextLdifMigrationPipelineServers:
             expected_true = c.Tests.BOOLEAN_RFC_TO_OID[input_true]
             expected_false = c.Tests.BOOLEAN_RFC_TO_OID[input_false]
 
-        enabled = c.Tests.ATTR_ORCL_IS_ENABLED.lower()
+        flag = c.Tests.ATTR_ORCL_IS_VISIBLE.lower()
         locked = c.Tests.ATTR_ORCL_ACCOUNT_LOCKED.lower()
 
         # Public model state: the single input entry survived the migration and
@@ -119,9 +119,9 @@ class TestsFlextLdifMigrationPipelineServers:
         tm.that(len(output_files), eq=1)
 
         # Observable output: target-form values present, source-form absent.
-        tm.that(content, has=f"{enabled}: {expected_true}")
+        tm.that(content, has=f"{flag}: {expected_true}")
         tm.that(content, has=f"{locked}: {expected_false}")
-        tm.ok(f"{enabled}: {input_true}" not in content)
+        tm.ok(f"{flag}: {input_true}" not in content)
         tm.ok(f"{locked}: {input_false}" not in content)
 
     @c.Tests.MARK.parametrize(
@@ -198,7 +198,7 @@ class TestsFlextLdifMigrationPipelineServers:
             f"{c.Tests.NAME_OBJECTCLASS}: {c.Tests.NAME_TOP}\n"
             f"{c.Tests.NAME_OBJECTCLASS}: {c.Tests.NAME_PERSON}\n"
             f"{c.Tests.NAME_CN}: {c.Tests.ATTR_VALUE_TEST}\n"
-            f"{c.Tests.ATTR_ORCL_IS_ENABLED}: {c.Tests.BOOLEAN_TRUE}\n"
+            f"{c.Tests.ATTR_ORCL_IS_VISIBLE}: {c.Tests.BOOLEAN_TRUE}\n"
         )
         content, entry_count, _output_files = self._run_migration(
             tmp_path=tmp_path,
@@ -209,7 +209,32 @@ class TestsFlextLdifMigrationPipelineServers:
 
         val_true_oid = c.Tests.BOOLEAN_RFC_TO_OID[c.Tests.BOOLEAN_TRUE]
         tm.that(entry_count, eq=1)
-        tm.that(content, has=f"{c.Tests.ATTR_ORCL_IS_ENABLED.lower()}: {val_true_oid}")
+        tm.that(content, has=f"{c.Tests.ATTR_ORCL_IS_VISIBLE.lower()}: {val_true_oid}")
+
+    @c.Tests.MARK.parametrize("state", list(c.Tests.ORCL_IS_ENABLED_VALUES))
+    def test_directory_string_account_state_passes_through_unchanged(
+        self,
+        tmp_path: Path,
+        state: str,
+    ) -> None:
+        """The DirectoryString account state orclIsEnabled is never coerced."""
+        ldif_content = (
+            f"dn: {c.Tests.DN_TEST_USER}\n"
+            f"{c.Tests.NAME_OBJECTCLASS}: {c.Tests.NAME_TOP}\n"
+            f"{c.Tests.NAME_OBJECTCLASS}: {c.Tests.NAME_PERSON}\n"
+            f"{c.Tests.NAME_CN}: {c.Tests.ATTR_VALUE_TEST}\n"
+            f"{c.Tests.NAME_SN}: {c.Tests.ATTR_VALUE_TEST}\n"
+            f"{c.Tests.ATTR_ORCL_IS_ENABLED}: {state}\n"
+        )
+        content, entry_count, _output_files = self._run_migration(
+            tmp_path=tmp_path,
+            ldif_content=ldif_content,
+            source_server=c.Tests.OID,
+            target_server=c.Tests.OUD,
+        )
+
+        tm.that(entry_count, eq=1)
+        tm.that(content, has=f"{c.Tests.ATTR_ORCL_IS_ENABLED.lower()}: {state}")
 
     @staticmethod
     def test_execute_fails_when_input_directory_is_missing(

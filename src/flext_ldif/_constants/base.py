@@ -151,6 +151,9 @@ class FlextLdifConstantsBase:
     SCHEMA_VALUE_SEPARATOR: ClassVar[str] = "$"
     ATTRIBUTE_NAME: ClassVar[str] = "^[a-zA-Z][a-zA-Z0-9-]*$"
     ATTRIBUTE_OPTION: ClassVar[str] = ";[a-zA-Z][a-zA-Z0-9-_]*"
+    # RFC 4512 § 2.5: an attribute description is its type plus options
+    # separated by this character; the type alone names every subtype.
+    ATTRIBUTE_OPTION_SEPARATOR: ClassVar[str] = ";"
     BINARY_CHAR_PATTERN: ClassVar[str] = "[\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f-\\xff]"
     NUMERIC_OID_PATTERN: ClassVar[str] = "^\\d+(\\.\\d+)*$"
     SCHEMA_X_EXTENSION: ClassVar[str] = (
@@ -352,6 +355,13 @@ class FlextLdifConstantsBase:
     ACL_ORIGINAL_NAME_RAW: ClassVar[str] = "acl_original_name_raw"
     ACL_FILTER: ClassVar[str] = "filter"
     ACL_CONSTRAINT: ClassVar[str] = "added_object_constraint"
+    # Body of a parenthesized LDAP filter (RFC 4515) without its outer
+    # parentheses, nesting up to three levels: "|(objectclass=a)(objectclass=b)".
+    # ``re`` has no recursion, so every ACL pattern that carries a filter value
+    # (filter=, added_object_constraint=, by-clause modifiers) composes this one.
+    LDAP_FILTER_BODY_PATTERN: ClassVar[str] = (
+        r"(?:[^()]|\((?:[^()]|\((?:[^()]|\([^()]*\))*\))*\))*"
+    )
     ACL_BINDMODE: ClassVar[str] = "bindmode"
     ACL_DENY_GROUP_OVERRIDE: ClassVar[str] = "deny_group_override"
     ACL_APPEND_TO_ALL: ClassVar[str] = "append_to_all"
@@ -506,14 +516,15 @@ class FlextLdifConstantsBase:
 
     OID_FALSE: ClassVar[str] = c.ParserBooleanToken.ZERO
 
+    # Only Boolean-syntax (1.3.6.1.4.1.1466.115.121.1.7) OID types. The OID
+    # schema declares orclIsEnabled as DirectoryString (ENABLED/DISABLED) and
+    # orclSSLEnable as Integer, so neither is converted.
     OID_BOOLEAN_ATTRIBUTES: ClassVar[frozenset[str]] = frozenset({
-        "orclisenabled",
         "orclaccountlocked",
         "orclpwdmustchange",
         "orclpasswordverify",
         "orclisvisible",
         "orclsamlenable",
-        "orclsslenable",
         "orcldasenableproductlogo",
         "orcldasenablesubscriberlogo",
         "orcldasshowproductlogo",

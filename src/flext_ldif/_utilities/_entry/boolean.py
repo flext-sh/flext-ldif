@@ -48,21 +48,25 @@ class FlextLdifUtilitiesEntryBoolean:
     ) -> str:
         """Convert one value according to the source/target format pair.
 
+        Only the two tokens of the source format are converted. Any other value
+        is returned unchanged, never coerced to false, so the destination
+        schema rejects it instead of the conversion silently rewriting it.
+
         Returns:
             The resulting ``str``.
 
         """
-        match format_pair:
-            case ("0/1", "TRUE/FALSE"):
-                return (
-                    "TRUE" if normalized_value == c.ParserBooleanToken.ONE else "FALSE"
-                )
-            case ("TRUE/FALSE", "0/1"):
-                return (
-                    c.ParserBooleanToken.ONE
-                    if normalized_value.upper() == "TRUE"
-                    else c.ParserBooleanToken.ZERO
-                )
+        rfc_true = c.ParserBooleanToken.TRUE.upper()
+        rfc_false = c.ParserBooleanToken.FALSE.upper()
+        match format_pair, normalized_value.upper():
+            case ("0/1", "TRUE/FALSE"), c.ParserBooleanToken.ONE:
+                return rfc_true
+            case ("0/1", "TRUE/FALSE"), c.ParserBooleanToken.ZERO:
+                return rfc_false
+            case ("TRUE/FALSE", "0/1"), token if token == rfc_true:
+                return c.ParserBooleanToken.ONE
+            case ("TRUE/FALSE", "0/1"), token if token == rfc_false:
+                return c.ParserBooleanToken.ZERO
             case _:
                 return normalized_value
 
