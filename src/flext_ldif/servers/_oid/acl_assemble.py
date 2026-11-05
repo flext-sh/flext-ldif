@@ -10,8 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-
 from flext_ldif import c, m, p, r
 from flext_ldif.servers._oid import FlextLdifServersOidAclToOud
 
@@ -22,18 +20,19 @@ class FlextLdifServersOidAclAssemble:
     class _RuleAssembler:
         """Assemble one parsed OID rule into one OUD :class:`m.Ldif.AciRule`.
 
-        Every subject records one typed :class:`m.Ldif.AclSubjectOutcome`.
-        Grants become ``allows``; explicit denials (``no*`` tokens and
-        ``(none)``, OID-30 §30.1.4.3 / Table 30-2) become typed ``denies`` the
-        consumer renders as OUD ``deny`` — never a complement grant. ``by *
-        (none)`` is ``DENIED_ALL`` and dead-codes every later subject; with
-        ``base_dn``, out-of-scope bind DNs are excluded. Object keywords,
-        modifiers and regex DNs without an exact OUD form surface as
-        ``r.fail``.
+        Inside one OID ACI the effective access of a session is the union of
+        the grants of every matching by-clause minus the union of their
+        denials (OID-30 §30.1.6.2). Every subject keeps its own grant as an
+        ``allow`` and its own denial as a ``deny`` with the same bind rule, so
+        OUD deny precedence (OUD §9.1.4) reproduces that union. Because every
+        session matches ``*``, rights a ``*`` subject denies are removed from
+        every grant of the rule. With ``base_dn``, out-of-scope bind DNs are
+        excluded. Unsupported subjects, modifiers, tokens and regex DNs
+        surface as ``r.fail``.
         """
 
         def __init__(self, rule: p.Ldif.OidAclRule, base_dn: str) -> None:
-            """Bind the rule, scope, and converted-subject accumulators."""
+            """Bind the rule, scope, and per-subject accumulators."""
             self._rule = rule
             self._base_dn = base_dn
             self._is_entry = rule.target_type == c.Ldif.AclTargetType.ENTRY
@@ -46,210 +45,209 @@ class FlextLdifServersOidAclAssemble:
                 c.Ldif.SUBJECT_ANYONE,
                 c.Ldif.DIRECTORY_MANAGER_DN,
             }
-            self._allows: list[p.Ldif.AciAllow] = []
-            self._denies: list[p.Ldif.AciDeny] = []
-            self._outcomes: list[p.Ldif.AclSubjectOutcome] = []
-            self._has_anyone = False
-            self._found_deny_all = False
+            self._resolved: dict[
+                int,
+                tuple[p.Ldif.AciAllow, p.Ldif.AclPermissionResolution, bool],
+            ] = {}
+            self._excluded: dict[int, p.Ldif.AclSubjectOutcome] = {}
 
         def assemble(self) -> p.Result[p.Ldif.AciRule]:
-            """Run the subject conversion pass and build the final AciRule.
-
-            ``DenyGroupOverride`` (OID-30 §30.1.3.4.2: blocks superuser and
-            DirectoryAdminGroup overrides, which OUD decides by privileges, not
-            ACIs) and ``AppendToAll`` (§30.1.4.1: appends the subject to every
-            ACI of the ACP) have no per-rule OUD form and surface as
-            ``r.fail``, as does an unknown permission token or an
-            untranslatable modifier / regex DN (never a silent partial result).
+            """Resolve every subject, then build the clauses and outcomes.
 
             Returns:
-                The resulting ``p.Result[p.Ldif.AciRule]``.
+                The assembled rule, or the first subject failure.
 
             """
-            if self._rule.deny_group_override:
-                return r[p.Ldif.AciRule].fail(
-                    "OID DenyGroupOverride has no exact OUD ACI equivalent "
-                    f"(manual review required): {self._rule.raw_line!r}",
-                )
-            if self._rule.append_to_all:
-                return r[p.Ldif.AciRule].fail(
-                    "OID AppendToAll has no per-rule OUD ACI equivalent "
-                    f"(manual review required): {self._rule.raw_line!r}",
-                )
-            kind = c.Ldif.AclSubjectOutcomeKind
-            for subject in self._rule.subjects:
-                if self._found_deny_all:
-                    self._record(
-                        m.Ldif.AclSubjectOutcome(
-                            subject=subject,
-                            kind=kind.EXCLUDED_DEAD_CODE,
-                        ),
-                    )
-                    continue
-                step_result = self._process_subject(subject)
-                if step_result.failure:
-                    return r[p.Ldif.AciRule].from_failure(step_result)
+            for index, subject in enumerate(self._rule.subjects):
+                step = self._resolve_subject(index, subject)
+                if step.failure:
+                    return r[p.Ldif.AciRule].from_failure(step)
             return r[p.Ldif.AciRule].ok(self._build_rule())
 
-        def _record(self, outcome: p.Ldif.AclSubjectOutcome) -> p.Result[bool]:
-            """Record the typed outcome of one subject.
+        def _resolve_subject(
+            self,
+            index: int,
+            subject: p.Ldif.OidAclSubject,
+        ) -> p.Result[bool]:
+            """Convert one subject's bind rule, modifiers and permissions.
 
             Returns:
-                The resulting ``p.Result[bool]``.
+                Success once the subject is resolved or excluded, or the
+                first conversion failure.
 
             """
-            self._outcomes.append(outcome)
-            return r[bool].ok(value=True)
-
-        def _process_subject(self, subject: p.Ldif.OidAclSubject) -> p.Result[bool]:
-            """Convert one subject clause, appending its clauses and outcome.
-
-            Returns:
-                The resulting ``p.Result[bool]``.
-
-            """
-            kind = c.Ldif.AclSubjectOutcomeKind
             bind = FlextLdifServersOidAclToOud.convert_subject_to_oud(subject)
             if bind.failure:
-                return self._record(
-                    m.Ldif.AclSubjectOutcome(subject=subject, kind=kind.UNSUPPORTED),
-                )
+                return r[bool].from_failure(bind)
             ip = FlextLdifServersOidAclToOud.convert_bind_modifiers(subject)
             if ip.failure:
                 return r[bool].from_failure(ip)
-            bind_type = bind.value.subject_type
-            converted = bind.value.subject_value
-            bind_value = converted
-            if bind_type in self._dn_binds and converted not in self._literal_binds:
-                wildcard = FlextLdifServersOidAclToOud.regex_to_wildcard(converted)
-                if wildcard.failure:
-                    return r[bool].from_failure(wildcard)
-                bind_value = wildcard.value
-                if not FlextLdifServersOidAclToOud.in_scope(bind_value, self._base_dn):
-                    return self._record(
-                        m.Ldif.AclSubjectOutcome(
-                            subject=subject,
-                            kind=kind.OUT_OF_SCOPE,
-                            display_value=bind_value,
-                        ),
-                    )
-            dn_kinds = {c.Ldif.OidSubjectKind.GROUP, c.Ldif.OidSubjectKind.USER}
-            return self._append_clauses(
-                subject,
-                m.Ldif.AciAllow(
-                    subject_type=bind_type,
-                    subject_value=bind_value,
-                    ip=ip.value,
-                ),
-                wildcard_rewritten=bind_value != converted,
-                display_value=(
-                    converted if subject.subject_type in dn_kinds else subject.value
-                ),
-            )
-
-        def _append_clauses(
-            self,
-            subject: p.Ldif.OidAclSubject,
-            bind: p.Ldif.AciAllow,
-            *,
-            wildcard_rewritten: bool,
-            display_value: str,
-        ) -> p.Result[bool]:
-            """Resolve permissions and append the allow/deny clauses + outcome.
-
-            Returns:
-                The resulting ``p.Result[bool]``.
-
-            """
-            resolved = FlextLdifServersOidAclToOud.convert_permissions(
+            resolved = FlextLdifServersOidAclToOud.resolve_permissions(
                 subject.permissions,
                 is_entry=self._is_entry,
             )
             if resolved.failure:
                 return r[bool].from_failure(resolved)
+            converted = bind.value.subject_value
+            bind_value = converted
+            dn_bind = bind.value.subject_type in self._dn_binds
+            if dn_bind and converted not in self._literal_binds:
+                wildcard = FlextLdifServersOidAclToOud.convert_bind_dn(
+                    bind.value.subject_type,
+                    converted,
+                )
+                if wildcard.failure:
+                    return r[bool].from_failure(wildcard)
+                bind_value = wildcard.value
+                if not FlextLdifServersOidAclToOud.in_scope(bind_value, self._base_dn):
+                    self._excluded[index] = m.Ldif.AclSubjectOutcome(
+                        subject=subject,
+                        kind=c.Ldif.AclSubjectOutcomeKind.OUT_OF_SCOPE,
+                        display_value=bind_value,
+                    )
+                    return r[bool].ok(value=True)
+            self._resolved[index] = (
+                m.Ldif.AciAllow(
+                    subject_type=bind.value.subject_type,
+                    subject_value=bind_value,
+                    ip=ip.value,
+                ),
+                resolved.value,
+                bind_value != converted,
+            )
+            return r[bool].ok(value=True)
+
+        def _catch_all_denials(self) -> frozenset[str]:
+            """Return the rights any ``*`` subject of the rule denies."""
+            return frozenset(
+                perm
+                for index, (_, resolution, _) in self._resolved.items()
+                if self._rule.subjects[index].subject_type
+                == c.Ldif.OidSubjectKind.ANYONE
+                for perm in resolution.deny
+            )
+
+        @staticmethod
+        def _outcome(
+            subject: p.Ldif.OidAclSubject,
+            resolved: tuple[p.Ldif.AciAllow, p.Ldif.AclPermissionResolution, bool],
+            catch_all: frozenset[str],
+        ) -> p.Ldif.AclSubjectOutcome:
+            """Type one resolved subject's effective allow, deny and kind.
+
+            Returns:
+                The subject outcome.
+
+            """
             kind = c.Ldif.AclSubjectOutcomeKind
+            bind, resolution, rewritten = resolved
+            effective = tuple(
+                perm for perm in resolution.allow if perm not in catch_all
+            )
             deny = (
                 m.Ldif.AciDeny(
                     subject_type=bind.subject_type,
                     subject_value=bind.subject_value,
-                    permissions=resolved.value.deny,
+                    permissions=resolution.deny,
                     ip=bind.ip,
                 )
-                if resolved.value.deny
+                if resolution.deny
                 else None
             )
-            if deny is not None:
-                self._denies.append(deny)
-            if not resolved.value.allow:
-                total = FlextLdifServersOidAclAssemble.deny_none(subject.permissions)
-                self._found_deny_all = total and (
-                    subject.subject_type == c.Ldif.OidSubjectKind.ANYONE
-                )
-                return self._record(
-                    m.Ldif.AclSubjectOutcome(
-                        subject=subject,
-                        kind=(kind.DENIED_ALL if total else kind.DENIED)
-                        if deny is not None
-                        else kind.UNGRANTED,
-                        deny=deny,
-                        display_value=display_value,
-                    ),
-                )
-            allow = bind.model_copy(update={"permissions": resolved.value.allow})
-            self._allows.append(allow)
-            self._has_anyone = self._has_anyone or (
-                subject.subject_type == c.Ldif.OidSubjectKind.ANYONE
-            )
-            return self._record(
-                m.Ldif.AclSubjectOutcome(
-                    subject=subject,
-                    kind=kind.GRANTED,
-                    allow=allow,
-                    deny=deny,
-                    wildcard_rewritten=wildcard_rewritten,
+            if effective:
+                outcome_kind = kind.GRANTED
+            elif resolution.allow:
+                outcome_kind = kind.CANCELLED
+            elif resolution.total_denial:
+                outcome_kind = kind.DENIED_ALL
+            else:
+                outcome_kind = kind.DENIED
+            return m.Ldif.AclSubjectOutcome(
+                subject=subject,
+                kind=outcome_kind,
+                allow=(
+                    bind.model_copy(update={"permissions": effective})
+                    if effective
+                    else None
                 ),
+                deny=deny,
+                wildcard_rewritten=rewritten,
             )
 
         def _build_rule(self) -> p.Ldif.AciRule:
-            """Derive the acl name and assemble the final OUD AciRule.
+            """Derive outcomes, scoped clauses and the acl name of the rule.
 
             Returns:
                 The resulting ``m.Ldif.AciRule``.
 
             """
+            catch_all = self._catch_all_denials()
+            outcomes = tuple(
+                self._excluded[index]
+                if index in self._excluded
+                else self._outcome(subject, self._resolved[index], catch_all)
+                for index, subject in enumerate(self._rule.subjects)
+            )
+            has_anyone = any(
+                outcome.allow is not None
+                and outcome.subject.subject_type == c.Ldif.OidSubjectKind.ANYONE
+                for outcome in outcomes
+            )
+            rule_scope = FlextLdifServersOidAclToOud.calculate_targetscope(
+                self._rule,
+                has_anyone_subject=has_anyone,
+            )
+            allows: list[p.Ldif.AciAllow] = []
+            denies: list[p.Ldif.AciDeny] = []
+            for outcome in outcomes:
+                if outcome.allow is not None:
+                    allows.extend(
+                        outcome.allow.model_copy(
+                            update={"permissions": perms, "targetscope": scope},
+                        )
+                        for scope, perms in FlextLdifServersOidAclToOud.clause_scopes(
+                            self._rule,
+                            outcome.allow.permissions,
+                            deny=False,
+                            rule_scope=rule_scope,
+                        )
+                    )
+                if outcome.deny is not None:
+                    denies.extend(
+                        outcome.deny.model_copy(
+                            update={"permissions": perms, "targetscope": scope},
+                        )
+                        for scope, perms in FlextLdifServersOidAclToOud.clause_scopes(
+                            self._rule,
+                            outcome.deny.permissions,
+                            deny=True,
+                            rule_scope=rule_scope,
+                        )
+                    )
             first_value = self._rule.subjects[0].value if self._rule.subjects else ""
             acl_name = FlextLdifServersOidAclAssemble.generate_acl_name(
                 self._rule.dn,
                 self._rule.target_type,
                 first_value,
             )
-            group_count = len({tuple(allow.permissions) for allow in self._allows})
+            group_count = len({
+                tuple(outcome.allow.permissions)
+                for outcome in outcomes
+                if outcome.allow is not None
+            })
             if group_count > 1:
                 acl_name += f" (+{group_count - 1})"
             return m.Ldif.AciRule(
                 dn=self._rule.dn,
                 targetattr=FlextLdifServersOidAclToOud.resolve_targetattr(self._rule),
                 targetfilter=self._rule.target_filter,
-                targetscope=FlextLdifServersOidAclToOud.calculate_targetscope(
-                    self._rule,
-                    has_anyone_subject=self._has_anyone,
-                ),
+                targetscope=rule_scope,
                 acl_name=acl_name,
-                allows=tuple(self._allows),
-                denies=tuple(self._denies),
+                allows=tuple(allows),
+                denies=tuple(denies),
                 target_type=self._rule.target_type,
-                outcomes=tuple(self._outcomes),
+                outcomes=outcomes,
             )
-
-    @staticmethod
-    def deny_none(permissions: Sequence[str]) -> bool:
-        """Report whether the permission list is exactly the ``none`` deny token.
-
-        Returns:
-            The resulting ``bool``.
-
-        """
-        return [perm.lower() for perm in permissions] == [c.Ldif.PERM_NONE]
 
     @staticmethod
     def generate_acl_name(dn: str, target_type: str, subject_value: str) -> str:

@@ -1,12 +1,12 @@
-"""OID→OUD ACL conversion — typed OidAclRule → OUD aci value objects.
+"""OID→OUD ACL conversion — typed OidAclRule parts → OUD aci value objects.
 
 Each by-clause subject maps to one OUD bind-rule (``m.Ldif.AciAllow``);
 subjects with no OUD equivalent (``guidattr``/unknown) surface as ``r.fail``
-carrying the manual review note — never a silent drop. Permission lists resolve
-to typed grant and deny sets (OID 12.2.1.3 ch. 30 §30.1.4.3: each access level
-is granted or denied independently and ``noxxx`` denies ``xxx``). Modifiers and
-regex DNs without an exact OUD form surface as ``r.fail``. Taxonomy is the
-``c.Ldif`` SSOT.
+carrying the manual review note. Permission lists resolve to typed grant and
+deny sets (OID 12.2.1.3 ch. 30 §30.1.4.3: each access level is granted or
+denied independently and ``noxxx`` denies ``xxx``). Tokens outside the OID
+access grammar, modifiers and regex DNs without an exact OUD form surface as
+``r.fail``.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -15,8 +15,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from warnings import deprecated
 
 from flext_ldif import c, m, p, r, u
+from flext_ldif.servers._oid import FlextLdifConstantsServersOid
 
 
 class FlextLdifServersOidAclToOud:
@@ -29,6 +31,28 @@ class FlextLdifServersOidAclToOud:
         return normalized.strip()
 
     @staticmethod
+    def container_dns(base_dn: str) -> frozenset[str]:
+        """Return the base DN plus the deprecated container suffix DNs.
+
+        Serves only the deprecated ``high_level_containers`` pass-throughs and
+        is removed with them.
+        """
+        base = base_dn.lower().strip()
+        return frozenset(
+            f"{suffix}{base}" if suffix else base
+            for suffix in FlextLdifConstantsServersOid.HIGH_LEVEL_CONTAINER_SUFFIXES
+        )
+
+    @classmethod
+    @deprecated(
+        "compat: high_level_containers -> removed (no OID semantics); "
+        "fix: drop the high-level container filter",
+    )
+    def high_level_containers(cls, base_dn: str) -> frozenset[str]:
+        """Return :meth:`container_dns` (deprecated consumer filter)."""
+        return cls.container_dns(base_dn)
+
+    @staticmethod
     def in_scope(dn: str, base_dn: str) -> bool:
         """Return True if ``dn`` is the base or a descendant of it (empty base =.
 
@@ -37,28 +61,61 @@ class FlextLdifServersOidAclToOud:
         return not base_dn or u.Ldif.under_base(dn, base_dn)
 
     @staticmethod
-    def regex_to_wildcard(value: str) -> p.Result[str]:
-        r"""Convert an OID regex DN to an OUD wildcard (``.*``/``.+`` → ``*``).
+    def regex_dn_to_wildcard(value: str) -> p.Result[str]:
+        r"""Convert an OID DN regex to the exact OUD bind-DN wildcard.
 
-        OID restricts the DN regex to a leading wildcard over a subtree root
-        (OID-A7 §A.7.1); OUD bind DNs accept only ``*`` wildcards (OUD 12.2.1.4
-        §9.5.2). ``\.``/``\,`` are unescaped. A residual regex metacharacter
-        means the DN has no exact OUD form and surfaces as ``r.fail`` — the raw
-        regex is never written as a bind DN.
+        The OID grammar allows a DN or a leading wildcard over a subtree root
+        (``.*,<dn>``; OID-A7 §A.7.1, written ``.*,`` or ``*,`` in Oracle
+        text). That matches one or more RDNs below the root, which is OUD
+        ``**,<dn>`` (OUD 12.2.1.4 §9.5.2). A regex-escaped dot ``\.`` is a
+        literal dot. Any other wildcard, quantifier, regex construct or
+        non-DN escape has no exact OUD form and surfaces as ``r.fail``.
 
         Returns:
-            The OUD wildcard DN, or the typed failure.
+            The OUD bind DN, or the typed failure.
 
         """
-        converted = value
-        for pattern, replacement in c.Ldif.OID_REGEX_REPLACEMENTS:
-            converted = converted.replace(pattern, replacement)
-        if c.Ldif.OID_REGEX_RESIDUAL_RE.search(converted):
+        constants = FlextLdifConstantsServersOid
+        subtree = constants.OID_DN_SUBTREE_REGEX_RE.match(value)
+        root = subtree.group(1) if subtree else value
+        root = constants.OID_DN_ESCAPED_DOT_RE.sub(".", root)
+        if constants.OID_DN_UNSUPPORTED_RE.search(root):
             return r[str].fail(
-                f"OID regex DN has no exact OUD wildcard (only '.*' and '.+' "
-                f"convert; manual review required): {value!r}",
+                f"OID regex DN has no exact OUD wildcard (only a leading '.*,' "
+                f"subtree wildcard converts; manual review required): {value!r}",
             )
-        return r[str].ok(converted)
+        prefix = constants.OUD_DN_SUBTREE_WILDCARD if subtree else ""
+        return r[str].ok(f"{prefix}{root}")
+
+    @classmethod
+    def convert_bind_dn(cls, bind_type: str, value: str) -> p.Result[str]:
+        """Convert the DN of a ``userdn``/``groupdn`` bind rule.
+
+        A ``dn=`` subject is a DN regex (:meth:`regex_dn_to_wildcard`). A
+        ``group=`` subject names one group DN (OID-A7 §A.7.1), so a wildcard
+        in it has no exact OUD ``groupdn`` form and surfaces as ``r.fail``.
+
+        Returns:
+            The OUD bind DN, or the typed failure.
+
+        """
+        if bind_type != c.Ldif.OudSubjectType.GROUPDN:
+            return cls.regex_dn_to_wildcard(value)
+        if c.Ldif.ACL_WILDCARD in value:
+            return r[str].fail(
+                f"OID group DN with a wildcard has no exact OUD groupdn "
+                f"(manual review required): {value!r}",
+            )
+        return r[str].ok(value)
+
+    @classmethod
+    @deprecated(
+        "compat: regex_to_wildcard -> regex_dn_to_wildcard; "
+        "fix: consume the typed result",
+    )
+    def regex_to_wildcard(cls, value: str) -> str:
+        """Return :meth:`regex_dn_to_wildcard`, raising on its failure."""
+        return cls.regex_dn_to_wildcard(value).unwrap()
 
     @staticmethod
     def _ipv4_pattern(term: str) -> p.Result[str]:
@@ -72,19 +129,22 @@ class FlextLdifServersOidAclToOud:
             The OUD ip pattern, or the typed failure.
 
         """
-        match = c.Ldif.OID_IPV4_PREFIX_RE.match(term)
+        constants = FlextLdifConstantsServersOid
+        match = constants.OID_IPV4_PREFIX_RE.match(term)
         octets = match.group(1).split(".") if match else []
         wildcard = bool(match and match.group(2))
-        exact = len(octets) == c.Ldif.IPV4_OCTET_COUNT and not wildcard
-        prefix = 0 < len(octets) < c.Ldif.IPV4_OCTET_COUNT and wildcard
+        exact = len(octets) == constants.IPV4_OCTET_COUNT and not wildcard
+        prefix = 0 < len(octets) < constants.IPV4_OCTET_COUNT and wildcard
         if not (exact or prefix) or any(
-            int(octet) > c.Ldif.IPV4_OCTET_MAX for octet in octets
+            int(octet) > constants.IPV4_OCTET_MAX for octet in octets
         ):
             return r[str].fail(
                 f"OID bindipfilter value {term!r} has no exact OUD ip pattern "
                 "(manual review required)",
             )
-        padding = [c.Ldif.IPV4_OCTET_WILDCARD] * (c.Ldif.IPV4_OCTET_COUNT - len(octets))
+        padding = [constants.IPV4_OCTET_WILDCARD] * (
+            constants.IPV4_OCTET_COUNT - len(octets)
+        )
         return r[str].ok(".".join((*octets, *padding)))
 
     @classmethod
@@ -101,17 +161,18 @@ class FlextLdifServersOidAclToOud:
             The OUD ip value, or the typed failure.
 
         """
+        constants = FlextLdifConstantsServersOid
         text = value.strip()
         if not text:
             return r[str].ok("")
-        term = c.Ldif.OID_IP_FILTER_TERM_RE.match(text)
-        alternatives = c.Ldif.OID_IP_FILTER_OR_RE.match(text)
+        term = constants.OID_IP_FILTER_TERM_RE.match(text)
+        alternatives = constants.OID_IP_FILTER_OR_RE.match(text)
         if term is not None:
             raw_terms: Sequence[str] = (term.group(1),)
         elif alternatives is not None:
             raw_terms = tuple(
                 item.group(1)
-                for item in c.Ldif.OID_IP_FILTER_OR_TERM_RE.finditer(
+                for item in constants.OID_IP_FILTER_OR_TERM_RE.finditer(
                     alternatives.group(1),
                 )
             )
@@ -122,7 +183,7 @@ class FlextLdifServersOidAclToOud:
                 "manual review required)",
             )
         return r.traverse(raw_terms, cls._ipv4_pattern).map(
-            c.Ldif.OUD_IP_LIST_SEPARATOR.join,
+            constants.OUD_IP_LIST_SEPARATOR.join,
         )
 
     @classmethod
@@ -156,14 +217,11 @@ class FlextLdifServersOidAclToOud:
 
     @staticmethod
     def _order_perms(perms: set[str]) -> Sequence[str]:
-        ordered = tuple(p for p in c.Ldif.PERM_ORDERED if p in perms)
-        extra = tuple(sorted(perms - set(c.Ldif.PERM_ORDERED)))
-        return ordered + extra
+        return tuple(perm for perm in c.Ldif.PERM_ORDERED if perm in perms)
 
-    @classmethod
+    @staticmethod
     def _map_tokens(
-        cls,
-        bases: set[str],
+        bases: frozenset[str],
         perm_map: Mapping[str, str | None],
     ) -> set[str]:
         granted: set[str] = set()
@@ -175,107 +233,111 @@ class FlextLdifServersOidAclToOud:
                 )
         return granted
 
-    @classmethod
+    @staticmethod
     def _collect_permission_bases(
-        cls,
         permissions: Sequence[str],
-        perm_map: Mapping[str, str | None],
-        all_perms: frozenset[str],
-    ) -> p.Result[tuple[set[str], set[str], bool, bool]]:
-        """Split OID permission tokens into positive/negated base sets.
+        *,
+        is_entry: bool,
+    ) -> p.Result[tuple[frozenset[str], frozenset[str]]]:
+        """Split OID access tokens into granted and denied base rights.
+
+        Only the tokens of the OID access grammar for the object kind are
+        accepted (OID-A7 §A.7.1; OID-30 Table 30-2): ``none``, the entry
+        rights ``browse``/``add``/``delete``/``proxy`` or the attribute rights
+        ``read``/``search``/``write``/``selfwrite``/``compare``, and their
+        ``no*`` forms. ``all``, ``*``, an empty list and a right of the other
+        object kind surface as ``r.fail``. ``none`` denies every right of the
+        kind; a right both granted and denied is denied.
 
         Returns:
-            The resulting ``p.Result[tuple[set[str], set[str], bool, bool]]``.
+            The ``(granted, denied)`` base rights, or the typed failure.
 
         """
-        positive_bases: set[str] = set()
-        negated_bases: set[str] = set()
-        deny_all = False
-        explicit_all = False
-        known_positive = c.Ldif.ALL_ENTRY_PERMS | c.Ldif.ALL_ATTR_PERMS
-        for raw in permissions:
-            perm = raw.strip().lower()
-            if not perm:
-                continue
-            if perm == "none":
-                deny_all = True
-            elif perm.startswith(c.ParserBooleanToken.NO):
-                base = c.Ldif.NEGATION_TO_BASE.get(perm)
-                if base is None:
-                    return r[tuple[set[str], set[str], bool, bool]].fail(
-                        f"Unknown negation perm: {perm!r}",
-                    )
-                negated_bases.add(base)
-            elif perm == c.Ldif.PERM_ALL:
-                explicit_all = True
-                positive_bases.update(all_perms)
-            elif perm in perm_map:
-                positive_bases.add(perm)
-            elif perm not in known_positive:
-                return r[tuple[set[str], set[str], bool, bool]].fail(
-                    f"Unknown permission token: {perm!r}",
+        scope = c.Ldif.ALL_ENTRY_PERMS if is_entry else c.Ldif.ALL_ATTR_PERMS
+        other = c.Ldif.ALL_ATTR_PERMS if is_entry else c.Ldif.ALL_ENTRY_PERMS
+        kind = c.Ldif.AclTargetType.ENTRY if is_entry else c.Ldif.AclTargetType.ATTR
+        tokens = [raw.strip().lower() for raw in permissions if raw.strip()]
+        result = r[tuple[frozenset[str], frozenset[str]]]
+        if not tokens:
+            return result.fail("Empty OID access list (manual review required)")
+        granted: set[str] = set()
+        denied: set[str] = set()
+        for perm in tokens:
+            base = c.Ldif.NEGATION_TO_BASE.get(perm, perm)
+            if perm == c.Ldif.PERM_NONE:
+                denied.update(scope)
+            elif base in scope:
+                (denied if base != perm else granted).add(base)
+            elif base in other:
+                return result.fail(
+                    f"OID permission {perm!r} is not a right of an {kind.value!r} "
+                    "object (OID-30 Table 30-2; manual review required)",
                 )
-        return r[tuple[set[str], set[str], bool, bool]].ok((
-            positive_bases,
-            negated_bases,
-            deny_all,
-            explicit_all,
-        ))
+            else:
+                return result.fail(
+                    f"Unknown OID permission token {perm!r} (not in the OID "
+                    "access grammar, OID-A7 §A.7.1; manual review required)",
+                )
+        return result.ok((frozenset(granted - denied), frozenset(denied)))
 
     @classmethod
-    def _resolve_permissions(
-        cls,
-        perm_map: Mapping[str, str | None],
-        all_perms: frozenset[str],
-        bases: tuple[set[str], set[str], bool, bool],
-    ) -> p.Ldif.AclPermissionResolution:
-        """Resolve collected positive/negated bases into grant and deny sets.
-
-        Returns:
-            The ordered OUD allow and deny tokens.
-
-        """
-        positive_bases, negated_bases, deny_all, explicit_all = bases
-        if deny_all:
-            return m.Ldif.AclPermissionResolution(
-                deny=cls._order_perms(cls._map_tokens(set(all_perms), perm_map)),
-            )
-        if explicit_all and not negated_bases:
-            return m.Ldif.AclPermissionResolution(allow=(c.Ldif.PERM_ALL,))
-        deny = cls._map_tokens(negated_bases, perm_map)
-        allow = cls._map_tokens(positive_bases - negated_bases, perm_map) - deny
-        return m.Ldif.AclPermissionResolution(
-            allow=cls._order_perms(allow),
-            deny=cls._order_perms(deny),
-        )
-
-    @classmethod
-    def convert_permissions(
+    def resolve_permissions(
         cls,
         permissions: Sequence[str],
         *,
         is_entry: bool,
     ) -> p.Result[p.Ldif.AclPermissionResolution]:
-        """Resolve OID permission tokens into ordered OUD grant and deny sets.
+        """Resolve OID access tokens into ordered OUD grant and deny sets.
 
         Each access level is granted or denied independently and ``noxxx``
-        denies ``xxx`` (OID 12.2.1.3 §30.1.4.3). A pure-negation list therefore
-        denies exactly the named rights and grants NOTHING; unnamed rights stay
-        unresolved (Table 30-4). A mixed list keeps its positive grants and
-        denies its ``no*`` rights. ``none`` denies every right of the target
-        kind (Table 30-2). ``all`` expands to the scoped permission universe
-        before ``no*`` negations apply. A perm valid only at the other scope
-        (``read`` on an entry rule) resolves to nothing here; a token in
-        neither scope → ``r.fail``.
+        denies ``xxx`` (OID 12.2.1.3 §30.1.4.3). A pure-negation list denies
+        exactly the named rights and grants nothing; unnamed rights stay
+        unresolved (Table 30-4). ``none`` denies every right of the target
+        kind (Table 30-2) and sets ``total_denial``. A token outside the OID
+        access grammar of the object kind surfaces as ``r.fail``.
 
         Returns:
-            The typed grant/deny resolution, or the unknown-token failure.
+            The typed grant/deny resolution, or the token failure.
 
         """
         perm_map = c.Ldif.ENTRY_PERM_MAP if is_entry else c.Ldif.ATTR_PERM_MAP
-        all_perms = c.Ldif.ALL_ENTRY_PERMS if is_entry else c.Ldif.ALL_ATTR_PERMS
-        return cls._collect_permission_bases(permissions, perm_map, all_perms).map(
-            lambda bases: cls._resolve_permissions(perm_map, all_perms, bases),
+        scope = c.Ldif.ALL_ENTRY_PERMS if is_entry else c.Ldif.ALL_ATTR_PERMS
+
+        def resolve(
+            bases: tuple[frozenset[str], frozenset[str]],
+        ) -> p.Ldif.AclPermissionResolution:
+            granted, denied = bases
+            deny = cls._map_tokens(denied, perm_map)
+            allow = cls._map_tokens(granted, perm_map) - deny
+            return m.Ldif.AclPermissionResolution(
+                allow=cls._order_perms(allow),
+                deny=cls._order_perms(deny),
+                total_denial=denied == scope,
+            )
+
+        return cls._collect_permission_bases(permissions, is_entry=is_entry).map(
+            resolve,
+        )
+
+    @classmethod
+    @deprecated(
+        "compat: convert_permissions -> resolve_permissions; "
+        "fix: render the typed deny set",
+    )
+    def convert_permissions(
+        cls,
+        permissions: Sequence[str],
+        *,
+        is_entry: bool,
+    ) -> p.Result[Sequence[str]]:
+        """Return the granted rights of :meth:`resolve_permissions` only.
+
+        Returns:
+            The granted OUD tokens, or the token failure.
+
+        """
+        return cls.resolve_permissions(permissions, is_entry=is_entry).map(
+            lambda resolved: tuple(resolved.allow),
         )
 
     @staticmethod
@@ -308,10 +370,10 @@ class FlextLdifServersOidAclToOud:
         *,
         has_anyone_subject: bool,
     ) -> str | None:
-        """Compute the OUD ``targetscope`` (``base`` or default subtree).
+        """Compute the OUD ``targetscope`` of the rule's allow clauses.
 
         ``orclentrylevelaci`` is non-inheritable → always ``base``. An ``orclaci``
-        with a surviving ``anyone`` subject is pinned to ``base`` to prevent
+        with a granting ``anyone`` subject is pinned to ``base`` to prevent
         inheritance to the subtree; otherwise the OUD default (subtree) applies
         and ``targetscope`` is omitted (``None``).
 
@@ -326,6 +388,44 @@ class FlextLdifServersOidAclToOud:
             return acl_scope_base
         return None
 
+    @staticmethod
+    def clause_scopes(
+        rule: p.Ldif.OidAclRule,
+        permissions: Sequence[str],
+        *,
+        deny: bool,
+        rule_scope: str | None,
+    ) -> Sequence[tuple[str | None, Sequence[str]]]:
+        """Partition one clause's OUD rights by the targetscope they need.
+
+        ``orclentrylevelaci`` governs only its entry (OID-30 §30.1.3.3), but
+        OID ``add`` there authorizes adding children while OUD checks ``add``
+        on the new child (OUD 12.2.1.4 §9.2.3.3), so ``add`` renders with
+        ``onelevel`` and the other rights with the rule scope. An ``orclaci``
+        is prescriptive over its whole subtree (OID-30 §30.1.3.2), so its
+        denials render with ``subtree`` even when the rule's allows are
+        pinned to ``base``. ``None`` means the rule's targetscope.
+
+        Returns:
+            ``(targetscope, rights)`` pairs with non-empty rights.
+
+        """
+        constants = FlextLdifConstantsServersOid
+        if rule.acl_type == c.Ldif.AclConvertType.ORCLENTRYLEVELACI:
+            child = constants.ENTRY_LEVEL_CHILD_PERMS
+            parts: Sequence[tuple[str | None, Sequence[str]]] = (
+                (None, tuple(perm for perm in permissions if perm not in child)),
+                (
+                    constants.ACL_SCOPE_ONELEVEL,
+                    tuple(perm for perm in permissions if perm in child),
+                ),
+            )
+        elif deny and rule_scope is not None:
+            parts = ((constants.ACL_SCOPE_SUBTREE, tuple(permissions)),)
+        else:
+            parts = ((None, tuple(permissions)),)
+        return tuple((scope, perms) for scope, perms in parts if perms)
+
     @classmethod
     def convert_subject_to_oud(
         cls,
@@ -335,9 +435,9 @@ class FlextLdifServersOidAclToOud:
 
         Returns an :class:`m.Ldif.AciAllow` whose ``subject_value`` is the
         normalized bind value (``ldap:///`` is applied at aci assembly) and whose
-        ``permissions`` are left empty — Step 5 fills the converted permission
-        set. ``guidattr``/unknown subjects have no OUD equivalent and surface as
-        ``r.fail`` (the caller records the manual-review note).
+        ``permissions`` are left empty — the assembler fills the resolved
+        rights. ``guidattr``/unknown subjects have no OUD equivalent and
+        surface as ``r.fail`` carrying the manual-review note.
 
         Returns:
             The resulting ``p.Result[p.Ldif.AciAllow]``.

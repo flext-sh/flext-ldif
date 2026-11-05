@@ -288,6 +288,7 @@ class FlextLdifConstantsBaseParts:
         ACI_VERSION: ClassVar[str] = "version 3.0"
         ACI_VERSION_NUMBER: ClassVar[str] = "3.0"
         ACI_ALLOW: ClassVar[str] = "allow"
+        ACI_DENY: ClassVar[str] = "deny"
         BIND_OR: ClassVar[str] = "or "
         "Keyword opening each further same-permission bind-rule of an ``allow``."
         ACI_PART_INDENT: ClassVar[str] = "    "
@@ -302,12 +303,9 @@ class FlextLdifConstantsBaseParts:
         ACL_NAME_ATTRS: ClassVar[str] = "Attrs"
         PERM_NONE: ClassVar[str] = "none"
         "OID permission token denying all access (``by X (none)``)."
-        PERM_ALL: ClassVar[str] = "all"
-        "OID/OUD permission token granting all rights."
 
         # OID permission → OUD permission(s); None = a ``no*``/``none`` deny token.
         ENTRY_PERM_MAP: ClassVar[Mapping[str, str | None]] = MappingProxyType({
-            "all": "all",
             "browse": "read, search",
             "add": "add",
             "delete": "delete",
@@ -319,7 +317,6 @@ class FlextLdifConstantsBaseParts:
             "none": None,
         })
         ATTR_PERM_MAP: ClassVar[Mapping[str, str | None]] = MappingProxyType({
-            "all": "all",
             "read": "read",
             "search": "search",
             "write": "write",
@@ -367,7 +364,6 @@ class FlextLdifConstantsBaseParts:
         })
         # Canonical OUD permission ordering for deterministic aci assembly.
         PERM_ORDERED: ClassVar[tuple[str, ...]] = (
-            "all",
             "read",
             "search",
             "write",

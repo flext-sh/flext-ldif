@@ -35,7 +35,7 @@ class FlextLdifServersOidAclPipeline:
     ) -> p.Result[tuple[p.Ldif.AciRule, ...]]:
         """Parse and assemble each OID ACL line into one typed OUD aci rule.
 
-        Each rule carries its rendered-ready allows and the per-subject
+        Each rule carries its allow and deny clauses and the per-subject
         :class:`m.Ldif.AclSubjectOutcome` records. A malformed line or unknown
         perm token surfaces as ``r.fail``.
 
@@ -59,27 +59,25 @@ class FlextLdifServersOidAclPipeline:
 
     @staticmethod
     def render_aci_values(rules: tuple[p.Ldif.AciRule, ...]) -> Sequence[str]:
-        """Render rules with allows to deduplicated raw ``aci`` attribute values.
+        """Render every allow and deny clause to deduplicated ``aci`` values.
 
-        Duplicate values (whitespace- and case-normalized) keep first order.
+        Each rule renders one value per clause targetscope; duplicate values
+        (whitespace- and case-normalized) keep first order.
 
         Returns:
-            The resulting ``Sequence[str]``.
+            The raw ``aci`` attribute values.
 
         """
         values: list[str] = []
         seen: set[str] = set()
         for aci in rules:
-            if not aci.allows:
-                continue
-            rendered = FlextLdifServersOidAclRender.render_aci_string(
-                aci,
-            ).removeprefix(c.Ldif.ACI_PREFIX)
-            normalized = c.Ldif.WHITESPACE_RE.sub(" ", rendered.strip().lower())
-            if normalized in seen:
-                continue
-            seen.add(normalized)
-            values.append(rendered)
+            for line in FlextLdifServersOidAclRender.render_aci_strings(aci):
+                rendered = line.removeprefix(c.Ldif.ACI_PREFIX)
+                normalized = c.Ldif.WHITESPACE_RE.sub(" ", rendered.strip().lower())
+                if normalized in seen:
+                    continue
+                seen.add(normalized)
+                values.append(rendered)
         return tuple(values)
 
     @classmethod
@@ -93,10 +91,11 @@ class FlextLdifServersOidAclPipeline:
         """Convert an entry's OID ACL lines to deduplicated OUD ``aci`` values.
 
         Each ``orclaci:``/``orclentrylevelaci:`` line is parsed → built →
-        rendered; deny-only rules emit nothing; duplicate aci values (whitespace-
-        and case-normalized) are merged keeping first order. A malformed line or
-        unknown perm token surfaces as ``r.fail``. Returned values exclude the
-        ``aci: `` prefix (they are raw ``aci`` attribute values).
+        rendered with its allow and deny clauses; duplicate aci values
+        (whitespace- and case-normalized) are merged keeping first order. A
+        malformed line or unknown perm token surfaces as ``r.fail``. Returned
+        values exclude the ``aci: `` prefix (they are raw ``aci`` attribute
+        values).
 
         Returns:
             The resulting ``p.Result[Sequence[str]]``.

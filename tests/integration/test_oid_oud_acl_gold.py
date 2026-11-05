@@ -1,21 +1,19 @@
-"""OID→OUD ACL migration through the public pipeline, against consumer golds.
+"""OID→OUD ACL migration through the public pipeline, against expected outputs.
 
-Each scenario copies the bytes of a consumer-owned OID ACL dump into an input
-directory and runs ``FlextLdif().migration_pipeline`` (oid→oud) with the ACL
-phase output options: hierarchical entry order and ``changetype: modify`` /
-``replace: aci`` records. The written output file must equal the consumer's
-gold byte for byte. The gold copies keep one provenance line, which the
-comparison drops.
+Each scenario copies an OID ACL input fixture into an input directory and runs
+``FlextLdif().migration_pipeline`` (oid→oud) with the ACL phase output
+options: hierarchical entry order and ``changetype: modify`` / ``replace:
+aci`` records. The written output file must equal the expected output byte
+for byte; the expected file keeps one provenance line, which the comparison
+drops. The inputs derive from devops-oud-iac fixtures (their provenance lines
+record the source and any amendment); the expected outputs are flext-ldif's
+own conversion under the documented OID semantics (OID-30 §30.1.6.2: union of
+grants minus union of denials per ACI) with every denial rendered as an OUD
+``deny`` (OUD §9.1.4), not the consumer's gold.
 
 The per-subject outcomes recorded on ``entry.metadata.acl_conversion`` must
-match the conversion notes of the same gold: for each emitted aci (first
-occurrence after deduplication), the gold's ``DE`` lines count the subjects it
-granted, its ``EXCL`` lines the ``(none)`` subjects (``DENIED_ALL``), and its
-section 6.8 lines the pure-negation subjects. The gold granted those the
-complement of the negated rights; OID-30 §30.1.4.3 makes them denials that
-grant nothing, so they are ``DENIED`` here and leave the granted count.
-``*_outcomes.tsv`` holds those counts, extracted from the original gold before
-its report text was stripped.
+match ``*_outcomes.tsv``: for every rule of every entry, in output order, the
+count of each outcome kind — deny-only rules included.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -27,7 +25,6 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_ldif import FlextLdif
-from flext_ldif.servers import FlextLdifServersOidAclPipeline
 from tests import c, m, p, tm, u
 
 if TYPE_CHECKING:
@@ -35,62 +32,52 @@ if TYPE_CHECKING:
 
 
 class TestsFlextLdifOidOudAclGold:
-    """Gold parity of the public oid→oud migration for ACL entries."""
+    """Expected-output parity of the public oid→oud migration for ACL entries."""
 
     GOLD_DIR: ClassVar[Path] = c.Tests.FIXTURES_DIR / "oid" / "acl_gold"
     OUTPUT_NAME: ClassVar[str] = "acls.ldif"
 
-    @staticmethod
+    _KINDS: ClassVar[tuple[c.Ldif.AclSubjectOutcomeKind, ...]] = (
+        c.Ldif.AclSubjectOutcomeKind.GRANTED,
+        c.Ldif.AclSubjectOutcomeKind.CANCELLED,
+        c.Ldif.AclSubjectOutcomeKind.DENIED_ALL,
+        c.Ldif.AclSubjectOutcomeKind.DENIED,
+        c.Ldif.AclSubjectOutcomeKind.OUT_OF_SCOPE,
+    )
+
+    @classmethod
     def _outcome_rows(
+        cls,
         entries: Sequence[p.Ldif.Entry],
-    ) -> list[tuple[str, int, int, int, int]]:
-        """Count outcome kinds for each emitted aci, first occurrence only.
+    ) -> list[tuple[str, ...]]:
+        """Count outcome kinds for every rule of every converted entry.
 
         Returns:
-            Rows of DN, granted, denied-all, denied and other kinds.
+            Rows of DN followed by one count per ``_KINDS`` kind.
 
         """
-        kind = c.Ldif.AclSubjectOutcomeKind
-        rows: list[tuple[str, int, int, int, int]] = []
+        rows: list[tuple[str, ...]] = []
         for entry in entries:
             conversion = entry.metadata.acl_conversion if entry.metadata else None
             if conversion is None:
                 continue
-            seen: set[str] = set()
             for rule in conversion.rules:
-                rendered = FlextLdifServersOidAclPipeline.render_aci_values((rule,))
-                if not rendered or rendered[0] in seen:
-                    continue
-                seen.add(rendered[0])
                 kinds = [outcome.kind for outcome in rule.outcomes]
-                granted = kinds.count(kind.GRANTED)
-                denied_all = kinds.count(kind.DENIED_ALL)
-                denied = kinds.count(kind.DENIED)
                 rows.append((
                     entry.dn_str,
-                    granted,
-                    denied_all,
-                    denied,
-                    len(kinds) - granted - denied_all - denied,
+                    *(str(kinds.count(kind)) for kind in cls._KINDS),
                 ))
         return rows
 
-    def _expected_rows(
-        self, outcomes_name: str
-    ) -> list[tuple[str, int, int, int, int]]:
-        """Read the gold-derived outcome counts (no other kind is recorded).
+    def _expected_rows(self, outcomes_name: str) -> list[tuple[str, ...]]:
+        """Read the expected per-rule outcome counts.
 
         Returns:
-            Rows of DN, granted, denied-all, denied and zero others.
+            Rows of DN followed by one count per ``_KINDS`` kind.
 
         """
         lines = (self.GOLD_DIR / outcomes_name).read_text(encoding="utf-8")
-        rows: list[tuple[str, int, int, int, int]] = []
-        for line in lines.splitlines()[1:]:
-            dn, granted, deny_none, complement = line.split("\t")
-            denied = int(complement)
-            rows.append((dn, int(granted) - denied, int(deny_none), denied, 0))
-        return rows
+        return [tuple(line.split("\t")) for line in lines.splitlines()[1:]]
 
     @c.Tests.MARK.parametrize(
         ("input_name", "gold_name", "outcomes_name", "base_dn"),
@@ -119,7 +106,7 @@ class TestsFlextLdifOidOudAclGold:
         outcomes_name: str,
         base_dn: str,
     ) -> None:
-        """The written ACL file and the typed outcomes both match the gold."""
+        """The written ACL file and the typed outcomes match the expected output."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
         input_dir.mkdir()

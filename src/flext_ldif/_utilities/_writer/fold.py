@@ -219,14 +219,14 @@ class FlextLdifUtilitiesWriterFold:
 
         A boundary is the start of a whitespace run of at least
         ``c.Ldif.ACI_PART_INDENT`` width, outside quoted values, that precedes
-        a top-level ``(`` part or an ``allow``/``or`` token inside
+        a top-level ``(`` part or an ``allow``/``deny``/``or`` token inside
         the ``(version …)`` body. Single-space compact ACIs have none.
 
         Returns:
             The resulting ``Sequence[int]``.
 
         """
-        tokens = (c.Ldif.ACI_ALLOW, c.Ldif.BIND_OR)
+        tokens = (c.Ldif.ACI_ALLOW, c.Ldif.ACI_DENY, c.Ldif.BIND_OR)
         min_run = len(c.Ldif.ACI_PART_INDENT)
         points: MutableSequence[int] = []
         depth = 0

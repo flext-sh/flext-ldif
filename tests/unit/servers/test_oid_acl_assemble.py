@@ -189,24 +189,26 @@ class TestsFlextLdifOidAclAssemble:
 
     # ---- build_aci_rule: parse → build parity --------------------------
 
-    def test_group_grant_and_anyone_none_denial(self) -> None:
-        """``by * (none)`` is a typed total denial next to the group grant."""
+    def test_anyone_none_cancels_every_grant_of_the_rule(self) -> None:
+        """``by * (none)`` denies every right to every session of the rule.
+
+        Every session matches ``*``, so the union-minus-denials rule (OID-30
+        §30.1.6.2) leaves the group grant nothing, whatever the clause order.
+        """
         aci = self._build(
             "cn=users,dc=ctbc",
             'orclaci: access to entry by group="cn=admins,dc=ctbc" '
             "(browse,add) by * (none)",
         )
 
-        tm.that(len(aci.allows), eq=1)
-        tm.that(aci.allows[0].subject_type, eq="groupdn")
-        tm.that(aci.allows[0].permissions, eq=("read", "search", "add"))
+        tm.that(aci.allows, eq=())
         tm.ok(aci.targetscope is None)
         tm.that(aci.acl_name, eq="users Entry by admins")
         tm.that(
             [outcome.kind for outcome in aci.outcomes],
-            eq=[_KIND.GRANTED, _KIND.DENIED_ALL],
+            eq=[_KIND.CANCELLED, _KIND.DENIED_ALL],
         )
-        tm.that(aci.outcomes[0].allow, eq=aci.allows[0])
+        tm.that(aci.outcomes[0].allow, eq=None)
         denial = tm.not_none(aci.outcomes[1].deny)
         tm.that(denial.subject_value, eq="anyone")
         tm.that(
@@ -228,7 +230,7 @@ class TestsFlextLdifOidAclAssemble:
         tm.that(aci.allows[0].subject_value, eq="anyone")
 
     def test_deny_only_rule_yields_empty_allows_with_outcomes(self) -> None:
-        """A deny-first rule grants nothing, denies all, dead-codes the rest."""
+        """A catch-all ``(none)`` first cancels the later grant the same way."""
         aci = self._build(
             "cn=users,dc=ctbc",
             'orclaci: access to entry by * (none) by group="cn=x,dc=ctbc" (browse)',
@@ -237,25 +239,40 @@ class TestsFlextLdifOidAclAssemble:
         tm.that(aci.allows, eq=())
         tm.that(
             [outcome.kind for outcome in aci.outcomes],
-            eq=[_KIND.DENIED_ALL, _KIND.EXCLUDED_DEAD_CODE],
+            eq=[_KIND.DENIED_ALL, _KIND.CANCELLED],
         )
         tm.that(len(aci.denies), eq=1)
 
-    def test_guidattr_unsupported_other_subject_survives(self) -> None:
-        """A guidattr subject is UNSUPPORTED while the other subject is granted."""
-        aci = self._build(
-            "cn=users,dc=ctbc",
-            "orclaci: access to entry by guidattr=(orclguid) (browse) "
-            'by group="cn=a,dc=ctbc" (browse)',
-        )
+    def test_mixed_none_list_is_a_total_denial(self) -> None:
+        """``(none, nobrowse)`` and ``(browse, none)`` deny every right."""
+        for perms in ("none, nobrowse", "browse,none"):
+            aci = self._build(
+                "cn=users,dc=ctbc",
+                f'orclaci: access to entry by * ({perms}) by group="cn=a,dc=ctbc" '
+                "(browse)",
+            )
 
-        tm.that(len(aci.allows), eq=1)
-        tm.that(aci.allows[0].subject_type, eq="groupdn")
-        tm.that(
-            [outcome.kind for outcome in aci.outcomes],
-            eq=[_KIND.UNSUPPORTED, _KIND.GRANTED],
+            tm.that(
+                [outcome.kind for outcome in aci.outcomes],
+                eq=[_KIND.DENIED_ALL, _KIND.CANCELLED],
+            )
+            tm.that(aci.allows, eq=())
+
+    @staticmethod
+    def test_guidattr_subject_fails_the_whole_rule() -> None:
+        """A guidattr subject has no OUD form; the rule fails, never partial."""
+        tm.fail(
+            FlextLdifServersOidAclPipeline.convert_acl_values(
+                "cn=users,dc=ctbc",
+                (
+                    (
+                        "orclaci: access to entry by guidattr=(orclguid) (nobrowse) "
+                        "by * (browse)"
+                    ),
+                ),
+            ),
+            has="guidattr",
         )
-        tm.that(aci.outcomes[0].subject.subject_type, eq="guidattr")
 
     def test_two_perm_groups_append_plus_count_to_acl_name(self) -> None:
         """Test two perm groups append plus count to acl name."""
@@ -276,20 +293,23 @@ class TestsFlextLdifOidAclAssemble:
             'orclaci: access to entry by group="cn=a,dc=ctbc" (bogus)',
         ).unwrap()
 
-        tm.ok(FlextLdifServersOidAclAssemble.build_aci_rule(rule).failure)
+        tm.fail(
+            FlextLdifServersOidAclAssemble.build_aci_rule(rule),
+            has="Unknown OID permission token",
+        )
 
     @staticmethod
-    def test_cross_level_perm_grants_nothing_not_failure() -> None:
-        # 'read' is an attribute perm; on an entry rule it grants nothing.
-        """Test cross level perm grants nothing not failure."""
+    def test_cross_level_perm_fails_loud() -> None:
+        """An attribute right on an entry rule fails instead of granting nothing."""
         rule = FlextLdifServersOidAclConvert.parse_oid_acl_line(
             "cn=users,dc=ctbc",
             'orclaci: access to entry by group="cn=a,dc=ctbc" (read)',
         ).unwrap()
-        result = FlextLdifServersOidAclAssemble.build_aci_rule(rule)
 
-        tm.ok(result.success)
-        tm.that(result.unwrap().allows, eq=())
+        tm.fail(
+            FlextLdifServersOidAclAssemble.build_aci_rule(rule),
+            has="not a right of an 'entry' object",
+        )
 
     @staticmethod
     def test_anyone_at_base_dn_is_granted_without_container_policy() -> None:
@@ -330,14 +350,14 @@ class TestsFlextLdifOidAclAssemble:
         """Test regex dn converts to wildcard in scope."""
         rule = FlextLdifServersOidAclConvert.parse_oid_acl_line(
             "cn=users,dc=ctbc",
-            'orclaci: access to entry by group="cn=.*,dc=ctbc" (browse)',
+            'orclaci: access to entry by dn=".*,dc=ctbc" (browse)',
         ).unwrap()
         aci = FlextLdifServersOidAclAssemble.build_aci_rule(
             rule, base_dn="dc=ctbc"
         ).unwrap()
 
         tm.that(len(aci.allows), eq=1)
-        tm.that(aci.allows[0].subject_value, eq="cn=*,dc=ctbc")
+        tm.that(aci.allows[0].subject_value, eq="**,dc=ctbc")
         tm.ok(aci.outcomes[0].wildcard_rewritten)
 
     @staticmethod
@@ -380,14 +400,23 @@ class TestsFlextLdifOidAclAssemble:
         tm.that(len(result.unwrap()), eq=1)
 
     @staticmethod
-    def test_deny_only_line_emits_no_value() -> None:
-        """Test deny only line emits no value."""
+    def test_deny_only_line_emits_deny_value() -> None:
+        """A denial is rendered as an OUD ``deny`` clause, never dropped."""
         result = FlextLdifServersOidAclPipeline.convert_acl_values(
             "cn=users,dc=ctbc",
             ("orclaci: access to entry by * (none)",),
         )
 
-        tm.that(result.unwrap(), eq=())
+        tm.that(
+            result.unwrap(),
+            eq=(
+                (
+                    '(targetattr="*")    (version 3.0; acl "users Entry by anyone";'
+                    "     deny (read, search, add, delete, proxy)    "
+                    'userdn="ldap:///anyone";)'
+                ),
+            ),
+        )
 
     @staticmethod
     def test_malformed_line_surfaces_failure() -> None:
@@ -397,7 +426,7 @@ class TestsFlextLdifOidAclAssemble:
             ("orclaci: this is not a valid acl",),
         )
 
-        tm.ok(result.failure)
+        tm.fail(result, has="missing 'access to'")
 
 
 class TestsFlextLdifOidAclDenials:
@@ -468,20 +497,37 @@ class TestsFlextLdifOidAclDenials:
 
         tm.that(tuple(aci.allows[0].permissions), eq=("read", "search"))
         tm.that(aci.outcomes[0].kind, eq=_KIND.GRANTED)
+        tm.that(aci.targetscope, eq="base")
         tm.that(tuple(aci.denies[0].permissions), eq=("add",))
-        tm.that(aci.outcomes[0].deny, eq=aci.denies[0])
+        tm.that(aci.denies[0].targetscope, eq="subtree")
+        tm.that(
+            FlextLdifServersOidAclRender.render_aci_strings(aci),
+            eq=(
+                (
+                    'aci: (targetattr="*")    (targetscope="base")'
+                    '    (version 3.0; acl "users Entry by anyone";'
+                    '     allow (read, search)    userdn="ldap:///anyone";)'
+                ),
+                (
+                    'aci: (targetattr="*")'
+                    '    (version 3.0; acl "users Entry by anyone";'
+                    '     deny (add)    userdn="ldap:///anyone";)'
+                ),
+            ),
+        )
 
     @staticmethod
     def test_negation_only_subject_never_receives_complement_grant() -> None:
-        """A ``(noread)`` subject denies read; no write/selfwrite grant appears."""
+        """A ``* (noread)`` denies read to all; no complement grant appears."""
         rule = FlextLdifServersOidAclConvert.parse_oid_acl_line(
             "cn=users,dc=ctbc",
-            'orclaci: access to attr=(cn) by group="cn=a,dc=ctbc" (read) by * (noread)',
+            'orclaci: access to attr=(cn) by group="cn=a,dc=ctbc" (read,search) '
+            "by * (noread)",
         ).unwrap()
         aci = FlextLdifServersOidAclAssemble.build_aci_rule(rule).unwrap()
 
         tm.that(len(aci.allows), eq=1)
-        tm.that(tuple(aci.allows[0].permissions), eq=("read",))
+        tm.that(tuple(aci.allows[0].permissions), eq=("search",))
         tm.that(
             [outcome.kind for outcome in aci.outcomes],
             eq=[_KIND.GRANTED, _KIND.DENIED],
@@ -528,17 +574,95 @@ class TestsFlextLdifOidAclDenials:
                 "added_object_constraint",
                 id="added-object-constraint",
             ),
+            u.Tests.param(
+                "orclaci: access to entry by dnattr=(manager) (browse) "
+                "bindmode=(Simple)",
+                "bindmode",
+                id="dnattr-trailing-bindmode",
+            ),
+            u.Tests.param(
+                "orclaci: access to entry by groupattr=(owner) bindmode=(Simple) "
+                "(browse)",
+                "bindmode",
+                id="groupattr-leading-bindmode",
+            ),
+            u.Tests.param(
+                "orclaci: access to entry by SuperUser (browse) bindmode=(Simple)",
+                "bindmode",
+                id="superuser-bindmode",
+            ),
+            u.Tests.param(
+                'orclaci: access to entry by group="cn=a,dc=ctbc" (browse) '
+                "by dn=cn=x,dc=ctbc (nobrowse)",
+                "Unrecognized OID ACL text",
+                id="unrecognized-second-clause",
+            ),
+            u.Tests.param(
+                'orclaci: access to entry by group="cn=a,dc=ctbc" (browse) '
+                'by group="cn=b,dc=ctbc" bindmode=Simple (browse)',
+                "Unrecognized OID ACL text",
+                id="unparenthesized-modifier",
+            ),
+            u.Tests.param(
+                "orclaci: access to entry by * (browse) by bogus",
+                "Unrecognized OID ACL text",
+                id="trailing-garbage",
+            ),
+            u.Tests.param(
+                'orclaci: access to entry by dn="cn=adm*,dc=ctbc" (browse)',
+                "no exact OUD wildcard",
+                id="bare-star-quantifier",
+            ),
+            u.Tests.param(
+                'orclaci: access to entry by group="cn=.*,dc=ctbc" (browse)',
+                "no exact OUD groupdn",
+                id="wildcard-group",
+            ),
+            u.Tests.param(
+                "orclaci: access to attr=(*) by * (all)",
+                "'all'",
+                id="all-token",
+            ),
         ],
     )
     def test_untranslatable_construct_fails_loud(line: str, message: str) -> None:
         """Constructs without an exact OUD form fail; none passes raw or silent."""
-        rule = FlextLdifServersOidAclConvert.parse_oid_acl_line(
-            "cn=users,dc=ctbc", line
-        ).unwrap()
-        result = FlextLdifServersOidAclAssemble.build_aci_rule(rule)
+        tm.fail(
+            FlextLdifServersOidAclPipeline.convert_acl_values(
+                "cn=users,dc=ctbc", (line,)
+            ),
+            has=message,
+        )
 
-        tm.ok(result.failure)
-        tm.that(result.error, contains=message)
+    @staticmethod
+    def test_entry_level_add_renders_under_onelevel_scope() -> None:
+        """Entry-level ``add`` targets the children; other rights stay base."""
+        result = FlextLdifServersOidAclPipeline.convert_acl_values(
+            "cn=users,dc=ctbc",
+            (
+                (
+                    'orclentrylevelaci: access to entry by group="cn=a,dc=ctbc" '
+                    "(browse,add,nodelete)"
+                ),
+            ),
+        )
+
+        tm.that(
+            result.unwrap(),
+            eq=(
+                (
+                    '(targetattr="*")    (targetscope="base")'
+                    '    (version 3.0; acl "users Entry by a";'
+                    '     allow (read, search)    groupdn="ldap:///cn=a,dc=ctbc";'
+                    "     deny (delete)" + " " * 11 + 'groupdn="ldap:///cn=a,dc=ctbc";)'
+                ),
+                (
+                    '(targetattr="*")    (targetscope="onelevel")'
+                    '    (version 3.0; acl "users Entry by a";'
+                    '     allow (add)    groupdn="ldap:///cn=a,dc=ctbc";)'
+                ),
+            ),
+        )
 
     @staticmethod
     def test_bindipfilter_becomes_oud_ip() -> None:
@@ -569,8 +693,9 @@ class TestsFlextLdifOidAclFixtureAndEntry:
     def test_oid_acl_fixture_lines_convert_or_fail_loud() -> None:
         """Each fixture line converts, or fails loud on an untranslatable form.
 
-        bindmode, DenyGroupOverride, AppendToAll and added-object constraints
-        have no exact OUD form and surface as typed failures, never raw output.
+        bindmode, DenyGroupOverride, AppendToAll, added-object constraints,
+        guidattr, misplaced text and rights of the other object kind have no
+        exact OUD form and surface as typed failures, never raw output.
         """
         fixture_path = (
             Path(__file__).parents[2] / "fixtures" / "oid" / "oid_acl_fixtures.ldif"
@@ -596,8 +721,8 @@ class TestsFlextLdifOidAclFixtureAndEntry:
             values_emitted += len(result.unwrap())
 
         tm.that(rules_seen, eq=16)
-        tm.that(failures, eq=5)
-        tm.that(values_emitted, eq=8)
+        tm.that(failures, eq=12)
+        tm.that(values_emitted, eq=5)
 
     @staticmethod
     def test_out_of_scope_dn_excluded_with_base_dn() -> None:
@@ -615,10 +740,7 @@ class TestsFlextLdifOidAclFixtureAndEntry:
         """convert_entry_acls records per-subject outcomes on entry metadata."""
         entry = _acl_entry({
             "orclaci": [
-                (
-                    "access to entry by guidattr=(g) (browse) "
-                    'by group="cn=a,dc=ctbc" (browse)'
-                ),
+                ('access to entry by group="cn=a,dc=ctbc" (browse) by * (none)'),
             ],
         })
 
@@ -630,7 +752,7 @@ class TestsFlextLdifOidAclFixtureAndEntry:
         tm.fail(conversion.oracle_internal_skip)
         tm.that(
             [outcome.kind for outcome in conversion.rules[0].outcomes],
-            eq=[_KIND.UNSUPPORTED, _KIND.GRANTED],
+            eq=[_KIND.CANCELLED, _KIND.DENIED_ALL],
         )
 
     @staticmethod
@@ -702,11 +824,9 @@ class TestsFlextLdifOidAclFixtureAndEntry:
         """Test malformed acl surfaces failure."""
         entry = _acl_entry({"orclaci": ["not a valid acl"]})
 
-        tm.that(
-            FlextLdifServersOidAclPipeline.convert_entry_acls(
-                entry, "oid", "oud"
-            ).failure,
-            eq=True,
+        tm.fail(
+            FlextLdifServersOidAclPipeline.convert_entry_acls(entry, "oid", "oud"),
+            has="missing 'access to'",
         )
 
     @staticmethod
@@ -717,4 +837,4 @@ class TestsFlextLdifOidAclFixtureAndEntry:
             ('orclaci: access to entry by group="cn=a,dc=ctbc" (bogus)',),
         )
 
-        tm.ok(result.failure)
+        tm.fail(result, has="Unknown OID permission token")

@@ -14,6 +14,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from flext_ldif import c, m, p, r
+from flext_ldif.servers._oid import FlextLdifConstantsServersOid
 
 
 class FlextLdifServersOidAclConvert:
@@ -113,8 +114,8 @@ class FlextLdifServersOidAclConvert:
     def parse_subject(cls, subject_str: str) -> p.Ldif.OidAclSubject:
         """Identify one ``by <subject> (perms)`` clause as a typed subject.
 
-        Returns ``subject_type="unknown"`` when no matcher applies (the caller
-        drops unknown subjects), mirroring the oracle's default contract.
+        Returns ``subject_type="unknown"`` when no matcher applies; the line
+        parser fails on it.
 
         Returns:
             The resulting ``m.Ldif.OidAclSubject``.
@@ -254,14 +255,72 @@ class FlextLdifServersOidAclConvert:
             remaining,
         ))
 
+    @staticmethod
+    def _unrecognized(text: str) -> p.Result[tuple[p.Ldif.OidAclSubject, ...]]:
+        """Fail on ACL text outside every recognized by-clause.
+
+        Returns:
+            The typed failure naming an object keyword when one is present.
+
+        """
+        keyword = FlextLdifConstantsServersOid.OID_ACL_OBJECT_KEYWORD_RE.search(text)
+        if keyword is not None:
+            return r[tuple[p.Ldif.OidAclSubject, ...]].fail(
+                f"OID object keyword {keyword.group(1)!r} has no per-rule OUD "
+                f"ACI equivalent (manual review required): {text!r}",
+            )
+        return r[tuple[p.Ldif.OidAclSubject, ...]].fail(
+            f"Unrecognized OID ACL text (manual review required): {text!r}",
+        )
+
+    @classmethod
+    def _parse_by_clauses(
+        cls,
+        content: str,
+    ) -> p.Result[tuple[p.Ldif.OidAclSubject, ...]]:
+        """Parse every ``by`` clause, consuming the whole remaining text.
+
+        Text between or around the clauses that is not a recognized clause
+        fails, as does a clause no subject matcher recognizes. The object
+        keywords ``DenyGroupOverride`` (blocks superuser and
+        DirectoryAdminGroup overrides, which OUD decides by privileges, not
+        ACIs; OID-30 §30.1.3.4.2) and ``AppendToAll`` (appends the subject to
+        every ACI of the ACP; §30.1.4.1) have no per-rule OUD ACI form and
+        fail too.
+
+        Returns:
+            The parsed subjects in input order, or the typed failure.
+
+        """
+        subjects: list[p.Ldif.OidAclSubject] = []
+        cursor = 0
+        for clause in c.Ldif.BY_CLAUSE_RE.finditer(content):
+            gap = content[cursor : clause.start()].strip()
+            cursor = clause.end()
+            if gap:
+                return cls._unrecognized(gap)
+            subject = cls.parse_subject(clause.group(0))
+            if subject.subject_type == c.Ldif.OidSubjectKind.UNKNOWN:
+                return r[tuple[p.Ldif.OidAclSubject, ...]].fail(
+                    f"Unrecognized OID by-clause: {clause.group(0)!r}",
+                )
+            subjects.append(subject)
+        rest = content[cursor:].strip()
+        if rest:
+            return cls._unrecognized(rest)
+        if not subjects:
+            return r[tuple[p.Ldif.OidAclSubject, ...]].fail(
+                f"No subjects in ACL: {content[:40]!r}",
+            )
+        return r[tuple[p.Ldif.OidAclSubject, ...]].ok(tuple(subjects))
+
     @classmethod
     def parse_oid_acl_line(cls, dn: str, line: str) -> p.Result[p.Ldif.OidAclRule]:
         """Parse one full ``orclaci:``/``orclentrylevelaci:`` line into a rule.
 
-        Malformation (wrong prefix, missing ``access to``, unknown target, or no
-        recognizable subjects) surfaces as ``r.fail`` — never a silent drop.
-        The ``DenyGroupOverride``/``AppendToAll`` object keywords (OID-30
-        §30.1.4.1) are recorded as typed flags for the converter.
+        Malformation (wrong prefix, missing ``access to``, unknown target,
+        unrecognized text or by-clause, an object keyword without an OUD
+        form, or no subjects) surfaces as ``r.fail`` — never a silent drop.
 
         Returns:
             The resulting ``p.Result[p.Ldif.OidAclRule]``.
@@ -276,15 +335,8 @@ class FlextLdifServersOidAclConvert:
         if parsed_target.failure:
             return r[p.Ldif.OidAclRule].from_failure(parsed_target)
         target_type, target_attrs, target_filter, content = parsed_target.value
-        subjects = tuple(
-            subject
-            for raw in c.Ldif.BY_CLAUSE_RE.finditer(content)
-            if (subject := cls.parse_subject(raw.group(0))).subject_type != "unknown"
-        )
-        if not subjects:
-            return r[p.Ldif.OidAclRule].fail(f"No subjects in ACL: {content[:40]!r}")
-        return r[p.Ldif.OidAclRule].ok(
-            m.Ldif.OidAclRule(
+        return cls._parse_by_clauses(content).map(
+            lambda subjects: m.Ldif.OidAclRule(
                 dn=dn,
                 acl_type=acl_type,
                 target_type=target_type,
@@ -292,8 +344,6 @@ class FlextLdifServersOidAclConvert:
                 target_filter=target_filter,
                 subjects=subjects,
                 raw_line=line,
-                deny_group_override=bool(c.Ldif.DENY_GROUP_OVERRIDE_RE.search(content)),
-                append_to_all=bool(c.Ldif.APPEND_TO_ALL_RE.search(content)),
             ),
         )
 

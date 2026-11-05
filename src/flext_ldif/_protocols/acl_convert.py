@@ -93,16 +93,6 @@ class FlextLdifProtocolsAclConvert:
             """Original raw OID ACL line."""
             ...
 
-        @property
-        def deny_group_override(self) -> bool:
-            """Whether the object carries DenyGroupOverride."""
-            ...
-
-        @property
-        def append_to_all(self) -> bool:
-            """Whether the object carries AppendToAll."""
-            ...
-
     @runtime_checkable
     class AciBindClause(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
@@ -132,6 +122,15 @@ class FlextLdifProtocolsAclConvert:
             """OUD ip bind-rule constraint (from bindipfilter)."""
             ...
 
+        @property
+        def targetscope(self) -> str | None:
+            """Structural member projected from the owning model.
+
+            OUD targetscope of the aci this clause renders in; None renders it under
+            the rule's targetscope.
+            """
+            ...
+
     @runtime_checkable
     class AciAllow(AciBindClause, Protocol):
         """Structural data contract projected from the owning model."""
@@ -154,6 +153,11 @@ class FlextLdifProtocolsAclConvert:
             """Denied OUD permission tokens in canonical order."""
             ...
 
+        @property
+        def total_denial(self) -> bool:
+            """Whether deny covers every right of the target kind."""
+            ...
+
     @runtime_checkable
     class AclSubjectOutcome(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
@@ -170,7 +174,7 @@ class FlextLdifProtocolsAclConvert:
 
         @property
         def allow(self) -> FlextLdifProtocolsAclConvert.AciAllow | None:
-            """Final allow clause of a GRANTED subject."""
+            """Effective allow clause of a GRANTED subject."""
             ...
 
         @property
@@ -185,7 +189,7 @@ class FlextLdifProtocolsAclConvert:
 
         @property
         def display_value(self) -> str:
-            """Bind value shown for OUT_OF_SCOPE / UNGRANTED."""
+            """Converted bind DN of an OUT_OF_SCOPE subject."""
             ...
 
     @runtime_checkable
@@ -224,7 +228,7 @@ class FlextLdifProtocolsAclConvert:
 
         @property
         def denies(self) -> tuple[FlextLdifProtocolsAclConvert.AciDeny, ...]:
-            """deny() clauses for the consumer to render."""
+            """deny() clauses."""
             ...
 
         @property
@@ -287,9 +291,9 @@ class FlextLdifProtocolsAclConvert:
             ...
 
         def with_allow(
-            self, allow: FlextLdifProtocolsAclConvert.AciAllow, bind: str
+            self, allow: FlextLdifProtocolsAclConvert.AciBindClause, bind: str
         ) -> FlextLdifProtocolsAclConvert.AciAllowGroups:
-            """Return grouped allow state with one rendered bind rule appended."""
+            """Return grouped clause state with one rendered bind rule appended."""
             ...
 
     @runtime_checkable

@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from warnings import deprecated
+
 from flext_ldif import p, t
 from flext_ldif.servers import (
     FlextLdifServersOidAclAssemble,
@@ -41,45 +43,87 @@ class FlextLdifOidAcl:
         return FlextLdifServersOidAclToOud.convert_subject_to_oud(subject)
 
     @staticmethod
-    def convert_permissions(
+    def resolve_permissions(
         permissions: t.StrSequence,
         *,
         is_entry: bool,
     ) -> p.Result[p.Ldif.AclPermissionResolution]:
         """Resolve OID permissions into typed OUD grant and deny sets.
 
-        Changed contract: the result is the typed ``allow``/``deny`` resolution
-        (previously the bare allow sequence, which granted the complement of a
-        pure-negation list). ``by * (nobrowse,noadd)`` now denies exactly
-        those rights and grants nothing (OID 12.2.1.3 §30.1.4.3); the consumer
-        renders ``deny`` as an OUD ``deny`` clause.
+        ``by * (nobrowse,noadd)`` denies exactly those rights and grants
+        nothing (OID 12.2.1.3 §30.1.4.3); the deny set renders as an OUD
+        ``deny`` clause.
 
         Returns:
             The typed resolution or the conversion failure.
 
         """
-        return FlextLdifServersOidAclToOud.convert_permissions(
+        return FlextLdifServersOidAclToOud.resolve_permissions(
             permissions,
             is_entry=is_entry,
         )
 
     @staticmethod
-    def regex_to_wildcard(value: str) -> p.Result[str]:
-        """Convert an OID regular-expression DN to an OUD wildcard DN.
+    @deprecated(
+        "compat: convert_permissions -> resolve_permissions; "
+        "fix: render the typed deny set",
+    )
+    def convert_permissions(
+        permissions: t.StrSequence,
+        *,
+        is_entry: bool,
+    ) -> p.Result[t.StrSequence]:
+        """Return only the granted rights of :meth:`resolve_permissions`.
 
-        Changed contract: a DN with no exact OUD wildcard (anything beyond
-        ``.*``/``.+``) is now an ``r.fail`` instead of being returned raw.
+        Returns:
+            The granted OUD permissions or the conversion failure.
+
+        """
+        return FlextLdifServersOidAclToOud.resolve_permissions(
+            permissions,
+            is_entry=is_entry,
+        ).map(lambda resolved: tuple(resolved.allow))
+
+    @staticmethod
+    def regex_dn_to_wildcard(value: str) -> p.Result[str]:
+        """Convert an OID regular-expression DN to its exact OUD wildcard DN.
+
+        A DN beyond a plain DN or a leading ``.*,`` subtree wildcard surfaces
+        as ``r.fail``.
 
         Returns:
             The converted wildcard DN or the typed failure.
 
         """
-        return FlextLdifServersOidAclToOud.regex_to_wildcard(value)
+        return FlextLdifServersOidAclToOud.regex_dn_to_wildcard(value)
+
+    @staticmethod
+    @deprecated(
+        "compat: regex_to_wildcard -> regex_dn_to_wildcard; "
+        "fix: consume the typed result",
+    )
+    def regex_to_wildcard(value: str) -> str:
+        """Return :meth:`regex_dn_to_wildcard`, raising on its failure.
+
+        Returns:
+            The converted wildcard DN.
+
+        """
+        return FlextLdifServersOidAclToOud.regex_dn_to_wildcard(value).unwrap()
 
     @staticmethod
     def in_scope(dn: str, base_dn: str) -> bool:
         """Return whether a DN is in the supplied OUD scope."""
         return FlextLdifServersOidAclToOud.in_scope(dn, base_dn)
+
+    @staticmethod
+    @deprecated(
+        "compat: high_level_containers -> removed (no OID semantics); "
+        "fix: drop the high-level container filter",
+    )
+    def high_level_containers(base_dn: str) -> frozenset[str]:
+        """Return the base DN plus the deprecated container suffix DNs."""
+        return FlextLdifServersOidAclToOud.container_dns(base_dn)
 
     @staticmethod
     def build_aci_rule(
@@ -97,13 +141,23 @@ class FlextLdifOidAcl:
 
     @staticmethod
     def render_aci_string(aci: p.Ldif.AciRule) -> str:
-        """Render a typed OUD ACI rule as an ``aci:`` attribute line.
+        """Render a typed OUD ACI rule as newline-joined ``aci:`` lines.
 
         Returns:
-            The compact LDAP attribute line.
+            One ``aci:`` line per clause targetscope.
 
         """
         return FlextLdifServersOidAclRender.render_aci_string(aci)
+
+    @staticmethod
+    def render_aci_strings(aci: p.Ldif.AciRule) -> t.StrSequence:
+        """Render a typed OUD ACI rule as its ``aci:`` lines.
+
+        Returns:
+            One ``aci:`` line per clause targetscope.
+
+        """
+        return FlextLdifServersOidAclRender.render_aci_strings(aci)
 
 
 __all__: list[str] = ["FlextLdifOidAcl"]

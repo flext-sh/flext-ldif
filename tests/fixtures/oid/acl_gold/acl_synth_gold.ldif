@@ -1,21 +1,12 @@
-# provenance: devops-oud-iac@2225708e3ac8 tests/benchmark/gold/acl_synth_gold.ldif sha256=02391ee84ada28158e64d2c94ff2aa30cc2d5cacc50ce40cac3dc5d8f99c36b2 stripped=all-comment-lines(consumer-report-text) amended=flext-ws7iv(pure-negation complement allows removed; OID-30 30.1.4.3)
+# provenance: flext-ldif FlextLdif().migration_pipeline oid->oud base_dn=dc=ctbc output of acl_synth_input.ldif (sha256=91e103d8bf5cac49243692ed2e0312bc1215d25e97cc339cf6450537e51be1e0); flext-ws7iv semantics: union of grants minus denials per ACI (OID-30 30.1.6.2), denials rendered as OUD deny (OUD 9.1.4); regenerate on any intended conversion change
 version: 1
 
 dn: cn=admins,dc=ctbc
 changetype: modify
 replace: aci
 aci: (targetattr="*")
-     (version 3.0; acl "admins Entry by SecurityAdmins (+1)";
-      allow (read, search, add, delete)    groupdn="ldap:///cn=SecurityAdmins,dc=ctbc";
-      allow (read, search)                 userdn="ldap:///self";)
--
-
-dn: cn=combined-deny,dc=ctbc
-changetype: modify
-replace: aci
-aci: (targetattr="*")
-     (version 3.0; acl "combined-deny Entry by Admins";
-      allow (all)    groupdn="ldap:///cn=Admins,dc=ctbc";)
+     (version 3.0; acl "admins Entry by SecurityAdmins";
+      deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
 -
 
 dn: cn=groupattr-case,dc=ctbc
@@ -23,7 +14,7 @@ changetype: modify
 replace: aci
 aci: (targetattr="member")
      (version 3.0; acl "groupattr-case Attrs by uniquemember";
-      allow (read, search)    userattr="uniquemember#GROUPDN";)
+      deny (read, search, write, selfwrite, compare)    userdn="ldap:///anyone";)
 -
 
 dn: cn=negated-wildcard,dc=ctbc
@@ -31,7 +22,8 @@ changetype: modify
 replace: aci
 aci: (targetattr="orclpasswordhint")
      (version 3.0; acl "negated-wildcard Attrs by CommonUsers";
-      allow (read, search, compare)    groupdn="ldap:///cn=CommonUsers,dc=ctbc";)
+      allow (search)                 groupdn="ldap:///cn=CommonUsers,dc=ctbc";
+      deny (read, write, compare)    userdn="ldap:///anyone";)
 -
 
 dn: cn=owner-groups,dc=ctbc
@@ -40,11 +32,15 @@ replace: aci
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "owner-groups Entry by owner";
-      allow (read, search)    userattr="owner#USERDN";)
+      deny (read, search, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="*")
+     (targetscope="onelevel")
+     (version 3.0; acl "owner-groups Entry by owner";
+      deny (add)    userdn="ldap:///anyone";)
 aci: (targetattr="uniquemember")
      (targetscope="base")
      (version 3.0; acl "owner-groups Attrs by owner";
-      allow (read, search, write)    userattr="owner#USERDN";)
+      deny (read, search, write, selfwrite, compare)    userdn="ldap:///anyone";)
 -
 
 dn: cn=public-read,dc=ctbc
@@ -61,7 +57,7 @@ changetype: modify
 replace: aci
 aci: (targetattr="*")
      (version 3.0; acl "superuser-case Attrs by Directory Manager";
-      allow (read, write, compare)    userdn="ldap:///cn=Directory Manager";)
+      deny (read, search, write, selfwrite, compare)    userdn="ldap:///anyone";)
 -
 
 dn: cn=users-attrs,dc=ctbc
@@ -69,8 +65,7 @@ changetype: modify
 replace: aci
 aci: (targetattr="userPassword")
      (targetfilter="(objectclass=inetorgperson)")
-     (version 3.0; acl "users-attrs Attrs by SecurityAdmins (+1)";
-      allow (read, search, write, compare)               groupdn="ldap:///cn=SecurityAdmins,dc=ctbc";
-      allow (read, search, write, selfwrite, compare)    userdn="ldap:///self";)
+     (version 3.0; acl "users-attrs Attrs by SecurityAdmins";
+      deny (read, search, write, selfwrite, compare)    userdn="ldap:///anyone";)
 -
 

@@ -79,14 +79,6 @@ class FlextLdifModelsAclConvert:
             m.Field(description="Parsed by-clause subjects"),
         ] = ()
         raw_line: Annotated[str, m.Field(description="Original raw OID ACL line")] = ""
-        deny_group_override: Annotated[
-            bool,
-            m.Field(description="Whether the object carries DenyGroupOverride"),
-        ] = False
-        append_to_all: Annotated[
-            bool,
-            m.Field(description="Whether the object carries AppendToAll"),
-        ] = False
 
     class AciBindClause(m.FrozenModel):
         """One OUD ``aci`` permission clause: bind-rule subject + permission set."""
@@ -111,6 +103,13 @@ class FlextLdifModelsAclConvert:
             str,
             m.Field(description="OUD ip bind-rule constraint (from bindipfilter)"),
         ] = ""
+        targetscope: Annotated[
+            str | None,
+            m.Field(
+                description="OUD targetscope of the aci this clause renders in; "
+                "None renders it under the rule's targetscope",
+            ),
+        ] = None
 
     class AciAllow(AciBindClause):
         """One OUD ``aci`` ``allow()`` clause: bind-rule subject + granted set."""
@@ -123,8 +122,9 @@ class FlextLdifModelsAclConvert:
 
         Each OID access level is granted or denied independently and ``noxxx``
         denies ``xxx`` (OID-30 §30.1.4.3); ``none`` denies every right of the
-        target kind (Table 30-2). Rights the list does not name stay
-        unresolved and appear in neither set.
+        target kind (Table 30-2). A right both granted and denied is denied.
+        Rights the list does not name stay unresolved and appear in neither
+        set.
         """
 
         allow: Annotated[
@@ -135,17 +135,22 @@ class FlextLdifModelsAclConvert:
             Sequence[str],
             m.Field(description="Denied OUD permission tokens in canonical order"),
         ] = ()
+        total_denial: Annotated[
+            bool,
+            m.Field(description="Whether deny covers every right of the target kind"),
+        ] = False
 
     class AclSubjectOutcome(m.FrozenModel):
         """What conversion did with one OID by-clause subject, in input order.
 
-        ``allow`` and ``wildcard_rewritten`` describe a ``GRANTED`` subject;
-        ``deny`` carries the denied rights of a ``GRANTED`` (explicit ``no*``
-        tokens), ``DENIED`` or ``DENIED_ALL`` subject.
-        ``display_value`` is the converted bind DN after wildcarding for
-        ``OUT_OF_SCOPE``, and for ``UNGRANTED`` the converted DN of a
-        ``group``/``user`` subject or the raw value otherwise. An
-        ``UNSUPPORTED`` subject's kind is its ``subject.subject_type``.
+        ``allow`` is the effective grant of a ``GRANTED`` subject: its granted
+        rights minus the rights a catch-all (``*``) subject of the same rule
+        denies, since every session matches that subject and a matched denial
+        wins (OID-30 §30.1.6.2). A ``CANCELLED`` subject granted only rights
+        such a denial removes. ``deny`` carries the subject's own denied
+        rights. ``wildcard_rewritten`` reports a regex→wildcard bind DN, and
+        ``display_value`` is the converted bind DN of an ``OUT_OF_SCOPE``
+        subject.
         """
 
         subject: Annotated[
@@ -165,7 +170,7 @@ class FlextLdifModelsAclConvert:
                 t.schema_for_model(FlextLdifModelsAclConvert.AciAllow),
             ]
             | None,
-            m.Field(description="Final allow clause of a GRANTED subject"),
+            m.Field(description="Effective allow clause of a GRANTED subject"),
         ] = None
         deny: Annotated[
             Annotated[
@@ -181,11 +186,15 @@ class FlextLdifModelsAclConvert:
         ] = False
         display_value: Annotated[
             str,
-            m.Field(description="Bind value shown for OUT_OF_SCOPE / UNGRANTED"),
+            m.Field(description="Converted bind DN of an OUT_OF_SCOPE subject"),
         ] = ""
 
     class AciRule(m.FrozenModel):
-        """An OUD ``aci`` rule assembled from one OID rule (one rule → one aci)."""
+        """The OUD ``aci`` clauses assembled from one OID rule.
+
+        Clauses render as one ``aci`` value per distinct clause targetscope;
+        ``targetscope`` is the scope of clauses that declare none.
+        """
 
         dn: Annotated[str, m.Field(description="Entry DN that owns the aci")]
         targetattr: Annotated[
@@ -219,7 +228,7 @@ class FlextLdifModelsAclConvert:
                 ],
                 ...,
             ],
-            m.Field(description="deny() clauses for the consumer to render"),
+            m.Field(description="deny() clauses"),
         ] = ()
         target_type: Annotated[
             str,
@@ -283,10 +292,10 @@ class FlextLdifModelsAclConvert:
 
         def with_allow(
             self,
-            allow: p.Ldif.AciAllow,
+            allow: p.Ldif.AciBindClause,
             bind: str,
         ) -> FlextLdifModelsAclConvert.AciAllowGroups:
-            """Return grouped allow state with one rendered bind rule appended."""
+            """Return grouped clause state with one rendered bind rule appended."""
             permissions = tuple(allow.permissions)
             updated: tuple[FlextLdifModelsAclConvert.AciAllowGroup, ...] = ()
             matched = False

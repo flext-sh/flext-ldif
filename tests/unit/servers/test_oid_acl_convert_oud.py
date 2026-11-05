@@ -84,14 +84,14 @@ class TestsFlextLdifOidAclConvertOud:
         value: str,
     ) -> None:
         """Test subject without oud equivalent surfaces failure."""
-        result = FlextLdifServersOidAclToOud.convert_subject_to_oud(
-            self._subject(kind, value)
+        tm.fail(
+            FlextLdifServersOidAclToOud.convert_subject_to_oud(
+                self._subject(kind, value)
+            ),
+            has="manual review",
         )
 
-        tm.ok(result.failure)
-        tm.that(result.error, contains="manual review")
-
-    # -- convert_permissions ----------------------------------------------
+    # -- resolve_permissions ----------------------------------------------
 
     @staticmethod
     @c.Tests.MARK.parametrize(
@@ -103,15 +103,14 @@ class TestsFlextLdifOidAclConvertOud:
                 ("read", "search", "add", "delete"),
                 (),
             ),
-            (("all", "browse", "add"), True, ("all",), ()),
-            (("all", "noadd"), True, ("read", "search", "delete", "proxy"), ("add",)),
-            (
-                ("all", "noread"),
-                False,
-                ("search", "write", "selfwrite", "compare"),
-                ("read",),
-            ),
             (("search", "read"), False, ("read", "search"), ()),
+            (("browse", "nobrowse"), True, (), ("read", "search")),
+            (
+                ("browse", "none"),
+                True,
+                (),
+                ("read", "search", "add", "delete", "proxy"),
+            ),
             (("browse", "noadd"), True, ("read", "search"), ("add",)),
             (("noadd",), True, (), ("add",)),
             (
@@ -131,7 +130,7 @@ class TestsFlextLdifOidAclConvertOud:
             (("none",), False, (), ("read", "search", "write", "selfwrite", "compare")),
         ],
     )
-    def test_convert_permissions_resolves_grants_and_denials(
+    def test_resolve_permissions_resolves_grants_and_denials(
         permissions: tuple[str, ...],
         *,
         is_entry: bool,
@@ -140,9 +139,10 @@ class TestsFlextLdifOidAclConvertOud:
     ) -> None:
         """Each OID access level is granted or denied on its own (OID-30 §30.1.4.3).
 
-        A pure-negation list denies exactly the named rights and grants nothing.
+        A pure-negation list denies exactly the named rights and grants
+        nothing; a right both granted and denied is denied.
         """
-        resolved = FlextLdifServersOidAclToOud.convert_permissions(
+        resolved = FlextLdifServersOidAclToOud.resolve_permissions(
             permissions, is_entry=is_entry
         ).unwrap()
 
@@ -150,16 +150,57 @@ class TestsFlextLdifOidAclConvertOud:
         tm.that(tuple(resolved.deny), eq=deny)
 
     @staticmethod
-    @c.Tests.MARK.parametrize("permissions", [("bogus",), ("nofoo",)])
-    def test_convert_permissions_unknown_token_surfaces_failure(
+    @c.Tests.MARK.parametrize(
+        ("permissions", "is_entry", "total"),
+        [
+            (("none",), True, True),
+            (("nobrowse", "noadd", "nodelete", "noproxy"), True, True),
+            (("nobrowse", "noadd"), True, False),
+            (("browse", "none"), True, True),
+            (("noread",), False, False),
+        ],
+    )
+    def test_total_denial_covers_every_right_of_the_kind(
         permissions: tuple[str, ...],
+        *,
+        is_entry: bool,
+        total: bool,
     ) -> None:
-        """Test convert permissions unknown token surfaces failure."""
-        result = FlextLdifServersOidAclToOud.convert_permissions(
-            permissions, is_entry=False
-        )
+        """``total_denial`` holds exactly when every right of the kind is denied."""
+        resolved = FlextLdifServersOidAclToOud.resolve_permissions(
+            permissions, is_entry=is_entry
+        ).unwrap()
 
-        tm.ok(result.failure)
+        tm.that(resolved.total_denial, eq=total)
+
+    @staticmethod
+    @c.Tests.MARK.parametrize(
+        ("permissions", "is_entry", "message"),
+        [
+            (("bogus",), False, "Unknown OID permission token"),
+            (("nofoo",), False, "Unknown OID permission token"),
+            (("all",), True, "Unknown OID permission token 'all'"),
+            (("all", "noread"), False, "Unknown OID permission token 'all'"),
+            (("*",), False, "Unknown OID permission token"),
+            (("read",), True, "not a right of an 'entry' object"),
+            (("noread",), True, "not a right of an 'entry' object"),
+            (("browse",), False, "not a right of an 'attr' object"),
+            ((" ",), True, "Empty OID access list"),
+        ],
+    )
+    def test_token_outside_access_grammar_surfaces_failure(
+        permissions: tuple[str, ...],
+        *,
+        is_entry: bool,
+        message: str,
+    ) -> None:
+        """Tokens outside the OID access grammar of the object kind fail loud."""
+        tm.fail(
+            FlextLdifServersOidAclToOud.resolve_permissions(
+                permissions, is_entry=is_entry
+            ),
+            has=message,
+        )
 
     # -- resolve_targetattr ---------------------------------------------------
 
@@ -187,7 +228,7 @@ class TestsFlextLdifOidAclConvertOud:
             eq=expected,
         )
 
-    # -- calculate_targetscope --------------------------------------------
+    # -- calculate_targetscope / clause_scopes -----------------------------
 
     def test_scope_orclaci_without_anyone_is_default(self) -> None:
         """Test scope orclaci without anyone is default."""
@@ -215,33 +256,62 @@ class TestsFlextLdifOidAclConvertOud:
 
         tm.that(scope, eq="base")
 
-    # -- regex_to_wildcard ------------------------------------------------
+    # -- regex_dn_to_wildcard / convert_bind_dn ----------------------------
 
     @staticmethod
     @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [
-            ("cn=.*,dc=ctbc", "cn=*,dc=ctbc"),
-            ("cn=.+,dc=ctbc", "cn=*,dc=ctbc"),
+            (".*,dc=ctbc", "**,dc=ctbc"),
+            (".+, dc=ctbc", "**,dc=ctbc"),
+            ("*,ou=people,dc=ctbc", "**,ou=people,dc=ctbc"),
             (r"cn=a\.b,dc=ctbc", "cn=a.b,dc=ctbc"),
+            (r"cn=Doe\, John,dc=ctbc", r"cn=Doe\, John,dc=ctbc"),
+            ("uid=joe,dc=ctbc", "uid=joe,dc=ctbc"),
             ("", ""),
         ],
     )
-    def test_regex_to_wildcard(value: str, expected: str) -> None:
-        """Only ``.*``/``.+`` regex DNs convert to an OUD wildcard."""
+    def test_regex_dn_to_wildcard(value: str, expected: str) -> None:
+        """A plain DN stays; the leading subtree regex becomes OUD ``**,``."""
         tm.that(
-            FlextLdifServersOidAclToOud.regex_to_wildcard(value).unwrap(),
+            FlextLdifServersOidAclToOud.regex_dn_to_wildcard(value).unwrap(),
             eq=expected,
         )
 
     @staticmethod
-    @c.Tests.MARK.parametrize("value", ["cn=a[0-9]b", "cn=(a|b),dc=ctbc", "^cn=a$"])
+    @c.Tests.MARK.parametrize(
+        "value",
+        [
+            "cn=.*,dc=ctbc",
+            "cn=adm*,dc=ctbc",
+            r"cn=a\d,dc=ctbc",
+            r"cn=a\.*,dc=ctbc",
+            "cn=ab+,dc=ctbc",
+            "cn=a[0-9]b",
+            "cn=(a|b),dc=ctbc",
+            "^cn=a$",
+        ],
+    )
     def test_unconvertible_regex_dn_surfaces_failure(value: str) -> None:
-        """A regex DN beyond ``.*``/``.+`` fails instead of passing raw."""
-        result = FlextLdifServersOidAclToOud.regex_to_wildcard(value)
+        """A regex DN beyond the leading subtree wildcard fails, never raw."""
+        tm.fail(
+            FlextLdifServersOidAclToOud.regex_dn_to_wildcard(value),
+            has="no exact OUD wildcard",
+        )
 
-        tm.ok(result.failure)
-        tm.that(result.error, contains="no exact OUD wildcard")
+    @staticmethod
+    def test_group_dn_with_wildcard_surfaces_failure() -> None:
+        """A ``group=`` subject names one DN; a wildcard there fails loud."""
+        tm.fail(
+            FlextLdifServersOidAclToOud.convert_bind_dn("groupdn", ".*,dc=ctbc"),
+            has="no exact OUD groupdn",
+        )
+        tm.that(
+            FlextLdifServersOidAclToOud.convert_bind_dn(
+                "groupdn", "cn=g,dc=ctbc"
+            ).unwrap(),
+            eq="cn=g,dc=ctbc",
+        )
 
     # -- convert_bindipfilter / convert_bind_modifiers ------------------------
 
@@ -278,7 +348,10 @@ class TestsFlextLdifOidAclConvertOud:
     )
     def test_untranslatable_bindipfilter_surfaces_failure(value: str) -> None:
         """A bindipfilter without an exact OUD ip form fails loud."""
-        tm.ok(FlextLdifServersOidAclToOud.convert_bindipfilter(value).failure)
+        tm.fail(
+            FlextLdifServersOidAclToOud.convert_bindipfilter(value),
+            has="no exact OUD ip",
+        )
 
     @staticmethod
     @c.Tests.MARK.parametrize(
@@ -302,10 +375,49 @@ class TestsFlextLdifOidAclConvertOud:
         message: str,
     ) -> None:
         """Modifiers without an exact OUD form fail instead of passing raw."""
-        result = FlextLdifServersOidAclToOud.convert_bind_modifiers(subject)
+        tm.fail(
+            FlextLdifServersOidAclToOud.convert_bind_modifiers(subject),
+            has=message,
+        )
 
-        tm.ok(result.failure)
-        tm.that(result.error, contains=message)
+    @c.Tests.MARK.parametrize(
+        ("acl_type", "deny", "rule_scope", "expected"),
+        [
+            (
+                "orclentrylevelaci",
+                False,
+                "base",
+                ((None, ("read", "search")), ("onelevel", ("add",))),
+            ),
+            (
+                "orclentrylevelaci",
+                True,
+                "base",
+                ((None, ("read", "search")), ("onelevel", ("add",))),
+            ),
+            ("orclaci", True, "base", (("subtree", ("read", "search", "add")),)),
+            ("orclaci", True, None, ((None, ("read", "search", "add")),)),
+            ("orclaci", False, "base", ((None, ("read", "search", "add")),)),
+        ],
+    )
+    def test_clause_scopes_partition_rights_by_targetscope(
+        self,
+        acl_type: str,
+        *,
+        deny: bool,
+        rule_scope: str | None,
+        expected: tuple[tuple[str | None, tuple[str, ...]], ...],
+    ) -> None:
+        """Entry-level ``add`` targets children; orclaci denials keep subtree."""
+        tm.that(
+            FlextLdifServersOidAclToOud.clause_scopes(
+                self._rule("entry", acl_type=acl_type),
+                ("read", "search", "add"),
+                deny=deny,
+                rule_scope=rule_scope,
+            ),
+            eq=expected,
+        )
 
     # -- in_scope ------------------------------------------------------
 
