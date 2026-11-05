@@ -156,13 +156,12 @@ class TestsFlextLdifRelaxed:
 
     @staticmethod
     @pytest.mark.parametrize(
-        ("_scenario", "definition_data"),
-        list(c.Tests.RELAXED_OBJECTCLASS_DEFINITIONS.items()),
+        "definition_data",
+        list(c.Tests.RELAXED_OBJECTCLASS_DEFINITIONS.values()),
         ids=list(c.Tests.RELAXED_OBJECTCLASS_DEFINITIONS.keys()),
     )
     def test_parse_objectclass_scenarios(
         schema_server: FlextLdifServersRelaxedSchema,
-        _scenario: str,
         definition_data: tuple[str, bool],
     ) -> None:
         """Test parse_objectclass with various scenarios."""
@@ -197,13 +196,12 @@ class TestsFlextLdifRelaxed:
 
     @staticmethod
     @pytest.mark.parametrize(
-        ("_name", "acl_data"),
-        list(c.Tests.RELAXED_ACL_DEFINITIONS.items()),
+        "acl_data",
+        list(c.Tests.RELAXED_ACL_DEFINITIONS.values()),
         ids=list(c.Tests.RELAXED_ACL_DEFINITIONS.keys()),
     )
     def test_parse_acl_scenarios(
         acl_server: FlextLdifServersRelaxed.Acl,
-        _name: str,
         acl_data: tuple[str, bool],
     ) -> None:
         """Test ACL parsing in relaxed mode with various scenarios."""
