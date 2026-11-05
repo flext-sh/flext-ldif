@@ -355,6 +355,13 @@ class FlextLdifConstantsBase:
     ACL_ORIGINAL_NAME_RAW: ClassVar[str] = "acl_original_name_raw"
     ACL_FILTER: ClassVar[str] = "filter"
     ACL_CONSTRAINT: ClassVar[str] = "added_object_constraint"
+    # Body of a parenthesized LDAP filter (RFC 4515) without its outer
+    # parentheses, nesting up to three levels: "|(objectclass=a)(objectclass=b)".
+    # ``re`` has no recursion, so every ACL pattern that carries a filter value
+    # (filter=, added_object_constraint=, by-clause modifiers) composes this one.
+    LDAP_FILTER_BODY_PATTERN: ClassVar[str] = (
+        r"(?:[^()]|\((?:[^()]|\((?:[^()]|\([^()]*\))*\))*\))*"
+    )
     ACL_BINDMODE: ClassVar[str] = "bindmode"
     ACL_DENY_GROUP_OVERRIDE: ClassVar[str] = "deny_group_override"
     ACL_APPEND_TO_ALL: ClassVar[str] = "append_to_all"

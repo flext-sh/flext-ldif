@@ -17,6 +17,8 @@ import re
 from enum import StrEnum, unique
 from typing import TYPE_CHECKING, ClassVar
 
+from flext_ldif._constants import FlextLdifConstantsBase
+
 if TYPE_CHECKING:
     from flext_ldif import t
 
@@ -92,7 +94,7 @@ class FlextLdifConstantsAclConvert:
 
     _SUBJ_MODIFIER_PATTERN = (
         r"(?:\s+(?:added_object_constraint|constraintonaddedobject|bindmode|bindipfilter)"
-        r'\s*=\s*(?:\([^)]+\)|"[^"]+"))'
+        rf'\s*=\s*(?:\({FlextLdifConstantsBase.LDAP_FILTER_BODY_PATTERN}\)|"[^"]+"))'
     )
     _SUBJ_MODIFIERS = rf"(?:{_SUBJ_MODIFIER_PATTERN})*"
 
@@ -154,7 +156,7 @@ class FlextLdifConstantsAclConvert:
     "Finds each ``by <subject> (perms)`` clause in an OID ACL (optional modifiers)."
     SUBJ_MODIFIER_RE: ClassVar[t.RegexPattern] = re.compile(
         r"(bindmode|bindipfilter|added_object_constraint|constraintonaddedobject)\s*=\s*"
-        r'(?:\(([^)]+)\)|"([^"]+)")',
+        rf'(?:\(({FlextLdifConstantsBase.LDAP_FILTER_BODY_PATTERN})\)|"([^"]+)")',
         re.IGNORECASE,
     )
     "by-clause modifier: g1=kind, g2=paren-value, g3=quoted-value."
