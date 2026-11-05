@@ -310,8 +310,8 @@ class FlextLdifUtilitiesParserRecord:
         """
         state = FlextLdifUtilitiesParserRecord._RecordState()
         for raw_line in lines:
-            line = raw_line.rstrip()
-            if not line:
+            line = raw_line.rstrip("\r\n")
+            if not line.strip():
                 continue
             if line.startswith("#"):
                 state.comments.append(line)
