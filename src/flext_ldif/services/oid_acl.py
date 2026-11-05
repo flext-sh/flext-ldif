@@ -45,11 +45,17 @@ class FlextLdifOidAcl:
         permissions: t.StrSequence,
         *,
         is_entry: bool,
-    ) -> p.Result[t.StrSequence]:
-        """Convert OID permissions into their OUD equivalents.
+    ) -> p.Result[p.Ldif.AclPermissionResolution]:
+        """Resolve OID permissions into typed OUD grant and deny sets.
+
+        Changed contract: the result is the typed ``allow``/``deny`` resolution
+        (previously the bare allow sequence, which granted the complement of a
+        pure-negation list). ``by * (nobrowse,noadd)`` now denies exactly
+        those rights and grants nothing (OID 12.2.1.3 §30.1.4.3); the consumer
+        renders ``deny`` as an OUD ``deny`` clause.
 
         Returns:
-            The supported OUD permissions or the conversion failure.
+            The typed resolution or the conversion failure.
 
         """
         return FlextLdifServersOidAclToOud.convert_permissions(
@@ -58,11 +64,14 @@ class FlextLdifOidAcl:
         )
 
     @staticmethod
-    def regex_to_wildcard(value: str) -> str:
-        """Convert an OID regular-expression value to an OUD wildcard.
+    def regex_to_wildcard(value: str) -> p.Result[str]:
+        """Convert an OID regular-expression DN to an OUD wildcard DN.
+
+        Changed contract: a DN with no exact OUD wildcard (anything beyond
+        ``.*``/``.+``) is now an ``r.fail`` instead of being returned raw.
 
         Returns:
-            The converted wildcard value.
+            The converted wildcard DN or the typed failure.
 
         """
         return FlextLdifServersOidAclToOud.regex_to_wildcard(value)
@@ -71,11 +80,6 @@ class FlextLdifOidAcl:
     def in_scope(dn: str, base_dn: str) -> bool:
         """Return whether a DN is in the supplied OUD scope."""
         return FlextLdifServersOidAclToOud.in_scope(dn, base_dn)
-
-    @staticmethod
-    def high_level_containers(base_dn: str) -> frozenset[str]:
-        """Return the protected high-level containers for an OUD base DN."""
-        return FlextLdifServersOidAclToOud.high_level_containers(base_dn)
 
     @staticmethod
     def build_aci_rule(

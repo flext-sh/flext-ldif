@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_ldif._protocols import FlextLdifProtocolsElements
 
 if TYPE_CHECKING:
-    from flext_ldif._constants import FlextLdifConstantsBaseParts
+    from flext_ldif import c
     from flext_ldif._protocols import FlextLdifProtocolsDomainMetadata
 
 
@@ -64,14 +64,7 @@ class FlextLdifProtocolsDomainSchema:
         max_length: int | None
         case_insensitive: bool
         allows_multivalued: bool
-
-        @property
-        def encoding(
-            self,
-        ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.Encoding:
-            """Expected character encoding (utf-8, ascii, iso-8859-1, etc.)."""
-            ...
-
+        encoding: c.Ldif.Encoding
         validation_pattern: str | None
 
         @property

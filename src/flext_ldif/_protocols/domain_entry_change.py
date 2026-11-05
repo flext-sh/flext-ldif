@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_cli import FlextCliProtocols
 
 if TYPE_CHECKING:
-    from flext_ldif._constants import FlextLdifConstantsBaseParts
+    from flext_ldif import c
     from flext_ldif._protocols import FlextLdifProtocolsDomainEntryChangeValue
 
 
@@ -26,9 +26,7 @@ class FlextLdifProtocolsDomainEntryChange:
         """Structural data contract projected from the owning model."""
 
         @property
-        def operation(
-            self,
-        ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.ChangeOperation:
+        def operation(self) -> c.Ldif.ChangeOperation:
             """Modify operation name."""
             ...
 

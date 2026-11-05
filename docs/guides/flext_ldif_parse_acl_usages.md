@@ -92,8 +92,10 @@ from flext_ldif import p, t
 class Acl(Protocol):
 """Protocol for ACL servers."""
 
-    def parse(self, acl_line: str) -> p.Result[t.JsonMapping]:
-        """Parse ACL - returns r with dict or Acl model."""
+```text
+def parse(self, acl_line: str) -> p.Result[t.JsonMapping]:
+    """Parse ACL - returns r with dict or Acl model."""
+```
 
 ---
 
@@ -227,12 +229,14 @@ def test_parse_oracle_oid():
 server = FlextLdifServersOid.Acl()
 acl_line = "orclaci: access to entry by * (browse)"
 
-    result = server.parse(acl_line)
+```text
+result = server.parse(acl_line)
 
-    tm.ok(result.success)
-    acl = result.unwrap()
-    assert isinstance(acl, FlextLdifModels.Acl)  # ← Tests Acl return type
-    tm.that(acl.server_type, eq="oid")
+tm.ok(result.success)
+acl = result.unwrap()
+assert isinstance(acl, FlextLdifModels.Acl)  # ← Tests Acl return type
+tm.that(acl.server_type, eq="oid")
+```
 
 **Total Tests**: ~50+ test methods using parse()
 
@@ -266,7 +270,7 @@ acl_line = "orclaci: access to entry by * (browse)"
 
 ## 6. CURRENT DATA FLOW
 
-```
+```text
 Input LDIF with OID ACL (orclaci:)
     ↓
 ldif.parse() → FlextLdifModels.Entry[]

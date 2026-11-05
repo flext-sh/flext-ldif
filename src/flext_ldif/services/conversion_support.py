@@ -32,7 +32,7 @@ class FlextLdifConversionSupport(FlextLdifServer):
             default=None,
             description=(
                 "Migration base DN; when set, OID→OUD ACL conversion filters "
-                "out-of-scope bind DNs and high-level-container anyone rules"
+                "out-of-scope bind DNs"
             ),
         ),
     ] = None

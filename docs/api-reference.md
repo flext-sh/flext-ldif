@@ -581,7 +581,7 @@ class Config(m.BaseModel):
 
 from flext_ldif import FlextLdifModels, ldif
 
-# Create custom configuration
+## Create custom configuration
 
 settings = FlextLdifModels.Config(
 max_entries=50000,
@@ -590,7 +590,7 @@ ignore_unknown_attributes=False,
 encoding="utf-8",
 )
 
-# Use configuration with API
+## Use configuration with API
 
 api = ldif(settings=settings)
 
@@ -657,19 +657,19 @@ group = FlextLdifModels.Entry(
 )
 ```
 
-## Configuration Management
+### Configuration Management
 
-### Global Configuration
+#### Global Configuration
 
 from flext_ldif import FlextLdifSettings, u
 
-# Initialize configuration
+## Initialize configuration
 
 settings = FlextLdifSettings(
 max_entries=100000, strict_validation=True, encoding="utf-8"
 )
 
-# Access global configuration
+## Access global configuration
 
 u.Cli.print(f"Max entries: {settings.max_entries}")
 
@@ -688,9 +688,9 @@ instance_config = FlextLdifModels.Config(
 api = ldif(settings=instance_config)
 ```
 
-## Error Handling
+### Error Handling
 
-### r Integration
+#### r Integration
 
 All API operations return r for composable error handling:
 
@@ -723,7 +723,7 @@ final_result = (
 )
 ```
 
-### Exception Types
+#### Exception Types
 
 ```python
 from flext_ldif import (
@@ -742,7 +742,7 @@ except FlextLdifValidationError as e:
     u.Cli.print(f"Validation error: {e}")
 ```
 
-## ⚠️ Library-Only Usage
+### ⚠️ Library-Only Usage
 
 **IMPORTANT**: FLEXT-LDIF is a **library-only** package with NO CLI. All functionality
 must be accessed programmatically through the API.
@@ -789,9 +789,9 @@ if result.success:
         u.Cli.print(f"Found {len(persons)} person entries")
 ```
 
-## Advanced Usage Patterns
+### Advanced Usage Patterns
 
-### Pipeline Processing
+#### Pipeline Processing
 
 ```text
 def process_enterprise_directory(
@@ -825,7 +825,7 @@ def process_enterprise_directory(
     )
 ```
 
-### Batch Processing
+#### Batch Processing
 
 ```text
 def process_multiple_files(file_paths: Sequence[Path]) -> p.Result[p.Dict]:
@@ -850,7 +850,7 @@ def process_multiple_files(file_paths: Sequence[Path]) -> p.Result[p.Dict]:
     })
 ```
 
-### Custom Filtering
+#### Custom Filtering
 
 ```text
 def filter_by_custom_criteria(
@@ -873,9 +873,9 @@ def filter_by_custom_criteria(
         return r[Sequence[FlextLdifModels.Entry]].fail(f"Filtering failed: {e}")
 ```
 
-## RFC Schema Parser API
+### RFC Schema Parser API
 
-### RfcSchemaParserService
+#### RfcSchemaParserService
 
 Parse LDAP schema definitions with RFC 4512 compliance and
 **MANDATORY servers support**.
@@ -978,9 +978,9 @@ rfc_parser = RfcSchemaParserService(
    servers
 1. **Future-proof** - New servers can be added without API changes
 
-## Migration Pipeline API
+### Migration Pipeline API
 
-### FlextLdifMigration
+#### FlextLdifMigration
 
 Generic LDIF migration between different LDAP servers.
 
@@ -1050,9 +1050,9 @@ if result.success:
 # OpenLDAP to OUD, AD to 389 DS, etc.
 ```
 
-## Servers Registry API
+### Servers Registry API
 
-### ServerRegistryService
+#### ServerRegistryService
 
 Central registry for managing server-specific servers.
 
@@ -1124,9 +1124,9 @@ acl_server = client.acl("openldap")
 # and exposed through the facade API.
 ```
 
-## Integration with FLEXT Ecosystem
+### Integration with FLEXT Ecosystem
 
-### FlextContainer Usage
+#### FlextContainer Usage
 
 ```text
 from __future__ import annotations
@@ -1187,7 +1187,7 @@ if api_result.success:
     ldif_api = api_result.unwrap()
 ```
 
-### FlextLogger Integration
+#### FlextLogger Integration
 
 ```python
 from __future__ import annotations
@@ -1224,9 +1224,9 @@ logger.info(
 )
 ```
 
-## 🚀 Quick Start Guide
+### 🚀 Quick Start Guide
 
-### Basic Usage - Parse, Validate, Write
+#### Basic Usage - Parse, Validate, Write
 
 ```python
 import sys
@@ -1260,7 +1260,7 @@ if validation_result.failure:
 u.Cli.print("✅ All entries valid")
 ```
 
-### LDIF Parsing Example
+#### LDIF Parsing Example
 
 ```python
 from flext_ldif import ldif, u
@@ -1278,13 +1278,13 @@ else:
     u.Cli.print(f"❌ Failed to parse LDIF: {result.error}")
 ```
 
-### Generic Migration Pipeline
+#### Generic Migration Pipeline
 
 from pathlib import Path
 
 from flext_ldif import FlextLdifMigration, u
 
-# Migrate OID → OUD using generic transformation pipeline
+## Migrate OID → OUD using generic transformation pipeline
 
 migration = FlextLdifMigration(
 input_dir=Path("source_oid_ldif"),
@@ -1293,7 +1293,7 @@ source_server_type="oid", # Oracle Internet Directory
 target_server_type="oud", # Oracle Unified Directory
 )
 
-# Execute migration: OID → RFC → OUD
+## Execute migration: OID → RFC → OUD
 
 result = migration.execute()
 if result.success:
@@ -1304,9 +1304,9 @@ u.Cli.print(f"✅ Generated {len(data['output_files'])} output files")
 else:
 u.Cli.print(f"❌ Migration failed: {result.error}")
 
-# Works with ANY server combination (N implementations, not N²)
+## Works with ANY server combination (N implementations, not N²)
 
-# Examples: OID↔OUD, OpenLDAP↔389DS, AD→OUD
+## Examples: OID↔OUD, OpenLDAP↔389DS, AD→OUD
 
 ### Railway-Oriented Pipeline
 
@@ -1353,7 +1353,7 @@ else:
     u.Cli.print(f"❌ Pipeline failed: {result.error}")
 ```
 
-### Supported LDAP Servers
+#### Supported LDAP Servers
 
 **Complete Implementations** (4 servers):
 
@@ -1405,7 +1405,7 @@ library-only interface, RFC-first architecture with MANDATORY server_registry, g
 migration pipeline, and comprehensive servers system, while demonstrating integration
 with FLEXT ecosystem patterns and professional Python development practices.
 
-## Related Documentation
+### Related Documentation
 
 **Within Project**:
 

@@ -1,4 +1,4 @@
-# provenance: devops-oud-iac@2225708e3ac8 tests/fixtures/synthetic/output/acls.ldif sha256=f03fa7eb2137b82c4f51d81c372acf535ab0a1ade9344d43a6959126076cc1d7 stripped=all-comment-lines(consumer-report-text)
+# provenance: devops-oud-iac@2225708e3ac8 tests/fixtures/synthetic/output/acls.ldif sha256=f03fa7eb2137b82c4f51d81c372acf535ab0a1ade9344d43a6959126076cc1d7 stripped=all-comment-lines(consumer-report-text) amended=flext-ws7iv(pure-negation complement allows removed; OID-30 30.1.4.3)
 version: 1
 
 dn: cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
@@ -10,10 +10,8 @@ aci: (targetattr="*")
       allow (read, search, compare)                      groupdn="ldap:///cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                                                       or groupdn="ldap:///cn=group-00591,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
 aci: (targetattr="*")
-     (version 3.0; acl "node-00004 Entry by group-00213 (+1)";
-      allow (read, search, add, delete, proxy)    groupdn="ldap:///cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
-      allow (proxy)                               groupdn="ldap:///cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
-                                               or groupdn="ldap:///cn=group-00591,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
+     (version 3.0; acl "node-00004 Entry by group-00213";
+      allow (read, search, add, delete, proxy)    groupdn="ldap:///cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00004 Entry by group-01851";

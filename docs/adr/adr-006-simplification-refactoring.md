@@ -294,9 +294,11 @@ from flext_core import s
 class FlextLdifDetector(s):
 """Server detection service with automatic logging."""
 
-    def execute(self, content: str) -> p.Result[dict]:
-        self.logger.info("Detecting server type", extra={"size": len(content)})
-        # self.logger available automatically from s
+```text
+def execute(self, content: str) -> p.Result[dict]:
+    self.logger.info("Detecting server type", extra={"size": len(content)})
+    # self.logger available automatically from s
+```
 
 **Benefits**:
 

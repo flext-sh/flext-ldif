@@ -14,8 +14,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_cli import FlextCliProtocols
 
 if TYPE_CHECKING:
-    from flext_ldif import t
-    from flext_ldif._constants import FlextLdifConstantsBaseParts
+    from flext_ldif import c, t
 
 
 class FlextLdifProtocolsSettingsCriteria:
@@ -111,9 +110,7 @@ class FlextLdifProtocolsSettingsCriteria:
             ...
 
         @property
-        def objectclass_mode(
-            self,
-        ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.EntryCriteriaMode:
+        def objectclass_mode(self) -> c.Ldif.EntryCriteriaMode:
             """Match mode: "any" (has any) or "all" (has all)."""
             ...
 
@@ -142,9 +139,7 @@ class FlextLdifProtocolsSettingsCriteria:
         """Structural data contract projected from the owning model."""
 
         @property
-        def server_type(
-            self,
-        ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.ServerTypes:
+        def server_type(self) -> c.Ldif.ServerTypes:
             """Server type performing the parse (oid, oud, rfc, etc.)."""
             ...
 

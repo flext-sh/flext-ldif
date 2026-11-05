@@ -305,7 +305,7 @@ class FlextLdifConstantsBaseParts:
         PERM_ALL: ClassVar[str] = "all"
         "OID/OUD permission token granting all rights."
 
-        # OID permission → OUD permission(s); None = negation/deny (dropped).
+        # OID permission → OUD permission(s); None = a ``no*``/``none`` deny token.
         ENTRY_PERM_MAP: ClassVar[Mapping[str, str | None]] = MappingProxyType({
             "all": "all",
             "browse": "read, search",
@@ -332,7 +332,7 @@ class FlextLdifConstantsBaseParts:
             "nocompare": None,
             "none": None,
         })
-        # OID ``noX`` negation token → its base permission (for complement computation).
+        # OID ``noX`` token → the base permission it denies (OID-30 §30.1.4.3).
         NEGATION_TO_BASE: ClassVar[Mapping[str, str]] = MappingProxyType({
             "noread": "read",
             "nosearch": "search",
@@ -376,15 +376,6 @@ class FlextLdifConstantsBaseParts:
             "add",
             "delete",
             "proxy",
-        )
-        # DN suffixes (relative to base) treated as high-level containers
-        #  (filter anyone).
-        HIGH_LEVEL_CONTAINER_SUFFIXES: ClassVar[tuple[str, ...]] = (
-            "",
-            "dc=network,",
-            "cn=users,dc=network,",
-            "cn=groups,dc=network,",
-            "cn=perfis,dc=network,",
         )
 
 

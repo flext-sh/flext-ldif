@@ -16,8 +16,7 @@ from flext_cli import FlextCliProtocols
 from flext_ldif._protocols import FlextLdifProtocolsElements
 
 if TYPE_CHECKING:
-    from flext_ldif import t
-    from flext_ldif._constants import FlextLdifConstantsBaseParts
+    from flext_ldif import c, t
     from flext_ldif._protocols import FlextLdifProtocolsDomainMetadata
 
 
@@ -56,13 +55,7 @@ class FlextLdifProtocolsDomainAcl:
     class AclSubject(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def subject_type(
-            self,
-        ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.AclSubjectType:
-            """Subject type (user, group, etc.)."""
-            ...
-
+        subject_type: c.Ldif.AclSubjectType
         subject_value: str
 
     @runtime_checkable
@@ -146,16 +139,12 @@ class FlextLdifProtocolsDomainAcl:
             ...
 
         @property
-        def source_server_type(
-            self,
-        ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.ServerTypes | None:
+        def source_server_type(self) -> c.Ldif.ServerTypes | None:
             """Source server type."""
             ...
 
         @property
-        def target_server_type(
-            self,
-        ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.ServerTypes | None:
+        def target_server_type(self) -> c.Ldif.ServerTypes | None:
             """Target server type."""
             ...
 

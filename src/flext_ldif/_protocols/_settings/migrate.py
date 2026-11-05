@@ -14,10 +14,8 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_cli import FlextCliProtocols
 
 if TYPE_CHECKING:
-    from flext_ldif import t
-    from flext_ldif._constants import FlextLdifConstantsBaseParts
+    from flext_ldif import c, t
     from flext_ldif._protocols._settings import FlextLdifProtocolsSettingsRules
-    from flext_ldif._typings import FlextLdifTypesDomain
 
 
 class FlextLdifProtocolsSettingsMigrate:
@@ -203,7 +201,7 @@ class FlextLdifProtocolsSettingsMigrate:
         """Structural data contract projected from the owning model."""
 
         @property
-        def acl_attribute_names(self) -> FlextLdifTypesDomain.AclAttributeNames:
+        def acl_attribute_names(self) -> t.Ldif.AclAttributeNames:
             """Structural member projected from the owning model.
 
             Set of ACL attribute names (e.g., {'orclaci', 'orclentrylevelaci'}).
@@ -336,14 +334,7 @@ class FlextLdifProtocolsSettingsMigrate:
             ...
 
         @property
-        def output_files(
-            self,
-        ) -> (
-            MutableMapping[
-                FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.Categories, str
-            ]
-            | None
-        ):
+        def output_files(self) -> MutableMapping[c.Ldif.Categories, str] | None:
             """Category to filename mapping (categorized mode)."""
             ...
 

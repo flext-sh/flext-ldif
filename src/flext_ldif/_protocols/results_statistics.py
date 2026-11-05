@@ -14,8 +14,7 @@ from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 from flext_cli import FlextCliProtocols
 
 if TYPE_CHECKING:
-    from flext_ldif import t
-    from flext_ldif._constants import FlextLdifConstantsBaseParts
+    from flext_ldif import c, t
     from flext_ldif._protocols import (
         FlextLdifProtocolsCollections,
         FlextLdifProtocolsEvents,
@@ -207,9 +206,7 @@ class FlextLdifProtocolsResultsStatistics:
             ...
 
         @property
-        def detected_server_type(
-            self,
-        ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.ServerTypes | None:
+        def detected_server_type(self) -> c.Ldif.ServerTypes | None:
             """LDAP server type detected from LDIF content."""
             ...
 
@@ -229,9 +226,7 @@ class FlextLdifProtocolsResultsStatistics:
             ...
 
         @property
-        def encoding(
-            self,
-        ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.Encoding:
+        def encoding(self) -> c.Ldif.Encoding:
             """Character encoding used for output."""
             ...
 

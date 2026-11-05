@@ -15,8 +15,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_cli import FlextCliProtocols
 
 if TYPE_CHECKING:
-    from flext_ldif import t
-    from flext_ldif._constants import FlextLdifConstantsBaseParts
+    from flext_ldif import c, t
     from flext_ldif._protocols import (
         FlextLdifProtocolsCollections,
         FlextLdifProtocolsDomainAcl,
@@ -52,21 +51,8 @@ class FlextLdifProtocolsResults:
         input_dir: Path | None
         output_dir: Path | None
         output_filename: str | None
-
-        @property
-        def source_server_type(
-            self,
-        ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.ServerTypes:
-            """Canonical source dialect."""
-            ...
-
-        @property
-        def target_server_type(
-            self,
-        ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.ServerTypes:
-            """Canonical target dialect."""
-            ...
-
+        source_server_type: c.Ldif.ServerTypes
+        target_server_type: c.Ldif.ServerTypes
         base_dn: str
         sort_entries_hierarchically: bool
 
@@ -186,9 +172,7 @@ class FlextLdifProtocolsResults:
         """Structural data contract projected from the owning model."""
 
         @property
-        def detected_server_type(
-            self,
-        ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.ServerTypes:
+        def detected_server_type(self) -> c.Ldif.ServerTypes:
             """LDAP server type detected from LDIF content."""
             ...
 
@@ -264,9 +248,7 @@ class FlextLdifProtocolsResults:
             ...
 
         @property
-        def detected_server_type(
-            self,
-        ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.ServerTypes | None:
+        def detected_server_type(self) -> c.Ldif.ServerTypes | None:
             """LDAP server type detected during parsing."""
             ...
 

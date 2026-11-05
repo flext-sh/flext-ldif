@@ -14,8 +14,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_cli import FlextCliProtocols
 
 if TYPE_CHECKING:
-    from flext_ldif import t
-    from flext_ldif._constants import FlextLdifConstantsAclConvert
+    from flext_ldif import c, t
 
 
 class FlextLdifProtocolsAclConvert:
@@ -42,17 +41,17 @@ class FlextLdifProtocolsAclConvert:
 
         @property
         def bindmode(self) -> str:
-            """OID bindmode modifier → OUD authmethod."""
+            """OID bindmode modifier (no exact OUD authmethod)."""
             ...
 
         @property
         def bindipfilter(self) -> str:
-            """OID bindipfilter modifier → OUD ip."""
+            """OID bindipfilter modifier (orclipaddress filter)."""
             ...
 
         @property
         def added_object_constraint(self) -> str:
-            """OID added_object_constraint modifier (note only)."""
+            """OID added_object_constraint modifier."""
             ...
 
     @runtime_checkable
@@ -94,8 +93,18 @@ class FlextLdifProtocolsAclConvert:
             """Original raw OID ACL line."""
             ...
 
+        @property
+        def deny_group_override(self) -> bool:
+            """Whether the object carries DenyGroupOverride."""
+            ...
+
+        @property
+        def append_to_all(self) -> bool:
+            """Whether the object carries AppendToAll."""
+            ...
+
     @runtime_checkable
-    class AciAllow(FlextCliProtocols.BaseModel, Protocol):
+    class AciBindClause(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -115,12 +124,34 @@ class FlextLdifProtocolsAclConvert:
 
         @property
         def authmethod(self) -> str:
-            """OUD authmethod bind-rule constraint (from bindmode)."""
+            """OUD authmethod bind-rule constraint."""
             ...
 
         @property
         def ip(self) -> str:
             """OUD ip bind-rule constraint (from bindipfilter)."""
+            ...
+
+    @runtime_checkable
+    class AciAllow(AciBindClause, Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class AciDeny(AciBindClause, Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class AclPermissionResolution(FlextCliProtocols.BaseModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def allow(self) -> Sequence[str]:
+            """Granted OUD permission tokens in canonical order."""
+            ...
+
+        @property
+        def deny(self) -> Sequence[str]:
+            """Denied OUD permission tokens in canonical order."""
             ...
 
     @runtime_checkable
@@ -133,7 +164,7 @@ class FlextLdifProtocolsAclConvert:
             ...
 
         @property
-        def kind(self) -> FlextLdifConstantsAclConvert.AclSubjectOutcomeKind:
+        def kind(self) -> c.Ldif.AclSubjectOutcomeKind:
             """Conversion outcome for this subject."""
             ...
 
@@ -143,17 +174,13 @@ class FlextLdifProtocolsAclConvert:
             ...
 
         @property
-        def wildcard_rewritten(self) -> bool:
-            """Whether regex→wildcard rewrote the bind DN."""
+        def deny(self) -> FlextLdifProtocolsAclConvert.AciDeny | None:
+            """Deny clause of the subject's denied rights."""
             ...
 
         @property
-        def complement_calculated(self) -> bool:
-            """Structural member projected from the owning model.
-
-            Whether the granted permissions are the complement of negation-only OID
-            permissions.
-            """
+        def wildcard_rewritten(self) -> bool:
+            """Whether regex→wildcard rewrote the bind DN."""
             ...
 
         @property
@@ -193,6 +220,11 @@ class FlextLdifProtocolsAclConvert:
         @property
         def allows(self) -> tuple[FlextLdifProtocolsAclConvert.AciAllow, ...]:
             """allow() clauses."""
+            ...
+
+        @property
+        def denies(self) -> tuple[FlextLdifProtocolsAclConvert.AciDeny, ...]:
+            """deny() clauses for the consumer to render."""
             ...
 
         @property

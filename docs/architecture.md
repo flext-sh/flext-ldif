@@ -36,7 +36,7 @@ the library processes LDIF while adapting to different LDAP servers.
 
 ## Package Layout
 
-```
+```text
 src/flext_ldif/
 ├── api.py                # Public facade that wires and exposes services
 ├── base.py               # Shared service base with LDIF-specific settings helper

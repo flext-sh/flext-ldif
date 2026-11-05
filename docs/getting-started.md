@@ -214,18 +214,18 @@ Access additional configuration options:
 
 from flext_ldif import FlextLdifSettings, u
 
-# Get global configuration
+## Get global configuration
 
 settings = FlextLdifSettings()
 
-# Access configuration settings
+## Access configuration settings
 
 u.Cli.print(f"Max entries: {settings.max_entries}")
 u.Cli.print(f"Strict validation: {settings.strict_validation}")
 
-## Command Line Interface
+### Command Line Interface
 
-### CLI Installation and Usage
+#### CLI Installation and Usage
 
 FLEXT-LDIF provides a command-line interface for common operations:
 
@@ -240,7 +240,7 @@ python -m flext_ldif analyze directory.ldif
 python -m flext_ldif filter --type person directory.ldif
 ```
 
-### CLI Help
+#### CLI Help
 
 ```bash
 # Get help for all commands
@@ -250,9 +250,9 @@ python -m flext_ldif --help
 python -m flext_ldif parse --help
 ```
 
-## Common Use Cases
+### Common Use Cases
 
-### Generic Schema Parsing with Server Servers
+#### Generic Schema Parsing with Server Servers
 
 Parse LDAP schema files with automatic server-specific handling:
 
@@ -288,7 +288,7 @@ if result.success:
 # Works with any LDAP server - OpenLDAP, OUD, AD, etc.
 ```
 
-### Generic Entry Migration Between Servers
+#### Generic Entry Migration Between Servers
 
 Migrate entries between different LDAP servers using generic transformation:
 
@@ -330,7 +330,7 @@ if result.success:
 # 3. Works with ANY server combination (even unknown servers)
 ```
 
-### Working with Multiple Server Types
+#### Working with Multiple Server Types
 
 Handle entries from different LDAP servers in the same workflow:
 
@@ -350,7 +350,7 @@ ouds = server_registry.get_entrys("oud")
 # Servers are tried in priority order (lower number = higher priority)
 ```
 
-### Data Validation and Cleaning
+#### Data Validation and Cleaning
 
 Validate and clean LDIF data:
 
@@ -382,9 +382,9 @@ if result.success:
         )
 ```
 
-## Troubleshooting
+### Troubleshooting
 
-### Common Issues
+#### Common Issues
 
 **Memory Issues with Large Files**:
 
@@ -404,14 +404,14 @@ if result.success:
 - Verify all dependencies are properly installed
 - Run `make check` from the workspace root to identify type errors
 
-### Getting Help
+#### Getting Help
 
 - **Documentation**: Complete documentation
 - **API Reference**: API documentation
 - **Examples**: Usage examples
 - **Issues**: [GitHub Issues](https://github.com/flext-sh/flext-ldif/issues)
 
-## Next Steps
+### Next Steps
 
 Once you have FLEXT-LDIF installed and working:
 
@@ -420,7 +420,7 @@ Once you have FLEXT-LDIF installed and working:
 1. **Examples**: See practical usage patterns
 1. **Integration**: Learn about FLEXT ecosystem integration
 
-## Related Documentation
+### Related Documentation
 
 **Within Project**:
 

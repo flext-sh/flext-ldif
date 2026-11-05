@@ -43,15 +43,15 @@ class FlextLdifModelsAclConvert:
         ] = ()
         bindmode: Annotated[
             str,
-            m.Field(description="OID bindmode modifier → OUD authmethod"),
+            m.Field(description="OID bindmode modifier (no exact OUD authmethod)"),
         ] = ""
         bindipfilter: Annotated[
             str,
-            m.Field(description="OID bindipfilter modifier → OUD ip"),
+            m.Field(description="OID bindipfilter modifier (orclipaddress filter)"),
         ] = ""
         added_object_constraint: Annotated[
             str,
-            m.Field(description="OID added_object_constraint modifier (note only)"),
+            m.Field(description="OID added_object_constraint modifier"),
         ] = ""
 
     class OidAclRule(m.FrozenModel):
@@ -79,9 +79,17 @@ class FlextLdifModelsAclConvert:
             m.Field(description="Parsed by-clause subjects"),
         ] = ()
         raw_line: Annotated[str, m.Field(description="Original raw OID ACL line")] = ""
+        deny_group_override: Annotated[
+            bool,
+            m.Field(description="Whether the object carries DenyGroupOverride"),
+        ] = False
+        append_to_all: Annotated[
+            bool,
+            m.Field(description="Whether the object carries AppendToAll"),
+        ] = False
 
-    class AciAllow(m.FrozenModel):
-        """One OUD ``aci`` ``allow()`` clause: bind-rule subject + permission set."""
+    class AciBindClause(m.FrozenModel):
+        """One OUD ``aci`` permission clause: bind-rule subject + permission set."""
 
         subject_type: Annotated[
             str,
@@ -97,18 +105,43 @@ class FlextLdifModelsAclConvert:
         ] = ()
         authmethod: Annotated[
             str,
-            m.Field(description="OUD authmethod bind-rule constraint (from bindmode)"),
+            m.Field(description="OUD authmethod bind-rule constraint"),
         ] = ""
         ip: Annotated[
             str,
             m.Field(description="OUD ip bind-rule constraint (from bindipfilter)"),
         ] = ""
 
+    class AciAllow(AciBindClause):
+        """One OUD ``aci`` ``allow()`` clause: bind-rule subject + granted set."""
+
+    class AciDeny(AciBindClause):
+        """One OUD ``aci`` ``deny()`` clause: bind-rule subject + denied set."""
+
+    class AclPermissionResolution(m.FrozenModel):
+        """OUD permission tokens one OID access list grants and denies.
+
+        Each OID access level is granted or denied independently and ``noxxx``
+        denies ``xxx`` (OID-30 §30.1.4.3); ``none`` denies every right of the
+        target kind (Table 30-2). Rights the list does not name stay
+        unresolved and appear in neither set.
+        """
+
+        allow: Annotated[
+            Sequence[str],
+            m.Field(description="Granted OUD permission tokens in canonical order"),
+        ] = ()
+        deny: Annotated[
+            Sequence[str],
+            m.Field(description="Denied OUD permission tokens in canonical order"),
+        ] = ()
+
     class AclSubjectOutcome(m.FrozenModel):
         """What conversion did with one OID by-clause subject, in input order.
 
-        ``allow``, ``wildcard_rewritten`` and ``complement_calculated``
-        describe a ``GRANTED`` subject.
+        ``allow`` and ``wildcard_rewritten`` describe a ``GRANTED`` subject;
+        ``deny`` carries the denied rights of a ``GRANTED`` (explicit ``no*``
+        tokens), ``DENIED`` or ``DENIED_ALL`` subject.
         ``display_value`` is the converted bind DN after wildcarding for
         ``OUT_OF_SCOPE``, and for ``UNGRANTED`` the converted DN of a
         ``group``/``user`` subject or the raw value otherwise. An
@@ -116,7 +149,10 @@ class FlextLdifModelsAclConvert:
         """
 
         subject: Annotated[
-            FlextLdifModelsAclConvert.OidAclSubject,
+            Annotated[
+                p.Ldif.OidAclSubject,
+                t.schema_for_model(FlextLdifModelsAclConvert.OidAclSubject),
+            ],
             m.Field(description="The OID subject exactly as parsed"),
         ]
         kind: Annotated[
@@ -124,19 +160,24 @@ class FlextLdifModelsAclConvert:
             m.Field(description="Conversion outcome for this subject"),
         ]
         allow: Annotated[
-            FlextLdifModelsAclConvert.AciAllow | None,
+            Annotated[
+                p.Ldif.AciAllow,
+                t.schema_for_model(FlextLdifModelsAclConvert.AciAllow),
+            ]
+            | None,
             m.Field(description="Final allow clause of a GRANTED subject"),
+        ] = None
+        deny: Annotated[
+            Annotated[
+                p.Ldif.AciDeny,
+                t.schema_for_model(FlextLdifModelsAclConvert.AciDeny),
+            ]
+            | None,
+            m.Field(description="Deny clause of the subject's denied rights"),
         ] = None
         wildcard_rewritten: Annotated[
             bool,
             m.Field(description="Whether regex→wildcard rewrote the bind DN"),
-        ] = False
-        complement_calculated: Annotated[
-            bool,
-            m.Field(
-                description="Whether the granted permissions are the complement "
-                "of negation-only OID permissions",
-            ),
         ] = False
         display_value: Annotated[
             str,
@@ -161,15 +202,37 @@ class FlextLdifModelsAclConvert:
         ] = None
         acl_name: Annotated[str, m.Field(description="Human-readable acl name")] = ""
         allows: Annotated[
-            tuple[FlextLdifModelsAclConvert.AciAllow, ...],
+            tuple[
+                Annotated[
+                    p.Ldif.AciAllow,
+                    t.schema_for_model(FlextLdifModelsAclConvert.AciAllow),
+                ],
+                ...,
+            ],
             m.Field(description="allow() clauses"),
+        ] = ()
+        denies: Annotated[
+            tuple[
+                Annotated[
+                    p.Ldif.AciDeny,
+                    t.schema_for_model(FlextLdifModelsAclConvert.AciDeny),
+                ],
+                ...,
+            ],
+            m.Field(description="deny() clauses for the consumer to render"),
         ] = ()
         target_type: Annotated[
             str,
             m.Field(description="OID target kind of the source rule: entry | attr"),
         ] = ""
         outcomes: Annotated[
-            tuple[FlextLdifModelsAclConvert.AclSubjectOutcome, ...],
+            tuple[
+                Annotated[
+                    p.Ldif.AclSubjectOutcome,
+                    t.schema_for_model(FlextLdifModelsAclConvert.AclSubjectOutcome),
+                ],
+                ...,
+            ],
             m.Field(description="Per-subject conversion outcomes in input order"),
         ] = ()
 
@@ -177,7 +240,13 @@ class FlextLdifModelsAclConvert:
         """OID→OUD ACL conversion of one entry: its rules or the Oracle skip."""
 
         rules: Annotated[
-            tuple[FlextLdifModelsAclConvert.AciRule, ...],
+            tuple[
+                Annotated[
+                    p.Ldif.AciRule,
+                    t.schema_for_model(FlextLdifModelsAclConvert.AciRule),
+                ],
+                ...,
+            ],
             m.Field(description="Assembled aci rules in OID line order"),
         ] = ()
         oracle_internal_skip: Annotated[

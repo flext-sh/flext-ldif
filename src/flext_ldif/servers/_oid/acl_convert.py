@@ -260,6 +260,8 @@ class FlextLdifServersOidAclConvert:
 
         Malformation (wrong prefix, missing ``access to``, unknown target, or no
         recognizable subjects) surfaces as ``r.fail`` — never a silent drop.
+        The ``DenyGroupOverride``/``AppendToAll`` object keywords (OID-30
+        §30.1.4.1) are recorded as typed flags for the converter.
 
         Returns:
             The resulting ``p.Result[p.Ldif.OidAclRule]``.
@@ -290,6 +292,8 @@ class FlextLdifServersOidAclConvert:
                 target_filter=target_filter,
                 subjects=subjects,
                 raw_line=line,
+                deny_group_override=bool(c.Ldif.DENY_GROUP_OVERRIDE_RE.search(content)),
+                append_to_all=bool(c.Ldif.APPEND_TO_ALL_RE.search(content)),
             ),
         )
 

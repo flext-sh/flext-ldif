@@ -16,7 +16,7 @@ from flext_cli import FlextCliProtocols
 if TYPE_CHECKING:
     from flext_cli import p
 
-    from flext_ldif._constants import FlextLdifConstantsBaseParts
+    from flext_ldif import c
 
 
 class FlextLdifProtocolsElements:
@@ -50,13 +50,7 @@ class FlextLdifProtocolsElements:
     class AclElement(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def server_type(
-            self,
-        ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.ServerTypes:
-            """LDAP server type (oid, oud, openldap, rfc, etc.)."""
-            ...
-
+        server_type: c.Ldif.ServerTypes
         validation_violations: MutableSequence[str]
 
         @property

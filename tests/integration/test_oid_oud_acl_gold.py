@@ -9,11 +9,13 @@ comparison drops.
 
 The per-subject outcomes recorded on ``entry.metadata.acl_conversion`` must
 match the conversion notes of the same gold: for each emitted aci (first
-occurrence after deduplication), the gold's ``DE`` lines count the GRANTED
-subjects, its ``EXCL`` lines the ``by * (none)`` subjects, and its section 6.8
-lines the complemented granted subjects. ``*_outcomes.tsv`` holds those counts,
-extracted from the
-original gold before its report text was stripped.
+occurrence after deduplication), the gold's ``DE`` lines count the subjects it
+granted, its ``EXCL`` lines the ``(none)`` subjects (``DENIED_ALL``), and its
+section 6.8 lines the pure-negation subjects. The gold granted those the
+complement of the negated rights; OID-30 §30.1.4.3 makes them denials that
+grant nothing, so they are ``DENIED`` here and leave the granted count.
+``*_outcomes.tsv`` holds those counts, extracted from the original gold before
+its report text was stripped.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -45,7 +47,7 @@ class TestsFlextLdifOidOudAclGold:
         """Count outcome kinds for each emitted aci, first occurrence only.
 
         Returns:
-            Rows of DN, granted, deny-none, complemented and other kinds.
+            Rows of DN, granted, denied-all, denied and other kinds.
 
         """
         kind = c.Ldif.AclSubjectOutcomeKind
@@ -62,13 +64,14 @@ class TestsFlextLdifOidOudAclGold:
                 seen.add(rendered[0])
                 kinds = [outcome.kind for outcome in rule.outcomes]
                 granted = kinds.count(kind.GRANTED)
-                deny_none = kinds.count(kind.EXCLUDED_DENY_NONE)
+                denied_all = kinds.count(kind.DENIED_ALL)
+                denied = kinds.count(kind.DENIED)
                 rows.append((
                     entry.dn_str,
                     granted,
-                    deny_none,
-                    sum(outcome.complement_calculated for outcome in rule.outcomes),
-                    len(kinds) - granted - deny_none,
+                    denied_all,
+                    denied,
+                    len(kinds) - granted - denied_all - denied,
                 ))
         return rows
 
@@ -78,14 +81,15 @@ class TestsFlextLdifOidOudAclGold:
         """Read the gold-derived outcome counts (no other kind is recorded).
 
         Returns:
-            Rows of DN, granted, deny-none, complemented and zero others.
+            Rows of DN, granted, denied-all, denied and zero others.
 
         """
         lines = (self.GOLD_DIR / outcomes_name).read_text(encoding="utf-8")
         rows: list[tuple[str, int, int, int, int]] = []
         for line in lines.splitlines()[1:]:
             dn, granted, deny_none, complement = line.split("\t")
-            rows.append((dn, int(granted), int(deny_none), int(complement), 0))
+            denied = int(complement)
+            rows.append((dn, int(granted) - denied, int(deny_none), denied, 0))
         return rows
 
     @c.Tests.MARK.parametrize(

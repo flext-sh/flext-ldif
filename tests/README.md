@@ -71,7 +71,7 @@ pytest -m performance
 
 ### Test File Structure
 
-```
+```text
 tests/
 ├── conftest.py                     # Pytest configuration and fixtures
 ├── docker_fixtures.py             # Docker-based integration test fixtures
@@ -353,7 +353,7 @@ def ldap_server():
 
 ### Sample LDIF Files
 
-```
+```text
 tests/data/
 ├── sample_basic.ldif              # Basic LDIF with standard entries
 ├── sample_complex.ldif            # Complex LDIF with all features

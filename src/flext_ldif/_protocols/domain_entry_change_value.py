@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_cli import FlextCliProtocols
 
 if TYPE_CHECKING:
-    from flext_ldif._constants import FlextLdifConstantsBaseParts
+    from flext_ldif import c
 
 
 class FlextLdifProtocolsDomainEntryChangeValue:
@@ -29,9 +29,7 @@ class FlextLdifProtocolsDomainEntryChangeValue:
             ...
 
         @property
-        def value_origin(
-            self,
-        ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.ValueOrigin:
+        def value_origin(self) -> c.Ldif.ValueOrigin:
             """Original LDIF encoding/source for this value."""
             ...
 

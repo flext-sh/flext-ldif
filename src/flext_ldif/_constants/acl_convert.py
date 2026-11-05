@@ -56,12 +56,18 @@ class FlextLdifConstantsAclConvert:
 
     @unique
     class AclSubjectOutcomeKind(StrEnum):
-        """What OID→OUD conversion did with one by-clause subject."""
+        """What OID→OUD conversion did with one by-clause subject.
+
+        ``GRANTED`` carries an allow (plus a deny for its explicit ``no*``
+        tokens); ``DENIED`` is a clause with only ``no*`` tokens (denies them,
+        grants nothing); ``DENIED_ALL`` is ``(none)`` (denies every right of
+        the target kind). OID-30 §30.1.4.3, Table 30-2.
+        """
 
         GRANTED = "granted"
+        DENIED = "denied"
+        DENIED_ALL = "denied_all"
         EXCLUDED_DEAD_CODE = "excluded_dead_code"
-        EXCLUDED_DENY_NONE = "excluded_deny_none"
-        EXCLUDED_CONTAINER = "excluded_container"
         UNSUPPORTED = "unsupported"
         OUT_OF_SCOPE = "out_of_scope"
         UNGRANTED = "ungranted"
@@ -169,7 +175,41 @@ class FlextLdifConstantsAclConvert:
         (r"\,", ","),
     )
     OID_REGEX_RESIDUAL_RE: ClassVar[t.RegexPattern] = re.compile(r"[\[\]{}|^$+?()]")
-    "Residual regex metacharacters → DN too complex to wildcard (keep original)."
+    "Residual regex metacharacters → DN has no exact OUD wildcard (typed failure)."
+
+    DENY_GROUP_OVERRIDE_RE: ClassVar[t.RegexPattern] = re.compile(
+        r"\bDenyGroupOverride\b",
+        re.IGNORECASE,
+    )
+    "OID object keyword ``DenyGroupOverride`` (OID-30 §30.1.4.1, §30.1.3.4.2)."
+    APPEND_TO_ALL_RE: ClassVar[t.RegexPattern] = re.compile(
+        r"\bAppendToAll\b",
+        re.IGNORECASE,
+    )
+    "OID object keyword ``AppendToAll`` (OID-30 §30.1.4.1)."
+    OID_IP_FILTER_TERM_RE: ClassVar[t.RegexPattern] = re.compile(
+        r"^\(?\s*orclipaddress\s*=\s*([^()\s]+)\s*\)?$",
+        re.IGNORECASE,
+    )
+    "One ``orclipaddress=<value>`` equality term (OID-30 §30.1.4.2.3)."
+    OID_IP_FILTER_OR_RE: ClassVar[t.RegexPattern] = re.compile(
+        r"^\(?\s*\|\s*((?:\(\s*orclipaddress\s*=\s*[^()\s]+\s*\)\s*)+)\)?$",
+        re.IGNORECASE,
+    )
+    "An OR of ``orclipaddress=<value>`` equality terms (OID-30 §30.1.4.2.3)."
+    OID_IP_FILTER_OR_TERM_RE: ClassVar[t.RegexPattern] = re.compile(
+        r"\(\s*orclipaddress\s*=\s*([^()\s]+)\s*\)",
+        re.IGNORECASE,
+    )
+    "Each term of an ``orclipaddress`` OR filter."
+    OID_IPV4_PREFIX_RE: ClassVar[t.RegexPattern] = re.compile(
+        r"^(\d{1,3}(?:\.\d{1,3}){0,3})(\.\*)?$",
+    )
+    "IPv4 address, or dotted-octet prefix + trailing ``.*`` substring wildcard."
+    IPV4_OCTET_COUNT: ClassVar[int] = 4
+    IPV4_OCTET_MAX: ClassVar[int] = 255
+    IPV4_OCTET_WILDCARD: ClassVar[str] = "*"
+    OUD_IP_LIST_SEPARATOR: ClassVar[str] = ","
 
 
 __all__: list[str] = ["FlextLdifConstantsAclConvert"]

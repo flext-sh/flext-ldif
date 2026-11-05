@@ -16,8 +16,7 @@ from flext_cli import FlextCliProtocols
 if TYPE_CHECKING:
     from flext_cli import p
 
-    from flext_ldif import t
-    from flext_ldif._constants import FlextLdifConstantsBaseParts
+    from flext_ldif import c, t
     from flext_ldif._protocols import (
         FlextLdifProtocolsDomainAttributes,
         FlextLdifProtocolsDomainDn,
@@ -25,7 +24,6 @@ if TYPE_CHECKING:
         FlextLdifProtocolsDomainEntryControl,
         FlextLdifProtocolsDomainMetadata,
     )
-    from flext_ldif._typings import FlextLdifTypesBase
 
 
 class FlextLdifProtocolsDomainEntry:
@@ -60,15 +58,7 @@ class FlextLdifProtocolsDomainEntry:
             """
             ...
 
-        @property
-        def record_kind(
-            self,
-        ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.RecordKind:
-            """Structural member projected from the owning model.
-
-            Whether this Entry represents LDIF content or an LDIF change record.
-            """
-            ...
+        record_kind: c.Ldif.RecordKind
 
         @property
         def controls(self) -> Sequence[FlextLdifProtocolsDomainEntryControl.Control]:
@@ -82,17 +72,7 @@ class FlextLdifProtocolsDomainEntry:
             """Structured modify operation blocks for changetype=modify."""
             ...
 
-        @property
-        def changetype(
-            self,
-        ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.ChangeType | None:
-            """Structural member projected from the owning model.
-
-            Change operation type per RFC 2849 § 5.7
-            (add/delete/modify/moddn/modrdn).
-            """
-            ...
-
+        changetype: c.Ldif.ChangeType | None
         newrdn: str | None
         deleteoldrdn: bool | None
         newsuperior: str | None
@@ -128,7 +108,7 @@ class FlextLdifProtocolsDomainEntry:
             ...
 
         @property
-        def unconverted_attributes(self) -> FlextLdifTypesBase.UnconvertedAttributes:
+        def unconverted_attributes(self) -> t.Ldif.UnconvertedAttributes:
             """Raw attributes preserved from parsing, before conversion."""
             ...
 

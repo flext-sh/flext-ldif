@@ -95,31 +95,59 @@ class TestsFlextLdifOidAclConvertOud:
 
     @staticmethod
     @c.Tests.MARK.parametrize(
-        ("permissions", "is_entry", "expected"),
+        ("permissions", "is_entry", "allow", "deny"),
         [
-            (("browse", "add", "delete"), True, ("read", "search", "add", "delete")),
-            (("all", "browse", "add"), True, ("all",)),
-            (("all", "noadd"), True, ("read", "search", "delete", "proxy")),
-            (("all", "noread"), False, ("search", "write", "selfwrite", "compare")),
-            (("search", "read"), False, ("read", "search")),
-            (("browse", "noadd"), True, ("read", "search")),
-            (("noadd",), True, ("read", "search", "delete", "proxy")),
-            (("noread",), False, ("search", "write", "selfwrite", "compare")),
-            (("none",), True, ()),
+            (
+                ("browse", "add", "delete"),
+                True,
+                ("read", "search", "add", "delete"),
+                (),
+            ),
+            (("all", "browse", "add"), True, ("all",), ()),
+            (("all", "noadd"), True, ("read", "search", "delete", "proxy"), ("add",)),
+            (
+                ("all", "noread"),
+                False,
+                ("search", "write", "selfwrite", "compare"),
+                ("read",),
+            ),
+            (("search", "read"), False, ("read", "search"), ()),
+            (("browse", "noadd"), True, ("read", "search"), ("add",)),
+            (("noadd",), True, (), ("add",)),
+            (
+                ("nobrowse", "noadd", "nodelete"),
+                True,
+                (),
+                ("read", "search", "add", "delete"),
+            ),
+            (("noread",), False, (), ("read",)),
+            (
+                ("search", "read", "nowrite", "nocompare"),
+                False,
+                ("read", "search"),
+                ("write", "compare"),
+            ),
+            (("none",), True, (), ("read", "search", "add", "delete", "proxy")),
+            (("none",), False, (), ("read", "search", "write", "selfwrite", "compare")),
         ],
     )
-    def test_convert_permissions_yields_ordered_allow_set(
+    def test_convert_permissions_resolves_grants_and_denials(
         permissions: tuple[str, ...],
         *,
         is_entry: bool,
-        expected: tuple[str, ...],
+        allow: tuple[str, ...],
+        deny: tuple[str, ...],
     ) -> None:
-        """Test convert permissions yields ordered allow set."""
-        result = FlextLdifServersOidAclToOud.convert_permissions(
-            permissions, is_entry=is_entry
-        )
+        """Each OID access level is granted or denied on its own (OID-30 §30.1.4.3).
 
-        tm.that(result.unwrap(), eq=expected)
+        A pure-negation list denies exactly the named rights and grants nothing.
+        """
+        resolved = FlextLdifServersOidAclToOud.convert_permissions(
+            permissions, is_entry=is_entry
+        ).unwrap()
+
+        tm.that(tuple(resolved.allow), eq=allow)
+        tm.that(tuple(resolved.deny), eq=deny)
 
     @staticmethod
     @c.Tests.MARK.parametrize("permissions", [("bogus",), ("nofoo",)])
@@ -197,12 +225,87 @@ class TestsFlextLdifOidAclConvertOud:
             ("cn=.+,dc=ctbc", "cn=*,dc=ctbc"),
             (r"cn=a\.b,dc=ctbc", "cn=a.b,dc=ctbc"),
             ("", ""),
-            ("cn=a[0-9]b", "cn=a[0-9]b"),
         ],
     )
     def test_regex_to_wildcard(value: str, expected: str) -> None:
-        """Test regex to wildcard."""
-        tm.that(FlextLdifServersOidAclToOud.regex_to_wildcard(value), eq=expected)
+        """Only ``.*``/``.+`` regex DNs convert to an OUD wildcard."""
+        tm.that(
+            FlextLdifServersOidAclToOud.regex_to_wildcard(value).unwrap(),
+            eq=expected,
+        )
+
+    @staticmethod
+    @c.Tests.MARK.parametrize("value", ["cn=a[0-9]b", "cn=(a|b),dc=ctbc", "^cn=a$"])
+    def test_unconvertible_regex_dn_surfaces_failure(value: str) -> None:
+        """A regex DN beyond ``.*``/``.+`` fails instead of passing raw."""
+        result = FlextLdifServersOidAclToOud.regex_to_wildcard(value)
+
+        tm.ok(result.failure)
+        tm.that(result.error, contains="no exact OUD wildcard")
+
+    # -- convert_bindipfilter / convert_bind_modifiers ------------------------
+
+    @staticmethod
+    @c.Tests.MARK.parametrize(
+        ("value", "expected"),
+        [
+            ("", ""),
+            ("orclipaddress=10.1.2.3", "10.1.2.3"),
+            ("orclipaddress=10.10.*", "10.10.*.*"),
+            (
+                "|(orclipaddress=1.2.3.*)(orclipaddress=1.2.4.*)",
+                "1.2.3.*,1.2.4.*",
+            ),
+        ],
+    )
+    def test_bindipfilter_translates_to_oud_ip(value: str, expected: str) -> None:
+        """An orclipaddress equality (or OR of them) becomes an OUD ip list."""
+        tm.that(
+            FlextLdifServersOidAclToOud.convert_bindipfilter(value).unwrap(),
+            eq=expected,
+        )
+
+    @staticmethod
+    @c.Tests.MARK.parametrize(
+        "value",
+        [
+            "10.0.0.0",
+            "&(orclipaddress!=1.2.*)(orclipaddress!=3.4.*)",
+            "orclipaddress=1.2.3*",
+            "orclipaddress=1.*.3.4",
+            "orclipaddress=300.1.1.1",
+        ],
+    )
+    def test_untranslatable_bindipfilter_surfaces_failure(value: str) -> None:
+        """A bindipfilter without an exact OUD ip form fails loud."""
+        tm.ok(FlextLdifServersOidAclToOud.convert_bindipfilter(value).failure)
+
+    @staticmethod
+    @c.Tests.MARK.parametrize(
+        ("subject", "message"),
+        [
+            (
+                m.Ldif.OidAclSubject(subject_type="anyone", bindmode="Simple"),
+                "bindmode",
+            ),
+            (
+                m.Ldif.OidAclSubject(
+                    subject_type="anyone",
+                    added_object_constraint="objectclass=person",
+                ),
+                "added_object_constraint",
+            ),
+        ],
+    )
+    def test_bindmode_and_add_constraint_surface_failure(
+        subject: p.Ldif.OidAclSubject,
+        message: str,
+    ) -> None:
+        """Modifiers without an exact OUD form fail instead of passing raw."""
+        result = FlextLdifServersOidAclToOud.convert_bind_modifiers(subject)
+
+        tm.ok(result.failure)
+        tm.that(result.error, contains=message)
 
     # -- in_scope ------------------------------------------------------
 
@@ -219,13 +322,3 @@ class TestsFlextLdifOidAclConvertOud:
     def test_is_in_scope(dn: str, base_dn: str, *, expected: bool) -> None:
         """Test is in scope."""
         tm.that(FlextLdifServersOidAclToOud.in_scope(dn, base_dn), eq=expected)
-
-    # -- high_level_containers --------------------------------------------
-
-    @staticmethod
-    def test_high_level_containers_are_base_relative_and_case_folded() -> None:
-        """Test high level containers are base relative and case folded."""
-        containers = FlextLdifServersOidAclToOud.high_level_containers("dc=CTBC")
-
-        tm.ok("dc=ctbc" in containers)
-        tm.ok("dc=network,dc=ctbc" in containers)

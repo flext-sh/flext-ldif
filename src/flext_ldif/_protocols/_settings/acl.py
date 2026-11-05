@@ -13,8 +13,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_cli import FlextCliProtocols
 
 if TYPE_CHECKING:
-    from flext_ldif import t
-    from flext_ldif._constants import FlextLdifConstantsBaseParts
+    from flext_ldif import c, t
 
 
 class FlextLdifProtocolsSettingsAcl:
@@ -59,9 +58,7 @@ class FlextLdifProtocolsSettingsAcl:
         """Structural data contract projected from the owning model."""
 
         @property
-        def server_type(
-            self,
-        ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.ServerTypes:
+        def server_type(self) -> c.Ldif.ServerTypes:
             """Server type identifier (oid, oud, rfc, etc.)."""
             ...
 

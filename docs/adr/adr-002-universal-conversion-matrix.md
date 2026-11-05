@@ -28,7 +28,7 @@ intermediate representation:
 
 **Conversion Pattern**:
 
-```
+```text
 Source Format → Source.to_rfc() → RFC Format → Target.from_rfc() → Target Format
 ```
 

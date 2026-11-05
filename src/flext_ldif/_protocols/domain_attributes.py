@@ -14,8 +14,7 @@ from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 from flext_cli import FlextCliProtocols
 
 if TYPE_CHECKING:
-    from flext_ldif import t
-    from flext_ldif._constants import FlextLdifConstantsBaseParts
+    from flext_ldif import c, t
 
 
 class FlextLdifProtocolsDomainAttributes:
@@ -104,9 +103,7 @@ class FlextLdifProtocolsDomainAttributes:
             ...
 
         @property
-        def transformation_type(
-            self,
-        ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.TransformationType:
+        def transformation_type(self) -> c.Ldif.TransformationType:
             """Type of transformation applied to the attribute."""
             ...
 

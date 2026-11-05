@@ -46,7 +46,7 @@ across multiple LDAP server types (OID, OUD, OpenLDAP, RFC).
 
 ### Test Structure
 
-```
+```text
 tests/integration/
 ├── README.md                                      # This file
 ├── conftest.py                                    # Centralized pytest fixtures

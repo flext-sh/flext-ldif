@@ -14,8 +14,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_cli import FlextCliProtocols
 
 if TYPE_CHECKING:
-    from flext_ldif import t
-    from flext_ldif._constants import FlextLdifConstantsBaseParts
+    from flext_ldif import c, t
     from flext_ldif._protocols import (
         FlextLdifProtocolsAclConvert,
         FlextLdifProtocolsDomainAttributes,
@@ -65,9 +64,7 @@ class FlextLdifProtocolsDomainMetadata:
             ...
 
         @property
-        def validation_server_type(
-            self,
-        ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.ServerTypes | None:
+        def validation_server_type(self) -> c.Ldif.ServerTypes | None:
             """Server type used for validation."""
             ...
 
@@ -120,9 +117,7 @@ class FlextLdifProtocolsDomainMetadata:
             ...
 
         @property
-        def encoding(
-            self,
-        ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.Encoding | None:
+        def encoding(self) -> c.Ldif.Encoding | None:
             """Original encoding (utf-8, etc.)."""
             ...
 
@@ -184,16 +179,7 @@ class FlextLdifProtocolsDomainMetadata:
     class ServerMetadata(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def server_type(
-            self,
-        ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.ServerTypes:
-            """Structural member projected from the owning model.
-
-            Type of server this metadata represents (ServerTypes enum or literal).
-            """
-            ...
-
+        server_type: c.Ldif.ServerTypes
         extensions: t.MutableJsonMapping
         rfc_violations: MutableSequence[str]
         rfc_warnings: MutableSequence[str]
@@ -210,21 +196,8 @@ class FlextLdifProtocolsDomainMetadata:
             ...
 
         server_specific_data: t.MutableJsonMapping
-
-        @property
-        def original_server_type(
-            self,
-        ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.ServerTypes | None:
-            """Source LDAP server type (e.g., 'oid', 'oud', 'ad', 'openldap')."""
-            ...
-
-        @property
-        def target_server_type(
-            self,
-        ) -> FlextLdifConstantsBaseParts.FlextLdifConstantsEnums.ServerTypes | None:
-            """Target LDAP server type (e.g., 'oid', 'oud', 'ad', 'openldap')."""
-            ...
-
+        original_server_type: c.Ldif.ServerTypes | None
+        target_server_type: c.Ldif.ServerTypes | None
         acls: MutableSequence[str]
         objectclasses: MutableSequence[str]
 
