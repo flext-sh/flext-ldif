@@ -153,6 +153,10 @@ class FlextLdifFilters(s[p.Ldif.Response]):
     ) -> p.Ldif.Entry:
         """Strip forbidden attributes and objectClasses from an entry.
 
+        A forbidden attribute names its type (RFC 4512 § 2.5): every
+        description of that type is removed, with or without options, so
+        ``authPassword`` also removes ``authPassword;oid``.
+
         Returns:
             The resulting ``m.Ldif.Entry``.
 
@@ -160,9 +164,14 @@ class FlextLdifFilters(s[p.Ldif.Response]):
         filtered_entry: p.Ldif.Entry = u.Ldif.as_entry(entry)
         if entry.attributes and forbidden_attrs:
             attrs_dict = entry.attributes.attributes
-            forbidden_set = {attr.lower() for attr in forbidden_attrs}
+            separator = c.Ldif.ATTRIBUTE_OPTION_SEPARATOR
+            forbidden_set = {
+                attr.split(separator, 1)[0].lower() for attr in forbidden_attrs
+            }
             attrs_to_remove: Sequence[str] = [
-                k for k in attrs_dict if k.lower() in forbidden_set
+                k
+                for k in attrs_dict
+                if k.split(separator, 1)[0].lower() in forbidden_set
             ]
             if attrs_to_remove:
                 filtered_attrs = {
