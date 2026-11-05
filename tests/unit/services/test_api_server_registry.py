@@ -219,8 +219,8 @@ class TestsFlextLdifApiServerRegistry:
         tm.that(registry.fetch_plugin(c.Ldif.SERVERS, route).unwrap() is payload)
 
     @staticmethod
-    def test_parse_write_roundtrip_keeps_values_verbatim() -> None:
-        """Leading and trailing value spaces survive parse and write (RFC 2849)."""
+    def test_parse_write_roundtrip_keeps_base64_values_verbatim() -> None:
+        """Base64 values keep spaces; plain lines drop trailing ones (RFC 2849)."""
         api = FlextLdif()
         route = c.Ldif.ServerTypes.RFC.value
         source = (
@@ -234,14 +234,14 @@ class TestsFlextLdifApiServerRegistry:
         values = parsed.entries[0].attributes.attributes
         tm.that(values["sn"], eq=[" lead"])
         tm.that(values["displayName"], eq=["trail "])
-        tm.that(values["mail"], eq=["plain@example.com "])
+        tm.that(values["mail"], eq=["plain@example.com"])
         written = api.write_to_string(
             u.Ldif.as_entries(parsed.entries),
             server_type=route,
         ).unwrap()
         reparsed = api.parse_string(written, server_type=route).unwrap()
         tm.that(reparsed.entries[0].attributes.attributes, eq=values)
-        tm.that(written, has="mail:: ")
+        tm.that(written, has="mail: plain@example.com")
 
     @staticmethod
     def test_real_dialect_parse_write_roundtrip_and_removal_failure() -> None:
