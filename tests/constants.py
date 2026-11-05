@@ -100,7 +100,11 @@ class TestsFlextLdifConstants(
 
         BOOLEAN_TRUE: ClassVar[str] = "TRUE"
         BOOLEAN_FALSE: ClassVar[str] = "FALSE"
+        # orclIsVisible is Boolean syntax in the OID schema; orclIsEnabled is
+        # DirectoryString (ENABLED/DISABLED) and must pass through unchanged.
+        ATTR_ORCL_IS_VISIBLE: ClassVar[str] = "orclIsVisible"
         ATTR_ORCL_IS_ENABLED: ClassVar[str] = "orclIsEnabled"
+        ORCL_IS_ENABLED_VALUES: ClassVar[Sequence[str]] = ("ENABLED", "DISABLED")
         ATTR_ORCL_ACCOUNT_LOCKED: ClassVar[str] = "orclAccountLocked"
         ACL_READ_VALUE: ClassVar[str] = "access to entry by * (read)"
 
@@ -198,7 +202,7 @@ class TestsFlextLdifConstants(
             "{objectclass}: {orcluser}\n"
             "{cn}: {cn_value}\n"
             "{sn}: {sn_value}\n"
-            "{attr_enabled}: {val_true}\n"
+            "{attr_flag}: {val_true}\n"
             "{attr_locked}: {val_false}\n"
         )
         MIGRATION_ACL_ENTRY_TEMPLATE: ClassVar[str] = (
@@ -366,6 +370,14 @@ class TestsFlextLdifConstants(
             FILTERS_FORBIDDEN_ATTRS_ORDERED,
         )
         FILTERS_FORBIDDEN_OCS_ORDERED: ClassVar[Sequence[str]] = (NAME_INET_ORG_PERSON,)
+        # RFC 4512 § 2.5 attribute descriptions: one type, two option subtypes.
+        FILTERS_OPTION_TYPE: ClassVar[str] = "authPassword"
+        FILTERS_OPTION_DESCRIPTIONS: ClassVar[Sequence[str]] = (
+            "authPassword;oid",
+            "authPassword;orclcommonpwd",
+        )
+        FILTERS_OPTION_TYPE_PREFIX: ClassVar[str] = "auth"
+        FILTERS_OPTION_VALUE: ClassVar[str] = "{SASL/MD5}synthetic"
         FILTERS_USER_MAIL: ClassVar[str] = "user@example.com"
         FILTERS_USER_DESCRIPTION: ClassVar[str] = "a test user"
         FILTERS_UNWANTED_ATTR_OID: ClassVar[str] = (
