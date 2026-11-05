@@ -121,7 +121,7 @@ if result.is_success:
 ## Example Test Pattern
 
 ```text
-@pytest.mark.parametrize("attr_index", range(10))
+@c.Tests.MARK.parametrize("attr_index", range(10))
 def test_parse_real_attributes(oid_schema_attributes, attr_index):
     """Test parsing multiple real attributes from fixtures."""
     if attr_index >= len(oid_schema_attributes):

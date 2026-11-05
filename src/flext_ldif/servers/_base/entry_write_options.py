@@ -8,7 +8,10 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableSequence
 
-from flext_ldif import c, p, t, u
+from flext_ldif.constants import c
+from flext_ldif.protocols import p
+from flext_ldif.typings import t
+from flext_ldif.utilities import u
 
 
 class FlextLdifServersEntryWriteOptions:

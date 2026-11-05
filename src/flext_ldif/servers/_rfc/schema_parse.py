@@ -10,9 +10,14 @@ from abc import ABC
 from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar
 
-from flext_ldif import c, m, p, r, u
+from flext_cli import r
+
+from flext_ldif.constants import c
+from flext_ldif.models import m
+from flext_ldif.protocols import p
 from flext_ldif.servers._base import FlextLdifServersBaseSchema
 from flext_ldif.servers._rfc import FlextLdifServersRfcSchemaValues
+from flext_ldif.utilities import u
 
 
 class FlextLdifServersRfcSchemaParse(

@@ -136,7 +136,7 @@ class TestsFlextLdifApiServerRegistry:
     @pytest.mark.parametrize("field_name", ["_runtime", "_operation_stats"])
     def test_private_runtime_state_is_not_constructor_input(field_name: str) -> None:
         """The facade preserves the base model's strict private-state ownership."""
-        with pytest.raises(ValueError, match=field_name):
+        with u.Tests.raises(ValueError, match=field_name):
             FlextLdif.model_validate({field_name: None})
 
     @staticmethod
@@ -193,16 +193,16 @@ class TestsFlextLdifApiServerRegistry:
         field_name: str,
     ) -> None:
         """Services cannot construct infrastructure or accept a loose payload."""
-        with pytest.raises(ValueError, match="registry"):
+        with u.Tests.raises(ValueError, match="registry"):
             services.FlextLdifServer.model_validate({})
-        with pytest.raises(ValueError, match="registry"):
+        with u.Tests.raises(ValueError, match="registry"):
             m.Ldif.RegistryPortOptions.model_validate({field_name: m.Ldif.Statistics()})
         registry = FlextRegistry.create()
         ports = m.Ldif.RegistryPortOptions(registry=registry)
         tm.that(ports.registry is registry)
         tm.that(field_name not in ports.model_dump())
         tm.that(field_name not in ports.model_json_schema().get("properties", {}))
-        with pytest.raises(ValueError, match="registry"):
+        with u.Tests.raises(ValueError, match="registry"):
             setattr(ports, field_name, m.Ldif.Statistics())
         tm.that(ports.registry is registry)
 

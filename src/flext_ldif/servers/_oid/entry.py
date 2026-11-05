@@ -9,13 +9,15 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import ClassVar, override
 
-from flext_ldif import m, p, u
+from flext_ldif.models import m
+from flext_ldif.protocols import p
 from flext_ldif.servers._oid import (
     FlextLdifServersOidEntryNormalize,
     FlextLdifServersOidEntryParse,
     FlextLdifServersOidEntryRestore,
 )
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
+from flext_ldif.utilities import u
 
 
 class FlextLdifServersOidEntry(

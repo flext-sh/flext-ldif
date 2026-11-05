@@ -6,7 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, p, r, t
+from flext_cli import r
+
+from flext_ldif.constants import c
+from flext_ldif.protocols import p
+from flext_ldif.typings import t
 
 
 class FlextLdifUtilitiesParserSchemaFields:

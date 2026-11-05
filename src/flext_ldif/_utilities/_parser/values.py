@@ -8,8 +8,11 @@ from __future__ import annotations
 
 import base64
 
-from flext_ldif import c, p, r
+from flext_cli import r
+
 from flext_ldif._models import FlextLdifModelsDomainEntryControl
+from flext_ldif.constants import c
+from flext_ldif.protocols import p
 
 
 class FlextLdifUtilitiesParserValues:

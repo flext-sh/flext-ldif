@@ -8,9 +8,10 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from flext_ldif import c, t
+from flext_ldif.constants import c
 from flext_ldif.servers._oid import FlextLdifConstantsServersOid
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
+from flext_ldif.typings import t
 
 
 class FlextLdifServersOidEntryNormalize(FlextLdifServersRfcEntry):

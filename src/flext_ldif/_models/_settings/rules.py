@@ -13,9 +13,9 @@ from typing import Annotated, Self
 
 from flext_core import m
 
-from flext_ldif import t
 from flext_ldif._constants import FlextLdifConstantsBase
 from flext_ldif._typings import FlextLdifTypesBase
+from flext_ldif.typings import t
 
 
 class FlextLdifModelsSettingsRules:

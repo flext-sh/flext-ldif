@@ -9,12 +9,17 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import ClassVar, override
 
-from flext_ldif import c, p, r, t, u
+from flext_cli import r
+
+from flext_ldif.constants import c
+from flext_ldif.protocols import p
 from flext_ldif.servers._oid import (
     FlextLdifConstantsServersOid,
     FlextLdifServersOidSchemaNormalize,
 )
 from flext_ldif.servers._rfc import FlextLdifServersRfcSchema
+from flext_ldif.typings import t
+from flext_ldif.utilities import u
 
 
 class FlextLdifServersOidSchema(

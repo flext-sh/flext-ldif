@@ -17,7 +17,7 @@ import inspect
 import pytest
 
 import flext_ldif
-from tests import tm
+from tests import tm, u
 from tests.unit import TestsFlextLdifTypingsUnit
 
 REQUIRED_PUBLIC_API: tuple[TestsFlextLdifTypingsUnit.PublicSymbol, ...] = (
@@ -201,12 +201,12 @@ class TestsFlextLdifApiFreeze:
         symbol: TestsFlextLdifTypingsUnit.PublicSymbol,
     ) -> None:
         """Accessing a private implementation class raises ``AttributeError``."""
-        with pytest.raises(AttributeError):
+        with u.Tests.raises(AttributeError):
             getattr(flext_ldif, symbol)
 
     @staticmethod
     def test_unknown_attribute_raises_attribute_error() -> None:
         """The lazy ``__getattr__`` rejects names outside the public surface."""
         missing_name = "FlextLdifDoesNotExist"
-        with pytest.raises(AttributeError):
+        with u.Tests.raises(AttributeError):
             getattr(flext_ldif, missing_name)

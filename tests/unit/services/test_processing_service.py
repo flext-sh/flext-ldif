@@ -108,7 +108,7 @@ class TestsFlextLdifProcessingService:
             attributes=m.Ldif.Attributes(attributes={"cn": ["x"]}),
         )
 
-        with pytest.raises(ValueError, match="Entry DN cannot be None"):
+        with u.Tests.raises(ValueError, match="Entry DN cannot be None"):
             _ = api.process_entries(
                 [invalid_entry],
                 processor_name="validate",

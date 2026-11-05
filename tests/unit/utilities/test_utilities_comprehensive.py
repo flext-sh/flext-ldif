@@ -45,7 +45,7 @@ class TestsFlextLdifUtilitiesComprehensive:
     @staticmethod
     def test_normalize_server_type_rejects_unknown_type() -> None:
         """An unknown server type raises ValueError naming the invalid input."""
-        with pytest.raises(ValueError, match="bogus"):
+        with u.Tests.raises(ValueError, match="bogus"):
             u.Ldif.normalize_server_type("bogus")
 
     @staticmethod

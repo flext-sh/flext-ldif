@@ -2,7 +2,6 @@
 
 OID/RFC subject mapping helpers.
 
-
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -12,9 +11,14 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import ClassVar
 
-from flext_ldif import c, p, r, t, u
+from flext_cli import r
+
+from flext_ldif.constants import c
+from flext_ldif.protocols import p
 from flext_ldif.servers._oid import FlextLdifConstantsServersOid
 from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
+from flext_ldif.typings import t
+from flext_ldif.utilities import u
 
 
 class FlextLdifServersOidAclSubject(FlextLdifServersRfcAcl):

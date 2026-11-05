@@ -8,7 +8,11 @@ from __future__ import annotations
 
 from collections.abc import MutableMapping
 
-from flext_ldif import m, p, r, t
+from flext_cli import r
+
+from flext_ldif.models import m
+from flext_ldif.protocols import p
+from flext_ldif.typings import t
 
 
 class FlextLdifUtilitiesTransformersAttrs:

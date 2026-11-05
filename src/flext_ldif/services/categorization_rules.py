@@ -14,8 +14,14 @@ import struct
 from collections.abc import MutableMapping, MutableSequence
 from typing import Annotated
 
-from flext_ldif import c, m, p, r, t, u
+from flext_cli import r
+
+from flext_ldif.constants import c
+from flext_ldif.models import m
+from flext_ldif.protocols import p
 from flext_ldif.services import FlextLdifServer
+from flext_ldif.typings import t
+from flext_ldif.utilities import u
 
 
 class FlextLdifCategorizationRules(FlextLdifServer):

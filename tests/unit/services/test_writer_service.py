@@ -256,7 +256,7 @@ class TestsFlextLdifWriterService:
         )
 
         tm.fail(result, has=str(blocking_file))
-        with pytest.raises(FileExistsError):
+        with u.Tests.raises(FileExistsError):
             result.unwrap()
         tm.that(blocking_file.read_text(encoding="utf-8"), eq="x")
 
@@ -276,7 +276,7 @@ class TestsFlextLdifWriterService:
         )
 
         tm.fail(result, has=str(directory_target))
-        with pytest.raises(
+        with u.Tests.raises(
             OSError, match="atomic destination is not a regular file"
         ) as failure:
             result.unwrap()

@@ -112,7 +112,7 @@ class TestsFlextLdifUtilitiesOid:
         definition: str,
     ) -> None:
         """Malformed definitions propagate extraction failure instead of no-match."""
-        with pytest.raises(ValueError, match="missing an OID"):
+        with u.Tests.raises(ValueError, match="missing an OID"):
             u.Ldif.matches_pattern(definition, c.Tests.EXACT_OID_1_2_3_RE)
 
     @staticmethod

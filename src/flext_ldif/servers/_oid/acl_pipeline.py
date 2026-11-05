@@ -14,7 +14,11 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from flext_ldif import c, m, p, r
+from flext_cli import r
+
+from flext_ldif.constants import c
+from flext_ldif.models import m
+from flext_ldif.protocols import p
 from flext_ldif.servers._oid import (
     FlextLdifServersOidAclAssemble,
     FlextLdifServersOidAclConvert,

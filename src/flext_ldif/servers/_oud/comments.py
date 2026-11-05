@@ -11,11 +11,14 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from flext_ldif import c, p, t, u
+from flext_ldif.constants import c
+from flext_ldif.protocols import p
 from flext_ldif.servers._oud import (
     FlextLdifServersOudCommentsAcl,
     FlextLdifServersOudTransform,
 )
+from flext_ldif.typings import t
+from flext_ldif.utilities import u
 
 
 class FlextLdifServersOudComments(FlextLdifServersOudCommentsAcl):
@@ -147,7 +150,6 @@ class FlextLdifServersOudComments(FlextLdifServersOudCommentsAcl):
         """Add transformation comments for attribute changes.
 
         Includes OUD-specific ACL handling.
-
 
         handling.
         """

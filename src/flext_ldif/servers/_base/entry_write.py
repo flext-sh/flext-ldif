@@ -8,13 +8,17 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from flext_ldif import c, p, r, u
+from flext_cli import r
+
 from flext_ldif._models import FlextLdifModelsDomainEntryStatistics
+from flext_ldif.constants import c
+from flext_ldif.protocols import p
 from flext_ldif.servers._base import (
     FlextLdifServersEntryLineEmitter,
     FlextLdifServersEntryWriteBodyEmitter,
     FlextLdifServersEntryWriteOptions,
 )
+from flext_ldif.utilities import u
 
 
 class FlextLdifServersEntryWriteContext(FlextLdifServersEntryWriteBodyEmitter):

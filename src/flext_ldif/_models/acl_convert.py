@@ -15,7 +15,9 @@ from typing import Annotated
 
 from flext_core import m
 
-from flext_ldif import c, p, t
+from flext_ldif.constants import c
+from flext_ldif.protocols import p
+from flext_ldif.typings import t
 
 
 class FlextLdifModelsAclConvert:

@@ -12,9 +12,13 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import override
 
-from flext_ldif import p, r, t, u
+from flext_cli import r
+
+from flext_ldif.protocols import p
 from flext_ldif.servers._oud import FlextLdifServersOudHelpers
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
+from flext_ldif.typings import t
+from flext_ldif.utilities import u
 
 
 class FlextLdifServersOudEntryParse(FlextLdifServersRfcEntry):

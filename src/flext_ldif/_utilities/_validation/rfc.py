@@ -10,7 +10,7 @@ from typing import cast
 
 from flext_core import u
 
-from flext_ldif import t
+from flext_ldif.typings import t
 
 
 class FlextLdifUtilitiesValidationRfc:

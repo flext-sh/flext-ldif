@@ -11,8 +11,9 @@ from typing import Annotated, Self
 
 from flext_core import m
 
-from flext_ldif import c, t
 from flext_ldif._models import FlextLdifModelsCollections, FlextLdifModelsEvents
+from flext_ldif.constants import c
+from flext_ldif.typings import t
 
 
 class FlextLdifModelsResultsStatistics:

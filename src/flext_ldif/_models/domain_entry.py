@@ -10,9 +10,8 @@ from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
 from typing import Annotated, ClassVar, Self, override
 
-from flext_cli import m
+from flext_cli import e, m, r
 
-from flext_ldif import c, e, p, r, t
 from flext_ldif._models import (
     FlextLdifModelsDomainAttributes,
     FlextLdifModelsDomainDN,
@@ -20,6 +19,9 @@ from flext_ldif._models import (
     FlextLdifModelsDomainEntryControl,
     FlextLdifModelsDomainMetadata,
 )
+from flext_ldif.constants import c
+from flext_ldif.protocols import p
+from flext_ldif.typings import t
 
 
 class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):

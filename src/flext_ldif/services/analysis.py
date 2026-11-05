@@ -8,8 +8,13 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence, Sequence
 
-from flext_ldif import m, p, r, s, u
+from flext_cli import r
+
+from flext_ldif.base import s
+from flext_ldif.models import m
+from flext_ldif.protocols import p
 from flext_ldif.services import FlextLdifValidation
+from flext_ldif.utilities import u
 
 
 class FlextLdifAnalysis(s[p.Ldif.Response]):

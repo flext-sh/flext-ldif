@@ -10,7 +10,8 @@ from typing import Annotated, ClassVar
 
 from flext_cli import m
 
-from flext_ldif import c, t
+from flext_ldif.constants import c
+from flext_ldif.typings import t
 
 
 class FlextLdifModelsDomainEntryControl:

@@ -90,6 +90,7 @@ class TestsFlextLdifLdifFixturesIntegration:
         result = ldif_client.parse_ldif(self._fixture_path(subdir, filename))
 
         tm.ok(result)
+        tm.that(len(result.value.entries) >= _min_entries, truth=True)
         for entry in result.value.entries:
             dn = tm.not_none(entry.dn)
             dn_value = dn.value
@@ -111,6 +112,7 @@ class TestsFlextLdifLdifFixturesIntegration:
         response = ldif_client.parse_ldif(self._fixture_path(subdir, filename)).value
 
         tm.that(response.statistics.total_entries, eq=len(response.entries))
+        tm.that(len(response.entries) >= _min_entries, truth=True)
         tm.that(response.detected_server_type, truth=True)
 
     @pytest.mark.parametrize(("subdir", "filename", "_min_entries"), _FIXTURE_CASES)
@@ -125,6 +127,7 @@ class TestsFlextLdifLdifFixturesIntegration:
         parsed = ldif_client.parse_ldif(self._fixture_path(subdir, filename))
         tm.ok(parsed)
         original = parsed.value.entries
+        tm.that(len(original) >= _min_entries, truth=True)
 
         written = ldif_client.write(original)
         tm.ok(written)
@@ -150,6 +153,7 @@ class TestsFlextLdifLdifFixturesIntegration:
             self._fixture_path(subdir, filename),
         ).value.entries
 
+        tm.that(len(entries) >= _min_entries, truth=True)
         validation = ldif_client.validate_entries(entries)
 
         tm.ok(validation)

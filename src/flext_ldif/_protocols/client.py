@@ -11,12 +11,12 @@ from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 from flext_cli import p, t
 
-from flext_ldif import c
 from flext_ldif._protocols import (
     FlextLdifProtocolsBase,
     FlextLdifProtocolsDomainEntry,
     FlextLdifProtocolsResults,
 )
+from flext_ldif.constants import c
 
 if TYPE_CHECKING:
     from os import PathLike

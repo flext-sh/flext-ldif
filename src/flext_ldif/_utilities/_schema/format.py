@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 from flext_cli import u
 
-from flext_ldif import c
+from flext_ldif.constants import c
 
 if TYPE_CHECKING:
     from flext_ldif import FlextLdifModels

@@ -18,7 +18,7 @@ import pytest
 
 from flext_ldif import FlextLdif
 from flext_ldif.services import FlextLdifParser, FlextLdifServer, FlextLdifWriter
-from tests import c, m, tm
+from tests import c, m, tm, u
 
 
 class TestsFlextLdifRfcDockerRealIntegration:
@@ -201,7 +201,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
 
         tm.fail(result)
         tm.not_none(result.error)
-        with pytest.raises(RuntimeError):
+        with u.Tests.raises(RuntimeError):
             result.unwrap()
 
     @staticmethod

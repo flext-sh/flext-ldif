@@ -11,7 +11,7 @@ from typing import Annotated
 
 from flext_core import m
 
-from flext_ldif import t
+from flext_ldif.typings import t
 
 
 class FlextLdifModelsSettingsMisc:

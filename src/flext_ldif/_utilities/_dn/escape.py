@@ -11,7 +11,7 @@ from collections.abc import MutableSequence
 
 from flext_cli import u
 
-from flext_ldif import c
+from flext_ldif.constants import c
 
 
 class FlextLdifUtilitiesDNEscape:

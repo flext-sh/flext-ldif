@@ -10,7 +10,13 @@ from collections.abc import MutableSequence, Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextvars import copy_context
 
-from flext_ldif import m, p, r, s, t, u
+from flext_cli import r
+
+from flext_ldif.base import s
+from flext_ldif.models import m
+from flext_ldif.protocols import p
+from flext_ldif.typings import t
+from flext_ldif.utilities import u
 
 
 class FlextLdifProcessing(s[p.Ldif.Response]):

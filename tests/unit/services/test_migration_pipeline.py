@@ -161,7 +161,7 @@ class TestsFlextLdifMigrationPipeline:
     @staticmethod
     def test_unknown_server_type_input_is_rejected_at_configuration() -> None:
         """Invalid external selectors fail before the service is constructed."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             m.Ldif.ProcessConfig.model_validate({
                 "source_server": c.Tests.MIGRATION_UNKNOWN_SERVER,
                 "target_server": c.Tests.MIGRATION_UNKNOWN_SERVER,
@@ -171,7 +171,7 @@ class TestsFlextLdifMigrationPipeline:
     @pytest.mark.parametrize("value", [True, 1, [], {}])
     def test_configuration_rejects_non_string_server_inputs(value: t.JsonValue) -> None:
         """The input boundary rejects values outside the server selector contract."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             m.Ldif.ProcessConfig.model_validate({"source_server": value})
 
     @staticmethod
@@ -180,7 +180,7 @@ class TestsFlextLdifMigrationPipeline:
         field: str, server: p.Ldif.ServerRegistry
     ) -> None:
         """Omission uses a model default, while an explicit null is invalid."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             services.FlextLdifMigrationPipeline.model_validate({
                 "registry": server.registry,
                 field: None,

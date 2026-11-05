@@ -11,13 +11,16 @@ from typing import ClassVar
 
 from flext_cli import u
 
-from flext_ldif import c, m, p, t
 from flext_ldif._utilities._metadata import (
     FlextLdifUtilitiesMetadataMatch,
     FlextLdifUtilitiesMetadataNameDesc,
     FlextLdifUtilitiesMetadataPrefix,
     FlextLdifUtilitiesMetadataSyntaxOrigin,
 )
+from flext_ldif.constants import c
+from flext_ldif.models import m
+from flext_ldif.protocols import p
+from flext_ldif.typings import t
 
 
 class FlextLdifUtilitiesMetadataSchemaAnalysis:

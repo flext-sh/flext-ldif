@@ -50,7 +50,7 @@ class TestsFlextLdifModelsCollections:
     @pytest.mark.parametrize("value", [True, "2", 2.5, None])
     def test_dynamic_counts_rejects_non_integer_values(value: t.JsonValue) -> None:
         """Invalid counts fail at admission rather than becoming zero on reads."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             m.Ldif.DynamicCounts.model_validate({c.Ldif.Category.USERS.value: value})
 
     @staticmethod
@@ -58,7 +58,7 @@ class TestsFlextLdifModelsCollections:
         """Test dynamic counts missing key raises key error."""
         counts = m.Ldif.DynamicCounts()
 
-        with pytest.raises(KeyError, match="missing"):
+        with u.Tests.raises(KeyError, match="missing"):
             _ = counts["missing"]
 
     @staticmethod
@@ -139,7 +139,7 @@ class TestsFlextLdifModelsCollections:
         tm.that(len(list(categories.values())), eq=1)
         tm.that(len(list(categories.items())), eq=1)
 
-        with pytest.raises(TypeError, match="unhashable"):
+        with u.Tests.raises(TypeError, match="unhashable"):
             _ = hash(categories)
 
     @staticmethod

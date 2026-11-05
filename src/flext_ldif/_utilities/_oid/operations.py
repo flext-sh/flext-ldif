@@ -9,7 +9,10 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from flext_ldif import c, p, r
+from flext_cli import r
+
+from flext_ldif.constants import c
+from flext_ldif.protocols import p
 
 if TYPE_CHECKING:
     from flext_ldif import t

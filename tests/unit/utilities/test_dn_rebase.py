@@ -147,7 +147,7 @@ class TestsFlextLdifDnRebase:
     def test_unparseable_new_rdn_fails_loud() -> None:
         """A broken new root DN fails loud (RFC 4514) without corrupting."""
         entry = _entry(SOURCE, {"dc": ["example"]})
-        with pytest.raises(ValueError, match="DN"):
+        with u.Tests.raises(ValueError, match="DN"):
             u.Ldif.transform_entry_base_dn(
                 entry,
                 SOURCE,

@@ -120,7 +120,7 @@ def test_flext_ldif_entry_validation(sample_entry):
 
     # Test business rule violations
     invalid_entry = FlextLdifModels.Entry(dn="", attributes={})
-    with pytest.raises(FlextLdifValidationError):
+    with u.Tests.raises(FlextLdifValidationError):
         result = invalid_entry.validate_business_rules()
         assert not result.is_success
 ```

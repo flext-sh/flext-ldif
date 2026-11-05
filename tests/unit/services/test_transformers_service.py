@@ -160,5 +160,5 @@ class TestsFlextLdifTransformersService:
             target_server=c.Ldif.ServerTypes.RFC,
         )
 
-        with pytest.raises(ValueError, match="not-a-server"):
+        with u.Tests.raises(ValueError, match="not-a-server"):
             transformer.apply(entry)

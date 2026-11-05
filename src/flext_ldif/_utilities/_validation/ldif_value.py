@@ -8,7 +8,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_ldif import r, t
+from flext_cli import r
+
+from flext_ldif.typings import t
 
 if TYPE_CHECKING:
     from flext_ldif import p
