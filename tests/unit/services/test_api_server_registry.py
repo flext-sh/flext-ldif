@@ -219,6 +219,31 @@ class TestsFlextLdifApiServerRegistry:
         tm.that(registry.fetch_plugin(c.Ldif.SERVERS, route).unwrap() is payload)
 
     @staticmethod
+    def test_parse_write_roundtrip_keeps_values_verbatim() -> None:
+        """Leading and trailing value spaces survive parse and write (RFC 2849)."""
+        api = FlextLdif()
+        route = c.Ldif.ServerTypes.RFC.value
+        source = (
+            "dn: cn=person,dc=example,dc=com\n"
+            "objectClass: person\ncn: person\n"
+            "sn:: IGxlYWQ=\n"
+            "displayName:: dHJhaWwg\n"
+            "mail: plain@example.com \n"
+        )
+        parsed = api.parse_string(source, server_type=route).unwrap()
+        values = parsed.entries[0].attributes.attributes
+        tm.that(values["sn"], eq=[" lead"])
+        tm.that(values["displayName"], eq=["trail "])
+        tm.that(values["mail"], eq=["plain@example.com "])
+        written = api.write_to_string(
+            u.Ldif.as_entries(parsed.entries),
+            server_type=route,
+        ).unwrap()
+        reparsed = api.parse_string(written, server_type=route).unwrap()
+        tm.that(reparsed.entries[0].attributes.attributes, eq=values)
+        tm.that(written, has="mail:: ")
+
+    @staticmethod
     def test_real_dialect_parse_write_roundtrip_and_removal_failure() -> None:
         """Registry composition retains the real RFC parse/write implementation."""
         api = FlextLdif()
