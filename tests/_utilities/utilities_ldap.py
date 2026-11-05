@@ -14,9 +14,9 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Final
 
-import pytest
 from flext_tests.docker import FlextTestsDocker
 
+from flext_ldif import u
 from tests import c, p, tk
 
 if TYPE_CHECKING:
@@ -60,7 +60,7 @@ class TestsFlextLdifLdapClient:
     @classmethod
     def require_ldap_client(cls) -> ModuleType:
         """Return the LDAP client module, skipping when it is unavailable."""
-        module: ModuleType = pytest.importorskip(
+        module: ModuleType = u.Tests.importorskip(
             cls._LDAP_CLIENT_MODULE,
             reason=cls._LDAP_CLIENT_MISSING_REASON,
         )
@@ -69,7 +69,7 @@ class TestsFlextLdifLdapClient:
     @classmethod
     def create_ldap_entry_adapter(cls) -> p.Ldap3EntryAdapter:
         """Return an ldap3-to-LDIF entry adapter, skipping when unavailable."""
-        module: ModuleType = pytest.importorskip(
+        module: ModuleType = u.Tests.importorskip(
             cls._LDAP_ENTRY_ADAPTER_MODULE,
             reason=cls._LDAP_CLIENT_MISSING_REASON,
         )
@@ -91,7 +91,7 @@ class TestsFlextLdifLdapClient:
         )
         if find_spec(cls._LDAP_CLIENT_MODULE) is None:
             return transport
-        client: ModuleType = pytest.importorskip(
+        client: ModuleType = u.Tests.importorskip(
             cls._LDAP_CLIENT_MODULE,
             reason=cls._LDAP_CLIENT_MISSING_REASON,
         )

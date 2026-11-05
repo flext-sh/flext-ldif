@@ -14,8 +14,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_ldif import services
 from tests import c, m, p, tm, u
 
@@ -81,7 +79,7 @@ class TestsFlextLdifTransformersService:
         tm.that(tm.not_none(converted.dn).value, eq="cn=default,dc=example,dc=com")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("source_server", "target_server"),
         [(c.Ldif.ServerTypes.OID, c.Ldif.ServerTypes.OUD), ("oid", "oud")],
     )

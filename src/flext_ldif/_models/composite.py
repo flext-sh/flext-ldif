@@ -11,7 +11,7 @@ from typing import Annotated, ClassVar
 
 from flext_cli import m
 
-from flext_ldif.typings import t
+from flext_ldif import t
 
 
 class FlextLdifModelsComposite:

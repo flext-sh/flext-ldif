@@ -10,13 +10,7 @@ import struct
 from collections.abc import MutableSequence
 from typing import Annotated
 
-from flext_cli import r
-
-from flext_ldif.base import s
-from flext_ldif.constants import c
-from flext_ldif.models import m
-from flext_ldif.protocols import p
-from flext_ldif.utilities import u
+from flext_ldif import c, m, p, r, s, u
 
 
 class FlextLdifValidation(s[p.Ldif.Response]):

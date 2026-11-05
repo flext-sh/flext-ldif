@@ -6,8 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from tests import c, ldif, m, p, tm
 
 
@@ -15,7 +13,7 @@ class TestsFlextLdifProtocolsSchema:
     """Exercise schema payloads through the public facade and protocol types."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "server_type",
         [c.Ldif.ServerTypes.RFC, c.Ldif.ServerTypes.OID, c.Ldif.ServerTypes.OUD],
     )
@@ -51,7 +49,7 @@ class TestsFlextLdifProtocolsSchema:
         tm.that(routed.name, eq=parsed.name)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "superiors",
         [None, "top", ["top", "person"]],
     )
@@ -72,7 +70,7 @@ class TestsFlextLdifProtocolsSchema:
         tm.that(payload.may, none=True)
 
     @staticmethod
-    @pytest.mark.parametrize("definition", ["", "NAME 'missingOid'"])
+    @c.Tests.MARK.parametrize("definition", ["", "NAME 'missingOid'"])
     def test_parse_routes_preserve_failure_details(definition: str) -> None:
         """Routing to a union result preserves the parser's error metadata."""
         server: p.Ldif.SchemaServer = ldif.schema_server(

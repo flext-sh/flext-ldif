@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-import pytest
-
 from tests import c, t, tm, u
 
 
@@ -17,10 +15,10 @@ class TestsFlextLdifUtilitiesOid:
     """Behavioral contract for the OID schema-definition utilities."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "patterns", [(c.Ldif.SCHEMA_OID_CAPTURE_RE,), c.Ldif.OID_EXTRACTION_PATTERNS]
     )
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("definition", "expected_oid"),
         [
             ("( 1.2.840.113556.1.4.221 NAME 'x' )", "1.2.840.113556.1.4.221"),
@@ -43,7 +41,7 @@ class TestsFlextLdifUtilitiesOid:
         tm.that(value, eq=expected_oid)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "definition",
         [
             "( NAME 'cn' DESC 'no oid' )",
@@ -81,7 +79,7 @@ class TestsFlextLdifUtilitiesOid:
         tm.that(tm.ok(first), eq=tm.ok(second))
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("definition", "pattern", "expected"),
         [
             ("( 1.2.3 NAME 'x' )", "^1\\.2\\.3$", True),
@@ -104,7 +102,7 @@ class TestsFlextLdifUtilitiesOid:
         tm.that(result, eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "definition",
         ["( NAME 'cn' DESC 'no oid' )", "( NAME 'no oid' )"],
     )

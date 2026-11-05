@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from flext_ldif.constants import c
+from flext_ldif import c
 
 
 class FlextLdifUtilitiesParserRecords:

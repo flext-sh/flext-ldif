@@ -11,8 +11,6 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-import pytest
-
 from flext_ldif import FlextLdif
 from flext_ldif.services import FlextLdifConversion
 from tests import c, m, p, t, tm, u
@@ -39,10 +37,10 @@ class TestsFlextLdifOidAclEndToEnd:
             tm.reject(msg)
         return converted.attributes.attributes
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("source_attr", "source_value", "expected_aci"),
         [
-            pytest.param(
+            u.Tests.param(
                 "orclaci",
                 (
                     'access to entry by group="cn=admins,dc=ctbc" '
@@ -53,7 +51,7 @@ class TestsFlextLdifOidAclEndToEnd:
                 'groupdn="ldap:///cn=admins,dc=ctbc";)',
                 id="group-with-deny-fallback",
             ),
-            pytest.param(
+            u.Tests.param(
                 "orclaci",
                 "access to attr=(cn,sn,mail) by * (read,search)",
                 '(targetattr="cn||sn||mail")    (targetscope="base")'
@@ -61,14 +59,14 @@ class TestsFlextLdifOidAclEndToEnd:
                 '     allow (read, search)    userdn="ldap:///anyone";)',
                 id="attr-list-anyone-pins-targetscope-base",
             ),
-            pytest.param(
+            u.Tests.param(
                 "orclaci",
                 "access to entry by dnattr=(manager) (browse)",
                 '(targetattr="*")    (version 3.0; acl "users Entry by manager";'
                 '     allow (read, search)    userattr="manager#USERDN";)',
                 id="dnattr-becomes-userattr",
             ),
-            pytest.param(
+            u.Tests.param(
                 "orclentrylevelaci",
                 'access to entry by group="cn=g,dc=ctbc" (browse)',
                 '(targetattr="*")    (targetscope="base")'

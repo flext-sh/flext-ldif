@@ -8,13 +8,12 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable, MutableSequence, Sequence
 
+from flext_ldif import c, p
 from flext_ldif._models import FlextLdifModelsSettings
 from flext_ldif._utilities._entry import (
     FlextLdifUtilitiesEntryAccess,
     FlextLdifUtilitiesEntryMatching,
 )
-from flext_ldif.constants import c
-from flext_ldif.protocols import p
 
 
 class FlextLdifUtilitiesEntryCriteria:

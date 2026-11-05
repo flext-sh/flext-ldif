@@ -9,12 +9,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import Self
 
-from flext_cli import r
-
-from flext_ldif.constants import c
-from flext_ldif.models import m
-from flext_ldif.protocols import p
-from flext_ldif.utilities import u
+from flext_ldif import c, m, p, r, u
 
 
 class FlextLdifServersBaseIo:

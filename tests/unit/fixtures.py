@@ -9,8 +9,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from pathlib import Path
 
-import pytest
-
 from flext_ldif import FlextLdif, services
 from tests import c, ldif, p, u
 
@@ -39,7 +37,7 @@ def _parse_fixture_entries(
     return entries
 
 
-@pytest.fixture
+@u.Tests.fixture
 def api() -> p.Ldif.LdifClient:
     """Provide the unified ``ldif()`` client entry point.
 
@@ -50,7 +48,7 @@ def api() -> p.Ldif.LdifClient:
     return ldif()
 
 
-@pytest.fixture
+@u.Tests.fixture
 def parser(server: p.Ldif.ServerRegistry) -> services.FlextLdifParser:
     """Provide a parser service instance.
 
@@ -61,7 +59,7 @@ def parser(server: p.Ldif.ServerRegistry) -> services.FlextLdifParser:
     return services.FlextLdifParser(registry=server.registry)
 
 
-@pytest.fixture
+@u.Tests.fixture
 def writer(api: p.Ldif.LdifClient) -> p.Ldif.LdifClient:
     """Provide writing operations from the public, registry-bound facade.
 
@@ -72,7 +70,7 @@ def writer(api: p.Ldif.LdifClient) -> p.Ldif.LdifClient:
     return api
 
 
-@pytest.fixture
+@u.Tests.fixture
 def oid_schema_fixture() -> str:
     """Load the OID schema fixture file.
 
@@ -84,7 +82,7 @@ def oid_schema_fixture() -> str:
     return fixture_content
 
 
-@pytest.fixture
+@u.Tests.fixture
 def oid_acl_fixture() -> str:
     """Load the OID ACL fixture file.
 
@@ -96,7 +94,7 @@ def oid_acl_fixture() -> str:
     return fixture_content
 
 
-@pytest.fixture
+@u.Tests.fixture
 def oid_entries_fixture() -> str:
     """Load the OID entries fixture file.
 
@@ -108,7 +106,7 @@ def oid_entries_fixture() -> str:
     return fixture_content
 
 
-@pytest.fixture
+@u.Tests.fixture
 def oid_integration_fixture() -> str:
     """Load the OID integration fixture file.
 
@@ -120,7 +118,7 @@ def oid_integration_fixture() -> str:
     return fixture_content
 
 
-@pytest.fixture
+@u.Tests.fixture
 def oid_entries(
     api: p.Ldif.LdifClient,
     oid_entries_fixture: str,
@@ -142,7 +140,7 @@ def oid_entries(
     )
 
 
-@pytest.fixture
+@u.Tests.fixture
 def oud_schema_fixture() -> str:
     """Load the OUD schema fixture file.
 
@@ -154,7 +152,7 @@ def oud_schema_fixture() -> str:
     return fixture_content
 
 
-@pytest.fixture
+@u.Tests.fixture
 def oud_acl_fixture() -> str:
     """Load the OUD ACL fixture file.
 
@@ -166,7 +164,7 @@ def oud_acl_fixture() -> str:
     return fixture_content
 
 
-@pytest.fixture
+@u.Tests.fixture
 def oud_entries_fixture() -> str:
     """Load the OUD entries fixture file.
 
@@ -178,7 +176,7 @@ def oud_entries_fixture() -> str:
     return fixture_content
 
 
-@pytest.fixture
+@u.Tests.fixture
 def oud_integration_fixture() -> str:
     """Load the OUD integration fixture file.
 
@@ -190,7 +188,7 @@ def oud_integration_fixture() -> str:
     return fixture_content
 
 
-@pytest.fixture
+@u.Tests.fixture
 def oud_entries(
     api: p.Ldif.LdifClient,
     oud_entries_fixture: str,
@@ -212,7 +210,7 @@ def oud_entries(
     )
 
 
-@pytest.fixture
+@u.Tests.fixture
 def fixtures_dir() -> Path:
     """Provide the canonical test fixtures directory.
 
@@ -224,7 +222,7 @@ def fixtures_dir() -> Path:
     return fixtures_root
 
 
-@pytest.fixture
+@u.Tests.fixture
 def conversion_matrix(server: p.Ldif.ServerRegistry) -> services.FlextLdifConversion:
     """Provide a conversion service for schema conversion tests.
 
@@ -235,7 +233,7 @@ def conversion_matrix(server: p.Ldif.ServerRegistry) -> services.FlextLdifConver
     return services.FlextLdifConversion(registry=server.registry)
 
 
-@pytest.fixture
+@u.Tests.fixture
 def server() -> p.Ldif.ServerRegistry:
     """Provide the global server registry.
 
@@ -249,7 +247,7 @@ def server() -> p.Ldif.ServerRegistry:
     return server_registry
 
 
-@pytest.fixture
+@u.Tests.fixture
 def oid_server(server: p.Ldif.ServerRegistry) -> p.Ldif.ServerServer:
     """Resolve the registered OID server.
 
@@ -267,7 +265,7 @@ def oid_server(server: p.Ldif.ServerRegistry) -> p.Ldif.ServerServer:
     return server_instance
 
 
-@pytest.fixture
+@u.Tests.fixture
 def oud_server(server: p.Ldif.ServerRegistry) -> p.Ldif.ServerServer:
     """Resolve the registered OUD server.
 
@@ -285,7 +283,7 @@ def oud_server(server: p.Ldif.ServerRegistry) -> p.Ldif.ServerServer:
     return server_instance
 
 
-@pytest.fixture
+@u.Tests.fixture
 def oid_schema_server(oid_server: p.Ldif.ServerServer) -> p.Ldif.SchemaServer:
     """Provide the OID server's schema facade.
 
@@ -299,7 +297,7 @@ def oid_schema_server(oid_server: p.Ldif.ServerServer) -> p.Ldif.SchemaServer:
     return oid_server.schema_server
 
 
-@pytest.fixture
+@u.Tests.fixture
 def oud_schema_server(oud_server: p.Ldif.ServerServer) -> p.Ldif.SchemaServer:
     """Provide the OUD server's schema facade.
 
@@ -313,7 +311,7 @@ def oud_schema_server(oud_server: p.Ldif.ServerServer) -> p.Ldif.SchemaServer:
     return oud_server.schema_server
 
 
-@pytest.fixture
+@u.Tests.fixture
 def oid_acl_server(oid_server: p.Ldif.ServerServer) -> p.Ldif.AclServer:
     """Provide the OID server's ACL facade.
 
@@ -327,7 +325,7 @@ def oid_acl_server(oid_server: p.Ldif.ServerServer) -> p.Ldif.AclServer:
     return oid_server.acl_server
 
 
-@pytest.fixture
+@u.Tests.fixture
 def oud_acl_server(oud_server: p.Ldif.ServerServer) -> p.Ldif.AclServer:
     """Provide the OUD server's ACL facade.
 
@@ -341,7 +339,7 @@ def oud_acl_server(oud_server: p.Ldif.ServerServer) -> p.Ldif.AclServer:
     return oud_server.acl_server
 
 
-@pytest.fixture
+@u.Tests.fixture
 def migration_dirs(tmp_path: Path) -> tuple[Path, Path]:
     """Provide canonical (input_dir, output_dir) pair for migration tests.
 
@@ -362,7 +360,7 @@ def migration_dirs(tmp_path: Path) -> tuple[Path, Path]:
     return input_dir, output_dir
 
 
-@pytest.fixture
+@u.Tests.fixture
 def migration_pipeline(
     migration_dirs: tuple[Path, Path],
     server: p.Ldif.ServerRegistry,

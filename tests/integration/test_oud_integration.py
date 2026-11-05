@@ -19,9 +19,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-import pytest
-
-from tests import p, tm, u
+from tests import c, p, tm, u
 
 
 class TestsFlextLdifOudIntegration:
@@ -268,7 +266,7 @@ class TestsFlextLdifOudIntegration:
             eq={self._dn_value(entry) for entry in second.entries},
         )
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "dn_with_spaces",
         [
             "cn=Oracle Context, dc=example, dc=com",

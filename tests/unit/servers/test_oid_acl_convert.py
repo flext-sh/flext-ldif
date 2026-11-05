@@ -18,8 +18,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_ldif.servers import FlextLdifServersOidAclConvert
 from tests import c, m, p, tm
 
@@ -70,7 +68,7 @@ class TestsFlextLdifOidAclConvert:
         tm.that(rule.raw_line, eq=line)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("content", "expected_type", "expected_attrs"),
         [
             ("attr=(cn,sn,mail) by * (read,search)", "attr", "cn,sn,mail"),
@@ -132,7 +130,7 @@ class TestsFlextLdifOidAclConvert:
     # ------------------------------------------------------------------ #
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("line", "error_fragment"),
         [
             ("cn: not an acl", "Not an OID ACL line"),
@@ -163,7 +161,7 @@ class TestsFlextLdifOidAclConvert:
     # ------------------------------------------------------------------ #
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("clause", "subject_type", "value", "permissions"),
         [
             (

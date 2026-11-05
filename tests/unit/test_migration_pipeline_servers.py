@@ -14,8 +14,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
-
 from flext_ldif import FlextLdif
 from flext_ldif.servers import FlextLdifConstantsServersOid
 from tests import c, m, tm
@@ -69,7 +67,7 @@ class TestsFlextLdifMigrationPipelineServers:
             tuple(migrated.output_files),
         )
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("source_server", "target_server", "input_true", "input_false"),
         list(c.Tests.MIGRATION_BOOLEAN_CASES.values()),
         ids=list(c.Tests.MIGRATION_BOOLEAN_CASES.keys()),
@@ -126,7 +124,7 @@ class TestsFlextLdifMigrationPipelineServers:
         tm.ok(f"{enabled}: {input_true}" not in content)
         tm.ok(f"{locked}: {input_false}" not in content)
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("source_server", "target_server", "input_attribute", "expected_attribute"),
         list(c.Tests.MIGRATION_ACL_CASES.values()),
         ids=list(c.Tests.MIGRATION_ACL_CASES.keys()),

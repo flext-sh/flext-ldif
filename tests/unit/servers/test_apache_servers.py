@@ -9,8 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_ldif.servers import FlextLdifServersApache
 from tests import c, m, p, t, tm, u
 
@@ -42,7 +40,7 @@ class TestsFlextLdifApacheServers:
     """
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "test_case",
         u.Tests.attribute_test_cases(c.Tests.APACHE_ATTRIBUTE_CASE_ROWS),
         ids=lambda tc: tc.scenario,
@@ -112,7 +110,7 @@ class TestsFlextLdifApacheServers:
         )
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "test_case",
         u.Tests.objectclass_test_cases(c.Tests.APACHE_OBJECTCLASS_CASE_ROWS),
     )
@@ -309,7 +307,7 @@ class TestsFlextLdifApacheServers:
         )
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "test_case",
         u.Tests.entry_test_cases(c.Tests.APACHE_ENTRY_CASE_ROWS),
         ids=lambda tc: tc.scenario,
@@ -338,7 +336,7 @@ class TestsFlextLdifApacheServers:
                 ldif += f"{attr}: {values}\n"
         return ldif
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "test_case",
         [
             tc

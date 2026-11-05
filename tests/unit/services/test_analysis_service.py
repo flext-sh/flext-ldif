@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-import pytest
-
 from tests import c, m, p, tm, u
 
 
@@ -149,7 +147,7 @@ class TestsFlextLdifAnalysisService:
         tm.that(forward.valid_entries, eq=reverse.valid_entries)
         tm.that(forward.invalid_entries, eq=reverse.invalid_entries)
 
-    @pytest.mark.parametrize("oc_name", c.Tests.VALIDATION_VALID_OC_NAMES)
+    @c.Tests.MARK.parametrize("oc_name", c.Tests.VALIDATION_VALID_OC_NAMES)
     def test_valid_objectclass_names_pass_validation(
         self,
         oc_name: str,

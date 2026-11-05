@@ -14,15 +14,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_ldif import FlextLdif
 from flext_ldif.servers import (
     FlextLdifServersOid,
     FlextLdifServersOud,
     FlextLdifServersRfc,
 )
-from tests import c, t, tm
+from tests import c, t, tm, u
 from tests.unit.services import TestsFlextLdifTypingsService
 
 # (server class, canonical identity, priority) — the standardized identity table.
@@ -37,16 +35,16 @@ _STANDARDIZED_SERVERS: tuple[
 _EXPECTED_DN = "cn=test,dc=example,dc=com"
 
 
-@pytest.mark.unit
+@c.Tests.MARK.unit
 class TestsFlextLdifServersStandardization:
     """Verify the public server-standardization contract behaviourally."""
 
-    @pytest.fixture
+    @u.Tests.fixture
     def valid_ldif() -> str:
         """Return a single well-formed RFC 2849 entry every server must accept."""
         return f"dn: {_EXPECTED_DN}\nobjectClass: person\ncn: test\nsn: user\n"
 
-    @pytest.fixture
+    @u.Tests.fixture
     def multi_ldif() -> str:
         """Two independent entries in one LDIF stream.
 
@@ -67,7 +65,7 @@ class TestsFlextLdifServersStandardization:
     # -- Constants identity contract ---------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("server_cls", "canonical", "priority"),
         _STANDARDIZED_SERVERS,
     )
@@ -84,7 +82,7 @@ class TestsFlextLdifServersStandardization:
         )
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("server_cls", "canonical", "priority"),
         _STANDARDIZED_SERVERS,
     )
@@ -110,7 +108,7 @@ class TestsFlextLdifServersStandardization:
     # -- Parsing contract --------------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize("server_type", [s[1] for s in _STANDARDIZED_SERVERS])
+    @c.Tests.MARK.parametrize("server_type", [s[1] for s in _STANDARDIZED_SERVERS])
     def test_parse_server_returns_parsed_entry_for_valid_ldif(
         server_type: str,
         valid_ldif: str,
@@ -121,7 +119,7 @@ class TestsFlextLdifServersStandardization:
         tm.that(str(result.value[0].dn), eq=_EXPECTED_DN)
 
     @staticmethod
-    @pytest.mark.parametrize("server_type", [s[1] for s in _STANDARDIZED_SERVERS])
+    @c.Tests.MARK.parametrize("server_type", [s[1] for s in _STANDARDIZED_SERVERS])
     def test_parse_input_mirrors_successful_parse(
         server_type: str,
         valid_ldif: str,
@@ -132,7 +130,7 @@ class TestsFlextLdifServersStandardization:
         tm.that([str(entry.dn) for entry in result], eq=[_EXPECTED_DN])
 
     @staticmethod
-    @pytest.mark.parametrize("server_type", [s[1] for s in _STANDARDIZED_SERVERS])
+    @c.Tests.MARK.parametrize("server_type", [s[1] for s in _STANDARDIZED_SERVERS])
     def test_empty_content_parses_to_no_entries(server_type: str) -> None:
         """Empty input is a valid, empty parse -- success with zero entries."""
         entry = FlextLdif().entry(server_type).unwrap()
@@ -142,7 +140,7 @@ class TestsFlextLdifServersStandardization:
         tm.that(entry.parse_input(""), eq=[])
 
     @staticmethod
-    @pytest.mark.parametrize("content", ["", "   \n  \t\n"])
+    @c.Tests.MARK.parametrize("content", ["", "   \n  \t\n"])
     def test_parse_input_treats_blank_content_as_empty(content: str) -> None:
         """Blank / whitespace-only content returns an empty list, never None."""
         entry = FlextLdif().entry(c.Ldif.ServerTypes.RFC).unwrap()
@@ -202,7 +200,7 @@ class TestsFlextLdifServersStandardization:
     # -- can_handle contract ----------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("entry_dn", "attributes", "expected"),
         [
             ("cn=x,dc=e", {"objectClass": ["person"]}, True),

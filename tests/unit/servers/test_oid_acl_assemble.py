@@ -15,8 +15,6 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-import pytest
-
 from flext_ldif.servers import (
     FlextLdifServersOidAclAssemble,
     FlextLdifServersOidAclConvert,
@@ -62,10 +60,10 @@ class TestsFlextLdifOidAclAssemble:
     # ---- render_aci_string: AciRule → aci: line ------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("aci", "expected"),
         [
-            pytest.param(
+            u.Tests.param(
                 m.Ldif.AciRule(
                     dn="dc=ctbc",
                     targetattr="*",
@@ -91,7 +89,7 @@ class TestsFlextLdifOidAclAssemble:
                 "     allow (read, search)" + " " * 17 + 'userdn="ldap:///anyone";)',
                 id="two-distinct-perm-allows-with-targetscope",
             ),
-            pytest.param(
+            u.Tests.param(
                 m.Ldif.AciRule(
                     dn="dc=ctbc",
                     targetattr="cn||sn||mail",
@@ -116,7 +114,7 @@ class TestsFlextLdifOidAclAssemble:
                 + 'or groupdn="ldap:///cn=g,dc=ctbc";)',
                 id="same-perms-collapse-into-one-or-joined-allow",
             ),
-            pytest.param(
+            u.Tests.param(
                 m.Ldif.AciRule(
                     dn="dc=ctbc",
                     targetattr="*",
@@ -143,7 +141,7 @@ class TestsFlextLdifOidAclAssemble:
                 'and authmethod="Simple";)',
                 id="same-perms-different-modifiers-render-separate-allows",
             ),
-            pytest.param(
+            u.Tests.param(
                 m.Ldif.AciRule(
                     dn="dc=ctbc",
                     targetattr="!=userpassword",
@@ -163,7 +161,7 @@ class TestsFlextLdifOidAclAssemble:
                 '     allow (read, write)    userdn="ldap:///self";)',
                 id="negation-targetattr-and-filter",
             ),
-            pytest.param(
+            u.Tests.param(
                 m.Ldif.AciRule(
                     dn="dc=ctbc",
                     targetattr="*",

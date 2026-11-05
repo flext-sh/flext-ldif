@@ -12,15 +12,13 @@ from typing import Annotated, ClassVar
 
 from flext_cli import m
 
+from flext_ldif import c, p, t
 from flext_ldif._models import (
     FlextLdifModelsCollections,
     FlextLdifModelsDomainsEntries,
     FlextLdifModelsResultsStatistics,
 )
 from flext_ldif._models._settings import FlextLdifModelsSettingsMigrate
-from flext_ldif.constants import c
-from flext_ldif.protocols import p
-from flext_ldif.typings import t
 
 
 class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):

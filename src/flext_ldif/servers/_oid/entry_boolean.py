@@ -8,16 +8,12 @@ from __future__ import annotations
 
 from collections.abc import MutableMapping, MutableSequence, Sequence
 
-from flext_ldif.constants import c
-from flext_ldif.models import m
-from flext_ldif.protocols import p
+from flext_ldif import c, m, p, t, u
 from flext_ldif.servers._oid import (
     FlextLdifConstantsServersOid,
     FlextLdifServersOidEntryMetadata,
 )
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
-from flext_ldif.typings import t
-from flext_ldif.utilities import u
 
 
 class FlextLdifServersOidEntryBoolean(

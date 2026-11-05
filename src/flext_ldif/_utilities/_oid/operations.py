@@ -11,8 +11,7 @@ from typing import TYPE_CHECKING
 
 from flext_cli import r
 
-from flext_ldif.constants import c
-from flext_ldif.protocols import p
+from flext_ldif import c, p
 
 if TYPE_CHECKING:
     from flext_ldif import t

@@ -15,8 +15,8 @@ from typing import Annotated
 
 from flext_cli import m
 
+from flext_ldif import c
 from flext_ldif._models import FlextLdifModelsBases, FlextLdifModelsDomainMetadata
-from flext_ldif.constants import c
 
 
 class FlextLdifModelsDomainSchema:

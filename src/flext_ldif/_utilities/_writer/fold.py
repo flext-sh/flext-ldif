@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence, Sequence
 from itertools import pairwise
 
-from flext_ldif.constants import c
+from flext_ldif import c
 
 
 class FlextLdifUtilitiesWriterFold:

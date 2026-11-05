@@ -16,8 +16,6 @@ from collections.abc import Sequence
 from pathlib import PurePath
 from typing import TYPE_CHECKING
 
-import pytest
-
 from flext_ldif import FlextLdif, services
 from tests import c, m, p, tm, u
 
@@ -94,7 +92,7 @@ class TestsFlextLdifMigrationPipeline:
         tm.that(migration_pipeline.target_server_type, eq=defaults.target_server_type)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("source", "target"),
         [
             (c.Ldif.ServerTypes.OID, c.Ldif.ServerTypes.OUD),
@@ -127,7 +125,7 @@ class TestsFlextLdifMigrationPipeline:
         tm.that(pipeline.target_server_type, where=is_target)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("raw_server", "expected_server"),
         list(_KNOWN_COERCE_CASES.values()),
         ids=list(_KNOWN_COERCE_CASES.keys()),
@@ -168,14 +166,14 @@ class TestsFlextLdifMigrationPipeline:
             })
 
     @staticmethod
-    @pytest.mark.parametrize("value", [True, 1, [], {}])
+    @c.Tests.MARK.parametrize("value", [True, 1, [], {}])
     def test_configuration_rejects_non_string_server_inputs(value: t.JsonValue) -> None:
         """The input boundary rejects values outside the server selector contract."""
         with u.Tests.raises(m.ValidationError):
             m.Ldif.ProcessConfig.model_validate({"source_server": value})
 
     @staticmethod
-    @pytest.mark.parametrize("field", ["source_server_type", "target_server_type"])
+    @c.Tests.MARK.parametrize("field", ["source_server_type", "target_server_type"])
     def test_pipeline_rejects_explicit_null_selectors(
         field: str, server: p.Ldif.ServerRegistry
     ) -> None:
@@ -464,7 +462,7 @@ class TestsFlextLdifMigrationPipelineFileAndProcessing:
         )
 
     @staticmethod
-    @pytest.mark.parametrize("field", ["normalize_dns", "normalize_attrs"])
+    @c.Tests.MARK.parametrize("field", ["normalize_dns", "normalize_attrs"])
     def test_processing_execute_succeeds_with_normalization_config(
         field: str,
         server: p.Ldif.ServerRegistry,

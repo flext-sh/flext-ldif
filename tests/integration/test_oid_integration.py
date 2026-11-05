@@ -17,9 +17,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-import pytest
-
-from tests import p, t, tm, u
+from tests import c, p, t, tm, u
 
 ORACLE_OID_PREFIX = "2.16.840.1.113894"
 
@@ -103,7 +101,7 @@ class TestsFlextLdifOidIntegration:
             msg="every parsed schema entry must expose a non-empty DN",
         )
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "definition_attr",
         ["attributeTypes", "objectClasses"],
         ids=["attribute-types", "object-classes"],
@@ -147,7 +145,7 @@ class TestsFlextLdifOidIntegration:
             msg = f"expected > {min_expected_entries} entries, got {len(entries)}"
             tm.reject(msg)
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "attribute_name",
         ["orclaci", "orclentrylevelaci", "orclisenabled", "orclpassword"],
         ids=["acl", "entry-level-acl", "is-enabled", "password"],
@@ -197,7 +195,7 @@ class TestsFlextLdifOidIntegration:
 
         tm.that(roundtrip_dns, eq=original_dns)
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "acl_attribute",
         ["orclaci", "orclentrylevelaci"],
         ids=["acl", "entry-level-acl"],

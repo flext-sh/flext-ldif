@@ -19,9 +19,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
-
-from tests import c, ldif, m, tm
+from tests import c, ldif, m, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -30,7 +28,7 @@ if TYPE_CHECKING:
 from tests import p, t
 
 
-@pytest.fixture
+@u.Tests.fixture
 def flext_api() -> p.Ldif.LdifClient:
     """Ldif API instance.
 
@@ -41,7 +39,7 @@ def flext_api() -> p.Ldif.LdifClient:
     return ldif()
 
 
-@pytest.mark.integration
+@c.Tests.MARK.integration
 class TestsFlextLdifRealLdapCrud:
     """Behavioral CRUD and batch contracts over a live LDAP directory."""
 

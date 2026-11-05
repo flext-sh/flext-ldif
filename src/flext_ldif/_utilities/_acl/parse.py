@@ -10,16 +10,13 @@ from collections.abc import MutableSequence
 
 from flext_cli import r
 
+from flext_ldif import c, m, p, t
 from flext_ldif._utilities import FlextLdifUtilitiesMetadata
 from flext_ldif._utilities._acl import (
     FlextLdifUtilitiesACLExtract,
     FlextLdifUtilitiesACLFormat,
     FlextLdifUtilitiesACLPermissions,
 )
-from flext_ldif.constants import c
-from flext_ldif.models import m
-from flext_ldif.protocols import p
-from flext_ldif.typings import t
 
 
 class FlextLdifUtilitiesACLParse:

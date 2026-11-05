@@ -11,11 +11,11 @@ from typing import TYPE_CHECKING, ClassVar
 
 from flext_cli import u
 
+from flext_ldif import c
 from flext_ldif._utilities._entry import (
     FlextLdifUtilitiesEntryAttrValidation,
     FlextLdifUtilitiesEntryValidation,
 )
-from flext_ldif.constants import c
 
 if TYPE_CHECKING:
     from flext_ldif import p, t

@@ -11,9 +11,7 @@ from typing import ClassVar
 
 from flext_cli import u
 
-from flext_ldif.constants import c
-from flext_ldif.protocols import p
-from flext_ldif.typings import t
+from flext_ldif import c, p, t
 
 
 class FlextLdifUtilitiesACLExtensions:

@@ -9,9 +9,8 @@ from __future__ import annotations
 
 from flext_cli import m
 
+from flext_ldif import p, t
 from flext_ldif._models.elements import FlextLdifModelsBasesParts
-from flext_ldif.protocols import p
-from flext_ldif.typings import t
 
 
 class FlextLdifModelsBases(FlextLdifModelsBasesParts):

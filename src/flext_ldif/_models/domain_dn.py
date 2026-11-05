@@ -11,9 +11,7 @@ from typing import Annotated, ClassVar, Self, override
 
 from flext_cli import m, r
 
-from flext_ldif.constants import c
-from flext_ldif.protocols import p
-from flext_ldif.typings import t
+from flext_ldif import c, p, t
 
 
 class FlextLdifModelsDomainDN:

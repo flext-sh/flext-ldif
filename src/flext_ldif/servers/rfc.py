@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_ldif.protocols import p
+from flext_ldif import p
 from flext_ldif.servers import FlextLdifServersBase
 from flext_ldif.servers._base import (
     FlextLdifServersBaseEntry,

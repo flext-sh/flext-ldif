@@ -8,13 +8,10 @@ from __future__ import annotations
 
 from types import MappingProxyType
 
-import pytest
-from flext_core import p
-
-from tests import m, tm
+from tests import c, m, p, tm
 
 
-@pytest.mark.parametrize(
+@c.Tests.MARK.parametrize(
     ("rules", "field"),
     [
         (m.Ldif.CategoryRules(), "category_markers"),

@@ -12,8 +12,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from tests import c, m, p, tm, u
 
 
@@ -71,7 +69,7 @@ class TestsFlextLdifStatisticsService:
         stats: p.Ldif.EntriesStatistics = u.Tests.assert_success(result)
         tm.that(stats, is_=m.Ldif.EntriesStatistics)
 
-    @pytest.mark.parametrize(c.Aggregation.COUNT, [0, 1, 2, 5])
+    @c.Tests.MARK.parametrize(c.Aggregation.COUNT, [0, 1, 2, 5])
     def test_total_entries_equals_input_count(
         self,
         api: p.Ldif.LdifClient,
@@ -113,7 +111,7 @@ class TestsFlextLdifStatisticsService:
         tm.that(stats.server_type_distribution.get(c.Tests.RFC, 0), eq=1)
         tm.that(stats.server_type_distribution.get(c.Tests.OID, 0), eq=1)
 
-    @pytest.mark.parametrize("server_type", [c.Tests.RFC, c.Tests.OID])
+    @c.Tests.MARK.parametrize("server_type", [c.Tests.RFC, c.Tests.OID])
     def test_single_server_type_produces_single_count(
         self,
         api: p.Ldif.LdifClient,

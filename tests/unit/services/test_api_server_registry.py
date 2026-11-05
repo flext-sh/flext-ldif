@@ -9,7 +9,6 @@ from __future__ import annotations
 from pathlib import PurePath
 from typing import TYPE_CHECKING
 
-import pytest
 from flext_core import FlextRegistry
 
 from flext_ldif import FlextLdif, services
@@ -108,7 +107,7 @@ class TestsFlextLdifApiServerRegistry:
         tm.fail(api.resolve_server_constants(invalid))
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "resolver_name",
         ["resolve_base_server", "resolve_server_bundle", "resolve_server_constants"],
     )
@@ -133,7 +132,7 @@ class TestsFlextLdifApiServerRegistry:
         tm.ok(callable_api.resolve_base_server(route))
 
     @staticmethod
-    @pytest.mark.parametrize("field_name", ["_runtime", "_operation_stats"])
+    @c.Tests.MARK.parametrize("field_name", ["_runtime", "_operation_stats"])
     def test_private_runtime_state_is_not_constructor_input(field_name: str) -> None:
         """The facade preserves the base model's strict private-state ownership."""
         with u.Tests.raises(ValueError, match=field_name):
@@ -188,7 +187,7 @@ class TestsFlextLdifApiServerRegistry:
         tm.that(stored is dialect)
 
     @staticmethod
-    @pytest.mark.parametrize("field_name", ["registry"])
+    @c.Tests.MARK.parametrize("field_name", ["registry"])
     def test_required_registry_port_is_validated_and_not_serialized(
         field_name: str,
     ) -> None:
@@ -301,7 +300,7 @@ class TestsFlextLdifRegistryWrites:
         tm.that(parsed.entries[0].dn, eq=entry.dn)
 
     @staticmethod
-    @pytest.mark.parametrize("comment_acl", [False, True])
+    @c.Tests.MARK.parametrize("comment_acl", [False, True])
     def test_write_response_preserves_oid_entries_and_phase_options(
         tmp_path: Path,
         *,

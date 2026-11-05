@@ -22,8 +22,6 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
-import pytest
-
 from tests import c, ldif, tm, u
 
 if TYPE_CHECKING:
@@ -33,7 +31,7 @@ if TYPE_CHECKING:
 from tests import p
 
 
-@pytest.fixture
+@u.Tests.fixture
 def flext_api() -> p.Ldif.LdifClient:
     """Public Ldif API instance under test.
 
@@ -44,8 +42,8 @@ def flext_api() -> p.Ldif.LdifClient:
     return ldif()
 
 
-@pytest.mark.docker
-@pytest.mark.integration
+@c.Tests.MARK.docker
+@c.Tests.MARK.integration
 class TestsFlextLdifRealLdapExport:
     """Round-trip behavioral contract of LDIF export from a real LDAP server."""
 

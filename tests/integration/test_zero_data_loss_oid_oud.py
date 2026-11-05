@@ -22,8 +22,6 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-import pytest
-
 from tests import c, ldif, m, p, t, tm, u
 
 
@@ -37,7 +35,7 @@ class TestsFlextLdifZeroDataLossOidOud:
         "entrycsn",
     })
 
-    @pytest.fixture
+    @u.Tests.fixture
     def api() -> p.Ldif.LdifClient:
         """Create ldif API instance.
 
@@ -47,7 +45,7 @@ class TestsFlextLdifZeroDataLossOidOud:
         """
         return ldif()
 
-    @pytest.fixture
+    @u.Tests.fixture
     def oid_fixture() -> str:
         """Load OID entries fixture.
 
@@ -58,7 +56,7 @@ class TestsFlextLdifZeroDataLossOidOud:
         fixture: str = u.Tests.load(c.Tests.OID, c.Tests.ENTRIES)
         return fixture
 
-    @pytest.fixture
+    @u.Tests.fixture
     def oud_fixture() -> str:
         """Load OUD entries fixture.
 
@@ -72,7 +70,7 @@ class TestsFlextLdifZeroDataLossOidOud:
     # -- edge cases / invariants ------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize("content", ["", "not a valid ldif record"])
+    @c.Tests.MARK.parametrize("content", ["", "not a valid ldif record"])
     def test_parse_of_non_entry_input_succeeds_with_no_entries(
         api: p.Ldif.LdifClient,
         content: str,
@@ -99,7 +97,7 @@ class TestsFlextLdifZeroDataLossOidOud:
     # -- original text preservation ---------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize("server_type", [c.Tests.OID, c.Tests.OUD])
+    @c.Tests.MARK.parametrize("server_type", [c.Tests.OID, c.Tests.OUD])
     def test_parse_preserves_original_ldif_per_entry(
         api: p.Ldif.LdifClient,
         oid_fixture: str,

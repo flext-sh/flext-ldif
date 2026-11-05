@@ -14,11 +14,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from flext_ldif import FlextLdif
 from flext_ldif.services import FlextLdifParser, FlextLdifServer, FlextLdifWriter
-from tests import c, m, p, tm
+from tests import c, m, p, tm, u
 
 
 def _has_schema_attrs(entry: p.Ldif.Entry) -> bool:
@@ -34,7 +32,7 @@ def _has_schema_attrs(entry: p.Ldif.Entry) -> bool:
 class TestsFlextLdifRfcDockerReal:
     """Behavioral contract tests for LDIF parse/write over real fixtures."""
 
-    @pytest.fixture
+    @u.Tests.fixture
     def server_registry() -> FlextLdifServer:
         """Real server registry (genuine collaborator, not mocked).
 
@@ -44,7 +42,7 @@ class TestsFlextLdifRfcDockerReal:
         """
         return FlextLdifServer(registry=FlextLdif().registry)
 
-    @pytest.fixture
+    @u.Tests.fixture
     def fixtures_dir() -> Path:
         """Root fixtures directory.
 
@@ -60,7 +58,7 @@ class TestsFlextLdifRfcDockerReal:
     # ------------------------------------------------------------------ #
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("server_dir", "filename"),
         [
             (c.Tests.OID, "oid_schema_fixtures.ldif"),
@@ -77,7 +75,7 @@ class TestsFlextLdifRfcDockerReal:
         # Arrange
         source = fixtures_dir / server_dir / filename
         if not source.exists():
-            pytest.skip(f"Fixture not available: {source}")
+            u.Tests.skip(f"Fixture not available: {source}")
 
         # Act
         result = FlextLdifParser(registry=FlextLdif().registry).parse_ldif_file(source)
@@ -98,7 +96,7 @@ class TestsFlextLdifRfcDockerReal:
         # Arrange
         source = fixtures_dir / c.Tests.OID / "oid_schema_fixtures.ldif"
         if not source.exists():
-            pytest.skip(f"Fixture not available: {source}")
+            u.Tests.skip(f"Fixture not available: {source}")
 
         # Act
         result = FlextLdifParser(registry=FlextLdif().registry).parse_ldif_file(source)
@@ -113,7 +111,7 @@ class TestsFlextLdifRfcDockerReal:
         # Arrange
         source = fixtures_dir / c.Tests.OUD / "oud_acl_fixtures.ldif"
         if not source.exists():
-            pytest.skip(f"Fixture not available: {source}")
+            u.Tests.skip(f"Fixture not available: {source}")
 
         # Act
         result = FlextLdifParser(registry=FlextLdif().registry).parse_ldif_file(source)
@@ -137,7 +135,7 @@ class TestsFlextLdifRfcDockerReal:
         # Arrange
         source = fixtures_dir / c.Tests.OID / "oid_schema_fixtures.ldif"
         if not source.exists():
-            pytest.skip(f"Fixture not available: {source}")
+            u.Tests.skip(f"Fixture not available: {source}")
         min_schema_fixture_bytes = 300_000
         tm.that(
             source.stat().st_size > min_schema_fixture_bytes,
@@ -152,7 +150,7 @@ class TestsFlextLdifRfcDockerReal:
         tm.that(result.unwrap().entries, where=bool)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("server_dir", "filename"),
         [
             (c.Tests.OUD, "oud_integration_fixtures.ldif"),
@@ -217,7 +215,7 @@ class TestsFlextLdifRfcDockerReal:
         tm.that(result.error, has="atomic_write_text_file")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "subdir",
         [Path("edge_cases") / "unicode", Path("broken") / "structure"],
     )
@@ -229,10 +227,10 @@ class TestsFlextLdifRfcDockerReal:
         # Arrange
         target_dir = fixtures_dir / subdir
         if not target_dir.exists():
-            pytest.skip(f"Fixture directory not available: {target_dir}")
+            u.Tests.skip(f"Fixture directory not available: {target_dir}")
         ldif_files = sorted(target_dir.glob("*.ldif"))
         if not ldif_files:
-            pytest.skip(f"No LDIF fixtures under: {target_dir}")
+            u.Tests.skip(f"No LDIF fixtures under: {target_dir}")
 
         # Act / Assert
         for ldif_file in ldif_files:
@@ -259,12 +257,12 @@ class TestsFlextLdifRfcDockerReal:
         # Arrange
         source = fixtures_dir / c.Tests.OID / "oid_entries_fixtures.ldif"
         if not source.exists():
-            pytest.skip(f"Fixture not available: {source}")
+            u.Tests.skip(f"Fixture not available: {source}")
         parse_result = FlextLdifParser(registry=FlextLdif().registry).parse_ldif_file(
             source
         )
         if not parse_result.success:
-            pytest.skip(f"Source fixture unparseable: {parse_result.error}")
+            u.Tests.skip(f"Source fixture unparseable: {parse_result.error}")
         original_entries = parse_result.unwrap().entries
         original_dns = {
             entry.dn.value for entry in original_entries if entry.dn is not None

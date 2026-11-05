@@ -12,8 +12,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_ldif.servers import FlextLdifServersOidAclToOud
 from tests import c, m, p, tm
 
@@ -40,7 +38,7 @@ class TestsFlextLdifOidAclConvertOud:
 
     # -- convert_subject_to_oud: bind-rule mapping -------------------------
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("kind", "value", "bind_type", "bind_value"),
         [
             ("group", "cn=admins , dc=ctbc", "groupdn", "cn=admins,dc=ctbc"),
@@ -76,7 +74,7 @@ class TestsFlextLdifOidAclConvertOud:
 
         tm.that(result.unwrap().permissions, eq=())
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("kind", "value"),
         [("guidattr", "orclguid"), ("nosuchkind", "")],
     )
@@ -96,7 +94,7 @@ class TestsFlextLdifOidAclConvertOud:
     # -- convert_permissions ----------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("permissions", "is_entry", "expected"),
         [
             (("browse", "add", "delete"), True, ("read", "search", "add", "delete")),
@@ -124,7 +122,7 @@ class TestsFlextLdifOidAclConvertOud:
         tm.that(result.unwrap(), eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize("permissions", [("bogus",), ("nofoo",)])
+    @c.Tests.MARK.parametrize("permissions", [("bogus",), ("nofoo",)])
     def test_convert_permissions_unknown_token_surfaces_failure(
         permissions: tuple[str, ...],
     ) -> None:
@@ -137,7 +135,7 @@ class TestsFlextLdifOidAclConvertOud:
 
     # -- resolve_targetattr ---------------------------------------------------
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("target_type", "target_attrs", "expected"),
         [
             ("entry", "*", "*"),
@@ -192,7 +190,7 @@ class TestsFlextLdifOidAclConvertOud:
     # -- regex_to_wildcard ------------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [
             ("cn=.*,dc=ctbc", "cn=*,dc=ctbc"),
@@ -209,7 +207,7 @@ class TestsFlextLdifOidAclConvertOud:
     # -- in_scope ------------------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("dn", "base_dn", "expected"),
         [
             ("dc=ctbc", "dc=ctbc", True),

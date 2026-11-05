@@ -8,10 +8,8 @@ from __future__ import annotations
 
 from typing import ClassVar, override
 
-from flext_ldif.models import m
-from flext_ldif.protocols import p
+from flext_ldif import m, p, u
 from flext_ldif.servers._rfc import FlextLdifServersRfcSchema
-from flext_ldif.utilities import u
 
 
 class FlextLdifServersDialectSchema(FlextLdifServersRfcSchema):

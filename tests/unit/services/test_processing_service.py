@@ -9,8 +9,6 @@ from __future__ import annotations
 from collections.abc import MutableSequence, Sequence
 from typing import Literal
 
-import pytest
-
 from flext_ldif import FlextLdif
 from flext_ldif.services import FlextLdifProcessingPipeline
 from tests import c, m, p, tm, u
@@ -27,7 +25,7 @@ class TestsFlextLdifProcessingService:
             server_type=c.Tests.RFC,
         )
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("processor_name", c.ProcessingMode.PARALLEL, "batch_size", "max_workers"),
         list(c.Tests.PROCESSING_OPTIONS_CASES.values()),
         ids=list(c.Tests.PROCESSING_OPTIONS_CASES.keys()),

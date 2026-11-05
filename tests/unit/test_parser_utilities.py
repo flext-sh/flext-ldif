@@ -12,8 +12,6 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-import pytest
-
 from tests import c, p, tm, u
 
 
@@ -21,7 +19,7 @@ class TestsFlextLdifUtilitiesParser:
     """Public-contract behavior of the LDIF parser utilities."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("must_separator", "may_separator"), [("|", ","), (",", "|")]
     )
     def test_schema_field_separators_are_independent(
@@ -42,7 +40,7 @@ class TestsFlextLdifUtilitiesParser:
     # extract_oid
     # ------------------------------------------------------------------
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "definition",
         [
             "",
@@ -61,7 +59,7 @@ class TestsFlextLdifUtilitiesParser:
             tm.that(result.error, eq=c.Ldif.SCHEMA_OID_EMPTY_ERROR)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("definition", "expected_oid"),
         [
             ("( 1.2.840.113556.1.4.221 NAME 'x' )", "1.2.840.113556.1.4.221"),
@@ -88,7 +86,7 @@ class TestsFlextLdifUtilitiesParser:
         tm.fail(u.Ldif.parse_attribute_line("cn value"))
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("line", "expected"),
         [
             ("cn: test", ("cn", "test", False)),
@@ -110,7 +108,7 @@ class TestsFlextLdifUtilitiesParser:
     # decode_value
     # ------------------------------------------------------------------
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("remainder", "expected_value", "expected_origin", "expected_raw"),
         [
             (" plain text", "plain text", c.Ldif.ValueOrigin.PLAIN, "plain text"),
@@ -146,7 +144,7 @@ class TestsFlextLdifUtilitiesParser:
     # build_control
     # ------------------------------------------------------------------
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("payload", "expected_type", "expected_criticality", "expected_value"),
         [
             ("1.2.3.4 true payload", "1.2.3.4", True, "payload"),
@@ -172,7 +170,7 @@ class TestsFlextLdifUtilitiesParser:
     # extract_boolean_flag / extract_optional_field
     # ------------------------------------------------------------------
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("definition", "expected"),
         [
             ("( 1.1 NAME 'x' SINGLE-VALUE )", True),
@@ -231,7 +229,7 @@ class TestsFlextLdifUtilitiesParser:
     # unfold_lines
     # ------------------------------------------------------------------
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("content", "expected"),
         [
             ("cn: hello\n world\nsn: last", ["cn: helloworld", "sn: last"]),
@@ -260,7 +258,7 @@ class TestsFlextLdifUtilitiesParser:
     # parse_ldif_record
     # ------------------------------------------------------------------
     @staticmethod
-    @pytest.mark.parametrize("fill", ["", " ", "   "])
+    @c.Tests.MARK.parametrize("fill", ["", " ", "   "])
     def test_modify_record_preserves_operations_with_rfc_fill(fill: str) -> None:
         """RFC 2849 permits zero or more spaces after the changetype colon."""
         entry = u.Ldif.parse_ldif_record([

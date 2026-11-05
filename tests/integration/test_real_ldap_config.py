@@ -17,9 +17,7 @@ from __future__ import annotations
 import codecs
 from typing import TYPE_CHECKING
 
-import pytest
-
-from tests import ldif, m, tm
+from tests import c, ldif, m, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -27,11 +25,11 @@ if TYPE_CHECKING:
 from tests import p
 
 
-@pytest.mark.integration
+@c.Tests.MARK.integration
 class TestsFlextLdifRealLdapConfig:
     """Public-contract tests for LDIF settings and railway composition."""
 
-    @pytest.fixture
+    @u.Tests.fixture
     def flext_api() -> p.Ldif.LdifClient:
         """Ldif API instance under test.
 
@@ -41,7 +39,7 @@ class TestsFlextLdifRealLdapConfig:
         """
         return ldif()
 
-    @pytest.fixture
+    @u.Tests.fixture
     def sample_entry() -> p.Ldif.Entry:
         """Build a valid inetOrgPerson entry through the public model API.
 
@@ -167,12 +165,12 @@ class TestsFlextLdifRealLdapConfig:
         tm.that(error.lower(), has="not found")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "content",
         [
-            pytest.param("", id="empty-string"),
-            pytest.param("\n\n", id="blank-lines-only"),
-            pytest.param("# only a comment\n", id="comment-only"),
+            u.Tests.param("", id="empty-string"),
+            u.Tests.param("\n\n", id="blank-lines-only"),
+            u.Tests.param("# only a comment\n", id="comment-only"),
         ],
     )
     def test_parse_content_without_entries_succeeds_empty(

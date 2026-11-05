@@ -22,8 +22,6 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 
-import pytest
-
 from flext_ldif.services import FlextLdifEntries
 from tests import c, m, p, t, tm, u
 
@@ -104,7 +102,7 @@ class TestsFlextLdifEntries:
     # ── normalize_attribute_values ────────────────────────────────────────────
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("scenario", "value", "should_succeed"),
         tuple(
             (scenario, data[0], data[1])
@@ -147,7 +145,7 @@ class TestsFlextLdifEntries:
         result = FlextLdifEntries.resolve_entry_dn(entry)
         tm.fail(result, has="DN")
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("scenario", "entry_dict", "should_succeed"),
         tuple(
             (scenario, data[0], data[1])
@@ -267,7 +265,7 @@ class TestsFlextLdifEntries:
 
     # ── run_configured_operation ──────────────────────────────────────────────
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("scenario", "op", "should_succeed"),
         tuple(
             (scenario, data[0], data[1])

@@ -24,8 +24,6 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-import pytest
-
 from tests import c, ldif, m, p, tm, u
 
 _BASE_DN = "dc=example"
@@ -66,7 +64,7 @@ class TestsFlextLdifCategorizationRealData:
             ),
         )
 
-    @pytest.fixture
+    @u.Tests.fixture
     def hierarchy_entries(self) -> MutableSequence[p.Ldif.Entry]:
         """Mixed entries: three under dc=example, two under dc=example2.
 
@@ -209,7 +207,7 @@ class TestsFlextLdifCategorizationRealData:
         tm.that(rejected, has="cn=settings")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("dn", "base_dn", "expected"),
         [
             ("dc=example", "dc=example", True),

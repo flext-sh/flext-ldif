@@ -8,11 +8,9 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
+from flext_ldif import c, p, t
 from flext_ldif._models import FlextLdifModelsSettings
 from flext_ldif._utilities._entry import FlextLdifUtilitiesEntryValidation
-from flext_ldif.constants import c
-from flext_ldif.protocols import p
-from flext_ldif.typings import t
 
 
 class FlextLdifUtilitiesEntryServerRules:

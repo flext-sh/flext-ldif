@@ -12,15 +12,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
-from tests import c, ldif, p, t, tm
+from tests import c, ldif, p, t, tm, u
 
 
 class TestsFlextLdifAclMetadataPreservation:
     """Behavioral tests for OID/OUD ACL metadata preservation and round-trips."""
 
-    @pytest.fixture
+    @u.Tests.fixture
     def api() -> p.Ldif.LdifClient:
         """Provide a real LDIF client (public facade, no mocked internals).
 
@@ -63,35 +61,35 @@ class TestsFlextLdifAclMetadataPreservation:
 
     # -- OID ACL feature preservation ------------------------------------
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("acl_clause", "extension_key", "expected"),
         [
-            pytest.param(
+            u.Tests.param(
                 "access to entry by * (browse) bindmode=(Simple)",
                 c.Ldif.ACL_BINDMODE,
                 "Simple",
                 id="bindmode",
             ),
-            pytest.param(
+            u.Tests.param(
                 "access to entry by * (browse) DenyGroupOverride",
                 c.Ldif.ACL_DENY_GROUP_OVERRIDE,
                 True,
                 id="deny-group-override",
             ),
-            pytest.param(
+            u.Tests.param(
                 "access to entry by * (browse) AppendToAll",
                 c.Ldif.ACL_APPEND_TO_ALL,
                 True,
                 id="append-to-all",
             ),
-            pytest.param(
+            u.Tests.param(
                 "access to entry by * (browse) "
                 "bindipfilter=(orclipaddress=192.168.1.*)",
                 c.Ldif.ACL_BIND_IP_FILTER,
                 "orclipaddress=192.168.1.*",
                 id="bind-ip-filter",
             ),
-            pytest.param(
+            u.Tests.param(
                 "access to entry by * (add) "
                 "constraintonaddedobject=(objectclass=person)",
                 c.Ldif.ACL_CONSTRAIN_TO_ADDED_OBJECT,
@@ -144,66 +142,66 @@ class TestsFlextLdifAclMetadataPreservation:
 
     # -- OUD ACI feature preservation ------------------------------------
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("aci", "extension_key", "expected"),
         [
-            pytest.param(
+            u.Tests.param(
                 '(targetattr="cn")(targattrfilters="add=cn:(cn=admin)")'
                 '(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)',
                 c.Ldif.ACL_TARGETATTR_FILTERS,
                 "add=cn:(cn=admin)",
                 id="targattrfilters",
             ),
-            pytest.param(
+            u.Tests.param(
                 '(targetattr="*")(targetcontrol="1.3.6.1.4.1.42.2.27.9.5.2")'
                 '(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)',
                 c.Ldif.ACL_TARGET_CONTROL,
                 "1.3.6.1.4.1.42.2.27.9.5.2",
                 id="targetcontrol",
             ),
-            pytest.param(
+            u.Tests.param(
                 '(targetattr="*")(extop="1.3.6.1.4.1.26027.1.6.1")'
                 '(version 3.0; acl "test"; allow (read) userdn="ldap:///self";)',
                 c.Ldif.ACL_EXTOP,
                 "1.3.6.1.4.1.26027.1.6.1",
                 id="extop",
             ),
-            pytest.param(
+            u.Tests.param(
                 '(targetattr="*")(version 3.0; acl "test"; allow (read) '
                 'userdn="ldap:///self" and ip="192.168.1.0/24";)',
                 c.Ldif.ACL_BIND_IP_FILTER,
                 "192.168.1.0/24",
                 id="bind-ip",
             ),
-            pytest.param(
+            u.Tests.param(
                 '(targetattr="*")(version 3.0; acl "test"; allow (read) '
                 'userdn="ldap:///self" and dns="*.example.com";)',
                 c.Ldif.ACL_BIND_DNS,
                 "*.example.com",
                 id="bind-dns",
             ),
-            pytest.param(
+            u.Tests.param(
                 '(targetattr="*")(version 3.0; acl "test"; allow (read) '
                 'userdn="ldap:///self" and dayofweek="Mon,Tue,Wed";)',
                 c.Ldif.ACL_BIND_DAYOFWEEK,
                 "Mon,Tue,Wed",
                 id="bind-dayofweek",
             ),
-            pytest.param(
+            u.Tests.param(
                 '(targetattr="*")(version 3.0; acl "test"; allow (read) '
                 'userdn="ldap:///self" and timeofday >= "0800";)',
                 c.Ldif.ACL_BIND_TIMEOFDAY,
                 ">=0800",
                 id="bind-timeofday",
             ),
-            pytest.param(
+            u.Tests.param(
                 '(targetattr="*")(version 3.0; acl "test"; allow (read) '
                 'userdn="ldap:///self" and authmethod = "ssl";)',
                 c.Ldif.ACL_AUTHMETHOD,
                 "ssl",
                 id="bind-authmethod",
             ),
-            pytest.param(
+            u.Tests.param(
                 '(targetattr="*")(version 3.0; acl "test"; allow (read) '
                 'userdn="ldap:///self" and ssf >= "128";)',
                 c.Ldif.ACL_SSF,

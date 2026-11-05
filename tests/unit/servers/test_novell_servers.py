@@ -12,8 +12,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_ldif.servers import FlextLdifServersNovell
 from tests import c, m, p, tm, u
 
@@ -21,7 +19,7 @@ from tests import c, m, p, tm, u
 class TestsFlextLdifNovellServers:
     """Public-behaviour tests for the Novell eDirectory server."""
 
-    @pytest.fixture
+    @u.Tests.fixture
     def novell_server() -> FlextLdifServersNovell:
         """Create a Novell eDirectory server instance.
 
@@ -31,7 +29,7 @@ class TestsFlextLdifNovellServers:
         """
         return FlextLdifServersNovell()
 
-    @pytest.fixture
+    @u.Tests.fixture
     @staticmethod
     def schema_server(
         novell_server: FlextLdifServersNovell,
@@ -45,7 +43,7 @@ class TestsFlextLdifNovellServers:
         server = novell_server.schema_server
         return tm.instance(server, FlextLdifServersNovell.Schema)
 
-    @pytest.fixture
+    @u.Tests.fixture
     @staticmethod
     def acl_server(
         novell_server: FlextLdifServersNovell,
@@ -59,7 +57,7 @@ class TestsFlextLdifNovellServers:
         server = novell_server.acl_server
         return tm.instance(server, FlextLdifServersNovell.Acl)
 
-    @pytest.fixture
+    @u.Tests.fixture
     @staticmethod
     def entry_server(
         novell_server: FlextLdifServersNovell,
@@ -76,7 +74,7 @@ class TestsFlextLdifNovellServers:
     # ── Schema: attribute detection ─────────────────────────────────────
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "test_case", u.Tests.server_attribute_test_cases(c.Tests.NOVELL)
     )
     def test_can_handle_attribute_matches_expected_verdict(
@@ -144,7 +142,7 @@ class TestsFlextLdifNovellServers:
     # ── Schema: objectClass detection ───────────────────────────────────
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "test_case",
         u.Tests.objectclass_test_cases(c.Tests.NOVELL_OBJECTCLASS_CASE_ROWS),
     )
@@ -220,16 +218,16 @@ class TestsFlextLdifNovellServers:
     # ── ACL recognition ─────────────────────────────────────────────────
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("acl_line", "expected"),
         [
-            pytest.param("acl: cn=admin#trustee#RW", True, id="acl-attribute"),
-            pytest.param("inheritedACL: cn=x#trustee#R", True, id="inherited-acl"),
-            pytest.param("ACL: cn=x#trustee#R", True, id="acl-uppercase"),
-            pytest.param("aci: something", False, id="non-novell-aci"),
-            pytest.param("cn: value", False, id="ordinary-attribute"),
-            pytest.param("", False, id="empty-line"),
-            pytest.param("   ", False, id="blank-line"),
+            u.Tests.param("acl: cn=admin#trustee#RW", True, id="acl-attribute"),
+            u.Tests.param("inheritedACL: cn=x#trustee#R", True, id="inherited-acl"),
+            u.Tests.param("ACL: cn=x#trustee#R", True, id="acl-uppercase"),
+            u.Tests.param("aci: something", False, id="non-novell-aci"),
+            u.Tests.param("cn: value", False, id="ordinary-attribute"),
+            u.Tests.param("", False, id="empty-line"),
+            u.Tests.param("   ", False, id="blank-line"),
         ],
     )
     def test_can_handle_acl_recognises_edirectory_acl_lines(
@@ -242,17 +240,17 @@ class TestsFlextLdifNovellServers:
         tm.ok(acl_server.can_handle(acl_line) is expected)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("acl_line", "expected_name", "expected_payload"),
         [
-            pytest.param(
+            u.Tests.param(
                 "acl: cn=admin#trustee#RW",
                 "acl",
                 "cn=admin#trustee#RW",
                 id="name-and-payload",
             ),
-            pytest.param("acl:", "acl", "", id="name-without-payload"),
-            pytest.param(
+            u.Tests.param("acl:", "acl", "", id="name-without-payload"),
+            u.Tests.param(
                 "  inheritedACL:  cn=x#trustee#R  ",
                 "inheritedACL",
                 "cn=x#trustee#R",
@@ -273,7 +271,7 @@ class TestsFlextLdifNovellServers:
     # ── Entry detection ─────────────────────────────────────────────────
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "test_case",
         u.Tests.entry_test_cases(c.Tests.NOVELL_ENTRY_CASE_ROWS),
         ids=lambda tc: tc.scenario,

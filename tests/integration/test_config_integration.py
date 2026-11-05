@@ -20,9 +20,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-import pytest
-
-from tests import TestsFlextLdifSettings, c, ldif, p, s, tm
+from tests import TestsFlextLdifSettings, c, ldif, p, s, tm, u
 
 # Expected DN observable in CONFIG_BASIC_ENTRY.
 _BASIC_DN = "cn=Test,dc=example,dc=com"
@@ -88,7 +86,7 @@ class TestsFlextLdifConfigIntegration:
             eq=second.Ldif.ldif_strict_validation,
         )
 
-    @pytest.mark.parametrize("server_type", c.Tests.CONFIG_SERVER_TYPES)
+    @c.Tests.MARK.parametrize("server_type", c.Tests.CONFIG_SERVER_TYPES)
     def test_configured_facade_parses_entry_for_each_server_type(
         self,
         server_type: str,
@@ -103,7 +101,7 @@ class TestsFlextLdifConfigIntegration:
         tm.that(len(parsed.entries), eq=1)
         tm.that(self.dn_values(parsed.entries)[0], eq=_BASIC_DN)
 
-    @pytest.mark.parametrize(("server_type", "label"), _SERVER_TYPE_LABELS)
+    @c.Tests.MARK.parametrize(("server_type", "label"), _SERVER_TYPE_LABELS)
     def test_server_specific_content_round_trips_dn(
         self,
         server_type: str,
@@ -197,4 +195,4 @@ class TestsFlextLdifConfigIntegration:
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+    u.Tests.main([__file__, "-v"])

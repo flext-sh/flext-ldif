@@ -8,11 +8,9 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from flext_ldif.protocols import p
+from flext_ldif import p, t, u
 from flext_ldif.servers._oid import FlextLdifServersOidEntryBoolean
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
-from flext_ldif.typings import t
-from flext_ldif.utilities import u
 
 
 class FlextLdifServersOidEntryRestore(

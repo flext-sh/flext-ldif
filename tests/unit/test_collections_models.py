@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from collections.abc import Iterable, MutableSequence
 
-import pytest
-
 from tests import c, m, p, t, tm, u
 
 
@@ -47,7 +45,7 @@ class TestsFlextLdifModelsCollections:
         tm.that(counts.model_dump(), eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize("value", [True, "2", 2.5, None])
+    @c.Tests.MARK.parametrize("value", [True, "2", 2.5, None])
     def test_dynamic_counts_rejects_non_integer_values(value: t.JsonValue) -> None:
         """Invalid counts fail at admission rather than becoming zero on reads."""
         with u.Tests.raises(m.ValidationError):

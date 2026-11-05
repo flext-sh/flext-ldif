@@ -8,8 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableSequence, Sequence
 
-from flext_ldif.constants import c
-from flext_ldif.typings import t
+from flext_ldif import c, t
 
 
 class FlextLdifUtilitiesEntryBoolean:

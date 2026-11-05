@@ -6,8 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from tests import c, ldif, m, p, tm, u
 
 
@@ -15,7 +13,7 @@ class TestsFlextLdifProtocolsValues:
     """Value protocols resolve through the public facade and accept their models."""
 
     @staticmethod
-    @pytest.mark.parametrize("server_type", [c.Tests.RFC, c.Tests.OID])
+    @c.Tests.MARK.parametrize("server_type", [c.Tests.RFC, c.Tests.OID])
     def test_registered_schema_fields_support_oid_filtering(
         server: p.Ldif.ServerRegistry,
         server_type: str,

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_ldif.constants import c
+from flext_ldif import c
 
 if TYPE_CHECKING:
     from flext_ldif._models import FlextLdifModelsDomainSchema

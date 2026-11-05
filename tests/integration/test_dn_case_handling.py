@@ -13,9 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
-from tests import m, p, tm
+from tests import c, m, p, tm, u
 
 _LATER_VARIANT_CASES: tuple[str, ...] = (
     "cn=admin,dc=example,dc=com",
@@ -32,7 +30,7 @@ _RESOLUTION_LOOKUP_CASES: tuple[str, ...] = (
 class TestsFlextLdifDnCaseHandling:
     """Public-contract behavior of the DN case registry."""
 
-    @pytest.fixture
+    @u.Tests.fixture
     def registry() -> p.Ldif.DnRegistry:
         """Provide a fresh, empty DN registry.
 
@@ -54,7 +52,7 @@ class TestsFlextLdifDnCaseHandling:
         tm.that(canonical, eq="CN=Admin,DC=Example,DC=Com")
 
     @staticmethod
-    @pytest.mark.parametrize("variant", _LATER_VARIANT_CASES)
+    @c.Tests.MARK.parametrize("variant", _LATER_VARIANT_CASES)
     def test_later_variants_return_the_original_canonical(
         registry: p.Ldif.DnRegistry,
         variant: str,
@@ -101,7 +99,7 @@ class TestsFlextLdifDnCaseHandling:
     # -- resolution ----------------------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize("lookup", _RESOLUTION_LOOKUP_CASES)
+    @c.Tests.MARK.parametrize("lookup", _RESOLUTION_LOOKUP_CASES)
     def test_resolution_is_case_insensitive(
         registry: p.Ldif.DnRegistry,
         lookup: str,
@@ -112,7 +110,7 @@ class TestsFlextLdifDnCaseHandling:
         tm.that(registry.resolve_canonical_dn(lookup), eq="cn=test,dc=example,dc=com")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "lookup",
         ["cn=admin, dc=com", "cn=admin,  dc=com", "CN=Admin , DC=Com"],
     )
@@ -156,7 +154,7 @@ class TestsFlextLdifDnCaseHandling:
         tm.ok(result.unwrap())
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "variants",
         [
             ("cn=admin,dc=com", "CN=Admin,DC=Com"),

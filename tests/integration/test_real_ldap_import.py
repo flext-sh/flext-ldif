@@ -23,8 +23,6 @@ import base64
 from collections.abc import MutableMapping
 from typing import TYPE_CHECKING
 
-import pytest
-
 from tests import c, ldif, tm, u
 
 if TYPE_CHECKING:
@@ -34,7 +32,7 @@ if TYPE_CHECKING:
 from tests import p
 
 
-@pytest.fixture
+@u.Tests.fixture
 def flext_api() -> p.Ldif.LdifClient:
     """Public LDIF client under test.
 
@@ -45,8 +43,8 @@ def flext_api() -> p.Ldif.LdifClient:
     return ldif()
 
 
-@pytest.mark.docker
-@pytest.mark.integration
+@c.Tests.MARK.docker
+@c.Tests.MARK.integration
 class TestsFlextLdifRealLdapImport:
     """Behavioral contract of parsing LDIF and importing it into live LDAP."""
 
@@ -121,7 +119,7 @@ class TestsFlextLdifRealLdapImport:
         ldap_entry: p.Ldap3Entry = ldap_connection.entries[0]
         return ldap_entry
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("attribute", "expected"),
         [
             ("cn", None),  # cn equals the generated unique username

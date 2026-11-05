@@ -18,9 +18,8 @@ from typing import Annotated, ClassVar
 
 from flext_cli import m
 
+from flext_ldif import p, t
 from flext_ldif._models import FlextLdifModelsDomainsEntries
-from flext_ldif.protocols import p
-from flext_ldif.typings import t
 
 
 class FlextLdifModelsCollections:

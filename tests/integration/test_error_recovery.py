@@ -12,15 +12,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
-from tests import ldif, p, tm
+from tests import c, ldif, p, tm, u
 
 
 class TestsFlextLdifErrorRecovery:
     """Observable-behavior tests for malformed and edge-case LDIF input."""
 
-    @pytest.fixture
+    @u.Tests.fixture
     def api() -> p.Ldif.LdifClient:
         """Return a configured LDIF facade instance (public DSL alias)."""
         return ldif()
@@ -50,21 +48,21 @@ class TestsFlextLdifErrorRecovery:
         tm.that(set(attributes.attributes), eq={"objectClass", "cn", "sn"})
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("content", "expected_dn"),
         [
-            pytest.param(
+            u.Tests.param(
                 "version: 1\ndn: cn=W,dc=example,dc=com\nobjectClass: person\ncn: W\n",
                 "cn=W,dc=example,dc=com",
                 id="version-line-ignored",
             ),
-            pytest.param(
+            u.Tests.param(
                 "# a comment\ndn: cn=W,dc=example,dc=com\n# mid comment\nobjectClass: "
                 "person\ncn: W\n",
                 "cn=W,dc=example,dc=com",
                 id="comment-lines-ignored",
             ),
-            pytest.param(
+            u.Tests.param(
                 "dn: cn=José,dc=example,dc=com\nobjectClass: person\ncn: José\n",
                 "cn=José,dc=example,dc=com",
                 id="unicode-dn-preserved",
@@ -249,23 +247,23 @@ class TestsFlextLdifErrorRecovery:
         tm.that(dn.value, eq="cn=Minimal,dc=example,dc=com")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("content", "expected_count"),
         [
-            pytest.param(
+            u.Tests.param(
                 "dn: cn=Complete,dc=example,dc=com\nobjectClass: person\ncn: Complete\n"
                 "\ndn: cn=Incomplete,dc=example,dc\n",
                 1,
                 id="truncated-second-dn-dropped",
             ),
-            pytest.param(
+            u.Tests.param(
                 "dn: cn=Test1,dc=example,dc=com\nobjectClass: person\ncn: Test1\n"
                 "\n orphaned-continuation\n"
                 "dn: cn=Test2,dc=example,dc=com\nobjectClass: person\ncn: Test2\n",
                 2,
                 id="orphaned-continuation-recovers",
             ),
-            pytest.param(
+            u.Tests.param(
                 "dn: cn=NoBlank,dc=example,dc=com\nobjectClass: person\ncn: "
                 "NoBlank\nsn: Test",
                 1,
@@ -285,21 +283,21 @@ class TestsFlextLdifErrorRecovery:
         tm.that(len(result.unwrap().entries), eq=expected_count)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "content",
         [
-            pytest.param(
+            u.Tests.param(
                 "dn: cn=Schema,cn=settings\nobjectClass: schema\n"
                 "attributeTypes: ( invalid-oid NAME 'test' SYNTAX "
                 "1.3.6.1.4.1.1466.115.121.1.15 )\n",
                 id="malformed-oid",
             ),
-            pytest.param(
+            u.Tests.param(
                 "dn: cn=Schema,cn=settings\nobjectClass: schema\n"
                 "attributeTypes: ( 1.2.3 NAME 'incomplete'\n",
                 id="unclosed-schema-paren",
             ),
-            pytest.param(
+            u.Tests.param(
                 "dn: cn=InvalidBase64,dc=example,dc=com\nobjectClass: person\n"
                 "jpegPhoto:: !!!invalid-base64!!!\n",
                 id="invalid-base64",

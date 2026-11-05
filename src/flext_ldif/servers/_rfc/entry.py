@@ -9,12 +9,8 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import ClassVar, override
 
-from flext_cli import r
-
-from flext_ldif.protocols import p
+from flext_ldif import p, r, t, u
 from flext_ldif.servers._base import FlextLdifServersBaseEntry
-from flext_ldif.typings import t
-from flext_ldif.utilities import u
 
 
 class FlextLdifServersRfcEntry(

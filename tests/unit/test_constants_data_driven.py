@@ -10,8 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from tests import c, tm
 
 
@@ -19,7 +17,7 @@ class TestsFlextLdifConstantsDataDriven:
     """Validate the public contract of the reusable test-constants namespace."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("constant_value", "expected_server_type"),
         [
             (c.Tests.AD, c.Ldif.ServerTypes.AD.value),
@@ -70,7 +68,7 @@ class TestsFlextLdifConstantsDataDriven:
         tm.fail(c.Tests.RFC in c.Tests.FIXTURE_SERVERS_COMMON)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("name_constant", "expected_attribute"),
         [
             (c.Tests.NAME_UID, "uid"),
@@ -100,14 +98,14 @@ class TestsFlextLdifConstantsDataDriven:
         )
 
     @staticmethod
-    @pytest.mark.parametrize("rfc_value", ["TRUE", "FALSE"])
+    @c.Tests.MARK.parametrize("rfc_value", ["TRUE", "FALSE"])
     def test_boolean_oid_and_rfc_maps_are_mutual_inverses(rfc_value: str) -> None:
         """Test boolean oid and rfc maps are mutual inverses."""
         oid_value: str = c.Tests.BOOLEAN_RFC_TO_OID[rfc_value]
         tm.that(c.Tests.BOOLEAN_OID_TO_RFC[oid_value], eq=rfc_value)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("content", "expected_dn_prefix"),
         [
             (c.Tests.EDGE_CASE_UNICODE_LDIF, "dn: cn=José"),

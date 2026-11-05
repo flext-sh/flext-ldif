@@ -12,10 +12,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_ldif import FlextLdif
-from tests import p, tm
+from tests import c, p, tm, u
 
 _SYNTAX_NORMALIZATION_CASES: tuple[tuple[str, str, str], ...] = (
     (
@@ -59,7 +57,7 @@ _SUPERIOR_NORMALIZATION_CASES: tuple[tuple[str, str, str], ...] = (
 class TestsFlextLdifOidServers:
     """Public-contract behavior of the OID schema server."""
 
-    @pytest.fixture
+    @u.Tests.fixture
     def schema() -> p.Ldif.SchemaServer:
         """Resolve the OID schema server through the public registry.
 
@@ -77,9 +75,9 @@ class TestsFlextLdifOidServers:
         tm.fail(FlextLdif().resolve_schema_server("does-not-exist"))
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("attr_def", "expected_syntax"),
-        [pytest.param(*tc[:2], id=tc[2]) for tc in _SYNTAX_NORMALIZATION_CASES],
+        [u.Tests.param(*tc[:2], id=tc[2]) for tc in _SYNTAX_NORMALIZATION_CASES],
     )
     def test_parse_attribute_normalizes_syntax_oid(
         schema: p.Ldif.SchemaServer,
@@ -92,20 +90,20 @@ class TestsFlextLdifOidServers:
         tm.that(str(result.unwrap().syntax), eq=expected_syntax)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("equality_in", "expected_equality"),
         [
-            pytest.param(
+            u.Tests.param(
                 "caseIgnoreSubstringsMatch",
                 "caseIgnoreMatch",
                 id="substrings-equality-normalized",
             ),
-            pytest.param(
+            u.Tests.param(
                 "accessDirectiveMatch",
                 "caseIgnoreMatch",
                 id="oid-access-directive-normalized",
             ),
-            pytest.param(
+            u.Tests.param(
                 "distinguishedNAMEMatch",
                 "distinguishedNameMatch",
                 id="dn-case-variant-normalized",
@@ -169,9 +167,9 @@ class TestsFlextLdifOidServers:
         tm.that(result.error, has="OID")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("oc_def", "expected_sup"),
-        [pytest.param(*tc[:2], id=tc[2]) for tc in _SUPERIOR_NORMALIZATION_CASES],
+        [u.Tests.param(*tc[:2], id=tc[2]) for tc in _SUPERIOR_NORMALIZATION_CASES],
     )
     def test_parse_objectclass_normalizes_superior(
         schema: p.Ldif.SchemaServer,

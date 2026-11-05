@@ -50,7 +50,7 @@ def _probe_ldap_bind(
         return r[None].fail("LDAP bind returned False")
 
 
-@pytest.fixture(scope="session")
+@u.Tests.fixture(scope="session")
 def ldap_container(worker_id: str) -> t.JsonMapping:
     """Ensure shared OpenLDAP container is available for integration tests.
 
@@ -92,8 +92,8 @@ def ldap_container(worker_id: str) -> t.JsonMapping:
     }
 
 
-@pytest.fixture
-def unique_dn_suffix(worker_id: str, request: pytest.FixtureRequest) -> str:
+@u.Tests.fixture
+def unique_dn_suffix(worker_id: str, request: t.Tests.FixtureRequest) -> str:
     """Build a unique suffix for LDAP DNs per test execution.
 
     Returns:
@@ -108,7 +108,7 @@ def unique_dn_suffix(worker_id: str, request: pytest.FixtureRequest) -> str:
     return f"{worker_id}-{int(time.time() * 1000)}-{test_name_clean}"
 
 
-@pytest.fixture
+@u.Tests.fixture
 def make_test_username(unique_dn_suffix: str) -> Callable[[str], str]:
     """Return a factory that creates unique usernames."""
 
@@ -118,7 +118,7 @@ def make_test_username(unique_dn_suffix: str) -> Callable[[str], str]:
     return _make
 
 
-@pytest.fixture
+@u.Tests.fixture
 def make_test_base_dn(unique_dn_suffix: str) -> Callable[[str], str]:
     """Return a factory that creates unique test base DNs."""
 
@@ -128,7 +128,7 @@ def make_test_base_dn(unique_dn_suffix: str) -> Callable[[str], str]:
     return _make
 
 
-@pytest.fixture
+@u.Tests.fixture
 def ldap_connection(ldap_container: t.JsonMapping) -> Generator[p.Ldap3Connection]:
     """Provide a bound LDAP connection for integration tests.
 
@@ -158,7 +158,7 @@ def ldap_connection(ldap_container: t.JsonMapping) -> Generator[p.Ldap3Connectio
     conn.unbind()
 
 
-@pytest.fixture
+@u.Tests.fixture
 def clean_test_ou(
     ldap_connection: p.Ldap3Connection, make_test_base_dn: Callable[[str], str]
 ) -> Generator[str]:

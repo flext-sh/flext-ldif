@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
 
-from flext_ldif.constants import c
+from flext_ldif import c
 
 if TYPE_CHECKING:
     from flext_ldif import FlextLdifModels

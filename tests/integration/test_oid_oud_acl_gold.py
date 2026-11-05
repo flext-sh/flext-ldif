@@ -24,11 +24,9 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, ClassVar
 
-import pytest
-
 from flext_ldif import FlextLdif
 from flext_ldif.servers import FlextLdifServersOidAclPipeline
-from tests import c, m, p, tm
+from tests import c, m, p, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -90,17 +88,17 @@ class TestsFlextLdifOidOudAclGold:
             rows.append((dn, int(granted), int(deny_none), int(complement), 0))
         return rows
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("input_name", "gold_name", "outcomes_name", "base_dn"),
         [
-            pytest.param(
+            u.Tests.param(
                 "acl_synth_input.ldif",
                 "acl_synth_gold.ldif",
                 "acl_synth_outcomes.tsv",
                 "dc=ctbc",
                 id="synth",
             ),
-            pytest.param(
+            u.Tests.param(
                 "aci_dump_input.ldif",
                 "aci_dump_gold.ldif",
                 "aci_dump_outcomes.tsv",

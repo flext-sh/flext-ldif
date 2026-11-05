@@ -14,8 +14,6 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
-import pytest
-
 from tests import c, ldif, m, tm
 
 if TYPE_CHECKING:
@@ -23,7 +21,7 @@ if TYPE_CHECKING:
 
 from tests import p, t
 
-pytestmark = pytest.mark.docker
+pytestmark = c.Tests.MARK.docker
 
 
 class TestsFlextLdifSimpleLdap:

@@ -13,8 +13,6 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence, Sequence
 
-import pytest
-
 from flext_ldif.services import FlextLdifFilters
 from tests import c, ldif, m, p, tm, u
 
@@ -24,7 +22,7 @@ class TestsFlextLdifFiltersService:
 
     # ── fixtures ──────────────────────────────────────────────────────────────
 
-    @pytest.fixture
+    @u.Tests.fixture
     def regular_entry() -> p.Ldif.Entry:
         """Build a person entry carrying objectClasses plus filterable attributes.
 
@@ -47,7 +45,7 @@ class TestsFlextLdifFiltersService:
             },
         )
 
-    @pytest.fixture
+    @u.Tests.fixture
     def entry_without_attributes() -> p.Ldif.Entry:
         """Build an entry whose ``attributes`` field is ``None``.
 
@@ -172,7 +170,7 @@ class TestsFlextLdifFiltersService:
     # ── filter_schema_attribute_values ────────────────────────────────────────
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("attr_key", "allowed_oid", "raw_oid"),
         [
             (

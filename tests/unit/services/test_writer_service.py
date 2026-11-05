@@ -17,8 +17,6 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from uuid import uuid4
 
-import pytest
-
 from tests import c, ldif, m, p, tm, u
 
 
@@ -37,7 +35,7 @@ class TestsFlextLdifWriterService:
 
     # ── write_to_string: success contract ────────────────────────────────
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("scenario", "server_type"),
         tuple(c.Tests.WRITER_SERVER_CASES.items()),
     )
@@ -283,7 +281,7 @@ class TestsFlextLdifWriterService:
         tm.that(failure.value.errno, eq=errno.EINVAL)
         tm.that(directory_target.is_dir())
 
-    @pytest.mark.parametrize("server_type", [c.Tests.RFC, "oud"])
+    @c.Tests.MARK.parametrize("server_type", [c.Tests.RFC, "oud"])
     def test_rejection_comments_are_opt_in_and_cannot_inject_entries(
         self,
         writer: p.Ldif.LdifClient,

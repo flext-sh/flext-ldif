@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_ldif.protocols import p
+from flext_ldif import p, u
 from flext_ldif.servers._oid import (
     FlextLdifServersOidAclFormat,
     FlextLdifServersOidAclParse,
@@ -16,7 +16,6 @@ from flext_ldif.servers._oid import (
     FlextLdifServersOidAclWrite,
 )
 from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
-from flext_ldif.utilities import u
 
 
 class FlextLdifServersOidAcl(

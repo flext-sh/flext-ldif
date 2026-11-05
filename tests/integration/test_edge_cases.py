@@ -16,9 +16,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
-from tests import ldif, p, tm
+from tests import c, ldif, p, tm, u
 
 _ZERO_WIDTH = "zero" + "\u200b" + "width" + "\u200b" + "spaces"
 
@@ -26,7 +24,7 @@ _ZERO_WIDTH = "zero" + "\u200b" + "width" + "\u200b" + "spaces"
 class TestsFlextLdifIntegrationEdgeCases:
     """Behavioral edge-case coverage for the public LDIF client contract."""
 
-    @pytest.fixture
+    @u.Tests.fixture
     def api() -> p.Ldif.LdifClient:
         """Public LDIF client instance.
 
@@ -39,7 +37,7 @@ class TestsFlextLdifIntegrationEdgeCases:
     # -- Empty / minimal content -------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "content",
         ["", "   \n\n  \t\n  ", "# Comment 1\n# Comment 2\n# Comment 3\n"],
         ids=["empty", "whitespace", "comments"],
@@ -172,7 +170,7 @@ class TestsFlextLdifIntegrationEdgeCases:
         tm.that(entry.attributes_dict["sn"], eq=["B"])
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("attribute", "value"),
         [("sn", "*"), ("mail", "+"), ("description", "-")],
     )
@@ -216,7 +214,7 @@ class TestsFlextLdifIntegrationEdgeCases:
     # -- Unicode / encoding boundaries -------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "text",
         [
             "café, naïve, résumé, 中文, 日本語, العربية",

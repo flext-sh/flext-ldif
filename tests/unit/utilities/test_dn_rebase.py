@@ -14,9 +14,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import cast
 
-import pytest
-
-from tests import m, p, t, tm, u
+from tests import c, m, p, t, tm, u
 
 SOURCE = "dc=example,dc=invalid"
 TARGET = "dc=r123,dc=algar,dc=local"
@@ -41,7 +39,7 @@ def _entry(
     )
 
 
-@pytest.mark.unit
+@c.Tests.MARK.unit
 class TestsFlextLdifDnRebase:
     """Public contract of modrdn-aware transform_entry_base_dn."""
 

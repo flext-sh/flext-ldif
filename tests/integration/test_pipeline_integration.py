@@ -16,9 +16,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping, MutableSequence
 from typing import TYPE_CHECKING
 
-import pytest
-
-from tests import ldif, tm
+from tests import c, ldif, tm
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -76,7 +74,7 @@ class TestsFlextLdifPipelineIntegration:
         return attributes
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("content", "expected_count"),
         [
             (SINGLE_ENTRY, 1),
@@ -196,7 +194,7 @@ class TestsFlextLdifPipelineIntegration:
         tm.that(written.content, has="dn: cn=test,dc=example,dc=com")
         tm.that(written.statistics.total_entries, eq=1)
 
-    @pytest.mark.parametrize("content", [SINGLE_ENTRY, THREE_ENTRIES, GROUP_ENTRY])
+    @c.Tests.MARK.parametrize("content", [SINGLE_ENTRY, THREE_ENTRIES, GROUP_ENTRY])
     def test_parse_write_parse_roundtrip_is_idempotent(self, content: str) -> None:
         """Re-parsing serialized output reproduces DNs and attributes exactly."""
         api = ldif()
