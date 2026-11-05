@@ -78,19 +78,19 @@ class TestsFlextLdifLdifFixturesIntegration:
             )
             tm.reject(message)
 
-    @pytest.mark.parametrize(("subdir", "filename", "_min_entries"), _FIXTURE_CASES)
+    @pytest.mark.parametrize(("subdir", "filename", "min_entries"), _FIXTURE_CASES)
     def test_every_parsed_entry_exposes_a_wellformed_dn(
         self,
         ldif_client: p.Ldif.LdifClient,
         subdir: str,
         filename: str,
-        _min_entries: int,
+        min_entries: int,
     ) -> None:
         """Every parsed entry publishes a non-empty, attribute=value shaped DN."""
         result = ldif_client.parse_ldif(self._fixture_path(subdir, filename))
 
         tm.ok(result)
-        tm.that(len(result.value.entries) >= _min_entries, truth=True)
+        tm.that(len(result.value.entries) >= min_entries, truth=True)
         for entry in result.value.entries:
             dn = tm.not_none(entry.dn)
             dn_value = dn.value
@@ -100,34 +100,34 @@ class TestsFlextLdifLdifFixturesIntegration:
             tm.that(entry.dn_str, eq=dn_value)
             tm.that(dn_value, has="=")
 
-    @pytest.mark.parametrize(("subdir", "filename", "_min_entries"), _FIXTURE_CASES)
+    @pytest.mark.parametrize(("subdir", "filename", "min_entries"), _FIXTURE_CASES)
     def test_statistics_total_matches_returned_entry_count(
         self,
         ldif_client: p.Ldif.LdifClient,
         subdir: str,
         filename: str,
-        _min_entries: int,
+        min_entries: int,
     ) -> None:
         """Reported statistics agree with the number of entries returned."""
         response = ldif_client.parse_ldif(self._fixture_path(subdir, filename)).value
 
         tm.that(response.statistics.total_entries, eq=len(response.entries))
-        tm.that(len(response.entries) >= _min_entries, truth=True)
+        tm.that(len(response.entries) >= min_entries, truth=True)
         tm.that(response.detected_server_type, truth=True)
 
-    @pytest.mark.parametrize(("subdir", "filename", "_min_entries"), _FIXTURE_CASES)
+    @pytest.mark.parametrize(("subdir", "filename", "min_entries"), _FIXTURE_CASES)
     def test_write_then_reparse_preserves_entry_count(
         self,
         ldif_client: p.Ldif.LdifClient,
         subdir: str,
         filename: str,
-        _min_entries: int,
+        min_entries: int,
     ) -> None:
         """Writing parsed entries and reparsing the output round-trips the count."""
         parsed = ldif_client.parse_ldif(self._fixture_path(subdir, filename))
         tm.ok(parsed)
         original = parsed.value.entries
-        tm.that(len(original) >= _min_entries, truth=True)
+        tm.that(len(original) >= min_entries, truth=True)
 
         written = ldif_client.write(original)
         tm.ok(written)
@@ -140,20 +140,20 @@ class TestsFlextLdifLdifFixturesIntegration:
         tm.ok(reparsed)
         tm.that(len(reparsed.value.entries), eq=len(original))
 
-    @pytest.mark.parametrize(("subdir", "filename", "_min_entries"), _FIXTURE_CASES)
+    @pytest.mark.parametrize(("subdir", "filename", "min_entries"), _FIXTURE_CASES)
     def test_validate_entries_reports_success_for_wellformed_fixtures(
         self,
         ldif_client: p.Ldif.LdifClient,
         subdir: str,
         filename: str,
-        _min_entries: int,
+        min_entries: int,
     ) -> None:
         """Validating well-formed fixture entries yields a passing validation result."""
         entries = ldif_client.parse_ldif(
             self._fixture_path(subdir, filename),
         ).value.entries
 
-        tm.that(len(entries) >= _min_entries, truth=True)
+        tm.that(len(entries) >= min_entries, truth=True)
         validation = ldif_client.validate_entries(entries)
 
         tm.ok(validation)
