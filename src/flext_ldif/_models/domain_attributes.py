@@ -25,7 +25,6 @@ class FlextLdifModelsDomainAttributes:
             validate_assignment=True,
             extra="forbid",
             use_enum_values=True,
-            str_strip_whitespace=True,
         )
         attributes: Annotated[
             t.MutableStrSequenceMapping,
