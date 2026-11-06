@@ -47,6 +47,7 @@ class FlextLdifUtilitiesParserRecord:
         deleteoldrdn: bool | None
         newsuperior: str | None
         dn_was_base64: bool
+        has_dn: bool
 
         def __init__(self) -> None:
             """Initialize an empty record state."""
@@ -73,6 +74,7 @@ class FlextLdifUtilitiesParserRecord:
             self.deleteoldrdn: bool | None = None
             self.newsuperior: str | None = None
             self.dn_was_base64 = False
+            self.has_dn = False
 
     class _DecodedValue:
         """One decoded LDIF value with its origin and raw payload."""
@@ -231,6 +233,7 @@ class FlextLdifUtilitiesParserRecord:
                 remainder
             )
             state.dn = decoded_dn
+            state.has_dn = True
             state.dn_was_base64 = origin is c.Ldif.ValueOrigin.BASE64
             return True
         if key_lower == "changetype":
@@ -329,7 +332,7 @@ class FlextLdifUtilitiesParserRecord:
             state.current_change_operation,
             state.change_operations,
         )
-        if not state.dn:
+        if not state.has_dn:
             return r[FlextLdifModels.Ldif.Entry].fail("No DN found in entry")
         try:
             entry = FlextLdifUtilitiesParserRecord._build_entry(state)

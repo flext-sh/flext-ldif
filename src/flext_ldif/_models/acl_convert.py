@@ -1,8 +1,10 @@
-"""ACL-conversion models — OID rule / OUD aci typed value objects.
+"""ACL-conversion models — the typed OID policy and the OUD ACI statements.
 
-Cohesive home for the OID→OUD ACL conversion model layer (parsed OID rules,
-assembled OUD aci rules, and the subject-matcher parse descriptor). Mirrors the
-``_constants/acl_convert.py`` SSOT; composed into ``m.Ldif`` via MRO.
+Value objects of the OID→OUD ACL conversion: parsed OID rules, the injected
+source directory, the evaluation levels and resolutions of the OID policy,
+and the OUD ACI statements emitted from them. They carry data only; the
+OID dialect (``servers/_oid``) owns the grammar and the conversion rules.
+Composed into ``m.Ldif`` via MRO.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,7 +12,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+from types import MappingProxyType
 from typing import Annotated
 
 from flext_core import m
@@ -79,255 +82,322 @@ class FlextLdifModelsAclConvert:
             m.Field(description="Parsed by-clause subjects"),
         ] = ()
         raw_line: Annotated[str, m.Field(description="Original raw OID ACL line")] = ""
-
-    class AciBindClause(m.FrozenModel):
-        """One OUD ``aci`` permission clause: bind-rule subject + permission set."""
-
-        subject_type: Annotated[
-            str,
-            m.Field(description="OUD bind-rule keyword: userdn | groupdn | userattr"),
-        ]
-        subject_value: Annotated[
-            str,
-            m.Field(description="Bind-rule value, e.g. ldap:///cn=Directory Manager"),
-        ]
-        permissions: Annotated[
-            Sequence[str],
-            m.Field(description="OUD permission tokens in canonical order"),
-        ] = ()
-        authmethod: Annotated[
-            str,
-            m.Field(description="OUD authmethod bind-rule constraint"),
-        ] = ""
-        ip: Annotated[
-            str,
-            m.Field(description="OUD ip bind-rule constraint (from bindipfilter)"),
-        ] = ""
-        targetscope: Annotated[
-            str | None,
-            m.Field(
-                description="OUD targetscope of the aci this clause renders in; "
-                "None renders it under the rule's targetscope",
-            ),
-        ] = None
-
-    class AciAllow(AciBindClause):
-        """One OUD ``aci`` ``allow()`` clause: bind-rule subject + granted set."""
-
-    class AciDeny(AciBindClause):
-        """One OUD ``aci`` ``deny()`` clause: bind-rule subject + denied set."""
+        deny_group_override: Annotated[
+            bool,
+            m.Field(description="Whether the object carries DenyGroupOverride"),
+        ] = False
+        append_to_all: Annotated[
+            bool,
+            m.Field(description="Whether the object carries AppendToAll"),
+        ] = False
 
     class AclPermissionResolution(m.FrozenModel):
-        """OUD permission tokens one OID access list grants and denies.
+        """OID rights one OID access list grants and denies (OID-30 §30.1.4.3).
 
-        Each OID access level is granted or denied independently and ``noxxx``
-        denies ``xxx`` (OID-30 §30.1.4.3); ``none`` denies every right of the
-        target kind (Table 30-2). A right both granted and denied is denied.
-        Rights the list does not name stay unresolved and appear in neither
-        set.
+        Each access level is granted or denied independently and ``noxxx``
+        denies ``xxx``; ``none`` denies every right of the target kind (Table
+        30-2). A right both granted and denied in one list is denied. Rights
+        the list does not name stay unresolved and appear in neither set.
         """
 
         allow: Annotated[
-            Sequence[str],
-            m.Field(description="Granted OUD permission tokens in canonical order"),
-        ] = ()
+            frozenset[str],
+            m.Field(description="Granted OID rights of the target kind"),
+        ] = frozenset()
         deny: Annotated[
-            Sequence[str],
-            m.Field(description="Denied OUD permission tokens in canonical order"),
-        ] = ()
-        total_denial: Annotated[
+            frozenset[str],
+            m.Field(description="Denied OID rights of the target kind"),
+        ] = frozenset()
+
+    class AclSecurityGroup(m.FrozenModel):
+        """One source group entry: its OID security classes and nesting."""
+
+        classes: Annotated[
+            frozenset[str],
+            m.Field(description="Case-folded OID security group classes"),
+        ] = frozenset()
+        member_groups: Annotated[
+            frozenset[str],
+            m.Field(description="DN keys of the member entries that are groups"),
+        ] = frozenset()
+        dynamic: Annotated[
             bool,
-            m.Field(description="Whether deny covers every right of the target kind"),
+            m.Field(description="Whether membership is computed (memberURL)"),
         ] = False
 
-    class AclSubjectOutcome(m.FrozenModel):
-        """What conversion did with one OID by-clause subject, in input order.
+    class AclDirectory(m.FrozenModel):
+        """The migrated source directory injected into ACL conversion.
 
-        ``allow`` is the effective grant of a ``GRANTED`` subject: its granted
-        rights minus the rights a catch-all (``*``) subject of the same rule
-        denies, since every session matches that subject and a matched denial
-        wins (OID-30 §30.1.6.2). A ``CANCELLED`` subject granted only rights
-        such a denial removes. ``deny`` carries the subject's own denied
-        rights. ``wildcard_rewritten`` reports a regex→wildcard bind DN, and
-        ``display_value`` is the converted bind DN of an ``OUT_OF_SCOPE``
-        subject.
+        ``entries`` maps every migrated DN key to the DN as read; it is the
+        child set of the per-child denial split. ``groups`` holds every group
+        entry with its security classes (R8, OID-30 §30.1.3.4.6).
         """
 
+        entries: Annotated[
+            Mapping[str, str],
+            m.Field(description="DN key to DN as read, for every migrated entry"),
+        ] = MappingProxyType({})
+        groups: Annotated[
+            Mapping[str, FlextLdifModelsAclConvert.AclSecurityGroup],
+            m.Field(description="Group entries keyed by DN key"),
+        ] = MappingProxyType({})
+
+    class AclBindLeaf(m.FrozenModel):
+        """One OUD bind-rule subject converted from one OID subject (R8)."""
+
+        kind: Annotated[str, m.Field(description="Bind leaf kind")]
+        value: Annotated[str, m.Field(description="Bind value as rendered")]
+        key: Annotated[str, m.Field(description="Comparison key of the value")]
+
+    class AclBindRule(m.FrozenModel):
+        """A subject with the subjects it excludes: ``S and not (E1 or E2)``."""
+
+        include: Annotated[
+            FlextLdifModelsAclConvert.AclBindLeaf,
+            m.Field(description="Subject the rule matches"),
+        ]
+        exclude: Annotated[
+            tuple[FlextLdifModelsAclConvert.AclBindLeaf, ...],
+            m.Field(description="Subjects excluded from the match"),
+        ] = ()
+
+    class AclAttrSet(m.FrozenModel):
+        """An attribute set: listed names, or every attribute but ``names``."""
+
+        names: Annotated[
+            frozenset[str],
+            m.Field(description="Case-folded attribute names"),
+        ] = frozenset()
+        negated: Annotated[
+            bool,
+            m.Field(description="Every attribute except ``names``"),
+        ] = False
+
+    class AclClause(m.FrozenModel):
+        """One OID by-clause with its converted subject and OID rights."""
+
+        index: Annotated[int, m.Field(description="1-based clause position")]
         subject: Annotated[
-            Annotated[
-                p.Ldif.OidAclSubject,
-                t.schema_for_model(FlextLdifModelsAclConvert.OidAclSubject),
-            ],
-            m.Field(description="The OID subject exactly as parsed"),
+            FlextLdifModelsAclConvert.OidAclSubject,
+            m.Field(description="The OID subject as parsed"),
         ]
-        kind: Annotated[
-            c.Ldif.AclSubjectOutcomeKind,
-            m.Field(description="Conversion outcome for this subject"),
-        ]
-        allow: Annotated[
-            Annotated[
-                p.Ldif.AciAllow,
-                t.schema_for_model(FlextLdifModelsAclConvert.AciAllow),
-            ]
-            | None,
-            m.Field(description="Effective allow clause of a GRANTED subject"),
+        leaf: Annotated[
+            FlextLdifModelsAclConvert.AclBindLeaf | None,
+            m.Field(description="OUD subject, or None when no session matches"),
         ] = None
-        deny: Annotated[
-            Annotated[
-                p.Ldif.AciDeny,
-                t.schema_for_model(FlextLdifModelsAclConvert.AciDeny),
-            ]
-            | None,
-            m.Field(description="Deny clause of the subject's denied rights"),
-        ] = None
-        wildcard_rewritten: Annotated[
-            bool,
-            m.Field(description="Whether regex→wildcard rewrote the bind DN"),
-        ] = False
-        display_value: Annotated[
+        outcome: Annotated[
             str,
-            m.Field(description="Converted bind DN of an OUT_OF_SCOPE subject"),
+            m.Field(description="Rule that decided a subject without session"),
+        ] = ""
+        allow: Annotated[
+            frozenset[str],
+            m.Field(description="Granted OID rights"),
+        ] = frozenset()
+        deny: Annotated[
+            frozenset[str],
+            m.Field(description="Denied OID rights"),
+        ] = frozenset()
+
+    class AclLevelRule(m.FrozenModel):
+        """One OID ACI at its evaluation level (OID-30 §30.1.6)."""
+
+        level: Annotated[
+            str,
+            m.Field(description="Origin attribute: orclaci or orclentrylevelaci"),
+        ]
+        dn: Annotated[str, m.Field(description="Carrier DN as read")]
+        key: Annotated[str, m.Field(description="Carrier DN key")]
+        index: Annotated[int, m.Field(description="1-based position at the level")]
+        rule: Annotated[
+            FlextLdifModelsAclConvert.OidAclRule,
+            m.Field(description="The parsed OID ACI"),
+        ]
+        attrs: Annotated[
+            FlextLdifModelsAclConvert.AclAttrSet | None,
+            m.Field(description="Attribute target; None for an entry target"),
+        ] = None
+        target_filter: Annotated[
+            str | None,
+            m.Field(description="Parenthesized OID filter, if present"),
+        ] = None
+        clauses: Annotated[
+            tuple[FlextLdifModelsAclConvert.AclClause, ...],
+            m.Field(description="By-clauses in source order"),
+        ] = ()
+
+    class AclResolution(m.FrozenModel):
+        """One OID right decided by one clause of one ACI (R6a)."""
+
+        clause: Annotated[int, m.Field(description="Deciding clause position")]
+        right: Annotated[str, m.Field(description="OID right")]
+        effect: Annotated[str, m.Field(description="allow or deny")]
+        leaf: Annotated[
+            FlextLdifModelsAclConvert.AclBindLeaf,
+            m.Field(description="Subject of the clause"),
+        ]
+        grantors: Annotated[
+            tuple[FlextLdifModelsAclConvert.AclBindLeaf, ...],
+            m.Field(description="Subjects the same ACI grants the right to"),
+        ] = ()
+        added_object_constraint: Annotated[
+            str,
+            m.Field(description="OID added-object constraint of the clause"),
         ] = ""
 
-    class AciRule(m.FrozenModel):
-        """The OUD ``aci`` clauses assembled from one OID rule.
+    class AclForm(m.FrozenModel):
+        """OUD rights, attributes, filter and scope of one decision."""
 
-        Clauses render as one ``aci`` value per distinct clause targetscope;
-        ``targetscope`` is the scope of clauses that declare none.
-        """
-
-        dn: Annotated[str, m.Field(description="Entry DN that owns the aci")]
-        targetattr: Annotated[
-            str,
-            m.Field(description="targetattr expression, e.g. '*' or 'cn||sn'"),
-        ] = "*"
+        rights: Annotated[tuple[str, ...], m.Field(description="OUD rights")]
+        attrs: Annotated[
+            FlextLdifModelsAclConvert.AclAttrSet,
+            m.Field(description="OUD targetattr set"),
+        ]
         targetfilter: Annotated[
             str | None,
-            m.Field(description="targetfilter expression, if present"),
+            m.Field(description="OUD targetfilter"),
         ] = None
         targetscope: Annotated[
             str | None,
-            m.Field(description="targetscope, e.g. 'base', if present"),
+            m.Field(description="OUD targetscope; None is the subtree default"),
         ] = None
-        acl_name: Annotated[str, m.Field(description="Human-readable acl name")] = ""
-        allows: Annotated[
-            tuple[
-                Annotated[
-                    p.Ldif.AciAllow,
-                    t.schema_for_model(FlextLdifModelsAclConvert.AciAllow),
-                ],
-                ...,
-            ],
-            m.Field(description="allow() clauses"),
-        ] = ()
-        denies: Annotated[
-            tuple[
-                Annotated[
-                    p.Ldif.AciDeny,
-                    t.schema_for_model(FlextLdifModelsAclConvert.AciDeny),
-                ],
-                ...,
-            ],
-            m.Field(description="deny() clauses"),
-        ] = ()
-        target_type: Annotated[
+        rule: Annotated[str, m.Field(description="Conversion rule applied")]
+
+    class AclDecision(m.FrozenModel):
+        """One resolution with its OUD form and bind rule."""
+
+        rule: Annotated[
+            FlextLdifModelsAclConvert.AclLevelRule,
+            m.Field(description="Source ACI"),
+        ]
+        resolution: Annotated[
+            FlextLdifModelsAclConvert.AclResolution,
+            m.Field(description="Decided right"),
+        ]
+        form: Annotated[
+            FlextLdifModelsAclConvert.AclForm,
+            m.Field(description="OUD form"),
+        ]
+        bind: Annotated[
+            FlextLdifModelsAclConvert.AclBindRule,
+            m.Field(description="OUD bind rule"),
+        ]
+
+    class AclRegion(m.FrozenModel):
+        """Where a statement lands and the part of the subtree it covers."""
+
+        anchor: Annotated[str, m.Field(description="Anchor DN key")]
+        scope: Annotated[
+            str | None,
+            m.Field(description="Region scope; None is the whole subtree"),
+        ] = None
+        target: Annotated[
+            str | None,
+            m.Field(description="OUD target pattern without the URL prefix"),
+        ] = None
+        target_negated: Annotated[
+            bool,
+            m.Field(description="Whether the target is an exclusion"),
+        ] = False
+
+    class AclNearerGrant(m.FrozenModel):
+        """A grant of a nearer evaluation level inside a denial's region."""
+
+        key: Annotated[str, m.Field(description="Level DN key")]
+        level: Annotated[str, m.Field(description="Level attribute")]
+        leaf: Annotated[
+            FlextLdifModelsAclConvert.AclBindLeaf,
+            m.Field(description="Granted subject"),
+        ]
+
+    class AciStatement(m.FrozenModel):
+        """One OUD ACI value placed on one entry."""
+
+        dn: Annotated[str, m.Field(description="Entry that carries the ACI")]
+        effect: Annotated[str, m.Field(description="allow or deny")]
+        rights: Annotated[tuple[str, ...], m.Field(description="OUD rights")]
+        attrs: Annotated[
+            FlextLdifModelsAclConvert.AclAttrSet,
+            m.Field(description="OUD targetattr set"),
+        ]
+        targetfilter: Annotated[
+            str | None,
+            m.Field(description="OUD targetfilter"),
+        ] = None
+        targetscope: Annotated[
+            str | None,
+            m.Field(description="OUD targetscope"),
+        ] = None
+        target: Annotated[
+            str | None,
+            m.Field(description="OUD target pattern without the URL prefix"),
+        ] = None
+        target_negated: Annotated[
+            bool,
+            m.Field(description="Whether the target is ``target!=``"),
+        ] = False
+        bind: Annotated[
+            FlextLdifModelsAclConvert.AclBindRule,
+            m.Field(description="OUD bind rule"),
+        ]
+        rule: Annotated[str, m.Field(description="Conversion rule applied")]
+        name: Annotated[str, m.Field(description="acl name: the origin")]
+        origin_dn: Annotated[str, m.Field(description="Source ACL carrier DN")]
+        origin_index: Annotated[
+            int,
+            m.Field(description="Source ACI position at its level"),
+        ]
+        origin_level: Annotated[
             str,
-            m.Field(description="OID target kind of the source rule: entry | attr"),
-        ] = ""
-        outcomes: Annotated[
-            tuple[
-                Annotated[
-                    p.Ldif.AclSubjectOutcome,
-                    t.schema_for_model(FlextLdifModelsAclConvert.AclSubjectOutcome),
-                ],
-                ...,
-            ],
-            m.Field(description="Per-subject conversion outcomes in input order"),
+            m.Field(description="Source ACL attribute"),
+        ]
+
+    class AclConversionEvent(m.FrozenModel):
+        """One conversion fact the operator reviews (rule and source)."""
+
+        rule: Annotated[str, m.Field(description="Rule or exception identifier")]
+        dn: Annotated[str, m.Field(description="Source ACL carrier DN")]
+        detail: Annotated[str, m.Field(description="What the rule decided")]
+
+    class AclDirectoryConversion(m.FrozenModel):
+        """OID→OUD ACL conversion of a whole directory.
+
+        ``values`` maps the DN key of each entry that receives OUD ``aci``
+        values to those values; ``consumed`` holds the DN keys whose OID ACL
+        attributes the conversion consumed.
+        """
+
+        statements: Annotated[
+            tuple[FlextLdifModelsAclConvert.AciStatement, ...],
+            m.Field(description="Emitted ACI statements in emission order"),
         ] = ()
+        values: Annotated[
+            Mapping[str, tuple[str, ...]],
+            m.Field(description="Rendered aci values by receiving DN key"),
+        ] = MappingProxyType({})
+        events: Annotated[
+            tuple[FlextLdifModelsAclConvert.AclConversionEvent, ...],
+            m.Field(description="Operator-review events in order"),
+        ] = ()
+        consumed: Annotated[
+            frozenset[str],
+            m.Field(description="DN keys whose OID ACLs were consumed"),
+        ] = frozenset()
 
     class AclEntryConversion(m.FrozenModel):
-        """OID→OUD ACL conversion of one entry: its rules or the Oracle skip."""
+        """OID→OUD ACL conversion recorded on one entry."""
 
-        rules: Annotated[
-            tuple[
-                Annotated[
-                    p.Ldif.AciRule,
-                    t.schema_for_model(FlextLdifModelsAclConvert.AciRule),
-                ],
-                ...,
-            ],
-            m.Field(description="Assembled aci rules in OID line order"),
+        statements: Annotated[
+            tuple[FlextLdifModelsAclConvert.AciStatement, ...],
+            m.Field(description="ACI statements placed on this entry"),
+        ] = ()
+        events: Annotated[
+            tuple[FlextLdifModelsAclConvert.AclConversionEvent, ...],
+            m.Field(description="Events of the ACLs this entry carried"),
         ] = ()
         oracle_internal_skip: Annotated[
             bool,
             m.Field(description="Whether the DN is Oracle-internal (not migrated)"),
         ] = False
-
-    class AciAllowGroup(m.FrozenModel):
-        """One render-time allow group keyed by identical OUD permission tokens."""
-
-        permissions: Annotated[
-            Sequence[str],
-            m.Field(description="Canonical permission tuple shared by this group"),
-        ] = ()
-        binds: Annotated[
-            Sequence[str],
-            m.Field(description="Rendered bind rules joined with OUD 'or'"),
-        ] = ()
-        authmethod: Annotated[
-            str,
-            m.Field(description="Shared authmethod modifier for this group"),
-        ] = ""
-        ip: Annotated[str, m.Field(description="Shared ip modifier for this group")] = (
-            ""
-        )
-
-    class AciAllowGroups(m.FrozenModel):
-        """Pydantic render grouping model replacing ad-hoc dict/list state."""
-
-        groups: Annotated[
-            tuple[FlextLdifModelsAclConvert.AciAllowGroup, ...],
-            m.Field(description="Allow groups in first-seen render order"),
-        ] = ()
-
-        def with_allow(
-            self,
-            allow: p.Ldif.AciBindClause,
-            bind: str,
-        ) -> FlextLdifModelsAclConvert.AciAllowGroups:
-            """Return grouped clause state with one rendered bind rule appended."""
-            permissions = tuple(allow.permissions)
-            updated: tuple[FlextLdifModelsAclConvert.AciAllowGroup, ...] = ()
-            matched = False
-            for group in self.groups:
-                same_permissions = tuple(group.permissions) == permissions
-                same_modifiers = (
-                    group.authmethod == allow.authmethod and group.ip == allow.ip
-                )
-                if same_permissions and same_modifiers:
-                    updated = (
-                        *updated,
-                        FlextLdifModelsAclConvert.AciAllowGroup(
-                            permissions=group.permissions,
-                            binds=(*group.binds, bind),
-                            authmethod=group.authmethod,
-                            ip=group.ip,
-                        ),
-                    )
-                    matched = True
-                    continue
-                updated = (*updated, group)
-            if not matched:
-                updated = (
-                    *updated,
-                    FlextLdifModelsAclConvert.AciAllowGroup(
-                        permissions=permissions,
-                        binds=(bind,),
-                        authmethod=allow.authmethod,
-                        ip=allow.ip,
-                    ),
-                )
-            return FlextLdifModelsAclConvert.AciAllowGroups(groups=updated)
 
     class AclSubjectMatcher(m.ArbitraryTypesModel):
         """Parse descriptor: a compiled by-clause regex + group extraction map.

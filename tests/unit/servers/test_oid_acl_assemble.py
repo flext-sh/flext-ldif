@@ -16,6 +16,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from flext_ldif.servers import (
+    FlextLdifConstantsServersOid,
     FlextLdifServersOidAclAssemble,
     FlextLdifServersOidAclConvert,
     FlextLdifServersOidAclPipeline,
@@ -24,6 +25,17 @@ from flext_ldif.servers import (
 from tests import c, m, p, tm, u
 
 _KIND = c.Ldif.AclSubjectOutcomeKind
+_GROUPS = FlextLdifServersOidAclPipeline.security_group_dns([
+    u.Tests.oid_security_group_entry(dn)
+    for dn in (
+        "cn=a,dc=ctbc",
+        "cn=b,dc=ctbc",
+        "cn=admins,dc=ctbc",
+        "cn=x,dc=ctbc",
+        "cn=x,dc=other",
+    )
+])
+_OPERATIONAL_TARGETATTR = FlextLdifConstantsServersOid.OUD_GLOBAL_OPERATIONAL_TARGETATTR
 
 
 def _acl_entry(attributes: Mapping[str, Sequence[str]]) -> p.Ldif.Entry:
@@ -53,11 +65,12 @@ class TestsFlextLdifOidAclAssemble:
             dn, line
         ).unwrap()
         aci_rule: p.Ldif.AciRule = FlextLdifServersOidAclAssemble.build_aci_rule(
-            rule
+            rule,
+            access_groups=_GROUPS,
         ).unwrap()
         return aci_rule
 
-    # ---- render_aci_string: AciRule → aci: line ------------------------
+    # ---- render_aci_strings: AciRule → aci: lines ----------------------
 
     @staticmethod
     @c.Tests.MARK.parametrize(
@@ -180,12 +193,47 @@ class TestsFlextLdifOidAclAssemble:
             ),
         ],
     )
-    def test_render_aci_string_matches_oud_oracle(
+    def test_render_aci_strings_matches_oud_oracle(
         aci: p.Ldif.AciRule,
         expected: str,
     ) -> None:
-        """Test render aci string matches oud oracle."""
-        tm.that(FlextLdifServersOidAclRender.render_aci_string(aci), eq=expected)
+        """A single-target rule renders exactly the expected ``aci:`` line."""
+        tm.that(FlextLdifServersOidAclRender.render_aci_strings(aci), eq=(expected,))
+
+    @staticmethod
+    def test_clauses_with_distinct_targetattrs_render_separate_lines() -> None:
+        """A clause targetattr override renders its own ``aci:`` line."""
+        aci = m.Ldif.AciRule(
+            dn="dc=ctbc",
+            acl_name="x",
+            allows=(
+                m.Ldif.AciAllow(
+                    subject_type="userdn",
+                    subject_value="anyone",
+                    permissions=("read", "search"),
+                    targetattr="objectClass",
+                ),
+                m.Ldif.AciAllow(
+                    subject_type="userdn",
+                    subject_value="anyone",
+                    permissions=("add",),
+                ),
+            ),
+        )
+
+        tm.that(
+            FlextLdifServersOidAclRender.render_aci_strings(aci),
+            eq=(
+                (
+                    'aci: (targetattr="objectClass")    (version 3.0; acl "x";'
+                    '     allow (read, search)    userdn="ldap:///anyone";)'
+                ),
+                (
+                    'aci: (targetattr="*")    (version 3.0; acl "x";'
+                    '     allow (add)    userdn="ldap:///anyone";)'
+                ),
+            ),
+        )
 
     # ---- build_aci_rule: parse → build parity --------------------------
 
@@ -215,7 +263,9 @@ class TestsFlextLdifOidAclAssemble:
             tuple(denial.permissions),
             eq=("read", "search", "add", "delete", "proxy"),
         )
-        tm.that(aci.denies, eq=(denial,))
+        tm.that(aci.denies[0], eq=denial)
+        tm.that(aci.denies[1].targetattr, eq=_OPERATIONAL_TARGETATTR)
+        tm.that(tuple(aci.denies[1].permissions), eq=("read", "search", "compare"))
 
     def test_anyone_attr_rule_pins_targetscope_base(self) -> None:
         """Test anyone attr rule pins targetscope base."""
@@ -241,7 +291,7 @@ class TestsFlextLdifOidAclAssemble:
             [outcome.kind for outcome in aci.outcomes],
             eq=[_KIND.DENIED_ALL, _KIND.CANCELLED],
         )
-        tm.that(len(aci.denies), eq=1)
+        tm.that(len(aci.denies), eq=2)
 
     def test_mixed_none_list_is_a_total_denial(self) -> None:
         """``(none, nobrowse)`` and ``(browse, none)`` deny every right."""
@@ -270,6 +320,7 @@ class TestsFlextLdifOidAclAssemble:
                         "by * (browse)"
                     ),
                 ),
+                access_groups=_GROUPS,
             ),
             has="guidattr",
         )
@@ -282,7 +333,7 @@ class TestsFlextLdifOidAclAssemble:
             'by group="cn=b,dc=ctbc" (browse)',
         )
 
-        tm.that(len(aci.allows), eq=2)
+        tm.that(len(aci.allows), eq=3)
         tm.ok(aci.acl_name.endswith("(+1)"))
 
     @staticmethod
@@ -294,7 +345,7 @@ class TestsFlextLdifOidAclAssemble:
         ).unwrap()
 
         tm.fail(
-            FlextLdifServersOidAclAssemble.build_aci_rule(rule),
+            FlextLdifServersOidAclAssemble.build_aci_rule(rule, access_groups=_GROUPS),
             has="Unknown OID permission token",
         )
 
@@ -307,7 +358,7 @@ class TestsFlextLdifOidAclAssemble:
         ).unwrap()
 
         tm.fail(
-            FlextLdifServersOidAclAssemble.build_aci_rule(rule),
+            FlextLdifServersOidAclAssemble.build_aci_rule(rule, access_groups=_GROUPS),
             has="not a right of an 'entry' object",
         )
 
@@ -319,7 +370,9 @@ class TestsFlextLdifOidAclAssemble:
             'orclaci: access to entry by * (browse) by group="cn=a,dc=ctbc" (browse)',
         ).unwrap()
         aci = FlextLdifServersOidAclAssemble.build_aci_rule(
-            rule, base_dn="dc=ctbc"
+            rule,
+            base_dn="dc=ctbc",
+            access_groups=_GROUPS,
         ).unwrap()
 
         tm.that(len(aci.allows), eq=2)
@@ -338,7 +391,9 @@ class TestsFlextLdifOidAclAssemble:
             'orclaci: access to entry by group="cn=x,dc=other" (browse)',
         ).unwrap()
         aci = FlextLdifServersOidAclAssemble.build_aci_rule(
-            rule, base_dn="dc=ctbc"
+            rule,
+            base_dn="dc=ctbc",
+            access_groups=_GROUPS,
         ).unwrap()
 
         tm.that(aci.allows, eq=())
@@ -353,7 +408,9 @@ class TestsFlextLdifOidAclAssemble:
             'orclaci: access to entry by dn=".*,dc=ctbc" (browse)',
         ).unwrap()
         aci = FlextLdifServersOidAclAssemble.build_aci_rule(
-            rule, base_dn="dc=ctbc"
+            rule,
+            base_dn="dc=ctbc",
+            access_groups=_GROUPS,
         ).unwrap()
 
         tm.that(len(aci.allows), eq=1)
@@ -367,7 +424,9 @@ class TestsFlextLdifOidAclAssemble:
             "cn=users,dc=ctbc",
             'orclaci: access to entry by group="cn=x,dc=other" (browse)',
         ).unwrap()
-        aci = FlextLdifServersOidAclAssemble.build_aci_rule(rule).unwrap()
+        aci = FlextLdifServersOidAclAssemble.build_aci_rule(
+            rule, access_groups=_GROUPS
+        ).unwrap()
 
         tm.that(len(aci.allows), eq=1)
 
@@ -382,19 +441,22 @@ class TestsFlextLdifOidAclAssemble:
                 'orclaci: access to entry by group="cn=a,dc=ctbc" (browse)',
                 "orclentrylevelaci: access to attr=(cn) by * (read)",
             ),
+            access_groups=_GROUPS,
         )
 
         values = result.unwrap()
         tm.that(len(values), eq=2)
         tm.ok(all(not v.startswith("aci: ") for v in values))
-        tm.ok(values[0].startswith('(targetattr="*")'))
+        tm.ok(values[0].startswith('(targetattr="objectClass")'))
 
     @staticmethod
     def test_identical_aci_values_are_deduplicated() -> None:
         """Test identical aci values are deduplicated."""
         line = 'orclaci: access to entry by group="cn=a,dc=ctbc" (browse)'
         result = FlextLdifServersOidAclPipeline.convert_acl_values(
-            "cn=users,dc=ctbc", (line, line)
+            "cn=users,dc=ctbc",
+            (line, line),
+            access_groups=_GROUPS,
         )
 
         tm.that(len(result.unwrap()), eq=1)
@@ -405,6 +467,7 @@ class TestsFlextLdifOidAclAssemble:
         result = FlextLdifServersOidAclPipeline.convert_acl_values(
             "cn=users,dc=ctbc",
             ("orclaci: access to entry by * (none)",),
+            access_groups=_GROUPS,
         )
 
         tm.that(
@@ -415,6 +478,11 @@ class TestsFlextLdifOidAclAssemble:
                     "     deny (read, search, add, delete, proxy)    "
                     'userdn="ldap:///anyone";)'
                 ),
+                (
+                    f'(targetattr="{_OPERATIONAL_TARGETATTR}")'
+                    '    (version 3.0; acl "users Entry by anyone";'
+                    '     deny (read, search, compare)    userdn="ldap:///anyone";)'
+                ),
             ),
         )
 
@@ -424,6 +492,7 @@ class TestsFlextLdifOidAclAssemble:
         result = FlextLdifServersOidAclPipeline.convert_acl_values(
             "cn=users,dc=ctbc",
             ("orclaci: this is not a valid acl",),
+            access_groups=_GROUPS,
         )
 
         tm.fail(result, has="missing 'access to'")
@@ -449,7 +518,8 @@ class TestsFlextLdifOidAclDenials:
             dn, line
         ).unwrap()
         aci_rule: p.Ldif.AciRule = FlextLdifServersOidAclAssemble.build_aci_rule(
-            rule
+            rule,
+            access_groups=_GROUPS,
         ).unwrap()
         return aci_rule
 
@@ -489,31 +559,40 @@ class TestsFlextLdifOidAclDenials:
         tm.that(aci.targetscope, eq=None)
 
     def test_mixed_clause_grants_positive_and_denies_negation(self) -> None:
-        """``(browse,noadd)`` grants browse only and denies add."""
+        """``(add,nodelete)`` grants add to authenticated sessions, denies delete."""
         aci = self._build(
             "cn=users,dc=ctbc",
-            "orclaci: access to entry by * (browse,noadd)",
+            "orclaci: access to entry by * (add,nodelete)",
         )
 
-        tm.that(tuple(aci.allows[0].permissions), eq=("read", "search"))
+        tm.that(tuple(aci.allows[0].permissions), eq=("add",))
+        tm.that(aci.allows[0].subject_value, eq="all")
         tm.that(aci.outcomes[0].kind, eq=_KIND.GRANTED)
-        tm.that(aci.targetscope, eq="base")
-        tm.that(tuple(aci.denies[0].permissions), eq=("add",))
-        tm.that(aci.denies[0].targetscope, eq="subtree")
+        tm.that(aci.targetscope, eq=None)
+        tm.that(tuple(aci.denies[0].permissions), eq=("delete",))
+        tm.that(aci.denies[0].subject_value, eq="anyone")
         tm.that(
             FlextLdifServersOidAclRender.render_aci_strings(aci),
             eq=(
                 (
-                    'aci: (targetattr="*")    (targetscope="base")'
-                    '    (version 3.0; acl "users Entry by anyone";'
-                    '     allow (read, search)    userdn="ldap:///anyone";)'
-                ),
-                (
                     'aci: (targetattr="*")'
                     '    (version 3.0; acl "users Entry by anyone";'
-                    '     deny (add)    userdn="ldap:///anyone";)'
+                    '     allow (add)      userdn="ldap:///all";'
+                    '     deny (delete)    userdn="ldap:///anyone";)'
                 ),
             ),
+        )
+
+    @staticmethod
+    def test_entry_browse_grant_fails_loud() -> None:
+        """OID browse exposes the DN only; OUD has no exact right for it."""
+        rule = FlextLdifServersOidAclConvert.parse_oid_acl_line(
+            "cn=users,dc=ctbc",
+            "orclaci: access to entry by * (browse,noadd)",
+        ).unwrap()
+        tm.fail(
+            FlextLdifServersOidAclAssemble.build_aci_rule(rule),
+            has="exposes the DN only",
         )
 
     @staticmethod
@@ -524,7 +603,9 @@ class TestsFlextLdifOidAclDenials:
             'orclaci: access to attr=(cn) by group="cn=a,dc=ctbc" (read,search) '
             "by * (noread)",
         ).unwrap()
-        aci = FlextLdifServersOidAclAssemble.build_aci_rule(rule).unwrap()
+        aci = FlextLdifServersOidAclAssemble.build_aci_rule(
+            rule, access_groups=_GROUPS
+        ).unwrap()
 
         tm.that(len(aci.allows), eq=1)
         tm.that(tuple(aci.allows[0].permissions), eq=("search",))
@@ -623,16 +704,92 @@ class TestsFlextLdifOidAclDenials:
                 "'all'",
                 id="all-token",
             ),
+            u.Tests.param(
+                "orclaci: access to entry by * bindipfilter=(orclipaddress=1.1.1.1) "
+                "bindipfilter=(orclipaddress=2.2.2.2) (browse)",
+                "Repeated OID 'bindipfilter'",
+                id="repeated-modifier",
+            ),
+            u.Tests.param(
+                "orclaci: access to entry by * bindipfilter=() (browse)",
+                "Empty OID 'bindipfilter'",
+                id="empty-bindipfilter",
+            ),
+            u.Tests.param(
+                "orclaci: access to entry by * (browse,)",
+                "Empty token",
+                id="empty-permission-token",
+            ),
+            u.Tests.param(
+                "orclaci: access to attr=() by * (read)",
+                "is not '*' or a list",
+                id="empty-attr-list",
+            ),
+            u.Tests.param(
+                "orclaci: access to attr=(cn,*) by * (read)",
+                "is not '*' or a list",
+                id="star-inside-attr-list",
+            ),
+            u.Tests.param(
+                'orclaci: access to entry filter=(cn=a"b) by * (browse)',
+                "carries a quote",
+                id="quote-in-filter",
+            ),
+            u.Tests.param(
+                "orclaci: access to entry by dnattr=(manager, owner) (browse)",
+                "is not one attribute description",
+                id="dnattr-list",
+            ),
+            u.Tests.param(
+                'orclaci: access to entry by group="cn=other,dc=ctbc" (browse)',
+                "not a verified security group",
+                id="unverified-group",
+            ),
         ],
     )
     def test_untranslatable_construct_fails_loud(line: str, message: str) -> None:
         """Constructs without an exact OUD form fail; none passes raw or silent."""
         tm.fail(
             FlextLdifServersOidAclPipeline.convert_acl_values(
-                "cn=users,dc=ctbc", (line,)
+                "cn=users,dc=ctbc",
+                (line,),
+                access_groups=_GROUPS,
             ),
             has=message,
         )
+
+    @staticmethod
+    def test_out_of_scope_denial_fails_instead_of_dropping() -> None:
+        """A denial bound outside base_dn fails; its grants never survive alone."""
+        tm.fail(
+            FlextLdifServersOidAclPipeline.convert_acl_values(
+                "cn=users,dc=ctbc",
+                (
+                    (
+                        'orclaci: access to entry by group="cn=x,dc=other" (nobrowse) '
+                        "by * (browse)"
+                    ),
+                ),
+                base_dn="dc=ctbc",
+                access_groups=_GROUPS,
+            ),
+            has="cannot be dropped",
+        )
+
+    def test_conditional_catch_all_denial_keeps_other_grants(self) -> None:
+        """A ``*`` denial limited by an ip only denies sessions from that ip."""
+        aci = self._build(
+            "cn=users,dc=ctbc",
+            'orclaci: access to entry by group="cn=a,dc=ctbc" (browse) '
+            "by * bindipfilter=(orclipaddress=9.9.9.9) (none)",
+        )
+
+        tm.that(
+            [outcome.kind for outcome in aci.outcomes],
+            eq=[_KIND.GRANTED, _KIND.DENIED_ALL],
+        )
+        tm.that(tuple(aci.allows[0].permissions), eq=("read", "search"))
+        tm.that(aci.denies[0].ip, eq="9.9.9.9")
 
     @staticmethod
     def test_entry_level_add_renders_under_onelevel_scope() -> None:
@@ -645,21 +802,26 @@ class TestsFlextLdifOidAclDenials:
                     "(browse,add,nodelete)"
                 ),
             ),
+            access_groups=_GROUPS,
         )
 
         tm.that(
             result.unwrap(),
             eq=(
                 (
-                    '(targetattr="*")    (targetscope="base")'
+                    '(targetattr="objectClass")    (targetscope="base")'
                     '    (version 3.0; acl "users Entry by a";'
-                    '     allow (read, search)    groupdn="ldap:///cn=a,dc=ctbc";'
-                    "     deny (delete)" + " " * 11 + 'groupdn="ldap:///cn=a,dc=ctbc";)'
+                    '     allow (read, search)    groupdn="ldap:///cn=a,dc=ctbc";)'
                 ),
                 (
                     '(targetattr="*")    (targetscope="onelevel")'
                     '    (version 3.0; acl "users Entry by a";'
                     '     allow (add)    groupdn="ldap:///cn=a,dc=ctbc";)'
+                ),
+                (
+                    '(targetattr="*")    (targetscope="base")'
+                    '    (version 3.0; acl "users Entry by a";'
+                    '     deny (delete)    groupdn="ldap:///cn=a,dc=ctbc";)'
                 ),
             ),
         )
@@ -674,14 +836,24 @@ class TestsFlextLdifOidAclDenials:
         ).unwrap()
 
         tm.that(rule.subjects[0].bindipfilter, eq="orclipaddress=10.0.*")
-        aci = FlextLdifServersOidAclAssemble.build_aci_rule(rule).unwrap()
+        aci = FlextLdifServersOidAclAssemble.build_aci_rule(
+            rule, access_groups=_GROUPS
+        ).unwrap()
         tm.that(aci.allows[0].ip, eq="10.0.*.*")
         tm.that(
-            FlextLdifServersOidAclRender.render_aci_string(aci),
+            FlextLdifServersOidAclRender.render_aci_strings(aci),
             eq=(
-                'aci: (targetattr="*")    (version 3.0; acl "users Entry by a";'
-                '     allow (read, search, add)    groupdn="ldap:///cn=a,dc=ctbc" '
-                'and ip="10.0.*.*";)'
+                (
+                    'aci: (targetattr="objectClass")'
+                    '    (version 3.0; acl "users Entry by a";'
+                    '     allow (read, search)    groupdn="ldap:///cn=a,dc=ctbc" '
+                    'and ip="10.0.*.*";)'
+                ),
+                (
+                    'aci: (targetattr="*")    (version 3.0; acl "users Entry by a";'
+                    '     allow (add)    groupdn="ldap:///cn=a,dc=ctbc" '
+                    'and ip="10.0.*.*";)'
+                ),
             ),
         )
 
@@ -711,7 +883,10 @@ class TestsFlextLdifOidAclFixtureAndEntry:
             if not line.startswith(("orclaci:", "orclentrylevelaci:")):
                 continue
             result = FlextLdifServersOidAclPipeline.convert_acl_values(
-                dn, (line,), base_dn="dc=example,dc=com"
+                dn,
+                (line,),
+                base_dn="dc=example,dc=com",
+                access_groups=_GROUPS,
             )
             rules_seen += 1
             if result.failure:
@@ -721,7 +896,7 @@ class TestsFlextLdifOidAclFixtureAndEntry:
             values_emitted += len(result.unwrap())
 
         tm.that(rules_seen, eq=16)
-        tm.that(failures, eq=12)
+        tm.that(failures, eq=13)
         tm.that(values_emitted, eq=5)
 
     @staticmethod
@@ -731,6 +906,7 @@ class TestsFlextLdifOidAclFixtureAndEntry:
             "cn=users,dc=ctbc",
             ('orclaci: access to entry by group="cn=x,dc=other" (browse)',),
             base_dn="dc=ctbc",
+            access_groups=_GROUPS,
         )
 
         tm.that(result.unwrap(), eq=())
@@ -745,7 +921,10 @@ class TestsFlextLdifOidAclFixtureAndEntry:
         })
 
         converted = FlextLdifServersOidAclPipeline.convert_entry_acls(
-            entry, "oid", "oud"
+            entry,
+            "oid",
+            "oud",
+            access_groups=_GROUPS,
         ).unwrap()
         conversion = tm.not_none(tm.not_none(converted.metadata).acl_conversion)
 
@@ -766,7 +945,10 @@ class TestsFlextLdifOidAclFixtureAndEntry:
         )
 
         converted = FlextLdifServersOidAclPipeline.convert_entry_acls(
-            entry, "oid", "oud"
+            entry,
+            "oid",
+            "oud",
+            access_groups=_GROUPS,
         ).unwrap()
         conversion = tm.not_none(tm.not_none(converted.metadata).acl_conversion)
 
@@ -785,14 +967,17 @@ class TestsFlextLdifOidAclFixtureAndEntry:
         })
 
         converted = FlextLdifServersOidAclPipeline.convert_entry_acls(
-            entry, "oid", "oud"
+            entry,
+            "oid",
+            "oud",
+            access_groups=_GROUPS,
         ).unwrap()
         attrs = tm.not_none(converted.attributes).attributes
 
         tm.ok("orclaci" not in attrs)
         tm.ok("aci" in attrs)
         tm.that(len(attrs["aci"]), eq=1)
-        tm.ok(attrs["aci"][0].startswith('(targetattr="*")'))
+        tm.ok(attrs["aci"][0].startswith('(targetattr="objectClass")'))
 
     @staticmethod
     def test_non_oid_to_oud_passes_through_unchanged() -> None:
@@ -802,7 +987,10 @@ class TestsFlextLdifOidAclFixtureAndEntry:
         })
 
         converted = FlextLdifServersOidAclPipeline.convert_entry_acls(
-            entry, "oid", "rfc"
+            entry,
+            "oid",
+            "rfc",
+            access_groups=_GROUPS,
         ).unwrap()
         tm.ok("orclaci" in tm.not_none(converted.attributes).attributes)
 
@@ -812,7 +1000,10 @@ class TestsFlextLdifOidAclFixtureAndEntry:
         entry = _acl_entry({"cn": ["x"], "objectClass": ["top"]})
 
         converted = FlextLdifServersOidAclPipeline.convert_entry_acls(
-            entry, "oid", "oud"
+            entry,
+            "oid",
+            "oud",
+            access_groups=_GROUPS,
         ).unwrap()
         attrs = tm.not_none(converted.attributes).attributes
 
@@ -825,7 +1016,9 @@ class TestsFlextLdifOidAclFixtureAndEntry:
         entry = _acl_entry({"orclaci": ["not a valid acl"]})
 
         tm.fail(
-            FlextLdifServersOidAclPipeline.convert_entry_acls(entry, "oid", "oud"),
+            FlextLdifServersOidAclPipeline.convert_entry_acls(
+                entry, "oid", "oud", access_groups=_GROUPS
+            ),
             has="missing 'access to'",
         )
 
@@ -835,6 +1028,7 @@ class TestsFlextLdifOidAclFixtureAndEntry:
         result = FlextLdifServersOidAclPipeline.convert_acl_values(
             "cn=users,dc=ctbc",
             ('orclaci: access to entry by group="cn=a,dc=ctbc" (bogus)',),
+            access_groups=_GROUPS,
         )
 
         tm.fail(result, has="Unknown OID permission token")

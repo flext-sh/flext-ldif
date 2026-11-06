@@ -1,4 +1,4 @@
-# provenance: per-rule outcome counts of aci_dump_input.ldif (sha256=c12459828f94be0edafcc3187a56f54a9a16aba9da4f288270480d483a01de5a) through the same pipeline; columns: dn, granted, cancelled, denied_all, denied, out_of_scope
+# provenance: per-rule outcome counts of aci_dump_input.ldif (sha256=d62a9a4bd87beffd0e09e0ef3d031ef2b6117b05b610ba3703eb0432dd0cf17f) through the same pipeline; columns: dn, granted, cancelled, denied_all, denied, out_of_scope
 cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid	0	3	1	0	0
 cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid	0	1	1	2	0
 cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid	0	2	1	0	0

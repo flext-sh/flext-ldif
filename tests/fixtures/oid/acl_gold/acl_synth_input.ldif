@@ -1,4 +1,4 @@
-# provenance: devops-oud-iac@2225708e3ac8 tests/benchmark/gold/acl_synth_input.ldif sha256=e6e56c5311f7129970d5f0f7e8d8df47adbb5f505ced996ca8bae284c90cf80d amended=flext-ws7iv(entries cn=guidattr-case and cn=combined-deny removed: guidattr and the non-grammar 'all' token fail loud and are covered by unit tests)
+# provenance: devops-oud-iac@2225708e3ac8 tests/benchmark/gold/acl_synth_input.ldif sha256=e6e56c5311f7129970d5f0f7e8d8df47adbb5f505ced996ca8bae284c90cf80d amended=flext-ws7iv(entries cn=guidattr-case and cn=combined-deny removed: guidattr and the non-grammar 'all' token fail loud and are covered by unit tests; entries cn=SecurityAdmins and cn=CommonUsers added: OID ACP security groups the group subjects require)
 dn: cn=admins,dc=ctbc
 objectClass: top
 objectClass: container
@@ -41,3 +41,15 @@ objectClass: top
 objectClass: container
 cn: negated-wildcard
 orclaci: access to attr=(orclpasswordhint) by group="cn=CommonUsers,dc=ctbc" (read,search,compare) by * (noread,nowrite,nocompare)
+
+dn: cn=SecurityAdmins,dc=ctbc
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: SecurityAdmins
+
+dn: cn=CommonUsers,dc=ctbc
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: CommonUsers

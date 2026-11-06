@@ -79,6 +79,22 @@ class TestsFlextLdifEntryBuilders(FlextTestsUtilitiesFixturesDSL):
             },
         )
 
+    @classmethod
+    def oid_security_group_entry(cls, dn: str) -> p.Ldif.Entry:
+        """Build a real OID ACP security group entry without members.
+
+        Returns:
+            The resulting ``m.Ldif.Entry``.
+
+        """
+        return cls.create_real_entry(
+            dn=dn,
+            attributes={
+                "objectClass": ["top", "groupOfUniqueNames", "orclACPgroup"],
+                "cn": [dn.split(",", 1)[0].split("=", 1)[1]],
+            },
+        )
+
     @staticmethod
     def create_real_ldif_content(
         entries_count: int = 3,

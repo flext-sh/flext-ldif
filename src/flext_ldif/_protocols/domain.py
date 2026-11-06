@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence
+from collections.abc import MutableSequence, Sequence
 from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 
 from flext_cli import p, t
@@ -96,6 +96,14 @@ class FlextLdifProtocolsDomain(Protocol):
         def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool: ...
 
         def write(self, acl_data: p.Ldif.Acl) -> p.Result[str]: ...
+
+        def access_group_dns(self, entries: Sequence[p.Ldif.Entry]) -> frozenset[str]:
+            """Return the DN keys of the groups whose membership access honours.
+
+            Only the entries of ``entries`` qualify; ACL conversion fails on a
+            group subject outside the returned set.
+            """
+            ...
 
     @runtime_checkable
     class EntryServer(Protocol):
