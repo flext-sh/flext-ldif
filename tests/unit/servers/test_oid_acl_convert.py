@@ -145,7 +145,7 @@ class TestsFlextLdifOidAclConvert:
             ("orclaci: access to entry by nonsense", "Unrecognized OID ACL text"),
             ("orclaci: access to bogustarget by * (read)", "Unknown ACL target"),
             ("orclaci: access to attr=() by * (read)", "is not '*' or a list"),
-            ("orclaci: access to attr!=(*) by * (read)", "is not '*' or a list"),
+            ("orclaci: access to attr!=(*) by * (read)", "negates every attribute"),
             ("orclaci: access to attr=(cn,,sn) by * (read)", "is not '*' or a list"),
             (
                 (
