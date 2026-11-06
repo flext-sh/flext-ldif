@@ -35,7 +35,7 @@ _GROUPS = FlextLdifServersOidAclPipeline.security_group_dns([
         "cn=x,dc=other",
     )
 ])
-_OPERATIONAL_TARGETATTR = FlextLdifConstantsServersOid.OUD_GLOBAL_OPERATIONAL_TARGETATTR
+_OPERATIONAL_TARGETATTR = FlextLdifConstantsServersOid.OUD_TARGETATTR_ALL
 
 
 def _acl_entry(attributes: Mapping[str, Sequence[str]]) -> p.Ldif.Entry:

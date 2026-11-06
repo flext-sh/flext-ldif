@@ -480,7 +480,7 @@ class TestsFlextLdifOidAclConvertOud:
             expected.insert(
                 1 if acl_type == "orclaci" else 2,
                 (
-                    constants.OUD_GLOBAL_OPERATIONAL_TARGETATTR,
+                    constants.OUD_TARGETATTR_ALL,
                     None,
                     constants.OUD_GLOBAL_OPERATIONAL_PERMS,
                 ),
