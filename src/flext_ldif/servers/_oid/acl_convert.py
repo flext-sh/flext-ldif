@@ -28,7 +28,7 @@ class FlextLdifServersOidAclConvert:
                 m.Ldif.AclSubjectMatcher(
                     pattern=FlextLdifConstantsServersOid.OID_SUBJ_SUPERUSER_RE,
                     subj_type="superuser",
-                    value_group=c.Ldif.OidSubjectKind.SUPERUSER.value,
+                    value_group=c.Ldif.DIRECTORY_MANAGER_DN,
                     perms_group=1,
                 ),
                 m.Ldif.AclSubjectMatcher(
