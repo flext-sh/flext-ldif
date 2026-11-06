@@ -18,7 +18,7 @@ class FlextLdifUtilitiesDNParse:
     """Split DN strings and parse them into RFC 4514 components."""
 
     @staticmethod
-    def resolve_dn_value(dn: FlextLdifModels.Ldif.DN | str) -> str:
+    def resolve_dn_value(dn: p.Ldif.DN | str) -> str:
         """Extract DN string value from DN model or string (public utility method).
 
         Returns:
