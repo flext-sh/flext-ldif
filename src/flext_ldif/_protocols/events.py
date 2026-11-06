@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableSequence
+from datetime import datetime
 from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
 from flext_cli import FlextCliProtocols
@@ -51,6 +52,14 @@ class FlextLdifProtocolsEvents:
         """Structural data contract projected from the owning model."""
 
         @property
+        def created_at(self) -> datetime:
+            """Creation timestamp (configured timezone)."""
+            ...
+
+        updated_at: datetime | None
+        unique_id: t.NonEmptyStr
+
+        @property
         def message_type(self) -> Literal[c.HandlerType.EVENT]:
             """Immutable event discriminator for union routing."""
             ...
@@ -74,6 +83,14 @@ class FlextLdifProtocolsEvents:
     @runtime_checkable
     class ConversionEvent(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
+
+        @property
+        def created_at(self) -> datetime:
+            """Creation timestamp (configured timezone)."""
+            ...
+
+        updated_at: datetime | None
+        unique_id: t.NonEmptyStr
 
         @property
         def message_type(self) -> Literal[c.HandlerType.EVENT]:
