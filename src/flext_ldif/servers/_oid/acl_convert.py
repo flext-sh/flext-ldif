@@ -192,7 +192,11 @@ class FlextLdifServersOidAclConvert:
         lowered = content.lower()
         if lowered.startswith(c.Ldif.AclTargetType.ENTRY):
             rest = content[len(c.Ldif.AclTargetType.ENTRY) :].strip()
-            return result.ok((c.Ldif.AclTargetType.ENTRY.value, c.Ldif.ACL_WILDCARD, rest))
+            return result.ok((
+                c.Ldif.AclTargetType.ENTRY.value,
+                c.Ldif.ACL_WILDCARD,
+                rest,
+            ))
         if not lowered.startswith(c.Ldif.AclTargetType.ATTR):
             return result.fail(f"Unknown ACL target: {content[:40]!r}")
         match = FlextLdifConstantsServersOid.OID_ATTR_TARGET_RE.match(content)
@@ -404,7 +408,9 @@ class FlextLdifServersOidAclConvert:
         if parsed_target.failure:
             return r[p.Ldif.OidAclRule].from_failure(parsed_target)
         target_type, target_attrs, target_filter, content = parsed_target.value
-        keywords = FlextLdifConstantsServersOid.OID_ACL_OBJECT_KEYWORDS_RE.match(content)
+        keywords = FlextLdifConstantsServersOid.OID_ACL_OBJECT_KEYWORDS_RE.match(
+            content
+        )
         deny_group_override = bool(keywords and keywords.group("dgo"))
         append_to_all = bool(keywords and keywords.group("ata"))
         remaining = content[keywords.end() :] if keywords else content

@@ -83,7 +83,9 @@ class FlextLdifServersOidAclRegion:
         return m.Ldif.AclAttrSet(names=frozenset(), negated=True)
 
     @staticmethod
-    def intersect(left: m.Ldif.AclAttrSet, right: m.Ldif.AclAttrSet) -> m.Ldif.AclAttrSet:
+    def intersect(
+        left: m.Ldif.AclAttrSet, right: m.Ldif.AclAttrSet
+    ) -> m.Ldif.AclAttrSet:
         """Return the intersection of two attribute sets."""
         if left.negated and right.negated:
             return m.Ldif.AclAttrSet(names=left.names | right.names, negated=True)
@@ -190,7 +192,12 @@ class FlextLdifServersOidAclRegion:
 
     @staticmethod
     def add_scope(level: str) -> str:
-        """R4a: the OUD scope of add decided on the new entry, by level."""
+        """R4a: the OUD scope of add decided on the new entry, by level.
+
+        Returns:
+            The resulting ``str``.
+
+        """
         constants = FlextLdifConstantsServersOid
         if level == c.Ldif.AclConvertType.ORCLACI:
             return constants.ACL_ACP_ADD_SCOPE
@@ -222,7 +229,12 @@ class FlextLdifServersOidAclRegion:
 
     @staticmethod
     def simplify(bind: m.Ldif.AclBindRule) -> m.Ldif.AclBindRule | None:
-        """Drop exclusions that cannot match; None when one covers the subject."""
+        """Drop exclusions that cannot match; None when one covers the subject.
+
+        Returns:
+            The resulting ``m.Ldif.AclBindRule | None``.
+
+        """
         to_oud = FlextLdifServersOidAclToOud
         if any(to_oud.covers(leaf, bind.include) for leaf in bind.exclude):
             return None
@@ -241,7 +253,12 @@ class FlextLdifServersOidAclRegion:
         decision: m.Ldif.AclDecision,
         extra: Sequence[m.Ldif.AclBindLeaf],
     ) -> m.Ldif.AclDecision | None:
-        """Add exclusions to a decision; None when nothing is left."""
+        """Add exclusions to a decision; None when nothing is left.
+
+        Returns:
+            The resulting ``m.Ldif.AclDecision | None``.
+
+        """
         bind = self.simplify(
             decision.bind.model_copy(
                 update={"exclude": (*decision.bind.exclude, *extra)},
@@ -258,13 +275,20 @@ class FlextLdifServersOidAclRegion:
         decision: m.Ldif.AclDecision,
         region: m.Ldif.AclRegion,
     ) -> m.Ldif.AciStatement:
-        """Assemble one OUD ACI statement for a decision at a placement."""
+        """Assemble one OUD ACI statement for a decision at a placement.
+
+        Returns:
+            The resulting ``m.Ldif.AciStatement``.
+
+        """
         constants = FlextLdifConstantsServersOid
         rule, form = decision.rule, decision.form
         scope, target = region.scope, region.target
         if scope == constants.AclScope.DEPTH_TWO:
             scope = None
-            target = f"{constants.OUD_TARGET_DEPTH_TWO_PREFIX}{self.dn_of(region.anchor)}"
+            target = (
+                f"{constants.OUD_TARGET_DEPTH_TWO_PREFIX}{self.dn_of(region.anchor)}"
+            )
         return m.Ldif.AciStatement(
             dn=self.dn_of(region.anchor) if region.anchor else self._suffix,
             effect=decision.resolution.effect,
@@ -609,6 +633,10 @@ class FlextLdifServersOidAclRegion:
 
         Measured on OUD 14.1.2.1 (phase D): ``(!(entryDN=<dn>))`` in
         targetfilter excludes exactly that entry.
+
+        Returns:
+            The resulting ``m.Ldif.AclDecision``.
+
         """
         if not keys:
             return decision
@@ -689,7 +717,10 @@ class FlextLdifServersOidAclRegion:
         anchor_statement = self.statement(
             decision,
             region.model_copy(
-                update={"target": f"{prefix}{self.dn_of(node)}", "target_negated": True},
+                update={
+                    "target": f"{prefix}{self.dn_of(node)}",
+                    "target_negated": True,
+                },
             ),
         )
         pushed = self.widen(

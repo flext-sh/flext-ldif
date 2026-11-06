@@ -105,6 +105,10 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         OID returns attribute values only with browse on the entry (OID-30
         Table 30-2, Table 30-3). For an ACP the chain starts at the ACP
         itself, so it holds for every descendant.
+
+        Returns:
+            The resulting ``bool``.
+
         """
         acp = c.Ldif.AclConvertType.ORCLACI.value
         chain = [(key, acp) for key in self.farther_acp_keys(rule)]
@@ -221,7 +225,12 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         resolution: m.Ldif.AclResolution,
         scope: str | None,
     ) -> m.Ldif.AclForm:
-        """R4b/R4e and the R5 browse and proxy denials for one entry right."""
+        """R4b/R4e and the R5 browse and proxy denials for one entry right.
+
+        Returns:
+            The resulting ``m.Ldif.AclForm``.
+
+        """
         constants = FlextLdifConstantsServersOid
         right = resolution.right
         deny = resolution.effect == constants.AclEffect.DENY
@@ -249,7 +258,12 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
 
     @staticmethod
     def granted_leaf(leaf: m.Ldif.AclBindLeaf) -> m.Ldif.AclBindLeaf:
-        """R8 (operator decision "Grant all, deny anyone"): ``*`` grants go to all."""
+        """R8 (operator decision "Grant all, deny anyone"): ``*`` grants go to all.
+
+        Returns:
+            The resulting ``m.Ldif.AclBindLeaf``.
+
+        """
         constants = FlextLdifConstantsServersOid
         if leaf.kind != constants.AclLeafKind.ANYONE:
             return leaf
@@ -516,7 +530,12 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
 
     @staticmethod
     def render_leaf(leaf: m.Ldif.AclBindLeaf) -> str:
-        """Render one bind-rule subject (R8 table)."""
+        """Render one bind-rule subject (R8 table).
+
+        Returns:
+            The resulting ``str``.
+
+        """
         constants = FlextLdifConstantsServersOid
         kinds = constants.AclLeafKind
         prefix = c.Ldif.LDAP_PREFIX
@@ -535,7 +554,12 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
 
     @classmethod
     def render_bind(cls, bind: m.Ldif.AclBindRule) -> str:
-        """Render a subject with its R5 exclusions: ``(S and not (E1 or E2))``."""
+        """Render a subject with its R5 exclusions: ``(S and not (E1 or E2))``.
+
+        Returns:
+            The resulting ``str``.
+
+        """
         include = cls.render_leaf(bind.include)
         if not bind.exclude:
             return include
@@ -546,7 +570,12 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
 
     @staticmethod
     def target_parts(statement: m.Ldif.AciStatement) -> list[str]:
-        """Render the target keywords in OUD order (target, attr, filter, scope)."""
+        """Render the target keywords in OUD order (target, attr, filter, scope).
+
+        Returns:
+            The resulting ``list[str]``.
+
+        """
         parts: list[str] = []
         if statement.target:
             operator = c.Ldif.OUD_ATTR_NEGATION if statement.target_negated else "="
@@ -567,7 +596,12 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
 
     @classmethod
     def render_statement(cls, statement: m.Ldif.AciStatement) -> str:
-        """Render one statement as a single-line OUD ``aci`` value (no prefix)."""
+        """Render one statement as a single-line OUD ``aci`` value (no prefix).
+
+        Returns:
+            The resulting ``str``.
+
+        """
         rights = ",".join(statement.rights)
         clause = f"{statement.effect} ({rights}) {cls.render_bind(statement.bind)};)"
         head = f'({c.Ldif.ACI_VERSION}; acl "{statement.name}";'

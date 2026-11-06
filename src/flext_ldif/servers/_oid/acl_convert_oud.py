@@ -383,7 +383,9 @@ class FlextLdifServersOidAclToOud:
                 "(OID-A7 §A.7.1)",
             )
         return result.ok((
-            m.Ldif.AclBindLeaf(kind=constants.AclLeafKind.USER, value=dn, key=dn.lower()),
+            m.Ldif.AclBindLeaf(
+                kind=constants.AclLeafKind.USER, value=dn, key=dn.lower()
+            ),
             constants.AclRule.R8,
         ))
 
