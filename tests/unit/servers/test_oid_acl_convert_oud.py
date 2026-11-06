@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.servers import FlextLdifServersOidAclToOud
+from flext_ldif.servers import FlextLdifConstantsServersOid, FlextLdifServersOidAclToOud
 from tests import c, m, p, tm
 
 
@@ -45,9 +45,7 @@ class TestsFlextLdifOidAclConvertOud:
             (c.ContextScope.USER, "uid=joe,dc=ctbc", "userdn", "uid=joe,dc=ctbc"),
             ("self", "self", "userdn", "self"),
             ("anyone", "anyone", "userdn", "anyone"),
-            ("superuser", "cn=Directory Manager", "userdn", "cn=Directory Manager"),
             ("dnattr", "manager", "userattr", "manager#USERDN"),
-            ("groupattr", "owner", "userattr", "owner#GROUPDN"),
         ],
     )
     def test_subject_maps_to_expected_bind_rule(
@@ -76,7 +74,29 @@ class TestsFlextLdifOidAclConvertOud:
 
     @c.Tests.MARK.parametrize(
         ("kind", "value"),
-        [("guidattr", "orclguid"), ("nosuchkind", "")],
+        [("dnattr", "manager, owner"), ("dnattr", "a b"), ("dnattr", 'man"ager')],
+    )
+    def test_userattr_value_outside_attribute_grammar_fails(
+        self,
+        kind: str,
+        value: str,
+    ) -> None:
+        """A dnattr/groupattr value must be one attribute description."""
+        tm.fail(
+            FlextLdifServersOidAclToOud.convert_subject_to_oud(
+                self._subject(kind, value)
+            ),
+            has="is not one attribute description",
+        )
+
+    @c.Tests.MARK.parametrize(
+        ("kind", "value"),
+        [
+            ("guidattr", "orclguid"),
+            ("nosuchkind", ""),
+            ("superuser", "superuser"),
+            ("groupattr", "owner"),
+        ],
     )
     def test_subject_without_oud_equivalent_surfaces_failure(
         self,
@@ -185,7 +205,9 @@ class TestsFlextLdifOidAclConvertOud:
             (("read",), True, "not a right of an 'entry' object"),
             (("noread",), True, "not a right of an 'entry' object"),
             (("browse",), False, "not a right of an 'attr' object"),
-            ((" ",), True, "Empty OID access list"),
+            ((), True, "Empty OID access list"),
+            ((" ",), True, "Empty token in OID access list"),
+            (("browse", ""), True, "Empty token in OID access list"),
         ],
     )
     def test_token_outside_access_grammar_surfaces_failure(
@@ -202,59 +224,99 @@ class TestsFlextLdifOidAclConvertOud:
             has=message,
         )
 
-    # -- resolve_targetattr ---------------------------------------------------
+    # -- convert_targetattr --------------------------------------------------
 
     @c.Tests.MARK.parametrize(
-        ("target_type", "target_attrs", "expected"),
+        ("target_type", "target_attrs", "siblings", "expected"),
         [
-            ("entry", "*", "*"),
-            ("attr", "cn,sn,mail", "cn||sn||mail"),
-            ("attr", "*", "*"),
-            ("attr", "!=userpassword", "!=userpassword"),
-            ("attr", "!=a, b", "!=a||b"),
+            ("entry", "*", (), "*"),
+            ("attr", "cn,sn,mail", (), "cn||sn||mail"),
+            ("attr", "*", (), "*"),
+            ("attr", "*", ("userpassword", "cn"), "!=userpassword||cn"),
+            ("attr", "!=userpassword", (), "!=userpassword"),
+            ("attr", "!=a, b", (), "!=a||b"),
+            ("attr", "createTimestamp", (), "createTimestamp"),
         ],
     )
-    def test_get_targetattr(
+    def test_convert_targetattr(
         self,
         target_type: str,
         target_attrs: str,
+        siblings: tuple[str, ...],
         expected: str,
     ) -> None:
-        """Test get targetattr."""
+        """``attr=(*)`` excludes the attributes its ACP siblings name."""
         tm.that(
-            FlextLdifServersOidAclToOud.resolve_targetattr(
-                self._rule(target_type, target_attrs)
+            FlextLdifServersOidAclToOud.convert_targetattr(
+                self._rule(target_type, target_attrs),
+                sibling_attrs=siblings,
+            ).unwrap(),
+            eq=expected,
+        )
+
+    @c.Tests.MARK.parametrize(
+        ("target_attrs", "siblings", "message"),
+        [
+            ("!=sn", ("cn",), "combination undefined"),
+            ("cn,createTimestamp", (), "operational attributes"),
+            ("!=createTimestamp", (), "operational attributes"),
+            ("*", ("createTimestamp",), "operational attributes"),
+            ("orclaci", (), "ACL attributes"),
+        ],
+    )
+    def test_targetattr_without_exact_oud_form_fails(
+        self,
+        target_attrs: str,
+        siblings: tuple[str, ...],
+        message: str,
+    ) -> None:
+        """Undefined, illegal or vanishing OUD targetattr forms fail loud."""
+        tm.fail(
+            FlextLdifServersOidAclToOud.convert_targetattr(
+                self._rule("attr", target_attrs),
+                sibling_attrs=siblings,
+            ),
+            has=message,
+        )
+
+    # -- rule_targetscope ---------------------------------------------------
+
+    @c.Tests.MARK.parametrize(
+        ("acl_type", "expected"),
+        [("orclaci", None), ("orclentrylevelaci", "base")],
+    )
+    def test_rule_targetscope(self, acl_type: str, expected: str | None) -> None:
+        """An orclaci is prescriptive over its subtree; entry-level is base."""
+        tm.that(
+            FlextLdifServersOidAclToOud.rule_targetscope(
+                self._rule("entry", acl_type=acl_type),
             ),
             eq=expected,
         )
 
-    # -- calculate_targetscope / clause_scopes -----------------------------
+    # -- validate_ldap_filter -----------------------------------------------
 
-    def test_scope_orclaci_without_anyone_is_default(self) -> None:
-        """Test scope orclaci without anyone is default."""
-        scope = FlextLdifServersOidAclToOud.calculate_targetscope(
-            self._rule("entry"),
-            has_anyone_subject=False,
-        )
-
-        tm.ok(scope is None)
-
-    def test_scope_orclaci_with_anyone_is_base(self) -> None:
-        """Test scope orclaci with anyone is base."""
-        scope = FlextLdifServersOidAclToOud.calculate_targetscope(
-            self._rule("entry"), has_anyone_subject=True
-        )
-
-        tm.that(scope, eq="base")
-
-    def test_scope_orclentrylevelaci_is_always_base(self) -> None:
-        """Test scope orclentrylevelaci is always base."""
-        scope = FlextLdifServersOidAclToOud.calculate_targetscope(
-            self._rule("entry", acl_type="orclentrylevelaci"),
-            has_anyone_subject=False,
-        )
-
-        tm.that(scope, eq="base")
+    @staticmethod
+    @c.Tests.MARK.parametrize(
+        ("value", "expected"),
+        [
+            ("objectclass=person", "(objectclass=person)"),
+            ("&(a=b)(!(c=*))", "(&(a=b)(!(c=*)))"),
+            ("(cn=a*b)", "(cn=a*b)"),
+            ("cn:dn:2.5.13.5:=x", "(cn:dn:2.5.13.5:=x)"),
+            ("foo", ""),
+            ("!(a=b)(c=d)", ""),
+            ("&", ""),
+            ("(a=b)x", ""),
+        ],
+    )
+    def test_ldap_filter_is_validated(value: str, expected: str) -> None:
+        """An RFC 4515 filter renders parenthesized; any other text fails."""
+        result = FlextLdifServersOidAclToOud.validate_ldap_filter(value)
+        if expected:
+            tm.that(result.unwrap(), eq=expected)
+        else:
+            tm.fail(result, has="not one RFC 4515 LDAP filter")
 
     # -- regex_dn_to_wildcard / convert_bind_dn ----------------------------
 
@@ -319,7 +381,6 @@ class TestsFlextLdifOidAclConvertOud:
     @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [
-            ("", ""),
             ("orclipaddress=10.1.2.3", "10.1.2.3"),
             ("orclipaddress=10.10.*", "10.10.*.*"),
             (
@@ -339,6 +400,7 @@ class TestsFlextLdifOidAclConvertOud:
     @c.Tests.MARK.parametrize(
         "value",
         [
+            "",
             "10.0.0.0",
             "&(orclipaddress!=1.2.*)(orclipaddress!=3.4.*)",
             "orclipaddress=1.2.3*",
@@ -381,42 +443,67 @@ class TestsFlextLdifOidAclConvertOud:
         )
 
     @c.Tests.MARK.parametrize(
-        ("acl_type", "deny", "rule_scope", "expected"),
+        ("acl_type", "deny", "plain", "operational"),
         [
             (
                 "orclentrylevelaci",
                 False,
-                "base",
-                ((None, ("read", "search")), ("onelevel", ("add",))),
+                ((None, None, ("read", "search")), (None, "onelevel", ("add",))),
+                None,
             ),
             (
                 "orclentrylevelaci",
                 True,
-                "base",
-                ((None, ("read", "search")), ("onelevel", ("add",))),
+                ((None, None, ("read", "search")), (None, "onelevel", ("add",))),
+                "own",
             ),
-            ("orclaci", True, "base", (("subtree", ("read", "search", "add")),)),
-            ("orclaci", True, None, ((None, ("read", "search", "add")),)),
-            ("orclaci", False, "base", ((None, ("read", "search", "add")),)),
+            ("orclaci", True, ((None, None, ("read", "search", "add")),), "own"),
+            ("orclaci", False, ((None, None, ("read", "search", "add")),), None),
         ],
     )
-    def test_clause_scopes_partition_rights_by_targetscope(
+    def test_clause_parts_partition_entry_rights(
         self,
         acl_type: str,
         *,
         deny: bool,
-        rule_scope: str | None,
-        expected: tuple[tuple[str | None, tuple[str, ...]], ...],
+        plain: tuple[tuple[str | None, str | None, tuple[str, ...]], ...],
+        operational: str | None,
     ) -> None:
-        """Entry-level ``add`` targets children; orclaci denials keep subtree."""
+        """Entry-level ``add`` targets children; a visibility denial hides more.
+
+        A denial of read or search on an entry also denies, in its own aci,
+        the operational attributes the default global ACIs grant.
+        """
+        constants = FlextLdifConstantsServersOid
+        expected = list(plain)
+        if operational is not None:
+            expected.insert(
+                1 if acl_type == "orclaci" else 2,
+                (
+                    constants.OUD_TARGETATTR_ALL,
+                    None,
+                    constants.OUD_GLOBAL_OPERATIONAL_PERMS,
+                ),
+            )
+
         tm.that(
-            FlextLdifServersOidAclToOud.clause_scopes(
+            FlextLdifServersOidAclToOud.clause_parts(
                 self._rule("entry", acl_type=acl_type),
                 ("read", "search", "add"),
                 deny=deny,
-                rule_scope=rule_scope,
             ),
-            eq=expected,
+            eq=tuple(expected),
+        )
+
+    def test_clause_parts_keep_attribute_rights_whole(self) -> None:
+        """Attribute rules render every right under the rule's own target."""
+        tm.that(
+            FlextLdifServersOidAclToOud.clause_parts(
+                self._rule("attr", "cn"),
+                ("read", "search"),
+                deny=True,
+            ),
+            eq=((None, None, ("read", "search")),),
         )
 
     # -- in_scope ------------------------------------------------------

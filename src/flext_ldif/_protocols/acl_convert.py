@@ -8,13 +8,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_cli import FlextCliProtocols
 
 if TYPE_CHECKING:
-    from flext_ldif import c, t
+    from flext_ldif import t
 
 
 class FlextLdifProtocolsAclConvert:
@@ -93,154 +93,433 @@ class FlextLdifProtocolsAclConvert:
             """Original raw OID ACL line."""
             ...
 
-    @runtime_checkable
-    class AciBindClause(FlextCliProtocols.BaseModel, Protocol):
-        """Structural data contract projected from the owning model."""
-
         @property
-        def subject_type(self) -> str:
-            """OUD bind-rule keyword: userdn | groupdn | userattr."""
+        def deny_group_override(self) -> bool:
+            """Whether the object carries DenyGroupOverride."""
             ...
 
         @property
-        def subject_value(self) -> str:
-            """Bind-rule value, e.g. ldap:///cn=Directory Manager."""
+        def append_to_all(self) -> bool:
+            """Whether the object carries AppendToAll."""
             ...
-
-        @property
-        def permissions(self) -> Sequence[str]:
-            """OUD permission tokens in canonical order."""
-            ...
-
-        @property
-        def authmethod(self) -> str:
-            """OUD authmethod bind-rule constraint."""
-            ...
-
-        @property
-        def ip(self) -> str:
-            """OUD ip bind-rule constraint (from bindipfilter)."""
-            ...
-
-        @property
-        def targetscope(self) -> str | None:
-            """Structural member projected from the owning model.
-
-            OUD targetscope of the aci this clause renders in; None renders it under
-            the rule's targetscope.
-            """
-            ...
-
-    @runtime_checkable
-    class AciAllow(AciBindClause, Protocol):
-        """Structural data contract projected from the owning model."""
-
-    @runtime_checkable
-    class AciDeny(AciBindClause, Protocol):
-        """Structural data contract projected from the owning model."""
 
     @runtime_checkable
     class AclPermissionResolution(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
-        def allow(self) -> Sequence[str]:
-            """Granted OUD permission tokens in canonical order."""
+        def allow(self) -> frozenset[str]:
+            """Granted OID rights of the target kind."""
             ...
 
         @property
-        def deny(self) -> Sequence[str]:
-            """Denied OUD permission tokens in canonical order."""
-            ...
-
-        @property
-        def total_denial(self) -> bool:
-            """Whether deny covers every right of the target kind."""
+        def deny(self) -> frozenset[str]:
+            """Denied OID rights of the target kind."""
             ...
 
     @runtime_checkable
-    class AclSubjectOutcome(FlextCliProtocols.BaseModel, Protocol):
+    class AclSecurityGroup(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
+
+        @property
+        def classes(self) -> frozenset[str]:
+            """Case-folded OID security group classes."""
+            ...
+
+        @property
+        def member_groups(self) -> frozenset[str]:
+            """DN keys of the member entries that are groups."""
+            ...
+
+        @property
+        def dynamic(self) -> bool:
+            """Whether membership is computed (memberURL)."""
+            ...
+
+    @runtime_checkable
+    class AclDirectory(FlextCliProtocols.BaseModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def entries(self) -> Mapping[str, str]:
+            """DN key to DN as read, for every migrated entry."""
+            ...
+
+        @property
+        def groups(self) -> Mapping[str, FlextLdifProtocolsAclConvert.AclSecurityGroup]:
+            """Group entries keyed by DN key."""
+            ...
+
+    @runtime_checkable
+    class AclBindLeaf(FlextCliProtocols.BaseModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def kind(self) -> str:
+            """Bind leaf kind."""
+            ...
+
+        @property
+        def value(self) -> str:
+            """Bind value as rendered."""
+            ...
+
+        @property
+        def key(self) -> str:
+            """Comparison key of the value."""
+            ...
+
+    @runtime_checkable
+    class AclBindRule(FlextCliProtocols.BaseModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def include(self) -> FlextLdifProtocolsAclConvert.AclBindLeaf:
+            """Subject the rule matches."""
+            ...
+
+        @property
+        def exclude(self) -> tuple[FlextLdifProtocolsAclConvert.AclBindLeaf, ...]:
+            """Subjects excluded from the match."""
+            ...
+
+    @runtime_checkable
+    class AclAttrSet(FlextCliProtocols.BaseModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def names(self) -> frozenset[str]:
+            """Case-folded attribute names."""
+            ...
+
+        @property
+        def negated(self) -> bool:
+            """Every attribute except ``names``."""
+            ...
+
+    @runtime_checkable
+    class AclClause(FlextCliProtocols.BaseModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def index(self) -> int:
+            """1-based clause position."""
+            ...
 
         @property
         def subject(self) -> FlextLdifProtocolsAclConvert.OidAclSubject:
-            """The OID subject exactly as parsed."""
+            """The OID subject as parsed."""
             ...
 
         @property
-        def kind(self) -> c.Ldif.AclSubjectOutcomeKind:
-            """Conversion outcome for this subject."""
+        def leaf(self) -> FlextLdifProtocolsAclConvert.AclBindLeaf | None:
+            """OUD subject, or None when no session matches."""
             ...
 
         @property
-        def allow(self) -> FlextLdifProtocolsAclConvert.AciAllow | None:
-            """Effective allow clause of a GRANTED subject."""
+        def outcome(self) -> str:
+            """Rule that decided a subject without session."""
             ...
 
         @property
-        def deny(self) -> FlextLdifProtocolsAclConvert.AciDeny | None:
-            """Deny clause of the subject's denied rights."""
+        def allow(self) -> frozenset[str]:
+            """Granted OID rights."""
             ...
 
         @property
-        def wildcard_rewritten(self) -> bool:
-            """Whether regex→wildcard rewrote the bind DN."""
-            ...
-
-        @property
-        def display_value(self) -> str:
-            """Converted bind DN of an OUT_OF_SCOPE subject."""
+        def deny(self) -> frozenset[str]:
+            """Denied OID rights."""
             ...
 
     @runtime_checkable
-    class AciRule(FlextCliProtocols.BaseModel, Protocol):
+    class AclLevelRule(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
-        def dn(self) -> str:
-            """Entry DN that owns the aci."""
+        def level(self) -> str:
+            """Origin attribute: orclaci or orclentrylevelaci."""
             ...
 
         @property
-        def targetattr(self) -> str:
-            """Targetattr expression, e.g. '*' or 'cn||sn'."""
+        def dn(self) -> str:
+            """Carrier DN as read."""
+            ...
+
+        @property
+        def key(self) -> str:
+            """Carrier DN key."""
+            ...
+
+        @property
+        def index(self) -> int:
+            """1-based position at the level."""
+            ...
+
+        @property
+        def rule(self) -> FlextLdifProtocolsAclConvert.OidAclRule:
+            """The parsed OID ACI."""
+            ...
+
+        @property
+        def attrs(self) -> FlextLdifProtocolsAclConvert.AclAttrSet | None:
+            """Attribute target; None for an entry target."""
+            ...
+
+        @property
+        def target_filter(self) -> str | None:
+            """Parenthesized OID filter, if present."""
+            ...
+
+        @property
+        def clauses(self) -> tuple[FlextLdifProtocolsAclConvert.AclClause, ...]:
+            """By-clauses in source order."""
+            ...
+
+    @runtime_checkable
+    class AclResolution(FlextCliProtocols.BaseModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def clause(self) -> int:
+            """Deciding clause position."""
+            ...
+
+        @property
+        def right(self) -> str:
+            """OID right."""
+            ...
+
+        @property
+        def effect(self) -> str:
+            """Allow or deny."""
+            ...
+
+        @property
+        def leaf(self) -> FlextLdifProtocolsAclConvert.AclBindLeaf:
+            """Subject of the clause."""
+            ...
+
+        @property
+        def grantors(self) -> tuple[FlextLdifProtocolsAclConvert.AclBindLeaf, ...]:
+            """Subjects the same ACI grants the right to."""
+            ...
+
+        @property
+        def added_object_constraint(self) -> str:
+            """OID added-object constraint of the clause."""
+            ...
+
+    @runtime_checkable
+    class AclForm(FlextCliProtocols.BaseModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def rights(self) -> tuple[str, ...]:
+            """OUD rights."""
+            ...
+
+        @property
+        def attrs(self) -> FlextLdifProtocolsAclConvert.AclAttrSet:
+            """OUD targetattr set."""
             ...
 
         @property
         def targetfilter(self) -> str | None:
-            """Targetfilter expression, if present."""
+            """OUD targetfilter."""
             ...
 
         @property
         def targetscope(self) -> str | None:
-            """targetscope, e.g. 'base', if present."""
+            """OUD targetscope; None is the subtree default."""
             ...
 
         @property
-        def acl_name(self) -> str:
-            """Human-readable acl name."""
+        def rule(self) -> str:
+            """Conversion rule applied."""
+            ...
+
+    @runtime_checkable
+    class AclDecision(FlextCliProtocols.BaseModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def rule(self) -> FlextLdifProtocolsAclConvert.AclLevelRule:
+            """Source ACI."""
             ...
 
         @property
-        def allows(self) -> tuple[FlextLdifProtocolsAclConvert.AciAllow, ...]:
-            """allow() clauses."""
+        def resolution(self) -> FlextLdifProtocolsAclConvert.AclResolution:
+            """Decided right."""
             ...
 
         @property
-        def denies(self) -> tuple[FlextLdifProtocolsAclConvert.AciDeny, ...]:
-            """deny() clauses."""
+        def form(self) -> FlextLdifProtocolsAclConvert.AclForm:
+            """OUD form."""
             ...
 
         @property
-        def target_type(self) -> str:
-            """OID target kind of the source rule: entry | attr."""
+        def bind(self) -> FlextLdifProtocolsAclConvert.AclBindRule:
+            """OUD bind rule."""
+            ...
+
+    @runtime_checkable
+    class AclRegion(FlextCliProtocols.BaseModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def anchor(self) -> str:
+            """Anchor DN key."""
             ...
 
         @property
-        def outcomes(
-            self,
-        ) -> tuple[FlextLdifProtocolsAclConvert.AclSubjectOutcome, ...]:
-            """Per-subject conversion outcomes in input order."""
+        def scope(self) -> str | None:
+            """Region scope; None is the whole subtree."""
+            ...
+
+        @property
+        def target(self) -> str | None:
+            """OUD target pattern without the URL prefix."""
+            ...
+
+        @property
+        def target_negated(self) -> bool:
+            """Whether the target is an exclusion."""
+            ...
+
+    @runtime_checkable
+    class AclNearerGrant(FlextCliProtocols.BaseModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def key(self) -> str:
+            """Level DN key."""
+            ...
+
+        @property
+        def level(self) -> str:
+            """Level attribute."""
+            ...
+
+        @property
+        def leaf(self) -> FlextLdifProtocolsAclConvert.AclBindLeaf:
+            """Granted subject."""
+            ...
+
+    @runtime_checkable
+    class AciStatement(FlextCliProtocols.BaseModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def dn(self) -> str:
+            """Entry that carries the ACI."""
+            ...
+
+        @property
+        def effect(self) -> str:
+            """Allow or deny."""
+            ...
+
+        @property
+        def rights(self) -> tuple[str, ...]:
+            """OUD rights."""
+            ...
+
+        @property
+        def attrs(self) -> FlextLdifProtocolsAclConvert.AclAttrSet:
+            """OUD targetattr set."""
+            ...
+
+        @property
+        def targetfilter(self) -> str | None:
+            """OUD targetfilter."""
+            ...
+
+        @property
+        def targetscope(self) -> str | None:
+            """OUD targetscope."""
+            ...
+
+        @property
+        def target(self) -> str | None:
+            """OUD target pattern without the URL prefix."""
+            ...
+
+        @property
+        def target_negated(self) -> bool:
+            """Whether the target is ``target!=``."""
+            ...
+
+        @property
+        def bind(self) -> FlextLdifProtocolsAclConvert.AclBindRule:
+            """OUD bind rule."""
+            ...
+
+        @property
+        def rule(self) -> str:
+            """Conversion rule applied."""
+            ...
+
+        @property
+        def name(self) -> str:
+            """Acl name: the origin."""
+            ...
+
+        @property
+        def origin_dn(self) -> str:
+            """Source ACL carrier DN."""
+            ...
+
+        @property
+        def origin_index(self) -> int:
+            """Source ACI position at its level."""
+            ...
+
+        @property
+        def origin_level(self) -> str:
+            """Source ACL attribute."""
+            ...
+
+    @runtime_checkable
+    class AclConversionEvent(FlextCliProtocols.BaseModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def rule(self) -> str:
+            """Rule or exception identifier."""
+            ...
+
+        @property
+        def dn(self) -> str:
+            """Source ACL carrier DN."""
+            ...
+
+        @property
+        def detail(self) -> str:
+            """What the rule decided."""
+            ...
+
+    @runtime_checkable
+    class AclDirectoryConversion(FlextCliProtocols.BaseModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def statements(self) -> tuple[FlextLdifProtocolsAclConvert.AciStatement, ...]:
+            """Emitted ACI statements in emission order."""
+            ...
+
+        @property
+        def values(self) -> Mapping[str, tuple[str, ...]]:
+            """Rendered aci values by receiving DN key."""
+            ...
+
+        @property
+        def events(self) -> tuple[FlextLdifProtocolsAclConvert.AclConversionEvent, ...]:
+            """Operator-review events in order."""
+            ...
+
+        @property
+        def consumed(self) -> frozenset[str]:
+            """DN keys whose OID ACLs were consumed."""
             ...
 
     @runtime_checkable
@@ -248,52 +527,18 @@ class FlextLdifProtocolsAclConvert:
         """Structural data contract projected from the owning model."""
 
         @property
-        def rules(self) -> tuple[FlextLdifProtocolsAclConvert.AciRule, ...]:
-            """Assembled aci rules in OID line order."""
+        def statements(self) -> tuple[FlextLdifProtocolsAclConvert.AciStatement, ...]:
+            """ACI statements placed on this entry."""
+            ...
+
+        @property
+        def events(self) -> tuple[FlextLdifProtocolsAclConvert.AclConversionEvent, ...]:
+            """Events of the ACLs this entry carried."""
             ...
 
         @property
         def oracle_internal_skip(self) -> bool:
             """Whether the DN is Oracle-internal (not migrated)."""
-            ...
-
-    @runtime_checkable
-    class AciAllowGroup(FlextCliProtocols.BaseModel, Protocol):
-        """Structural data contract projected from the owning model."""
-
-        @property
-        def permissions(self) -> Sequence[str]:
-            """Canonical permission tuple shared by this group."""
-            ...
-
-        @property
-        def binds(self) -> Sequence[str]:
-            """Rendered bind rules joined with OUD 'or'."""
-            ...
-
-        @property
-        def authmethod(self) -> str:
-            """Shared authmethod modifier for this group."""
-            ...
-
-        @property
-        def ip(self) -> str:
-            """Shared ip modifier for this group."""
-            ...
-
-    @runtime_checkable
-    class AciAllowGroups(FlextCliProtocols.BaseModel, Protocol):
-        """Structural data contract projected from the owning model."""
-
-        @property
-        def groups(self) -> tuple[FlextLdifProtocolsAclConvert.AciAllowGroup, ...]:
-            """Allow groups in first-seen render order."""
-            ...
-
-        def with_allow(
-            self, allow: FlextLdifProtocolsAclConvert.AciBindClause, bind: str
-        ) -> FlextLdifProtocolsAclConvert.AciAllowGroups:
-            """Return grouped clause state with one rendered bind rule appended."""
             ...
 
     @runtime_checkable

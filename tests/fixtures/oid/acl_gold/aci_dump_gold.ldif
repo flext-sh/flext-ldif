@@ -1,4 +1,4 @@
-# provenance: flext-ldif FlextLdif().migration_pipeline oid->oud base_dn=dc=example,dc=invalid output of aci_dump_input.ldif (sha256=c12459828f94be0edafcc3187a56f54a9a16aba9da4f288270480d483a01de5a); flext-ws7iv semantics: union of grants minus denials per ACI (OID-30 30.1.6.2), denials rendered as OUD deny (OUD 9.1.4); regenerate on any intended conversion change
+# provenance: flext-ldif FlextLdif().migration_pipeline oid->oud base_dn=dc=example,dc=invalid output of aci_dump_input.ldif (sha256=d62a9a4bd87beffd0e09e0ef3d031ef2b6117b05b610ba3703eb0432dd0cf17f); flext-ws7iv semantics: union of grants minus denials per ACI (OID-30 30.1.6.2), denials rendered as OUD deny (OUD 9.1.4); regenerate on any intended conversion change
 version: 1
 
 dn: cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
@@ -14,6 +14,11 @@ aci: (targetattr="*")
       deny (read, search, add, delete)           groupdn="ldap:///cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                                               or groupdn="ldap:///cn=group-00591,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00004 Entry by group-00213";
+      deny (read, search, compare)    groupdn="ldap:///cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+                                   or groupdn="ldap:///cn=group-00591,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
+                                   or userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00004 Entry by group-01851";
@@ -26,6 +31,10 @@ aci: (targetattr="*")
       deny (add)    groupdn="ldap:///cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or groupdn="ldap:///cn=group-00591,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00004 Entry by group-01851";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00004 Attrs by group-01851";
@@ -39,6 +48,9 @@ replace: aci
 aci: (targetattr="*")
      (version 3.0; acl "node-00005 Entry by group-01465";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00005 Entry by group-01465";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (version 3.0; acl "node-00005 Attrs by group-01465";
       deny (read, search, write, selfwrite, compare)    userdn="ldap:///anyone";)
@@ -50,6 +62,9 @@ replace: aci
 aci: (targetattr="*")
      (version 3.0; acl "node-00080 Entry by group-01465";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00080 Entry by group-01465";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (version 3.0; acl "node-00080 Attrs by group-01465";
       deny (write)                                      groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
@@ -63,6 +78,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00014 Entry by group-00284";
       deny (add, delete, proxy)                  groupdn="ldap:///cn=group-00284,cn=node-00014,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00014 Entry by group-00284";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00014 Entry by group-00284";
@@ -73,6 +91,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00014 Entry by group-00284";
       deny (add)    groupdn="ldap:///cn=group-00284,cn=node-00014,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00014 Entry by group-00284";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00014 Attrs by group-00284";
@@ -87,6 +109,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00018 Entry by group-00594";
       deny (add, delete)                         groupdn="ldap:///cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00018 Entry by group-00594";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (version 3.0; acl "node-00018 Attrs by group-00594";
       deny (write, compare)                             groupdn="ldap:///cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
@@ -101,6 +126,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00018 Entry by group-00594";
       deny (add)    groupdn="ldap:///cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00018 Entry by group-00594";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00018 Attrs by group-00594";
@@ -115,6 +144,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00023 Entry by group-00595";
       deny (add, delete)                         groupdn="ldap:///cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00023 Entry by group-00595";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (version 3.0; acl "node-00023 Attrs by group-00595";
       deny (write, selfwrite, compare)                  groupdn="ldap:///cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
@@ -129,6 +161,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00023 Entry by group-00595";
       deny (add)    groupdn="ldap:///cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00023 Entry by group-00595";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00023 Attrs by group-00595";
@@ -143,6 +179,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00036 Entry by group-00596";
       deny (add, delete)                         groupdn="ldap:///cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00036 Entry by group-00596";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (version 3.0; acl "node-00036 Attrs by group-00596";
       deny (write)                                      groupdn="ldap:///cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
@@ -162,6 +201,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00036 Entry by group-00596";
       deny (add)    groupdn="ldap:///cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00036 Entry by group-00596";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 -
 
 dn: cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
@@ -170,6 +213,9 @@ replace: aci
 aci: (targetattr="*")
      (version 3.0; acl "node-00039 Entry by group-00213";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00039 Entry by group-00213";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (version 3.0; acl "node-00039 Attrs by group-00213";
       deny (read, search, write, selfwrite, compare)    userdn="ldap:///anyone";)
@@ -183,6 +229,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00039 Entry by group-00213";
       deny (add)    groupdn="ldap:///cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00039 Entry by group-00213";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00039 Attrs by group-00213";
@@ -197,6 +247,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00040 Entry by group-00597";
       deny (add, delete)                         groupdn="ldap:///cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00040 Entry by group-00597";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (version 3.0; acl "node-00040 Attrs by group-00597";
       deny (write)                                      groupdn="ldap:///cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
@@ -211,6 +264,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00040 Entry by group-00597";
       deny (add)    groupdn="ldap:///cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00040 Entry by group-00597";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00040 Attrs by group-00597";
@@ -229,6 +286,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00043 Entry by group-00598";
       deny (add, delete)                         groupdn="ldap:///cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00043 Entry by group-00598";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00043 Entry by group-00598";
@@ -239,6 +299,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00043 Entry by group-00598";
       deny (add)    groupdn="ldap:///cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00043 Entry by group-00598";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00043 Attrs by group-00598";
@@ -253,6 +317,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00045 Entry by group-00599";
       deny (add, delete)                         groupdn="ldap:///cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00045 Entry by group-00599";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (version 3.0; acl "node-00045 Attrs by group-00599";
       deny (write)                                      groupdn="ldap:///cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
@@ -267,6 +334,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00045 Entry by group-00599";
       deny (add)    groupdn="ldap:///cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00045 Entry by group-00599";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00045 Attrs by group-00599";
@@ -285,6 +356,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00046 Entry by group-00600";
       deny (add, delete)                         groupdn="ldap:///cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00046 Entry by group-00600";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00046 Entry by group-00600";
@@ -295,6 +369,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00046 Entry by group-00600";
       deny (add)    groupdn="ldap:///cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00046 Entry by group-00600";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00046 Attrs by group-00600";
@@ -313,6 +391,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00054 Entry by group-00685";
       deny (add, delete, proxy)                  groupdn="ldap:///cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00054 Entry by group-00685";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00054 Entry by group-00685";
@@ -323,6 +404,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00054 Entry by group-00685";
       deny (add)    groupdn="ldap:///cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00054 Entry by group-00685";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00054 Attrs by group-00685";
@@ -337,6 +422,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00058 Entry by group-00601";
       deny (add, delete)                         groupdn="ldap:///cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00058 Entry by group-00601";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (version 3.0; acl "node-00058 Attrs by group-00601";
       deny (write)                                      groupdn="ldap:///cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
@@ -351,6 +439,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00058 Entry by group-00601";
       deny (add)    groupdn="ldap:///cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00058 Entry by group-00601";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00058 Attrs by group-00601";
@@ -365,6 +457,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00062 Entry by group-00587";
       deny (add, delete)                         groupdn="ldap:///cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00062 Entry by group-00587";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (version 3.0; acl "node-00062 Attrs by group-00587";
       deny (write)                                      groupdn="ldap:///cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
@@ -378,6 +473,10 @@ aci: (targetattr="*")
      (targetscope="onelevel")
      (version 3.0; acl "node-00062 Entry by group-00587";
       deny (add)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00062 Entry by group-00587";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00062 Attrs by group-00587";
@@ -396,6 +495,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00063 Entry by group-00602";
       deny (add, delete)                         groupdn="ldap:///cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00063 Entry by group-00602";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00063 Attrs by group-00602";
@@ -411,6 +513,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00063 Entry by group-00602";
       deny (add)    groupdn="ldap:///cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00063 Entry by group-00602";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 -
 
 dn: cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
@@ -424,6 +530,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00066 Entry by group-00603";
       deny (add, delete)                         groupdn="ldap:///cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00066 Entry by group-00603";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00066 Attrs by group-00603";
@@ -439,6 +548,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00066 Entry by group-00603";
       deny (add)    groupdn="ldap:///cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00066 Entry by group-00603";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 -
 
 dn: cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
@@ -448,6 +561,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00088 Entry by group-00604";
       deny (add, delete)                         groupdn="ldap:///cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00088 Entry by group-00604";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (version 3.0; acl "node-00088 Attrs by group-00604";
       deny (write, selfwrite, compare)                  groupdn="ldap:///cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
@@ -462,6 +578,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00088 Entry by group-00604";
       deny (add)    groupdn="ldap:///cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00088 Entry by group-00604";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00088 Attrs by group-00604";
@@ -476,6 +596,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00095 Entry by group-00588";
       deny (add, delete)                         groupdn="ldap:///cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00095 Entry by group-00588";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (version 3.0; acl "node-00095 Attrs by group-00588";
       deny (write, compare)                             groupdn="ldap:///cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
@@ -490,6 +613,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00095 Entry by group-00588";
       deny (add)    groupdn="ldap:///cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00095 Entry by group-00588";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00095 Attrs by group-00588";
@@ -504,6 +631,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00103 Entry by group-00605";
       deny (add, delete)                         groupdn="ldap:///cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00103 Entry by group-00605";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (version 3.0; acl "node-00103 Attrs by group-00605";
       deny (write)                                      groupdn="ldap:///cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
@@ -518,6 +648,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00103 Entry by group-00605";
       deny (add)    groupdn="ldap:///cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00103 Entry by group-00605";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00103 Attrs by group-00605";
@@ -536,6 +670,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00123 Entry by group-00606";
       deny (add, delete)                         groupdn="ldap:///cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00123 Entry by group-00606";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00123 Entry by group-00606";
@@ -546,6 +683,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00123 Entry by group-00606";
       deny (add)    groupdn="ldap:///cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00123 Entry by group-00606";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00123 Attrs by group-00606";
@@ -566,6 +707,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00124 Entry by group-00606";
       deny (add)    groupdn="ldap:///cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00124 Entry by group-00606";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 -
 
 dn: cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
@@ -575,6 +720,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00125 Entry by group-00589";
       deny (add, delete)                         groupdn="ldap:///cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00125 Entry by group-00589";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (version 3.0; acl "node-00125 Attrs by group-00589";
       deny (write, compare)                             groupdn="ldap:///cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
@@ -589,6 +737,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00125 Entry by group-00589";
       deny (add)    groupdn="ldap:///cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00125 Entry by group-00589";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00125 Attrs by group-00589";
@@ -603,6 +755,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00131 Entry by group-00607";
       deny (add, delete)                         groupdn="ldap:///cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00131 Entry by group-00607";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (version 3.0; acl "node-00131 Attrs by group-00607";
       deny (write)                                      groupdn="ldap:///cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
@@ -611,6 +766,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00131 Entry by group-00590";
       deny (add, delete)                         groupdn="ldap:///cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00131 Entry by group-00590";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (version 3.0; acl "node-00131 Attrs by group-00590";
       deny (write)                                      groupdn="ldap:///cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
@@ -630,6 +788,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00131 Entry by group-00590";
       deny (add)    groupdn="ldap:///cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00131 Entry by group-00590";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00131 Attrs by group-00607";
@@ -645,6 +807,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00131 Entry by group-00607";
       deny (add)    groupdn="ldap:///cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00131 Entry by group-00607";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 -
 
 dn: cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
@@ -658,6 +824,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00150 Entry by group-00608";
       deny (add, delete)                         groupdn="ldap:///cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00150 Entry by group-00608";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00150 Attrs by group-00608";
@@ -673,6 +842,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00150 Entry by group-00608";
       deny (add)    groupdn="ldap:///cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00150 Entry by group-00608";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 -
 
 dn: cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
@@ -686,6 +859,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00151 Entry by group-00609";
       deny (add, delete)                         groupdn="ldap:///cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00151 Entry by group-00609";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00151 Attrs by group-00609";
@@ -701,6 +877,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00151 Entry by group-00609";
       deny (add)    groupdn="ldap:///cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00151 Entry by group-00609";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 -
 
 dn: cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
@@ -710,6 +890,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00158 Entry by group-00610";
       deny (add, delete)                         groupdn="ldap:///cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00158 Entry by group-00610";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (version 3.0; acl "node-00158 Attrs by group-00610";
       deny (write)                                      groupdn="ldap:///cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
@@ -724,6 +907,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00158 Entry by group-00610";
       deny (add)    groupdn="ldap:///cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00158 Entry by group-00610";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00158 Attrs by group-00610";
@@ -742,6 +929,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00159 Entry by group-00611";
       deny (add, delete)                         groupdn="ldap:///cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00159 Entry by group-00611";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00159 Entry by group-00611";
@@ -752,6 +942,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00159 Entry by group-00611";
       deny (add)    groupdn="ldap:///cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00159 Entry by group-00611";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00159 Attrs by group-00611";
@@ -766,6 +960,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00160 Entry by group-00612";
       deny (add, delete)                         groupdn="ldap:///cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-00160 Entry by group-00612";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (version 3.0; acl "node-00160 Attrs by group-00612";
       deny (write)                                      groupdn="ldap:///cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
@@ -780,6 +977,10 @@ aci: (targetattr="*")
      (version 3.0; acl "node-00160 Entry by group-00612";
       deny (add)    groupdn="ldap:///cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid"
                  or userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "node-00160 Entry by group-00612";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (targetscope="base")
      (version 3.0; acl "node-00160 Attrs by group-00612";
@@ -794,6 +995,9 @@ aci: (targetattr="*")
      (version 3.0; acl "node-02081 Entry by group-01465";
       deny (add, delete)                         groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "node-02081 Entry by group-01465";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="*")
      (version 3.0; acl "node-02081 Attrs by group-01465";
       deny (write, compare)                             groupdn="ldap:///cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid";

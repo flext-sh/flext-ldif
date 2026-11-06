@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import services
+from flext_ldif import servers, services
 from tests import c, m, p, tm, u
 
 
@@ -102,6 +102,9 @@ class TestsFlextLdifTransformersService:
             registry=server.registry,
             source_server=source_server,
             target_server=target_server,
+            access_groups=servers.FlextLdifServersOidAclPipeline.security_group_dns([
+                u.Tests.oid_security_group_entry("cn=admins,dc=ctbc"),
+            ]),
         )
 
         converted = tm.ok(transformer.apply(entry))
@@ -112,8 +115,13 @@ class TestsFlextLdifTransformersService:
             attrs["aci"],
             eq=[
                 (
+                    '(targetattr="objectClass")'
+                    '    (version 3.0; acl "users Entry by admins";'
+                    '     allow (read, search)    groupdn="ldap:///cn=admins,dc=ctbc";)'
+                ),
+                (
                     '(targetattr="*")    (version 3.0; acl "users Entry by admins";'
-                    '     allow (read, search, add)    groupdn="ldap:///cn=admins,dc=ctbc";)'
+                    '     allow (add)    groupdn="ldap:///cn=admins,dc=ctbc";)'
                 ),
             ],
         )
@@ -129,6 +137,9 @@ class TestsFlextLdifTransformersService:
             source_server=c.Ldif.ServerTypes.OID,
             target_server=c.Ldif.ServerTypes.OUD,
             base_dn="dc=ctbc",
+            access_groups=servers.FlextLdifServersOidAclPipeline.security_group_dns([
+                u.Tests.oid_security_group_entry("cn=a,dc=ctbc"),
+            ]),
         )
 
         converted = tm.ok(transformer.apply(entry))
@@ -137,7 +148,8 @@ class TestsFlextLdifTransformersService:
             tm.not_none(converted.attributes).attributes["aci"],
             eq=[
                 (
-                    '(targetattr="*")    (version 3.0; acl "users Entry by x";'
+                    '(targetattr="objectClass")'
+                    '    (version 3.0; acl "users Entry by x";'
                     '     allow (read, search)    groupdn="ldap:///cn=a,dc=ctbc";)'
                 ),
             ],

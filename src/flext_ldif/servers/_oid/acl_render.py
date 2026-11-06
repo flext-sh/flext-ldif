@@ -1,12 +1,25 @@
-"""OUD aci rendering — AciRule value object → canonical aci string.
+"""OUD ACI emission and rendering of the conversion rules R1-R9.
 
-Renders the aligned OUD form: ``aci: (targetattr=…)`` then the indented
-``(targetfilter=…)``/``(targetscope=…)``/``(version 3.0; acl "name";`` parts
-and one indented ``allow (perms) bindrule;`` / ``deny (perms) bindrule;``
-clause per permission set. Same-permission subjects collapse into one clause
-with ``or``-joined bind-rules. A rule whose clauses need different
-targetscopes renders one ``aci`` value per scope. Pure string assembly —
-total function, no failure channel.
+Consumes the indexed OID policy (:class:`FlextLdifServersOidAclRegion`) and
+emits OUD ACI statements per the Algar conversion spec v4.1 section 4:
+
+- R1/R2/R3: attribute grants keep the origin scope (``orclaci`` subtree,
+  ``orclentrylevelaci`` base) and the filter as ``targetfilter``; read and
+  compare are granted only where OID decides browse for the subject.
+- R4: entry rights are separate ACIs: add ``subordinate``/``onelevel``
+  (``dnattr`` reads the parent of the new entry, ``parent[1]``), delete
+  with the origin scope, browse as ``objectClass`` read and search
+  (operator decision "Emulate minimum"), the added-object constraint as the
+  add ``targetfilter``. A proxy grant fails: its OID target is unmeasured.
+- R5: every denial below the root DSE becomes a ``deny`` that excludes the
+  subjects its ACI grants (R6a) and the privilege groups a farther ACP
+  grants by group subject, placed by region (``acl_region.py``).
+- R6b: a named attribute leaves the ACP's ``*`` ACI; a filtered ACI decides
+  before the unfiltered one where its filter matches.
+- R8: a grant to OID ``*`` goes to ``ldap:///all`` and a denial to
+  ``ldap:///anyone`` (operator decision "Grant all, deny anyone").
+- R9: root DSE ``orclaci`` grants land on the suffix root; its denials emit
+  nothing.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,157 +27,585 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from flext_ldif import c, m, p, r
+from flext_ldif.servers._oid import (
+    FlextLdifConstantsServersOid,
+    FlextLdifServersOidAclRegion,
+    FlextLdifServersOidAclToOud,
+)
 
-from flext_ldif import c, m, p
-from flext_ldif.servers._oid import FlextLdifConstantsServersOid
 
+class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
+    """Emit and render the OUD ACI statements of an indexed OID policy."""
 
-class FlextLdifServersOidAclRender:
-    """Render an assembled OUD :class:`m.Ldif.AciRule` to its string form."""
+    def _event(self, rule: str, dn: str, detail: str) -> None:
+        """Record one operator-review event."""
+        self.events.append(m.Ldif.AclConversionEvent(rule=rule, dn=dn, detail=detail))
 
-    @staticmethod
-    def render_bind(allow: p.Ldif.AciBindClause) -> str:
-        """Render one allow or deny clause's bind-rule in canonical OUD form.
+    def is_privilege(self, leaf: m.Ldif.AclBindLeaf) -> bool:
+        """Return whether a group leaf is a source privilege group (Q5)."""
+        constants = FlextLdifConstantsServersOid
+        if leaf.kind != constants.AclLeafKind.GROUP:
+            return False
+        group = self._directory.groups.get(leaf.key)
+        return group is not None and bool(
+            group.classes & constants.OID_PRIVILEGE_GROUP_CLASSES,
+        )
+
+    def privilege_override(
+        self,
+        decision: m.Ldif.AclDecision,
+    ) -> p.Result[list[m.Ldif.AclBindLeaf]]:
+        """R5: the privilege groups a farther ACP grants the right by group subject.
+
+        A denial at a lower ACP stays unresolved for a privilege group member
+        when a higher ACP grants the right by a group subject (OID-30
+        §30.1.6.5, §30.1.3.4.2). No override happens when the denying level's
+        ACP carries ``DenyGroupOverride`` (Q4). A higher grant covering only
+        part of the denied attributes or carrying a filter has no exact form.
 
         Returns:
-            The bind-rule string (subject plus optional authmethod/ip).
+            Group leaves to exclude from the denial, or the failure.
 
         """
-        if allow.subject_type == c.Ldif.OudSubjectType.USERATTR:
-            keyword = c.Ldif.OudSubjectType.USERATTR.value
-            bind = f'{keyword}="{allow.subject_value}"'
-        else:
-            bind = f'{allow.subject_type}="{c.Ldif.LDAP_PREFIX}{allow.subject_value}"'
-        if allow.authmethod:
-            bind += f' and authmethod="{allow.authmethod}"'
-        if allow.ip:
-            bind += f' and ip="{allow.ip}"'
-        return bind
+        rule = decision.rule
+        result = r[list[m.Ldif.AclBindLeaf]]
+        own_acp = self.rules_at(rule.key, c.Ldif.AclConvertType.ORCLACI.value)
+        if any(item.rule.deny_group_override for item in (*own_acp, rule)):
+            return result.ok([])
+        excluded: list[m.Ldif.AclBindLeaf] = []
+        for higher in self.farther_rules(rule):
+            leaves = [
+                leaf
+                for leaf in self.grants(higher, decision.resolution.right)
+                if self.is_privilege(leaf)
+            ]
+            higher_attrs = self.effective_attrs(higher)
+            if not leaves or higher_attrs.failure:
+                continue
+            attrs = decision.form.attrs
+            covered = rule.attrs is None or self.contains(higher_attrs.value, attrs)
+            if covered and higher.target_filter is None:
+                excluded.extend(leaves)
+            elif covered or self.overlaps(higher_attrs.value, attrs):
+                return result.fail(
+                    f"R5: privilege group(s) granted {decision.resolution.right} at "
+                    f"{higher.dn or '<root DSE>'} cover only part of the denial at "
+                    f"{rule.dn} (filter or attributes)",
+                )
+        return result.ok(excluded)
 
-    @staticmethod
-    def target_parts(aci: p.Ldif.AciRule) -> Sequence[str]:
-        """Assemble the ACI target clauses (attr/filter/scope) in OUD order.
+    def browse_resolved(
+        self,
+        rule: m.Ldif.AclLevelRule,
+        leaf: m.Ldif.AclBindLeaf,
+    ) -> bool:
+        """R1: return whether some level decides browse for every session of leaf.
+
+        OID returns attribute values only with browse on the entry (OID-30
+        Table 30-2, Table 30-3). For an ACP the chain starts at the ACP
+        itself, so it holds for every descendant.
 
         Returns:
-            Target clause strings; the first is the unprefixed
-            ``(targetattr=…`` head, ready for layout composition.
+            The resulting ``bool``.
 
         """
-        if aci.targetattr.startswith(c.Ldif.OUD_ATTR_NEGATION):
-            body = aci.targetattr[len(c.Ldif.OUD_ATTR_NEGATION) :]
-            parts = [f'(targetattr{c.Ldif.OUD_ATTR_NEGATION}"{body}")']
-        else:
-            parts = [f'(targetattr="{aci.targetattr}")']
-        if aci.targetfilter:
-            value = (
-                aci.targetfilter
-                if aci.targetfilter.startswith("(")
-                else f"({aci.targetfilter})"
+        acp = c.Ldif.AclConvertType.ORCLACI.value
+        chain = [(key, acp) for key in self.farther_acp_keys(rule)]
+        browse = FlextLdifConstantsServersOid.ACL_RIGHT_BROWSE
+        return any(
+            clause.leaf is not None
+            and browse in clause.allow | clause.deny
+            and FlextLdifServersOidAclToOud.covers(clause.leaf, leaf)
+            for key, level in ((rule.key, rule.level), *chain)
+            for item in self.rules_at(key, level)
+            if item.attrs is None
+            for clause in item.clauses
+        )
+
+    def form(
+        self,
+        rule: m.Ldif.AclLevelRule,
+        resolution: m.Ldif.AclResolution,
+    ) -> p.Result[list[m.Ldif.AclForm]]:
+        """Return the OUD rights, attributes, filter, scope and rule of a decision.
+
+        Returns:
+            Zero or one form (E7 emits none), or the failure.
+
+        """
+        constants = FlextLdifConstantsServersOid
+        result = r[list[m.Ldif.AclForm]]
+        entry_level = rule.level == c.Ldif.AclConvertType.ORCLENTRYLEVELACI
+        scope = constants.AclScope.BASE.value if entry_level else None
+        deny = resolution.effect == constants.AclEffect.DENY
+        if rule.attrs is not None:
+            attrs = self.effective_attrs(rule)
+            if attrs.failure:
+                return result.from_failure(attrs)
+            identity = constants.AclRule.R2 if entry_level else constants.AclRule.R1
+            return result.ok([
+                m.Ldif.AclForm(
+                    rights=(resolution.right,),
+                    attrs=attrs.value,
+                    targetfilter=rule.target_filter,
+                    targetscope=scope,
+                    rule=constants.AclRule.R5 if deny else identity,
+                ),
+            ])
+        if resolution.right == constants.ACL_RIGHT_ADD:
+            return self.add_form(rule, resolution)
+        if resolution.right == constants.ACL_RIGHT_PROXY and not deny:
+            return result.fail(
+                f"{rule.dn or '<root DSE>'}: R4c/Q7: the entry OID evaluates a "
+                "proxy grant on is not documented and OUD also needs the "
+                "proxied-auth privilege (E2); no measured rule converts it",
             )
-            parts.append(f'(targetfilter="{value}")')
-        if aci.targetscope:
-            parts.append(f'(targetscope="{aci.targetscope}")')
-        return tuple(parts)
+        return result.ok([self.entry_form(rule, resolution, scope)])
+
+    def add_form(
+        self,
+        rule: m.Ldif.AclLevelRule,
+        resolution: m.Ldif.AclResolution,
+    ) -> p.Result[list[m.Ldif.AclForm]]:
+        """R4a/R4d: add is decided on the new entry (OUD-9 §9.2.3.3).
+
+        An OID filter matches the parent while the OUD add ``targetfilter``
+        matches the new entry (E7): a filtered add grant emits nothing and a
+        filtered add denial fails, since dropping it would grant in OUD what
+        OID denies.
+
+        Returns:
+            The add form, none under E7, or the E7 denial failure.
+
+        """
+        constants = FlextLdifConstantsServersOid
+        result = r[list[m.Ldif.AclForm]]
+        deny = resolution.effect == constants.AclEffect.DENY
+        if rule.target_filter is not None:
+            if deny:
+                return result.fail(
+                    f"{rule.dn}: E7: noadd under filter {rule.target_filter} "
+                    "matches the parent in OID and the new entry in OUD; the "
+                    "denial has no OUD form",
+                )
+            self._event(
+                constants.AclRule.E7,
+                rule.dn,
+                f"{rule.level} {rule.index}.{resolution.clause}: add grant under "
+                f"filter {rule.target_filter} emits nothing (stricter)",
+            )
+            return result.ok([])
+        constraint = (
+            None
+            if deny or not resolution.added_object_constraint
+            else FlextLdifServersOidAclToOud.validate_ldap_filter(
+                resolution.added_object_constraint,
+            ).value
+        )
+        return result.ok([
+            m.Ldif.AclForm(
+                rights=(constants.ACL_RIGHT_ADD,),
+                attrs=self.every_attribute(),
+                targetfilter=constraint,
+                targetscope=self.add_scope(rule.level),
+                rule=(
+                    constants.AclRule.R5
+                    if deny
+                    else constants.AclRule.R4D
+                    if constraint
+                    else constants.AclRule.R4A
+                ),
+            ),
+        ])
+
+    def entry_form(
+        self,
+        rule: m.Ldif.AclLevelRule,
+        resolution: m.Ldif.AclResolution,
+        scope: str | None,
+    ) -> m.Ldif.AclForm:
+        """R4b/R4e and the R5 browse and proxy denials for one entry right.
+
+        Returns:
+            The resulting ``m.Ldif.AclForm``.
+
+        """
+        constants = FlextLdifConstantsServersOid
+        right = resolution.right
+        deny = resolution.effect == constants.AclEffect.DENY
+        rights: tuple[str, ...] = (right,)
+        attrs = self.every_attribute()
+        identity = constants.AclRule.R4B
+        if right == constants.ACL_RIGHT_BROWSE:
+            rights = (
+                constants.ACL_BROWSE_DENIAL_RIGHTS
+                if deny
+                else constants.ACL_BROWSE_GRANT_RIGHTS
+            )
+            if not deny:
+                attrs = m.Ldif.AclAttrSet(
+                    names=frozenset({constants.ACL_BROWSE_GRANT_ATTRIBUTE}),
+                )
+            identity = constants.AclRule.R4E
+        return m.Ldif.AclForm(
+            rights=rights,
+            attrs=attrs,
+            targetfilter=rule.target_filter,
+            targetscope=scope,
+            rule=constants.AclRule.R5 if deny else identity,
+        )
 
     @staticmethod
-    def _scope_key(clause: p.Ldif.AciBindClause, aci: p.Ldif.AciRule) -> str | None:
-        """Return the rendered targetscope of a clause (subtree renders as None)."""
-        scope = clause.targetscope or aci.targetscope
-        return (
-            None if scope == FlextLdifConstantsServersOid.ACL_SCOPE_SUBTREE else scope
-        )
-
-    @classmethod
-    def _render_scope(
-        cls,
-        aci: p.Ldif.AciRule,
-        allows: Sequence[p.Ldif.AciBindClause],
-        denies: Sequence[p.Ldif.AciBindClause],
-    ) -> str:
-        """Render the clauses of one targetscope as one ``aci:`` line.
+    def granted_leaf(leaf: m.Ldif.AclBindLeaf) -> m.Ldif.AclBindLeaf:
+        """R8 (operator decision "Grant all, deny anyone"): ``*`` grants go to all.
 
         Returns:
-            The aligned ``aci:`` line.
+            The resulting ``m.Ldif.AclBindLeaf``.
 
         """
-        sections: list[tuple[str, p.Ldif.AciAllowGroups]] = []
-        for keyword, clauses in (
-            (c.Ldif.ACI_ALLOW, allows),
-            (c.Ldif.ACI_DENY, denies),
-        ):
-            grouped = m.Ldif.AciAllowGroups()
-            for clause in clauses:
-                grouped = grouped.with_allow(clause, cls.render_bind(clause))
-            sections.append((keyword, grouped))
-        heads = tuple(
-            (f"{keyword} ({', '.join(group.permissions)})", group)
-            for keyword, grouped in sections
-            for group in grouped.groups
+        constants = FlextLdifConstantsServersOid
+        if leaf.kind != constants.AclLeafKind.ANYONE:
+            return leaf
+        return m.Ldif.AclBindLeaf(
+            kind=constants.AclLeafKind.ALL,
+            value=constants.OUD_BIND_ALL,
+            key=constants.OUD_BIND_ALL,
         )
-        head_width = max((len(head) for head, _ in heads), default=0)
-        bind_column = len(c.Ldif.ACI_CLAUSE_INDENT) + head_width + c.Ldif.ACI_BIND_GAP
-        or_joint = " " * (bind_column - len(c.Ldif.BIND_OR)) + c.Ldif.BIND_OR
-        rendered = "".join(
-            f"{c.Ldif.ACI_CLAUSE_INDENT}{head.ljust(head_width + c.Ldif.ACI_BIND_GAP)}"
-            f"{or_joint.join(group.binds)};"
-            for head, group in heads
-        )
-        first, *rest = cls.target_parts(aci)
-        parts = "".join(
-            f"{c.Ldif.ACI_PART_INDENT}{part}"
-            for part in (*rest, f'({c.Ldif.ACI_VERSION}; acl "{aci.acl_name}";')
-        )
-        return f"{c.Ldif.ACI_PREFIX}{first}{parts}{rendered})"
 
-    @classmethod
-    def render_aci_strings(cls, aci: p.Ldif.AciRule) -> Sequence[str]:
-        """Render an :class:`m.Ldif.AciRule` to its OUD ``aci:`` lines.
-
-        Clauses group by targetscope (first-seen order, allows before
-        denies); each scope renders one ``aci:`` line. Within a line, clauses
-        with an identical permission set become one ``allow (perms) bind1 or
-        bind2;`` / ``deny (perms) …;`` clause. Target parts and ``(version``
-        follow ``c.Ldif.ACI_PART_INDENT``, each clause follows
-        ``c.Ldif.ACI_CLAUSE_INDENT``, bind-rules start in one column after the
-        longest clause head, and each further bind-rule's ``or`` keyword ends
-        in that column. A rule without clauses renders nothing.
+    def allow_statements(
+        self,
+        rule: m.Ldif.AclLevelRule,
+        resolution: m.Ldif.AclResolution,
+    ) -> p.Result[list[m.Ldif.AciStatement]]:
+        """R1-R4 and R9 for one grant; a grant wins in its ACI (R6a).
 
         Returns:
-            One ``aci:`` line per targetscope.
+            The grant's statements, or the failure.
 
         """
-        scopes: list[str | None] = []
-        for clause in (*aci.allows, *aci.denies):
-            key = cls._scope_key(clause, aci)
-            if key not in scopes:
-                scopes.append(key)
-        return tuple(
-            cls._render_scope(
-                aci.model_copy(update={"targetscope": scope}),
-                [
-                    clause
-                    for clause in aci.allows
-                    if cls._scope_key(clause, aci) == scope
-                ],
-                [
-                    clause
-                    for clause in aci.denies
-                    if cls._scope_key(clause, aci) == scope
-                ],
+        constants = FlextLdifConstantsServersOid
+        forms = self.form(rule, resolution)
+        if forms.failure:
+            return r[list[m.Ldif.AciStatement]].from_failure(forms)
+        bind = m.Ldif.AclBindRule(include=self.granted_leaf(resolution.leaf))
+        browse = rule.attrs is None or self.browse_resolved(rule, resolution.leaf)
+        statements: list[m.Ldif.AciStatement] = []
+        for form in forms.value:
+            rights = tuple(
+                item
+                for item in form.rights
+                if browse or item not in constants.ACL_BROWSE_DENIAL_RIGHTS
             )
-            for scope in scopes
+            if rights != form.rights:
+                self._event(
+                    constants.AclRule.R1,
+                    rule.dn,
+                    f"{rule.level} {rule.index}.{resolution.clause}: "
+                    f"{resolution.right} needs browse, which no level decides "
+                    "for the subject; nothing granted",
+                )
+            if not rights:
+                continue
+            kept = form.model_copy(
+                update={
+                    "rights": rights,
+                    "rule": form.rule if rule.key else constants.AclRule.R9,
+                },
+            )
+            statements.append(
+                self.statement(
+                    m.Ldif.AclDecision(
+                        rule=rule,
+                        resolution=resolution,
+                        form=kept,
+                        bind=bind,
+                    ),
+                    m.Ldif.AclRegion(anchor=rule.key, scope=form.targetscope),
+                ),
+            )
+        return r[list[m.Ldif.AciStatement]].ok(statements)
+
+    def deny_statements(
+        self,
+        rule: m.Ldif.AclLevelRule,
+        resolution: m.Ldif.AclResolution,
+    ) -> p.Result[list[m.Ldif.AciStatement]]:
+        """R5 for one denial, with R6b filter precedence and region placement.
+
+        A root DSE denial emits nothing (R9): above it only the OUD default
+        denial exists.
+
+        Returns:
+            The denial's statements, or the failure.
+
+        """
+        constants = FlextLdifConstantsServersOid
+        result = r[list[m.Ldif.AciStatement]]
+        if not rule.key:
+            self._event(
+                constants.AclRule.R9,
+                rule.dn,
+                f"root DSE denial {rule.index}.{resolution.clause} of "
+                f"{resolution.right} emits nothing",
+            )
+            return result.ok([])
+        forms = self.form(rule, resolution)
+        if forms.failure:
+            return result.from_failure(forms)
+        statements: list[m.Ldif.AciStatement] = []
+        for form in forms.value:
+            decision = m.Ldif.AclDecision(
+                rule=rule,
+                resolution=resolution,
+                form=form,
+                bind=m.Ldif.AclBindRule(
+                    include=resolution.leaf,
+                    exclude=resolution.grantors,
+                ),
+            )
+            override = self.privilege_override(decision)
+            if override.failure:
+                return result.from_failure(override)
+            widened = self.widen(decision, override.value)
+            for split in [] if widened is None else self.filter_precedence(widened):
+                placed = self.place(
+                    split,
+                    m.Ldif.AclRegion(anchor=rule.key, scope=form.targetscope),
+                )
+                if placed.failure:
+                    return placed
+                statements.extend(placed.value)
+        return result.ok(statements)
+
+    def filter_precedence(
+        self,
+        decision: m.Ldif.AclDecision,
+    ) -> list[m.Ldif.AclDecision]:
+        """R6b: a filtered ACI of the level decides before the unfiltered one.
+
+        Where a filter matches, the unfiltered denial excludes the subjects
+        the filtered ACI grants; elsewhere it stays whole (OID-30
+        §30.1.6.2.1-2). More than one overlapping filter is reported as E6.
+
+        Returns:
+            The denial split by filter, or the denial itself.
+
+        """
+        rule = decision.rule
+        if rule.target_filter is not None:
+            return [decision]
+        grants: dict[str, list[m.Ldif.AclBindLeaf]] = {}
+        for other in self.rules_at(rule.key, rule.level):
+            other_attrs = self.effective_attrs(other)
+            if (
+                other.target_filter is None
+                or (other.attrs is None) != (rule.attrs is None)
+                or other_attrs.failure
+                or not self.overlaps(other_attrs.value, decision.form.attrs)
+            ):
+                continue
+            leaves = self.grants(other, decision.resolution.right)
+            if leaves:
+                grants.setdefault(other.target_filter, []).extend(leaves)
+        if not grants:
+            return [decision]
+        if len(grants) > 1:
+            self._event(
+                FlextLdifConstantsServersOid.AclRule.E6,
+                rule.dn,
+                f"overlapping filters {sorted(grants)} decide in OID in a "
+                "non-deterministic order",
+            )
+        negations = [f"(!{item})" for item in sorted(grants)]
+        outside_filter = (
+            negations[0] if len(negations) == 1 else f"(&{''.join(negations)})"
+        )
+        outside = decision.model_copy(
+            update={
+                "form": decision.form.model_copy(
+                    update={"targetfilter": outside_filter},
+                ),
+            },
+        )
+        inside = [
+            narrowed.model_copy(
+                update={
+                    "form": narrowed.form.model_copy(update={"targetfilter": item}),
+                },
+            )
+            for item, leaves in sorted(grants.items())
+            if (narrowed := self.widen(decision, leaves)) is not None
+        ]
+        return [outside, *inside]
+
+    @staticmethod
+    def _add_leaf(leaf: m.Ldif.AclBindLeaf) -> p.Result[m.Ldif.AclBindLeaf]:
+        """R4a: rebind an add subject to the parent of the new entry.
+
+        OID add on X authorizes children of X while OUD evaluates add on the
+        new entry (OUD-9 §9.2.3.3). ``dnattr`` reads X's attribute, which is
+        ``userattr="parent[1].<a>#USERDN"`` (OUD-9 §9.4.4.7, §9.4.4.9).
+        ``self`` (the bind DN equals X) has no OUD parent form.
+
+        Returns:
+            The parent-bound leaf, or the failure for ``self``.
+
+        """
+        constants = FlextLdifConstantsServersOid
+        kinds = constants.AclLeafKind
+        if leaf.kind == kinds.SELF:
+            return r[m.Ldif.AclBindLeaf].fail(
+                "R4a: OID 'self' on add names the parent entry, while OUD "
+                "ldap:///self names the entry being added; no OUD form",
+            )
+        if leaf.kind != kinds.USERATTR:
+            return r[m.Ldif.AclBindLeaf].ok(leaf)
+        value = f"{constants.OUD_USERATTR_PARENT}{leaf.value}"
+        return r[m.Ldif.AclBindLeaf].ok(
+            leaf.model_copy(update={"value": value, "key": value.lower()}),
         )
 
     @classmethod
-    def render_aci_string(cls, aci: p.Ldif.AciRule) -> str:
-        """Render an :class:`m.Ldif.AciRule` to its newline-joined ``aci:`` lines.
+    def finalize(cls, statement: m.Ldif.AciStatement) -> p.Result[m.Ldif.AciStatement]:
+        """Bind every subject of an add statement to the parent entry (R4a).
 
         Returns:
-            The :meth:`render_aci_strings` lines joined by a newline.
+            The statement ready to render, or the add-subject failure.
 
         """
-        return "\n".join(cls.render_aci_strings(aci))
+        if FlextLdifConstantsServersOid.ACL_RIGHT_ADD not in statement.rights:
+            return r[m.Ldif.AciStatement].ok(statement)
+        bind = statement.bind
+        leaves = r.traverse((bind.include, *bind.exclude), cls._add_leaf)
+        if leaves.failure:
+            return r[m.Ldif.AciStatement].fail(
+                f"{statement.origin_dn}: {leaves.error}",
+            )
+        include, *exclude = leaves.value
+        return r[m.Ldif.AciStatement].ok(
+            statement.model_copy(
+                update={
+                    "bind": m.Ldif.AclBindRule(include=include, exclude=tuple(exclude)),
+                },
+            ),
+        )
+
+    def emit(self) -> p.Result[list[m.Ldif.AciStatement]]:
+        """Emit every statement of the policy in level order.
+
+        Returns:
+            All statements, or the first failure.
+
+        """
+        constants = FlextLdifConstantsServersOid
+        entry = c.Ldif.AclConvertType.ORCLENTRYLEVELACI.value
+        acp = c.Ldif.AclConvertType.ORCLACI.value
+        statements: list[m.Ldif.AciStatement] = []
+        for rule in self.rules_at("", entry):
+            self._event(
+                constants.AclRule.R9,
+                rule.dn,
+                f"root DSE orclentrylevelaci {rule.index} governs the root DSE "
+                "only; OUD global ACIs own it (not relocated)",
+            )
+        for key in self._keys:
+            for level in (entry, acp):
+                if not key and level == entry:
+                    continue
+                for rule in self.rules_at(key, level):
+                    for resolution in self.resolutions(rule):
+                        produced = (
+                            self.deny_statements(rule, resolution)
+                            if resolution.effect == constants.AclEffect.DENY
+                            else self.allow_statements(rule, resolution)
+                        )
+                        if produced.failure:
+                            return produced
+                        finalized = r.traverse(produced.value, self.finalize)
+                        if finalized.failure:
+                            return r[list[m.Ldif.AciStatement]].from_failure(finalized)
+                        statements.extend(finalized.value)
+        return r[list[m.Ldif.AciStatement]].ok(statements)
+
+    @staticmethod
+    def render_leaf(leaf: m.Ldif.AclBindLeaf) -> str:
+        """Render one bind-rule subject (R8 table).
+
+        Returns:
+            The resulting ``str``.
+
+        """
+        constants = FlextLdifConstantsServersOid
+        kinds = constants.AclLeafKind
+        prefix = c.Ldif.LDAP_PREFIX
+        userdn = c.Ldif.OudSubjectType.USERDN.value
+        match leaf.kind:
+            case kinds.GROUP:
+                return f'{c.Ldif.OudSubjectType.GROUPDN.value}="{prefix}{leaf.value}"'
+            case kinds.USERATTR:
+                keyword = c.Ldif.OudSubjectType.USERATTR.value
+                return f'{keyword}="{leaf.value}{c.Ldif.UserAttrSuffix.USERDN.value}"'
+            case kinds.USER_SUBTREE:
+                url = f"{prefix}{leaf.value}{constants.OUD_USERDN_SUBTREE_URL_SUFFIX}"
+                return f'({userdn}="{url}" and {userdn}!="{prefix}{leaf.value}")'
+            case _:
+                return f'{userdn}="{prefix}{leaf.value}"'
+
+    @classmethod
+    def render_bind(cls, bind: m.Ldif.AclBindRule) -> str:
+        """Render a subject with its R5 exclusions: ``(S and not (E1 or E2))``.
+
+        Returns:
+            The resulting ``str``.
+
+        """
+        include = cls.render_leaf(bind.include)
+        if not bind.exclude:
+            return include
+        excluded = " or ".join(cls.render_leaf(leaf) for leaf in bind.exclude)
+        if len(bind.exclude) > 1:
+            excluded = f"({excluded})"
+        return f"({include} and not {excluded})"
+
+    @staticmethod
+    def target_parts(statement: m.Ldif.AciStatement) -> list[str]:
+        """Render the target keywords in OUD order (target, attr, filter, scope).
+
+        Returns:
+            The resulting ``list[str]``.
+
+        """
+        parts: list[str] = []
+        if statement.target:
+            operator = c.Ldif.OUD_ATTR_NEGATION if statement.target_negated else "="
+            parts.append(
+                f'(target{operator}"{c.Ldif.LDAP_PREFIX}{statement.target}")',
+            )
+        names = c.Ldif.OUD_ATTR_OR.join(sorted(statement.attrs.names))
+        if statement.attrs.negated and names:
+            parts.append(f'(targetattr{c.Ldif.OUD_ATTR_NEGATION}"{names}")')
+        else:
+            everything = FlextLdifConstantsServersOid.OUD_TARGETATTR_ALL
+            parts.append(f'(targetattr="{names or everything}")')
+        if statement.targetfilter:
+            parts.append(f'(targetfilter="{statement.targetfilter}")')
+        if statement.targetscope is not None:
+            parts.append(f'(targetscope="{statement.targetscope}")')
+        return parts
+
+    @classmethod
+    def render_statement(cls, statement: m.Ldif.AciStatement) -> str:
+        """Render one statement as a single-line OUD ``aci`` value (no prefix).
+
+        Returns:
+            The resulting ``str``.
+
+        """
+        rights = ",".join(statement.rights)
+        clause = f"{statement.effect} ({rights}) {cls.render_bind(statement.bind)};)"
+        head = f'({c.Ldif.ACI_VERSION}; acl "{statement.name}";'
+        return f"{''.join(cls.target_parts(statement))}{head} {clause}"
 
 
 __all__: list[str] = ["FlextLdifServersOidAclRender"]

@@ -15,6 +15,7 @@ from collections.abc import (
     ValuesView,
 )
 from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
+from warnings import deprecated
 
 from flext_cli import FlextCliProtocols, p, t
 
@@ -86,14 +87,31 @@ class FlextLdifProtocolsBase:
             subject: FlextLdifProtocolsAclConvert.OidAclSubject,
         ) -> p.Result[FlextLdifProtocolsAclConvert.AciAllow]: ...
 
-        def convert_permissions(
+        def resolve_permissions(
             self,
             permissions: t.StrSequence,
             *,
             is_entry: bool,
         ) -> p.Result[FlextLdifProtocolsAclConvert.AclPermissionResolution]: ...
 
-        def regex_to_wildcard(self, value: str) -> p.Result[str]: ...
+        @deprecated(
+            "compat: convert_permissions -> resolve_permissions; "
+            "fix: render the typed deny set",
+        )
+        def convert_permissions(
+            self,
+            permissions: t.StrSequence,
+            *,
+            is_entry: bool,
+        ) -> p.Result[t.StrSequence]: ...
+
+        def regex_dn_to_wildcard(self, value: str) -> p.Result[str]: ...
+
+        @deprecated(
+            "compat: regex_to_wildcard -> regex_dn_to_wildcard; "
+            "fix: consume the typed result",
+        )
+        def regex_to_wildcard(self, value: str) -> str: ...
 
         def in_scope(self, dn: str, base_dn: str) -> bool: ...
 
@@ -102,11 +120,21 @@ class FlextLdifProtocolsBase:
             rule: FlextLdifProtocolsAclConvert.OidAclRule,
             *,
             base_dn: str = "",
+            access_groups: frozenset[str] = frozenset(),
+            sibling_attrs: t.StrSequence = (),
         ) -> p.Result[FlextLdifProtocolsAclConvert.AciRule]: ...
 
+        @deprecated(
+            "compat: render_aci_string -> render_aci_strings; "
+            "fix: render every aci line of the rule",
+        )
         def render_aci_string(
             self, aci: FlextLdifProtocolsAclConvert.AciRule
         ) -> str: ...
+
+        def render_aci_strings(
+            self, aci: FlextLdifProtocolsAclConvert.AciRule
+        ) -> t.StrSequence: ...
 
     @runtime_checkable
     class ServerDetectionService(Protocol):

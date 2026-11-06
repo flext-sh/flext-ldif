@@ -11,7 +11,7 @@ from functools import partial
 from typing import Self, override
 
 from flext_ldif import c, m, p, r, s, u
-from flext_ldif.services import FlextLdifTransformer
+from flext_ldif.services import FlextLdifServer, FlextLdifTransformer
 
 
 class FlextLdifProcessingPipeline(
@@ -19,7 +19,12 @@ class FlextLdifProcessingPipeline(
     m.Ldif.RegistryPortOptions,
     m.Ldif.ProcessingPipelineOptions,
 ):
-    """Apply DN, attribute and dialect transforms in their declared order."""
+    """Apply DN, attribute and dialect transforms in their declared order.
+
+    The dialect transform receives the access groups the source dialect
+    verifies within the batch itself, so ACL group subjects convert only for
+    groups whose entries are part of the migrated population.
+    """
 
     @classmethod
     def for_servers(
@@ -97,10 +102,20 @@ class FlextLdifProcessingPipeline(
                 return r[Sequence[p.Ldif.Entry]].from_failure(result)
             batch = result.value
         if process is not None and process.source_server and process.target_server:
+            source_server = u.Ldif.normalize_server_type(process.source_server)
+            entries = batch
+            access_groups = (
+                FlextLdifServer(registry=self.registry)
+                .acl(source_server)
+                .map(lambda acl: acl.access_group_dns(entries))
+            )
+            if access_groups.failure:
+                return r[Sequence[p.Ldif.Entry]].from_failure(access_groups)
             transformer = FlextLdifTransformer(
-                source_server=u.Ldif.normalize_server_type(process.source_server),
+                source_server=source_server,
                 target_server=u.Ldif.normalize_server_type(process.target_server),
                 base_dn=process.base_dn,
+                access_groups=access_groups.value,
                 registry=self.registry,
                 runtime_settings=self.settings,
             )
