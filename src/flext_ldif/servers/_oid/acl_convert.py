@@ -28,7 +28,7 @@ class FlextLdifServersOidAclConvert:
                 m.Ldif.AclSubjectMatcher(
                     pattern=FlextLdifConstantsServersOid.OID_SUBJ_SUPERUSER_RE,
                     subj_type="superuser",
-                    value_group="cn=Directory Manager",
+                    value_group=c.Ldif.OidSubjectKind.SUPERUSER.value,
                     perms_group=1,
                 ),
                 m.Ldif.AclSubjectMatcher(
@@ -177,24 +177,43 @@ class FlextLdifServersOidAclConvert:
         return None
 
     @classmethod
-    def _parse_target(cls, content: str) -> tuple[str, str, str] | None:
-        """Return ``(target_type, target_attrs, remaining_content)`` or None."""
+    def _parse_target(cls, content: str) -> p.Result[tuple[str, str, str]]:
+        """Read the ``<object>`` target: ``entry``, ``attr=*`` or an attribute list.
+
+        The OID BNF is ``attr <EQ-OR-NEQ> ( * | (<attrList>) ) | entry``
+        (OID-A7 §A.7.1); ``attr=(*)`` is the parenthesized wildcard. Any other
+        ``attr`` text, and ``attr!=*``, surface as ``r.fail``.
+
+        Returns:
+            ``(target_type, target_attrs, remaining_content)``, or the failure.
+
+        """
+        result = r[tuple[str, str, str]]
         lowered = content.lower()
         if lowered.startswith(c.Ldif.AclTargetType.ENTRY):
             rest = content[len(c.Ldif.AclTargetType.ENTRY) :].strip()
-            return c.Ldif.AclTargetType.ENTRY.value, c.Ldif.ACL_WILDCARD, rest
-        if lowered.startswith(c.Ldif.AclTargetType.ATTR):
-            match = c.Ldif.ATTR_PATTERN_RE.match(content)
-            if match is None:
-                return c.Ldif.AclTargetType.ATTR.value, c.Ldif.ACL_WILDCARD, content
-            operator, attrs = match.group(1), match.group(2)
-            target_attrs = f"!={attrs}" if operator == "!=" else attrs
-            return (
-                c.Ldif.AclTargetType.ATTR.value,
-                target_attrs,
-                content[match.end() :].strip(),
+            return result.ok((c.Ldif.AclTargetType.ENTRY.value, c.Ldif.ACL_WILDCARD, rest))
+        if not lowered.startswith(c.Ldif.AclTargetType.ATTR):
+            return result.fail(f"Unknown ACL target: {content[:40]!r}")
+        match = FlextLdifConstantsServersOid.OID_ATTR_TARGET_RE.match(content)
+        if match is None:
+            return result.fail(
+                f"OID attribute target {content[:40]!r} is neither attr=* nor "
+                "attr[!]=(<attrList>) (OID-A7 §A.7.1; manual review required)",
             )
-        return None
+        operator, listed, star = match.group(1), match.group(2), match.group(3)
+        attrs = (listed if listed is not None else star or "").strip()
+        if operator == c.Ldif.OUD_ATTR_NEGATION and attrs == c.Ldif.ACL_WILDCARD:
+            return result.fail(
+                f"OID attribute target {match.group(0)!r} negates every attribute "
+                "and names no target (OID-A7 §A.7.1; manual review required)",
+            )
+        target_attrs = f"!={attrs}" if operator == c.Ldif.OUD_ATTR_NEGATION else attrs
+        return result.ok((
+            c.Ldif.AclTargetType.ATTR.value,
+            target_attrs,
+            content[match.end() :].strip(),
+        ))
 
     @staticmethod
     def _check_target_attrs(target_attrs: str) -> p.Result[bool]:
@@ -285,11 +304,9 @@ class FlextLdifServersOidAclConvert:
 
         """
         target = cls._parse_target(content)
-        if target is None:
-            return r[tuple[str, str, str | None, str]].fail(
-                f"Unknown ACL target: {content[:40]!r}",
-            )
-        target_type, target_attrs, content = target
+        if target.failure:
+            return r[tuple[str, str, str | None, str]].from_failure(target)
+        target_type, target_attrs, content = target.value
         attrs_check = cls._check_target_attrs(target_attrs)
         if attrs_check.failure:
             return r[tuple[str, str, str | None, str]].from_failure(attrs_check)
@@ -315,8 +332,9 @@ class FlextLdifServersOidAclConvert:
         keyword = FlextLdifConstantsServersOid.OID_ACL_OBJECT_KEYWORD_RE.search(text)
         if keyword is not None:
             return r[tuple[p.Ldif.OidAclSubject, ...]].fail(
-                f"OID object keyword {keyword.group(1)!r} has no per-rule OUD "
-                f"ACI equivalent (manual review required): {text!r}",
+                f"OID object keyword {keyword.group(1)!r} outside its BNF position "
+                f"after the target and filter (OID-A7 §A.7.1; manual review "
+                f"required): {text!r}",
             )
         return r[tuple[p.Ldif.OidAclSubject, ...]].fail(
             f"Unrecognized OID ACL text (manual review required): {text!r}",
@@ -331,11 +349,8 @@ class FlextLdifServersOidAclConvert:
 
         Text between or around the clauses that is not a recognized clause
         fails, as does a clause no subject matcher recognizes. The object
-        keywords ``DenyGroupOverride`` (blocks superuser and
-        DirectoryAdminGroup overrides, which OUD decides by privileges, not
-        ACIs; OID-30 §30.1.3.4.2) and ``AppendToAll`` (appends the subject to
-        every ACI of the ACP; §30.1.4.1) have no per-rule OUD ACI form and
-        fail too.
+        keywords are read before the first clause
+        (:meth:`_parse_object_keywords`); one found here fails.
 
         Returns:
             The parsed subjects in input order, or the typed failure.
@@ -370,9 +385,11 @@ class FlextLdifServersOidAclConvert:
     def parse_oid_acl_line(cls, dn: str, line: str) -> p.Result[p.Ldif.OidAclRule]:
         """Parse one full ``orclaci:``/``orclentrylevelaci:`` line into a rule.
 
-        Malformation (wrong prefix, missing ``access to``, unknown target,
-        unrecognized text or by-clause, an object keyword without an OUD
-        form, or no subjects) surfaces as ``r.fail`` — never a silent drop.
+        The object keywords ``DenyGroupOverride`` and ``AppendToAll`` follow
+        the target and the filter (OID-A7 §A.7.1) and are recorded on the
+        rule. Malformation (wrong prefix, missing ``access to``, unknown
+        target, unrecognized text or by-clause, a misplaced object keyword,
+        or no subjects) surfaces as ``r.fail`` — never a silent drop.
 
         Returns:
             The resulting ``p.Result[p.Ldif.OidAclRule]``.
@@ -387,7 +404,11 @@ class FlextLdifServersOidAclConvert:
         if parsed_target.failure:
             return r[p.Ldif.OidAclRule].from_failure(parsed_target)
         target_type, target_attrs, target_filter, content = parsed_target.value
-        return cls._parse_by_clauses(content).map(
+        keywords = FlextLdifConstantsServersOid.OID_ACL_OBJECT_KEYWORDS_RE.match(content)
+        deny_group_override = bool(keywords and keywords.group("dgo"))
+        append_to_all = bool(keywords and keywords.group("ata"))
+        remaining = content[keywords.end() :] if keywords else content
+        return cls._parse_by_clauses(remaining).map(
             lambda subjects: m.Ldif.OidAclRule(
                 dn=dn,
                 acl_type=acl_type,
@@ -396,6 +417,8 @@ class FlextLdifServersOidAclConvert:
                 target_filter=target_filter,
                 subjects=subjects,
                 raw_line=line,
+                deny_group_override=deny_group_override,
+                append_to_all=append_to_all,
             ),
         )
 
