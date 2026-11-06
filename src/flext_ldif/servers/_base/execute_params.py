@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import MutableMapping, MutableSequence
 
-from flext_ldif import c, m, u
+from flext_ldif import c, p, u
 
 
 class FlextLdifServersBaseExecuteParams:
@@ -19,13 +19,13 @@ class FlextLdifServersBaseExecuteParams:
         cls,
         kwargs: MutableMapping[
             str,
-            str | int | bool | MutableSequence[m.Ldif.Entry],
+            str | int | bool | MutableSequence[p.Ldif.Entry],
         ],
-    ) -> tuple[str | None, MutableSequence[m.Ldif.Entry] | None, str | None]:
+    ) -> tuple[str | None, MutableSequence[p.Ldif.Entry] | None, str | None]:
         """Extract type-safe execution parameters from kwargs.
 
         Returns:
-            The resulting ``tuple[str | None, MutableSequence[m.Ldif.Entry] | None,
+            The resulting ``tuple[str | None, MutableSequence[p.Ldif.Entry] | None,
                 str | None]``.
 
         """
@@ -39,13 +39,13 @@ class FlextLdifServersBaseExecuteParams:
     def _extract_entries(
         kwargs: MutableMapping[
             str,
-            str | int | bool | MutableSequence[m.Ldif.Entry],
+            str | int | bool | MutableSequence[p.Ldif.Entry],
         ],
-    ) -> MutableSequence[m.Ldif.Entry] | None:
+    ) -> MutableSequence[p.Ldif.Entry] | None:
         """Extract and validate entries parameter.
 
         Returns:
-            The resulting ``MutableSequence[m.Ldif.Entry] | None``.
+            The resulting ``MutableSequence[p.Ldif.Entry] | None``.
 
         Raises:
             TypeError: If Expected MutableSequence[Entry | None] for entries, got.
@@ -57,7 +57,7 @@ class FlextLdifServersBaseExecuteParams:
         if not raw:
             return []
         try:
-            entries: MutableSequence[m.Ldif.Entry] = u.Ldif.as_entries(raw)
+            entries: MutableSequence[p.Ldif.Entry] = u.Ldif.as_entries(raw)
         except c.EXC_VALIDATION_TYPE as exc:
             msg = f"Expected MutableSequence[Entry | None] for entries, got {type(raw)}"
             raise TypeError(msg) from exc
@@ -68,7 +68,7 @@ class FlextLdifServersBaseExecuteParams:
     def _extract_ldif_text(
         kwargs: MutableMapping[
             str,
-            str | int | bool | MutableSequence[m.Ldif.Entry],
+            str | int | bool | MutableSequence[p.Ldif.Entry],
         ],
     ) -> str | None:
         """Extract and validate ldif_text parameter.
@@ -95,7 +95,7 @@ class FlextLdifServersBaseExecuteParams:
     def _extract_operation(
         kwargs: MutableMapping[
             str,
-            str | int | bool | MutableSequence[m.Ldif.Entry],
+            str | int | bool | MutableSequence[p.Ldif.Entry],
         ],
     ) -> str | None:
         """Extract and validate operation parameter.

@@ -45,7 +45,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             "ads-partition",
             "ads-interceptor",
         ])
-        ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+        ATTRIBUTE_PATTERN_SETTINGS: ClassVar[p.Ldif.ServerPatternsConfig] = (
             m.Ldif.ServerPatternsConfig(
                 oid_pattern=DETECTION_OID_PATTERN,
                 attr_prefixes=DETECTION_ATTRIBUTE_PREFIXES,
@@ -54,7 +54,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 match_definition_text=True,
             )
         )
-        OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+        OBJECTCLASS_PATTERN_SETTINGS: ClassVar[p.Ldif.ServerPatternsConfig] = (
             m.Ldif.ServerPatternsConfig(
                 oid_pattern=DETECTION_OID_PATTERN,
                 attr_names=DETECTION_OBJECTCLASS_NAMES,
@@ -93,8 +93,8 @@ class FlextLdifServersApache(FlextLdifServersRfc):
         """Schema servers for Apache Directory Server (ApacheDS)."""
 
         _NORMALIZE_OBJECTCLASS: ClassVar[bool] = True
-        _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
-        _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
+        _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[p.Ldif.ServerPatternsConfig]
+        _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[p.Ldif.ServerPatternsConfig]
 
     class Acl(FlextLdifServersRfcAcl):
         """Apache Directory Server ACI server."""
@@ -121,7 +121,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             )
 
         @override
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+        def _write_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
             """Write ACL data to Apache Directory Server ACI format.
 
             Returns:
@@ -158,11 +158,11 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             self,
             entry_dn: str,
             entry_attrs: MutableMapping[str, MutableSequence[str | bytes]],
-        ) -> p.Result[m.Ldif.Entry]:
+        ) -> p.Result[p.Ldif.Entry]:
             """Parse raw LDIF entry data into Entry model.
 
             Returns:
-                The resulting ``p.Result[m.Ldif.Entry]``.
+                The resulting ``p.Result[p.Ldif.Entry]``.
 
             """
             str_attrs: t.MutableStrSequenceMapping = {
@@ -171,25 +171,25 @@ class FlextLdifServersApache(FlextLdifServersRfc):
             }
             base_result = super().parse_entry(entry_dn, str_attrs)
             if base_result.failure:
-                return r[m.Ldif.Entry].from_result(base_result)
+                return r[p.Ldif.Entry].from_result(base_result)
             entry = base_result.value
             try:
                 return self._mark_apache_entry(entry)
             except c.EXC_BASIC_TYPE as exc:
-                return r[m.Ldif.Entry].fail_op(
+                return r[p.Ldif.Entry].fail_op(
                     "Apache Directory Server entry parsing",
                     exc,
                 )
 
-        def _mark_apache_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+        def _mark_apache_entry(self, entry: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
             """Attach Apache Directory Server metadata to an entry.
 
             Returns:
-                The resulting ``p.Result[m.Ldif.Entry]``.
+                The resulting ``p.Result[p.Ldif.Entry]``.
 
             """
             if not entry.dn:
-                return r[m.Ldif.Entry].ok(entry)
+                return r[p.Ldif.Entry].ok(entry)
             metadata = entry.metadata or m.Ldif.ServerMetadata(
                 server_type=self._get_server_type(),
             )
@@ -200,7 +200,7 @@ class FlextLdifServersApache(FlextLdifServersRfc):
                 FlextLdifServersApache.Constants.DN_CONFIG_ENTRY_MARKER in dn_lower
             )
             processed_entry = entry.model_copy(update={"metadata": metadata})
-            return r[m.Ldif.Entry].ok(processed_entry)
+            return r[p.Ldif.Entry].ok(processed_entry)
 
     # The ApacheDS dialect schema settings are owned by ``Constants`` and bound
     # here in the owner class body: a nested class body cannot reference the

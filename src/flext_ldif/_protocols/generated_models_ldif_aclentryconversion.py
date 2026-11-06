@@ -8,21 +8,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
-
-if TYPE_CHECKING:
-    from flext_ldif._protocols import FlextLdifProtocolsValues
-
 
 class FlextLdifLdifProtocolsGeneratedModelsAclEntryConversion:
     """Own the structural model contract declared by this module."""
-
-    @runtime_checkable
-    class AclEntryConversion(Protocol):
-        """Structural data contract projected from the owning model."""
-
-        rules: tuple[FlextLdifProtocolsValues.AciRule, ...]
-        oracle_internal_skip: bool
 
 
 __all__: list[str] = [

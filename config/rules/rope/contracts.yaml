@@ -2,6 +2,26 @@
 # packaged universal catalogue when `make mod` runs in this repository; they
 # name flext_ldif identities, so they live here and nowhere else.
 rules:
+  - id: ldif-constant-oid-owner
+    phase: contract-normalization
+    pattern: '${owner}.Oid'
+    goal: 'FlextLdifConstantsServersOid'
+    arguments:
+      owner: name=flext_ldif.constants.FlextLdifConstants.Ldif
+    imports:
+      FlextLdifConstantsServersOid: from flext_ldif._constants.servers_oid import FlextLdifConstantsServersOid
+    bindings:
+      FlextLdifConstantsServersOid: flext_ldif._constants.servers_oid.FlextLdifConstantsServersOid
+  - id: ldif-constant-oud-owner
+    phase: contract-normalization
+    pattern: '${owner}.Oud'
+    goal: 'FlextLdifConstantsServersOud'
+    arguments:
+      owner: name=flext_ldif.constants.FlextLdifConstants.Ldif
+    imports:
+      FlextLdifConstantsServersOud: from flext_ldif._constants.servers_oud import FlextLdifConstantsServersOud
+    bindings:
+      FlextLdifConstantsServersOud: flext_ldif._constants.servers_oud.FlextLdifConstantsServersOud
   - id: ldif-helper-internal-oid
     families: [u]
     pattern: '${extractor}(${definition})'

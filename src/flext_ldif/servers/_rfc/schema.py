@@ -48,7 +48,7 @@ class FlextLdifServersRfcSchema(
     @overload
     def __call__(
         self,
-        data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        data: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         operation: str | None = None,
     ) -> str: ...
 
@@ -145,7 +145,7 @@ class FlextLdifServersRfcSchema(
         self,
         original_format: str,
         extensions: t.Ldif.MetadataInputMapping | None = None,
-    ) -> m.Ldif.ServerMetadata:
+    ) -> p.Ldif.ServerMetadata:
         """Create server metadata with consistent server-specific extensions.
 
         Returns:
@@ -163,7 +163,7 @@ class FlextLdifServersRfcSchema(
         )
 
     @staticmethod
-    def should_filter_out_attribute(_attribute: m.Ldif.SchemaAttribute) -> bool:
+    def should_filter_out_attribute(_attribute: p.Ldif.SchemaAttribute) -> bool:
         """RFC server does not filter attributes.
 
         Returns:
@@ -175,7 +175,7 @@ class FlextLdifServersRfcSchema(
 
     @staticmethod
     def should_filter_out_objectclass(
-        _objectclass: m.Ldif.SchemaObjectClass,
+        _objectclass: p.Ldif.SchemaObjectClass,
     ) -> bool:
         """RFC server does not filter objectClasses.
 
@@ -189,25 +189,25 @@ class FlextLdifServersRfcSchema(
     @override
     def _hook_post_parse_attribute(
         self,
-        attr: m.Ldif.SchemaAttribute,
-    ) -> p.Result[m.Ldif.SchemaAttribute]:
+        attr: p.Ldif.SchemaAttribute,
+    ) -> p.Result[p.Ldif.SchemaAttribute]:
         """Run hook after parsing an attribute definition.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.SchemaAttribute]``.
+            The resulting ``p.Result[p.Ldif.SchemaAttribute]``.
 
         """
-        return r[m.Ldif.SchemaAttribute].ok(attr)
+        return r[p.Ldif.SchemaAttribute].ok(attr)
 
     @override
     def _parse_attribute(
         self,
         attr_definition: str,
-    ) -> p.Result[m.Ldif.SchemaAttribute]:
+    ) -> p.Result[p.Ldif.SchemaAttribute]:
         """Parse RFC 4512 attribute definition using generalized parser.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.SchemaAttribute]``.
+            The resulting ``p.Result[p.Ldif.SchemaAttribute]``.
 
         """
         server_type = self._get_server_type()
@@ -226,7 +226,7 @@ class FlextLdifServersRfcSchema(
             parse_parts_hook=parse_parts_hook,
         )
         if parse_result_raw.failure:
-            return r[m.Ldif.SchemaAttribute].from_failure(parse_result_raw)
+            return r[p.Ldif.SchemaAttribute].from_failure(parse_result_raw)
         parsed_raw = parse_result_raw.value
         parsed: t.Ldif.MutableMetadataMapping = dict(parsed_raw)
         syntax = parsed.get("syntax")
@@ -265,11 +265,11 @@ class FlextLdifServersRfcSchema(
     def _parse_objectclass(
         self,
         oc_definition: str,
-    ) -> p.Result[m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[p.Ldif.SchemaObjectClass]:
         """Parse RFC 4512 objectClass definition using core parser.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.SchemaObjectClass]``.
+            The resulting ``p.Result[p.Ldif.SchemaObjectClass]``.
 
         """
         parse_result = self._parse_objectclass_core(oc_definition)

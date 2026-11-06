@@ -8,7 +8,9 @@ from __future__ import annotations
 
 from collections.abc import MutableMapping
 
-from flext_ldif import m, p, r, t
+from flext_cli import r
+
+from flext_ldif import m, p, t
 
 
 class FlextLdifUtilitiesTransformersAttrs:
@@ -16,9 +18,9 @@ class FlextLdifUtilitiesTransformersAttrs:
 
     @staticmethod
     def entry_with_attributes(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         attributes: t.MutableStrSequenceMapping,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Replace an entry's attribute values, keeping its attribute metadata.
 
         Returns:
@@ -41,20 +43,20 @@ class FlextLdifUtilitiesTransformersAttrs:
 
     @staticmethod
     def normalize_entry_attrs(
-        item: m.Ldif.Entry,
+        item: p.Ldif.Entry,
         *,
         case_fold_names: bool = True,
         trim_values: bool = True,
         remove_empty: bool = False,
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Normalize attribute names and values of one entry.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[p.Ldif.Entry]``.
 
         """
         if item.attributes is None:
-            return r[m.Ldif.Entry].fail("Entry has no attributes")
+            return r[p.Ldif.Entry].fail("Entry has no attributes")
         attrs: t.MutableStrSequenceMapping = item.attributes.attributes
         if case_fold_names:
             attrs = {k.lower(): v for k, v in attrs.items()}
@@ -72,7 +74,7 @@ class FlextLdifUtilitiesTransformersAttrs:
                 }),
             }
             item = item.model_copy(update=update_dict)
-        return r[m.Ldif.Entry].ok(item)
+        return r[p.Ldif.Entry].ok(item)
 
 
 __all__: list[str] = ["FlextLdifUtilitiesTransformersAttrs"]

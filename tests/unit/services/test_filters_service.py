@@ -13,8 +13,6 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence, Sequence
 
-import pytest
-
 from flext_ldif.services import FlextLdifFilters
 from tests import c, ldif, m, p, tm, u
 
@@ -24,8 +22,8 @@ class TestsFlextLdifFiltersService:
 
     # ── fixtures ──────────────────────────────────────────────────────────────
 
-    @pytest.fixture
-    def regular_entry() -> m.Ldif.Entry:
+    @u.Tests.fixture
+    def regular_entry() -> p.Ldif.Entry:
         """Build a person entry carrying objectClasses plus filterable attributes.
 
         Returns:
@@ -47,8 +45,8 @@ class TestsFlextLdifFiltersService:
             },
         )
 
-    @pytest.fixture
-    def entry_without_attributes() -> m.Ldif.Entry:
+    @u.Tests.fixture
+    def entry_without_attributes() -> p.Ldif.Entry:
         """Build an entry whose ``attributes`` field is ``None``.
 
         Returns:
@@ -62,7 +60,7 @@ class TestsFlextLdifFiltersService:
         return entry.model_copy(update={"attributes": None})
 
     @staticmethod
-    def _schema_entry(values: Sequence[str]) -> m.Ldif.Entry:
+    def _schema_entry(values: Sequence[str]) -> p.Ldif.Entry:
         return u.Tests.create_real_entry(
             dn=c.Tests.FILTERS_DN_SCHEMA,
             attributes={
@@ -75,7 +73,7 @@ class TestsFlextLdifFiltersService:
 
     @staticmethod
     def test_removes_forbidden_attributes_keeping_the_rest(
-        regular_entry: m.Ldif.Entry,
+        regular_entry: p.Ldif.Entry,
     ) -> None:
         """Test removes forbidden attributes keeping the rest."""
         result = ldif.filter_entry_attributes(
@@ -132,7 +130,7 @@ class TestsFlextLdifFiltersService:
 
     @staticmethod
     def test_removes_forbidden_objectclass_values(
-        regular_entry: m.Ldif.Entry,
+        regular_entry: p.Ldif.Entry,
     ) -> None:
         """Test removes forbidden objectclass values."""
         result = ldif.filter_entry_attributes(
@@ -169,7 +167,7 @@ class TestsFlextLdifFiltersService:
 
     @staticmethod
     def test_empty_forbidden_lists_preserve_entry_identity(
-        regular_entry: m.Ldif.Entry,
+        regular_entry: p.Ldif.Entry,
     ) -> None:
         """Test empty forbidden lists preserve entry identity."""
         original_attributes = tm.not_none(regular_entry.attributes)
@@ -183,7 +181,7 @@ class TestsFlextLdifFiltersService:
 
     @staticmethod
     def test_attribute_filtering_is_idempotent(
-        regular_entry: m.Ldif.Entry,
+        regular_entry: p.Ldif.Entry,
     ) -> None:
         """Test attribute filtering is idempotent."""
         forbidden = list(c.Tests.FILTERS_FORBIDDEN_ATTRS_ORDERED)
@@ -196,7 +194,7 @@ class TestsFlextLdifFiltersService:
 
     @staticmethod
     def test_returns_entry_unchanged_when_no_attributes_present(
-        entry_without_attributes: m.Ldif.Entry,
+        entry_without_attributes: p.Ldif.Entry,
     ) -> None:
         """Test returns entry unchanged when no attributes present."""
         result = ldif.filter_entry_attributes(
@@ -211,7 +209,7 @@ class TestsFlextLdifFiltersService:
     # ── filter_schema_attribute_values ────────────────────────────────────────
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("attr_key", "allowed_oid", "raw_oid"),
         [
             (
@@ -318,7 +316,7 @@ class TestsFlextLdifFiltersService:
 
     @staticmethod
     def test_returns_entry_unchanged_when_no_attributes_to_filter(
-        entry_without_attributes: m.Ldif.Entry,
+        entry_without_attributes: p.Ldif.Entry,
     ) -> None:
         """Test returns entry unchanged when no attributes to filter."""
         result = ldif.filter_schema_attribute_values(entry_without_attributes, {})
@@ -330,12 +328,12 @@ class TestsFlextLdifFiltersService:
 
     @staticmethod
     def _filter_entries_by_allowed_oids(
-        entry: m.Ldif.Entry,
-    ) -> p.Result[MutableSequence[m.Ldif.Entry]]:
+        entry: p.Ldif.Entry,
+    ) -> p.Result[MutableSequence[p.Ldif.Entry]]:
         """Filter one entry against the full allowed-OID whitelist.
 
         Returns:
-            The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
+            The resulting ``p.Result[MutableSequence[p.Ldif.Entry]]``.
 
         """
         whitelist = m.Ldif.WhitelistRules.model_validate(
@@ -344,6 +342,7 @@ class TestsFlextLdifFiltersService:
         return FlextLdifFilters.filter_schema_by_oids(
             entries=[entry],
             allowed_oids=whitelist,
+            logger=u.fetch_logger(__name__),
         )
 
     def test_schema_by_oids_keeps_entry_matching_whitelist(self) -> None:
@@ -374,6 +373,7 @@ class TestsFlextLdifFiltersService:
         result = FlextLdifFilters.filter_schema_by_oids(
             entries=[entry],
             allowed_oids=empty_whitelist,
+            logger=u.fetch_logger(__name__),
         )
 
         tm.ok(result.success)

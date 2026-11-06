@@ -62,7 +62,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             "ibm-ldapserver",
             "ibm-filterentry",
         ])
-        ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+        ATTRIBUTE_PATTERN_SETTINGS: ClassVar[p.Ldif.ServerPatternsConfig] = (
             m.Ldif.ServerPatternsConfig(
                 oid_pattern=DETECTION_OID_PATTERN,
                 attr_prefixes=DETECTION_ATTRIBUTE_PREFIXES,
@@ -70,7 +70,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 match_definition_text=True,
             )
         )
-        OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig] = (
+        OBJECTCLASS_PATTERN_SETTINGS: ClassVar[p.Ldif.ServerPatternsConfig] = (
             m.Ldif.ServerPatternsConfig(
                 oid_pattern=DETECTION_OID_PATTERN,
                 attr_names=DETECTION_OBJECTCLASS_NAMES,
@@ -84,7 +84,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             "cn=configuration",
             "cn=ibm",
         ])
-        ENTRY_DETECTION: ClassVar[m.Ldif.EntryDetectionMarkers] = (
+        ENTRY_DETECTION: ClassVar[p.Ldif.EntryDetectionMarkers] = (
             m.Ldif.EntryDetectionMarkers(
                 dn_markers=DETECTION_DN_MARKERS,
                 objectclass_names=DETECTION_OBJECTCLASS_NAMES,
@@ -128,8 +128,8 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
     ):
         """IBM Tivoli Directory Server schema servers implementation."""
 
-        _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
-        _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
+        _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[p.Ldif.ServerPatternsConfig]
+        _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[p.Ldif.ServerPatternsConfig]
 
     class Acl(FlextLdifServersRfcAcl):
         """IBM Tivoli Directory Server ACL servers implementation."""
@@ -158,11 +158,11 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
             )
 
         @override
-        def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+        def _parse_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
             """Parse Tivoli DS ACL definition.
 
             Returns:
-                The resulting ``p.Result[m.Ldif.Acl]``.
+                The resulting ``p.Result[p.Ldif.Acl]``.
 
             """
             try:
@@ -197,12 +197,12 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                     server_type=self._get_server_type(),
                     raw_acl=acl_line,
                 )
-                return r[m.Ldif.Acl].ok(acl)
+                return r[p.Ldif.Acl].ok(acl)
             except c.EXC_BASIC_TYPE as exc:
-                return r[m.Ldif.Acl].fail_op("IBM Tivoli DS ACL parsing", exc)
+                return r[p.Ldif.Acl].fail_op("IBM Tivoli DS ACL parsing", exc)
 
         @override
-        def _write_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+        def _write_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
             """Write ACL data to RFC-compliant string format.
 
             Returns:
@@ -215,7 +215,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 "IBM Tivoli DS ACL write",
             )
 
-        def _write_tivoli_acl(self, acl_data: m.Ldif.Acl) -> p.Result[str]:
+        def _write_tivoli_acl(self, acl_data: p.Ldif.Acl) -> p.Result[str]:
             """Write IBM Tivoli DS ACL content.
 
             Returns:
@@ -245,7 +245,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
 
         @staticmethod
         def _active_tivoli_permissions(
-            permissions: m.Ldif.AclPermissions | None,
+            permissions: p.Ldif.AclPermissions | None,
         ) -> MutableSequence[str]:
             """Return active IBM Tivoli DS permission tokens."""
             permission_map = {
@@ -311,31 +311,31 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 return normalized
             return entry_dn.lower()
 
-        def process_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+        def process_entry(self, entry: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
             """Normalise IBM Tivoli DS entries and attach metadata.
 
             Returns:
-                The resulting ``p.Result[m.Ldif.Entry]``.
+                The resulting ``p.Result[p.Ldif.Entry]``.
 
             """
             try:
                 return self._process_tivoli_entry(entry)
             except c.EXC_BASIC_TYPE as exc:
-                return r[m.Ldif.Entry].fail_op("IBM Tivoli DS entry processing", exc)
+                return r[p.Ldif.Entry].fail_op("IBM Tivoli DS entry processing", exc)
 
-        def _process_tivoli_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+        def _process_tivoli_entry(self, entry: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
             """Normalize IBM Tivoli DS entry attributes.
 
             Returns:
-                The resulting ``p.Result[m.Ldif.Entry]``.
+                The resulting ``p.Result[p.Ldif.Entry]``.
 
             """
             if not entry.dn:
-                return r[m.Ldif.Entry].fail(
+                return r[p.Ldif.Entry].fail(
                     "Entry DN is required for Tivoli DS normalization",
                 )
             if not entry.attributes:
-                return r[m.Ldif.Entry].fail(
+                return r[p.Ldif.Entry].fail(
                     "Entry attributes are required for Tivoli DS normalization",
                 )
             attributes: t.MutableStrSequenceMapping = {**entry.attributes.attributes}
@@ -355,7 +355,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
                 "attributes": processed_attributes,
             })
             processed_entry = entry.model_copy(update={"attributes": new_attrs})
-            return r[m.Ldif.Entry].ok(processed_entry)
+            return r[p.Ldif.Entry].ok(processed_entry)
 
         @staticmethod
         def _is_config_entry(entry_dn: str) -> bool:

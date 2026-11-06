@@ -40,11 +40,11 @@ class FlextLdifServersOidEntry(
     def _parse_entry_from_lines(
         self,
         lines: MutableSequence[str],
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Parse entry from LDIF lines, apply OID→RFC normalization, finalize metadata.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[p.Ldif.Entry]``.
 
         """
         result = super()._parse_entry_from_lines(lines)
@@ -65,7 +65,7 @@ class FlextLdifServersOidEntry(
         return self._hook_post_parse_entry(finalize_result.value)
 
     @override
-    def _write_entry(self, entry_data: m.Ldif.Entry) -> p.Result[str]:
+    def _write_entry(self, entry_data: p.Ldif.Entry) -> p.Result[str]:
         """Write OID entry preserving OID-specific denormalized attribute names.
 
         Returns:

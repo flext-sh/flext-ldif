@@ -67,11 +67,11 @@ class FlextLdifServersOudEntry(
         self,
         entry_dn: str,
         entry_attrs: t.MutableStrSequenceMapping | m.Ldif.Entry,
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Delegate RFC parse, then enrich entry metadata with OUD round-trip context.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[p.Ldif.Entry]``.
 
         """
         entry_attrs_dict: t.MutableStrSequenceMapping = {}
@@ -100,14 +100,14 @@ class FlextLdifServersOudEntry(
         })
         metadata = u.Ldif.build_entry_parse_metadata(metadata_config)
         entry.metadata = metadata
-        return r[m.Ldif.Entry].ok(entry)
+        return r[p.Ldif.Entry].ok(entry)
 
     @override
-    def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+    def _hook_post_parse_entry(self, entry: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
         """Validate OUD ACI macros and merge ACL metadata into the parsed entry.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[p.Ldif.Entry]``.
 
         """
         attrs_dict: t.MutableStrSequenceMapping = (
@@ -115,16 +115,16 @@ class FlextLdifServersOudEntry(
         )
         aci_attrs = attrs_dict.get("aci")
         if not (aci_attrs and u.matches_type(aci_attrs, (list, tuple))):
-            return r[m.Ldif.Entry].ok(entry)
+            return r[p.Ldif.Entry].ok(entry)
         process_result = FlextLdifServersOudEntry._process_aci_attribute_values(
             aci_attrs,
         )
         if process_result.failure:
-            return r[m.Ldif.Entry].from_failure(process_result)
+            return r[p.Ldif.Entry].from_failure(process_result)
         has_macros, acl_metadata_extensions = process_result.value
         if has_macros:
             FlextLdifServersOudEntry._log_aci_macros_preserved(entry, aci_attrs)
-        return r[m.Ldif.Entry].ok(
+        return r[p.Ldif.Entry].ok(
             FlextLdifServersOudHelpers.merge_acl_metadata_to_entry(
                 entry,
                 acl_metadata_extensions,
@@ -164,7 +164,7 @@ class FlextLdifServersOudEntry(
 
     @staticmethod
     def _log_aci_macros_preserved(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         aci_attrs: Sequence[str],
     ) -> None:
         """Log that an entry carries OUD ACI macros preserved for runtime expansion."""
@@ -180,17 +180,17 @@ class FlextLdifServersOudEntry(
         )
 
     @override
-    def _hook_pre_write_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+    def _hook_pre_write_entry(self, entry: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
         """Normalize schema definitions for OUD (RFC 4512 SYNTAX OIDs) before write.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[p.Ldif.Entry]``.
 
         """
         if not FlextLdifServersOudHelpers.carries_schema_definitions(entry):
-            return r[m.Ldif.Entry].ok(entry)
+            return r[p.Ldif.Entry].ok(entry)
         if not isinstance(self.parent_server, p.Ldif.RegistryBound):
-            return r[m.Ldif.Entry].fail_op(
+            return r[p.Ldif.Entry].fail_op(
                 "normalize OUD schema definitions",
                 "Explicit registry-bound parent is required",
             )
@@ -200,7 +200,7 @@ class FlextLdifServersOudEntry(
         )
 
     @override
-    def _write_entry(self, entry_data: m.Ldif.Entry) -> p.Result[str]:
+    def _write_entry(self, entry_data: p.Ldif.Entry) -> p.Result[str]:
         """Write entry with OUD pre-write hook + phase-aware ACL handling + DN.
 
         # normalization.

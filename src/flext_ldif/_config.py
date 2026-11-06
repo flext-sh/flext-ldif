@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from flext_cli import FlextCliConfig, m
+from flext_cli import FlextCliConfig, m, t
 
 
 class FlextLdifConfig(FlextCliConfig):
@@ -27,7 +27,7 @@ class FlextLdifConfig(FlextCliConfig):
     class ConfigNamespace(m.BaseModel):
         """Open, frozen namespace exposing every configured LDIF domain."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
             extra="allow",
             frozen=True,
         )

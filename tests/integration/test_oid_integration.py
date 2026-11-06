@@ -17,9 +17,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-import pytest
-
-from tests import m, p, t, tm, u
+from tests import c, p, t, tm, u
 
 ORACLE_OID_PREFIX = "2.16.840.1.113894"
 
@@ -32,14 +30,14 @@ class TestsFlextLdifOidIntegration:
     """
 
     @staticmethod
-    def _entries(api: p.Ldif.LdifClient, content: str) -> Sequence[m.Ldif.Entry]:
+    def _entries(api: p.Ldif.LdifClient, content: str) -> Sequence[p.Ldif.Entry]:
         """Parse ``content`` through the public client and return its entries.
 
         Returns:
-            The resulting ``Sequence[m.Ldif.Entry]``.
+            The resulting ``Sequence[p.Ldif.Entry]``.
 
         """
-        response: m.Ldif.ParseResponse = u.Tests.assert_success(
+        response: p.Ldif.ParseResponse = u.Tests.assert_success(
             api.parse_ldif(content),
             error_msg="OID fixture parsing failed",
         )
@@ -47,7 +45,7 @@ class TestsFlextLdifOidIntegration:
 
     @staticmethod
     def _schema_definitions(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         attribute_name: str,
     ) -> Sequence[str]:
         """Return the raw schema definition strings for ``attribute_name``.
@@ -59,7 +57,7 @@ class TestsFlextLdifOidIntegration:
         return attrs.get(attribute_name, [])
 
     @staticmethod
-    def _attribute_value_count(entry: m.Ldif.Entry, attribute_name: str) -> int:
+    def _attribute_value_count(entry: p.Ldif.Entry, attribute_name: str) -> int:
         """Count values held under ``attribute_name`` via the public contract.
 
         Returns:
@@ -72,15 +70,15 @@ class TestsFlextLdifOidIntegration:
     def _roundtrip(
         cls,
         api: p.Ldif.LdifClient,
-        entries: Sequence[m.Ldif.Entry],
-    ) -> Sequence[m.Ldif.Entry]:
+        entries: Sequence[p.Ldif.Entry],
+    ) -> Sequence[p.Ldif.Entry]:
         """Write ``entries`` and re-parse the produced LDIF text.
 
         Returns:
-            The resulting ``Sequence[m.Ldif.Entry]``.
+            The resulting ``Sequence[p.Ldif.Entry]``.
 
         """
-        written: m.Ldif.WriteResponse = u.Tests.assert_success(
+        written: p.Ldif.WriteResponse = u.Tests.assert_success(
             api.write(list(entries)),
             error_msg="writing OID entries failed",
         )
@@ -103,7 +101,7 @@ class TestsFlextLdifOidIntegration:
             msg="every parsed schema entry must expose a non-empty DN",
         )
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "definition_attr",
         ["attributeTypes", "objectClasses"],
         ids=["attribute-types", "object-classes"],
@@ -147,7 +145,7 @@ class TestsFlextLdifOidIntegration:
             msg = f"expected > {min_expected_entries} entries, got {len(entries)}"
             tm.reject(msg)
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "attribute_name",
         ["orclaci", "orclentrylevelaci", "orclisenabled", "orclpassword"],
         ids=["acl", "entry-level-acl", "is-enabled", "password"],
@@ -197,7 +195,7 @@ class TestsFlextLdifOidIntegration:
 
         tm.that(roundtrip_dns, eq=original_dns)
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "acl_attribute",
         ["orclaci", "orclentrylevelaci"],
         ids=["acl", "entry-level-acl"],

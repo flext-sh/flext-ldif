@@ -22,7 +22,7 @@ class ExamplesFlextLdifSchemaBuilding:
     def create_entry_or_none(
         dn: str,
         attributes: t.MutableAttributeMapping,
-    ) -> m.Ldif.Entry | None:
+    ) -> p.Ldif.Entry | None:
         """Create an entry, returning None on failure.
 
         Returns:
@@ -35,14 +35,14 @@ class ExamplesFlextLdifSchemaBuilding:
     @staticmethod
     def object_class_entries(
         definitions: Sequence[tuple[str, str, str, list[str], list[str]]],
-    ) -> list[m.Ldif.Entry]:
+    ) -> list[p.Ldif.Entry]:
         """Build objectClass schema entries from ``(name, desc, sup, must, may)`` rows.
 
         Returns:
-            The resulting ``list[m.Ldif.Entry]``.
+            The resulting ``list[p.Ldif.Entry]``.
 
         """
-        entries: list[m.Ldif.Entry] = []
+        entries: list[p.Ldif.Entry] = []
         for name, desc, sup, must_attrs, may_attrs in definitions:
             attrs: t.MutableAttributeMapping = {
                 "objectClass": ["top", "ldapSubentry", "objectClassDescription"],
@@ -63,14 +63,14 @@ class ExamplesFlextLdifSchemaBuilding:
         return entries
 
     @staticmethod
-    def intelligent_schema_building() -> p.Result[MutableSequence[m.Ldif.Entry]]:
+    def intelligent_schema_building() -> p.Result[MutableSequence[p.Ldif.Entry]]:
         """Intelligent schema building with automatic type detection and validation.
 
         Returns:
-            The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
+            The resulting ``p.Result[MutableSequence[p.Ldif.Entry]]``.
 
         """
-        schema_entries: list[m.Ldif.Entry] = []
+        schema_entries: list[p.Ldif.Entry] = []
         schema_root = ExamplesFlextLdifSchemaBuilding.create_entry_or_none(
             dn="cn=schema",
             attributes={
@@ -127,7 +127,7 @@ class ExamplesFlextLdifSchemaBuilding:
         schema_entries.extend(
             ExamplesFlextLdifSchemaBuilding.object_class_entries(object_classes),
         )
-        return r[MutableSequence[m.Ldif.Entry]].ok(schema_entries)
+        return r[MutableSequence[p.Ldif.Entry]].ok(schema_entries)
 
 
 # Module-level rebinding of the namespace surface: the lazy package export and

@@ -16,7 +16,7 @@ class FlextLdifEntries(s[p.Ldif.Response]):
     """Entry operations with strict contracts."""
 
     entries: Annotated[
-        MutableSequence[m.Ldif.Entry],
+        MutableSequence[Annotated[p.Ldif.Entry, t.schema_for_model(m.Ldif.Entry)]],
         m.Field(
             default_factory=list,
             exclude=True,
@@ -87,15 +87,15 @@ class FlextLdifEntries(s[p.Ldif.Response]):
         dn: str,
         attributes: t.MutableAttributeMapping,
         objectclasses: MutableSequence[str] | None = None,
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Create a validated entry from DN and attributes.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[p.Ldif.Entry]``.
 
         """
         if not u.Ldif.validate_dn(dn):
-            return r[m.Ldif.Entry].fail(f"Invalid DN: {dn}")
+            return r[p.Ldif.Entry].fail(f"Invalid DN: {dn}")
         final_attrs = dict(attributes)
         if objectclasses:
             final_attrs[c.Ldif.DictKeys.OBJECTCLASS] = objectclasses
@@ -128,7 +128,7 @@ class FlextLdifEntries(s[p.Ldif.Response]):
 
     @staticmethod
     def resolve_entry_attributes(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
     ) -> p.Result[t.MutableStrSequenceMapping]:
         """Get entry attributes mapping.
 
@@ -143,7 +143,7 @@ class FlextLdifEntries(s[p.Ldif.Response]):
 
     @staticmethod
     def resolve_entry_dn(
-        entry: m.Ldif.Entry | t.MutableAttributeMapping,
+        entry: p.Ldif.Entry | t.MutableAttributeMapping,
     ) -> p.Result[str]:
         """Read DN from model or dictionary entry.
 
@@ -157,7 +157,7 @@ class FlextLdifEntries(s[p.Ldif.Response]):
 
     @staticmethod
     def resolve_entry_objectclasses(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
     ) -> p.Result[MutableSequence[str]]:
         """Get objectClass values from entry attributes.
 
@@ -191,17 +191,17 @@ class FlextLdifEntries(s[p.Ldif.Response]):
 
     @staticmethod
     def remove_attributes(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         attributes_to_remove: MutableSequence[str],
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Remove selected attributes from a single entry.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[p.Ldif.Entry]``.
 
         """
         if entry.attributes is None:
-            return r[m.Ldif.Entry].ok(entry)
+            return r[p.Ldif.Entry].ok(entry)
         attrs_to_remove_lower = {attr.lower() for attr in attributes_to_remove}
         new_attrs: t.MutableAttributeMapping = {
             k: v
@@ -215,27 +215,27 @@ class FlextLdifEntries(s[p.Ldif.Response]):
             metadata=entry.metadata,
         )
 
-    def run_configured_operation(self) -> p.Result[MutableSequence[m.Ldif.Entry]]:
+    def run_configured_operation(self) -> p.Result[MutableSequence[p.Ldif.Entry]]:
         """Run the configured entry operation against the bound entries.
 
         Returns:
-            The resulting ``p.Result[MutableSequence[m.Ldif.Entry]]``.
+            The resulting ``p.Result[MutableSequence[p.Ldif.Entry]]``.
 
         """
         if not self.operation:
-            return r[MutableSequence[m.Ldif.Entry]].fail("No operation specified")
+            return r[MutableSequence[p.Ldif.Entry]].fail("No operation specified")
         if self.operation == c.Ldif.ENTRY_OPERATION_REMOVE_ATTRIBUTES:
             if not self.attributes_to_remove:
-                return r[MutableSequence[m.Ldif.Entry]].fail(
+                return r[MutableSequence[p.Ldif.Entry]].fail(
                     "No attributes_to_remove specified for remove-attributes operation",
                 )
-            results: MutableSequence[m.Ldif.Entry] = []
+            results: MutableSequence[p.Ldif.Entry] = []
             for entry in self.entries:
                 result = self.remove_attributes(entry, self.attributes_to_remove)
                 if result.success:
                     results.append(result.value)
-            return r[MutableSequence[m.Ldif.Entry]].ok(results)
-        return r[MutableSequence[m.Ldif.Entry]].fail(
+            return r[MutableSequence[p.Ldif.Entry]].ok(results)
+        return r[MutableSequence[p.Ldif.Entry]].fail(
             f"Unknown operation: {self.operation}",
         )
 

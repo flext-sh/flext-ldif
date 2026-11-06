@@ -2,7 +2,7 @@
 
 Every assertion targets observable public contract only:
 - server ``parse_*`` / ``write_*`` returning ``r[T]`` outcomes and their values,
-- ``FlextLdifConversion.convert_model`` returning ``r[m.Ldif.Entry]``,
+- ``FlextLdifConversion.convert_model`` returning ``r[p.Ldif.Entry]``,
 - public model fields (``.syntax``, ``.equality``) and written schema text.
 
 No private attribute/method access, no internal-collaborator spying,
@@ -16,16 +16,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
-
 from flext_ldif import FlextLdif
 from flext_ldif.services import FlextLdifConversion, FlextLdifServer
-from tests import m, p, t, tm
+from tests import c, m, p, t, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-pytestmark = [pytest.mark.integration]
+pytestmark = [c.Tests.MARK.integration]
 
 
 def _resolve_schema_server(
@@ -54,12 +52,12 @@ def _assert_definition_roundtrip(
     target_schema = _resolve_schema_server(registry, target)
     parse: Callable[
         [str],
-        p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass],
+        p.Result[p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass],
     ] = getattr(source_schema, parse_method)
     parse_result = parse(definition)
     tm.ok(parse_result)
     write: Callable[
-        [m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass],
+        [p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass],
         p.Result[str],
     ] = getattr(
         target_schema,
@@ -77,7 +75,7 @@ def _assert_definition_roundtrip(
 class TestsFlextLdifCrossDirectionConversion:
     """Cross-direction schema conversion observable behavior."""
 
-    @pytest.fixture
+    @u.Tests.fixture
     def server_registry() -> FlextLdifServer:
         """Real server registry (unit under test, no mocks).
 
@@ -87,7 +85,7 @@ class TestsFlextLdifCrossDirectionConversion:
         """
         return FlextLdifServer(registry=FlextLdif().registry)
 
-    @pytest.fixture
+    @u.Tests.fixture
     def conversion() -> FlextLdifConversion:
         """Real entry-level conversion service (unit under test).
 
@@ -101,10 +99,10 @@ class TestsFlextLdifCrossDirectionConversion:
     # Attribute definition conversion (server parse in source, write target)
     # ------------------------------------------------------------------
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "case",
         [
-            pytest.param(
+            u.Tests.param(
                 (
                     "oid",
                     "oud",
@@ -118,7 +116,7 @@ class TestsFlextLdifCrossDirectionConversion:
                 ),
                 id="oid-to-oud-substrings-rule-moves-to-substr",
             ),
-            pytest.param(
+            u.Tests.param(
                 (
                     "oid",
                     "oud",
@@ -131,7 +129,7 @@ class TestsFlextLdifCrossDirectionConversion:
                 ),
                 id="oid-to-oud-syntax-rfc-normalized",
             ),
-            pytest.param(
+            u.Tests.param(
                 (
                     "oud",
                     "oid",
@@ -145,7 +143,7 @@ class TestsFlextLdifCrossDirectionConversion:
                 ),
                 id="oud-to-oid-generic-rule-not-rewritten",
             ),
-            pytest.param(
+            u.Tests.param(
                 (
                     "oud",
                     "oud",
@@ -172,10 +170,10 @@ class TestsFlextLdifCrossDirectionConversion:
     # ObjectClass definition conversion
     # ------------------------------------------------------------------
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "case",
         [
-            pytest.param(
+            u.Tests.param(
                 (
                     "oid",
                     "oud",
@@ -188,7 +186,7 @@ class TestsFlextLdifCrossDirectionConversion:
                 ),
                 id="oid-to-oud-quoted-sup-normalized",
             ),
-            pytest.param(
+            u.Tests.param(
                 (
                     "oid",
                     "oid",
@@ -201,7 +199,7 @@ class TestsFlextLdifCrossDirectionConversion:
                 ),
                 id="oid-roundtrip-objectclass-semantics-preserved",
             ),
-            pytest.param(
+            u.Tests.param(
                 (
                     "oud",
                     "oud",
@@ -243,10 +241,10 @@ class TestsFlextLdifCrossDirectionConversion:
     # Parsed-model field normalization (public model contract)
     # ------------------------------------------------------------------
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("server", "attr_def", "field", "expected"),
         [
-            pytest.param(
+            u.Tests.param(
                 "oid",
                 "( 2.16.840.1.113894.1.1.1 NAME 'orclIsEnabled' "
                 "SYNTAX 1.3.6.1.4.1.1466.115.121.1.1 SINGLE-VALUE )",
@@ -254,7 +252,7 @@ class TestsFlextLdifCrossDirectionConversion:
                 "1.3.6.1.4.1.1466.115.121.1.15",
                 id="oid-syntax-normalized-to-rfc",
             ),
-            pytest.param(
+            u.Tests.param(
                 "oid",
                 "( 2.16.840.1.113894.1.1.600 NAME 'orclMemberRef' "
                 "EQUALITY distinguishedNAMEMatch "

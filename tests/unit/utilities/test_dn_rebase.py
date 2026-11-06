@@ -14,9 +14,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import cast
 
-import pytest
-
-from tests import m, t, tm, u
+from tests import c, m, p, t, tm, u
 
 SOURCE = "dc=example,dc=invalid"
 TARGET = "dc=r123,dc=algar,dc=local"
@@ -25,7 +23,7 @@ TARGET = "dc=r123,dc=algar,dc=local"
 def _entry(
     dn: str,
     attributes: Mapping[str, Sequence[str]] | None = None,
-) -> m.Ldif.Entry:
+) -> p.Ldif.Entry:
     """Build a minimal LDIF entry model for transform tests.
 
     Returns:
@@ -41,7 +39,7 @@ def _entry(
     )
 
 
-@pytest.mark.unit
+@c.Tests.MARK.unit
 class TestsFlextLdifDnRebase:
     """Public contract of modrdn-aware transform_entry_base_dn."""
 
@@ -147,7 +145,7 @@ class TestsFlextLdifDnRebase:
     def test_unparseable_new_rdn_fails_loud() -> None:
         """A broken new root DN fails loud (RFC 4514) without corrupting."""
         entry = _entry(SOURCE, {"dc": ["example"]})
-        with pytest.raises(ValueError, match="DN"):
+        with u.Tests.raises(ValueError, match="DN"):
             u.Ldif.transform_entry_base_dn(
                 entry,
                 SOURCE,

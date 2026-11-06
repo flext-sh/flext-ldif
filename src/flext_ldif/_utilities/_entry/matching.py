@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, m, p, t
+from flext_ldif import c, p, t
 from flext_ldif._utilities._entry import FlextLdifUtilitiesEntryAccess
 
 
@@ -41,7 +41,7 @@ class FlextLdifUtilitiesEntryMatching:
     def matches_entry_server_patterns(
         entry_dn: str,
         attributes: t.StrSequenceMapping,
-        settings: m.Ldif.ServerPatternsConfig,
+        settings: p.Ldif.ServerPatternsConfig,
     ) -> bool:
         """Check if entry matches server-specific patterns.
 

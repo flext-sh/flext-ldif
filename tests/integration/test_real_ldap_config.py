@@ -17,9 +17,7 @@ from __future__ import annotations
 import codecs
 from typing import TYPE_CHECKING
 
-import pytest
-
-from tests import ldif, m, tm
+from tests import c, ldif, m, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -27,11 +25,11 @@ if TYPE_CHECKING:
 from tests import p
 
 
-@pytest.mark.integration
+@c.Tests.MARK.integration
 class TestsFlextLdifRealLdapConfig:
     """Public-contract tests for LDIF settings and railway composition."""
 
-    @pytest.fixture
+    @u.Tests.fixture
     def flext_api() -> p.Ldif.LdifClient:
         """Ldif API instance under test.
 
@@ -41,8 +39,8 @@ class TestsFlextLdifRealLdapConfig:
         """
         return ldif()
 
-    @pytest.fixture
-    def sample_entry() -> m.Ldif.Entry:
+    @u.Tests.fixture
+    def sample_entry() -> p.Ldif.Entry:
         """Build a valid inetOrgPerson entry through the public model API.
 
         Returns:
@@ -60,7 +58,7 @@ class TestsFlextLdifRealLdapConfig:
             metadata=None,
         )
         tm.ok(result)
-        entry: m.Ldif.Entry = result.value
+        entry: p.Ldif.Entry = result.value
         return entry
 
     # -- settings contract ------------------------------------------------
@@ -93,7 +91,7 @@ class TestsFlextLdifRealLdapConfig:
     @staticmethod
     def test_railway_write_parse_validate_preserves_entry(
         flext_api: p.Ldif.LdifClient,
-        sample_entry: m.Ldif.Entry,
+        sample_entry: p.Ldif.Entry,
         tmp_path: Path,
     ) -> None:
         """Write, parse, then validate yields the original entry intact."""
@@ -120,7 +118,7 @@ class TestsFlextLdifRealLdapConfig:
     @staticmethod
     def test_write_to_string_then_parse_is_idempotent(
         flext_api: p.Ldif.LdifClient,
-        sample_entry: m.Ldif.Entry,
+        sample_entry: p.Ldif.Entry,
     ) -> None:
         """Serialize-to-string then parse-back preserves DN and attributes."""
         parsed = flext_api.write_to_string([sample_entry]).flat_map(
@@ -139,7 +137,7 @@ class TestsFlextLdifRealLdapConfig:
     @staticmethod
     def test_validate_entries_reports_full_success(
         flext_api: p.Ldif.LdifClient,
-        sample_entry: m.Ldif.Entry,
+        sample_entry: p.Ldif.Entry,
     ) -> None:
         """Validating a well-formed entry yields a passing ValidationResult."""
         result = flext_api.validate_entries([sample_entry])
@@ -167,12 +165,12 @@ class TestsFlextLdifRealLdapConfig:
         tm.that(error.lower(), has="not found")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "content",
         [
-            pytest.param("", id="empty-string"),
-            pytest.param("\n\n", id="blank-lines-only"),
-            pytest.param("# only a comment\n", id="comment-only"),
+            u.Tests.param("", id="empty-string"),
+            u.Tests.param("\n\n", id="blank-lines-only"),
+            u.Tests.param("# only a comment\n", id="comment-only"),
         ],
     )
     def test_parse_content_without_entries_succeeds_empty(

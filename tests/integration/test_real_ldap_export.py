@@ -22,18 +22,16 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
-import pytest
-
 from tests import c, ldif, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-from tests import m, p
+from tests import p
 
 
-@pytest.fixture
+@u.Tests.fixture
 def flext_api() -> p.Ldif.LdifClient:
     """Public Ldif API instance under test.
 
@@ -44,23 +42,23 @@ def flext_api() -> p.Ldif.LdifClient:
     return ldif()
 
 
-@pytest.mark.docker
-@pytest.mark.integration
+@c.Tests.MARK.docker
+@c.Tests.MARK.integration
 class TestsFlextLdifRealLdapExport:
     """Round-trip behavioral contract of LDIF export from a real LDAP server."""
 
     @staticmethod
     def _to_ldif_entries(
         ldap3_entries: Sequence[p.Ldap3Entry],
-    ) -> list[m.Ldif.Entry]:
+    ) -> list[p.Ldif.Entry]:
         """Convert ldap3 search results into ldif entries via the public adapter.
 
         Returns:
-            The resulting ``list[m.Ldif.Entry]``.
+            The resulting ``list[p.Ldif.Entry]``.
 
         """
         adapter = u.Tests.create_ldap_entry_adapter()
-        entries: list[m.Ldif.Entry] = []
+        entries: list[p.Ldif.Entry] = []
         for ldap3_entry in ldap3_entries:
             result = adapter.ldap3_to_ldif_entry(ldap3_entry)
             tm.ok(result)

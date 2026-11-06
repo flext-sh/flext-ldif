@@ -155,12 +155,12 @@ def test_conversion_oid_to_oud(
 
 ### Passo 2: Atualizar Instanciação
 
-# ANTES
+## ANTES
 
 oid = FlextLdifServersOid()
 oud = FlextLdifServersOud()
 
-# DEPOIS
+## DEPOIS
 
 from flext_ldif import FlextLdifServer, FlextLdifServersOid, FlextLdifServersOud
 
@@ -195,7 +195,7 @@ def my_function(oid: FlextLdifServersBase) -> None:
 
 ---
 
-## 📊 Status de Migração
+### 📊 Status de Migração
 
 **Arquivos Já Migrados**:
 
@@ -215,7 +215,7 @@ def my_function(oid: FlextLdifServersBase) -> None:
 
 ---
 
-## 🎯 Servers Disponíveis via API
+### 🎯 Servers Disponíveis via API
 
 ```python
 from flext_ldif import FlextLdifServer
@@ -240,7 +240,7 @@ server.server("tivoli")  # IBM Tivoli DS
 
 ---
 
-## 🔍 Verificação
+### 🔍 Verificação
 
 Para verificar se código está usando padrão correto:
 
@@ -257,7 +257,7 @@ grep -r "server.server(" src/
 
 ---
 
-## 📚 Referências
+### 📚 Referências
 
 - **API Central**: `src/flext_ldif/services/server.py` - FlextLdifServer class
 - **Base Class**: `src/flext_ldif/servers/base.py` - FlextLdifServersBase

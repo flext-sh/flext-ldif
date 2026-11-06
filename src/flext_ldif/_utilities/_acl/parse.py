@@ -8,7 +8,9 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from flext_ldif import c, m, p, r, t
+from flext_cli import r
+
+from flext_ldif import c, m, p, t
 from flext_ldif._utilities import FlextLdifUtilitiesMetadata
 from flext_ldif._utilities._acl import (
     FlextLdifUtilitiesACLExtract,
@@ -113,7 +115,7 @@ class FlextLdifUtilitiesACLParse:
     @staticmethod
     def _extract_target_info(
         aci_content: str,
-        settings: m.Ldif.AciParserConfig,
+        settings: p.Ldif.AciParserConfig,
     ) -> tuple[MutableSequence[str], str]:
         """Extract target attributes and DN from ACI content.
 
@@ -229,7 +231,7 @@ class FlextLdifUtilitiesACLParse:
     @staticmethod
     def _build_subject_and_permissions(
         aci_content: str,
-        settings: m.Ldif.AciParserConfig,
+        settings: p.Ldif.AciParserConfig,
     ) -> tuple[str, str, t.MutableBoolMapping]:
         """Build the subject and permissions of an ACI.
 
@@ -273,8 +275,8 @@ class FlextLdifUtilitiesACLParse:
     @staticmethod
     def parse_aci(
         acl_line: str,
-        settings: m.Ldif.AciParserConfig,
-    ) -> p.Result[m.Ldif.Acl]:
+        settings: p.Ldif.AciParserConfig,
+    ) -> p.Result[p.Ldif.Acl]:
         """Parse an ACI line using server-specific settings.
 
         Args:
@@ -290,7 +292,7 @@ class FlextLdifUtilitiesACLParse:
             settings.aci_prefix,
         )
         if not valid:
-            return r[m.Ldif.Acl].fail(f"Not a valid ACI format: {settings.aci_prefix}")
+            return r[p.Ldif.Acl].fail(f"Not a valid ACI format: {settings.aci_prefix}")
         version, acl_name = FlextLdifUtilitiesACLParse._extract_version_and_name(
             aci_content,
             settings.version_acl_pattern,
@@ -331,7 +333,7 @@ class FlextLdifUtilitiesACLParse:
                 extensions=extensions or None,
             ),
         )
-        return r[m.Ldif.Acl].ok(acl_model)
+        return r[p.Ldif.Acl].ok(acl_model)
 
 
 __all__: list[str] = ["FlextLdifUtilitiesACLParse"]

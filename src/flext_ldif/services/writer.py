@@ -22,15 +22,15 @@ class FlextLdifWriter(FlextLdifServer):
 
     def write(
         self,
-        entries: Sequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: Sequence[p.Ldif.Entry] | m.Ldif.ParseResponse,
         *,
         server_type: str | None = None,
-        format_options: m.Ldif.WriteFormatOptions | None = None,
-    ) -> p.Result[m.Ldif.WriteResponse]:
+        format_options: p.Ldif.WriteFormatOptions | None = None,
+    ) -> p.Result[p.Ldif.WriteResponse]:
         """Write entries to LDIF text and return canonical write metadata.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.WriteResponse]``.
+            The resulting ``p.Result[p.Ldif.WriteResponse]``.
 
         """
         batch = (
@@ -42,8 +42,8 @@ class FlextLdifWriter(FlextLdifServer):
             format_options=format_options,
         )
         if content_result.failure:
-            return r[m.Ldif.WriteResponse].from_failure(content_result)
-        return r[m.Ldif.WriteResponse].ok(
+            return r[p.Ldif.WriteResponse].from_failure(content_result)
+        return r[p.Ldif.WriteResponse].ok(
             m.Ldif.WriteResponse(
                 content=content_result.value,
                 statistics=m.Ldif.Statistics(
@@ -55,18 +55,18 @@ class FlextLdifWriter(FlextLdifServer):
 
     def write_ldif_file(
         self,
-        entries: Sequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: Sequence[p.Ldif.Entry] | m.Ldif.ParseResponse,
         path: PathLike[str],
         *,
         server_type: str | None = None,
-        format_options: m.Ldif.WriteFormatOptions | None = None,
-    ) -> p.Result[m.Ldif.WriteResponse]:
+        format_options: p.Ldif.WriteFormatOptions | None = None,
+    ) -> p.Result[p.Ldif.WriteResponse]:
         """Write entries to an LDIF file and return canonical write metadata.
 
         Relative paths use the current directory without resolving symbolic links.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.WriteResponse]``.
+            The resulting ``p.Result[p.Ldif.WriteResponse]``.
 
         """
         batch = (
@@ -78,12 +78,12 @@ class FlextLdifWriter(FlextLdifServer):
             format_options=format_options,
         )
         if content_result.failure:
-            return r[m.Ldif.WriteResponse].from_failure(content_result)
+            return r[p.Ldif.WriteResponse].from_failure(content_result)
         ldif_content = content_result.value
         write = u.Cli.atomic_write_text_file(Path(path).absolute(), ldif_content)
         if write.failure:
-            return r[m.Ldif.WriteResponse].from_failure(write)
-        return r[m.Ldif.WriteResponse].ok(
+            return r[p.Ldif.WriteResponse].from_failure(write)
+        return r[p.Ldif.WriteResponse].ok(
             m.Ldif.WriteResponse(
                 content=ldif_content,
                 output_path=str(path),
@@ -96,9 +96,9 @@ class FlextLdifWriter(FlextLdifServer):
 
     def write_to_string(
         self,
-        entries: Sequence[m.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: Sequence[p.Ldif.Entry] | m.Ldif.ParseResponse,
         server_type: str | None = None,
-        format_options: m.Ldif.WriteFormatOptions | None = None,
+        format_options: p.Ldif.WriteFormatOptions | None = None,
     ) -> p.Result[str]:
         """Write entries to LDIF text through the selected base server.
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 from pathlib import PurePath
 from typing import TYPE_CHECKING
 
-import pytest
+from flext_core import FlextRegistry
 
 from flext_ldif import FlextLdif, services
 from flext_ldif.servers import FlextLdifServersRfc
@@ -107,7 +107,7 @@ class TestsFlextLdifApiServerRegistry:
         tm.fail(api.resolve_server_constants(invalid))
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "resolver_name",
         ["resolve_base_server", "resolve_server_bundle", "resolve_server_constants"],
     )
@@ -132,10 +132,10 @@ class TestsFlextLdifApiServerRegistry:
         tm.ok(callable_api.resolve_base_server(route))
 
     @staticmethod
-    @pytest.mark.parametrize("field_name", ["_runtime", "_operation_stats"])
+    @c.Tests.MARK.parametrize("field_name", ["_runtime", "_operation_stats"])
     def test_private_runtime_state_is_not_constructor_input(field_name: str) -> None:
         """The facade preserves the base model's strict private-state ownership."""
-        with pytest.raises(ValueError, match=field_name):
+        with u.Tests.raises(ValueError, match=field_name):
             FlextLdif.model_validate({field_name: None})
 
     @staticmethod
@@ -187,28 +187,28 @@ class TestsFlextLdifApiServerRegistry:
         tm.that(stored is dialect)
 
     @staticmethod
-    @pytest.mark.parametrize("field_name", ["registry"])
+    @c.Tests.MARK.parametrize("field_name", ["registry"])
     def test_required_registry_port_is_validated_and_not_serialized(
         field_name: str,
     ) -> None:
         """Services cannot construct infrastructure or accept a loose payload."""
-        with pytest.raises(ValueError, match="registry"):
+        with u.Tests.raises(ValueError, match="registry"):
             services.FlextLdifServer.model_validate({})
-        with pytest.raises(ValueError, match="registry"):
+        with u.Tests.raises(ValueError, match="registry"):
             m.Ldif.RegistryPortOptions.model_validate({field_name: m.Ldif.Statistics()})
-        registry = u.build_registry()
+        registry = FlextRegistry.create()
         ports = m.Ldif.RegistryPortOptions(registry=registry)
         tm.that(ports.registry is registry)
         tm.that(field_name not in ports.model_dump())
         tm.that(field_name not in ports.model_json_schema().get("properties", {}))
-        with pytest.raises(ValueError, match="registry"):
+        with u.Tests.raises(ValueError, match="registry"):
             setattr(ports, field_name, m.Ldif.Statistics())
         tm.that(ports.registry is registry)
 
     @staticmethod
     def test_incompatible_stored_payload_fails_lookup_without_fallback() -> None:
         """An invalid stored dialect never causes a fresh dialect to be built."""
-        registry = u.build_registry()
+        registry = FlextRegistry.create()
         route = c.Ldif.ServerTypes.RFC.value
         payload = m.Ldif.Statistics()
         tm.ok(registry.register_plugin(c.Ldif.SERVERS, route, payload))
@@ -217,6 +217,31 @@ class TestsFlextLdifApiServerRegistry:
         tm.fail(service.resolve_server_bundle(route))
         tm.fail(service.summarize_registry())
         tm.that(registry.fetch_plugin(c.Ldif.SERVERS, route).unwrap() is payload)
+
+    @staticmethod
+    def test_parse_write_roundtrip_keeps_base64_values_verbatim() -> None:
+        """Base64 values keep spaces; plain lines drop trailing ones (RFC 2849)."""
+        api = FlextLdif()
+        route = c.Ldif.ServerTypes.RFC.value
+        source = (
+            "dn: cn=person,dc=example,dc=com\n"
+            "objectClass: person\ncn: person\n"
+            "sn:: IGxlYWQ=\n"
+            "displayName:: dHJhaWwg\n"
+            "mail: plain@example.com \n"
+        )
+        parsed = api.parse_string(source, server_type=route).unwrap()
+        values = parsed.entries[0].attributes.attributes
+        tm.that(values["sn"], eq=[" lead"])
+        tm.that(values["displayName"], eq=["trail "])
+        tm.that(values["mail"], eq=["plain@example.com"])
+        written = api.write_to_string(
+            u.Ldif.as_entries(parsed.entries),
+            server_type=route,
+        ).unwrap()
+        reparsed = api.parse_string(written, server_type=route).unwrap()
+        tm.that(reparsed.entries[0].attributes.attributes, eq=values)
+        tm.that(written, has="mail: plain@example.com")
 
     @staticmethod
     def test_real_dialect_parse_write_roundtrip_and_removal_failure() -> None:
@@ -300,7 +325,7 @@ class TestsFlextLdifRegistryWrites:
         tm.that(parsed.entries[0].dn, eq=entry.dn)
 
     @staticmethod
-    @pytest.mark.parametrize("comment_acl", [False, True])
+    @c.Tests.MARK.parametrize("comment_acl", [False, True])
     def test_write_response_preserves_oid_entries_and_phase_options(
         tmp_path: Path,
         *,
@@ -309,7 +334,9 @@ class TestsFlextLdifRegistryWrites:
         """OID metadata and explicitly selected ACL handling survive file writes."""
         api = FlextLdif()
         acl = "access to entry by * (browse)"
-        source_attribute = c.Ldif.Oid.ACL_ATTRIBUTE_NAME
+        oid = api.resolve_server_constants(c.Ldif.ServerTypes.OID).unwrap()
+        oud = api.resolve_server_constants(c.Ldif.ServerTypes.OUD).unwrap()
+        source_attribute = oid.ACL_ATTRIBUTE_NAME
         parsed = api.parse_string(
             "dn: cn=synthetic\nobjectClass: person\n"
             f"cn: synthetic\nsn: Sample\n{source_attribute}: {acl}\n\n",
@@ -327,7 +354,7 @@ class TestsFlextLdifRegistryWrites:
                 comment_acl_in_non_acl_phases=comment_acl,
                 acl_attribute_names=frozenset({
                     source_attribute,
-                    c.Ldif.Oud.ACL_ATTRIBUTE_NAME,
+                    oud.ACL_ATTRIBUTE_NAME,
                 }),
             ),
         ).unwrap()

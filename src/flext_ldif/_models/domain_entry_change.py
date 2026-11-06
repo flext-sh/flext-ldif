@@ -11,7 +11,7 @@ from typing import Annotated, ClassVar
 
 from flext_cli import m
 
-from flext_ldif import c
+from flext_ldif import c, t
 from flext_ldif._models import FlextLdifModelsDomainEntryChangeOperationValue
 
 
@@ -21,7 +21,7 @@ class FlextLdifModelsDomainEntryChangeOperation:
     class ChangeOperation(m.Value):
         """Structured RFC 2849 modify operation block."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(use_enum_values=False)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(use_enum_values=False)
 
         operation: Annotated[
             c.Ldif.ChangeOperation,

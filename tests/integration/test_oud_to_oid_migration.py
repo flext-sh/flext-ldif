@@ -18,8 +18,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-import pytest
-
 from flext_ldif import FlextLdif
 from flext_ldif.servers import FlextLdifServersOid, FlextLdifServersOud
 from tests import c, ldif, m, tm, u
@@ -35,7 +33,7 @@ MIN_OUD_ENTRIES = 10
 class TestsFlextLdifOudToOidMigration:
     """Behavioral contract of the OUD -> OID migration workflow."""
 
-    @pytest.fixture
+    @u.Tests.fixture
     def oud() -> FlextLdifServersOud:
         """Create an OUD server instance.
 
@@ -45,7 +43,7 @@ class TestsFlextLdifOudToOidMigration:
         """
         return FlextLdifServersOud(registry=FlextLdif().registry)
 
-    @pytest.fixture
+    @u.Tests.fixture
     def oid() -> FlextLdifServersOid:
         """Create an OID server instance.
 
@@ -55,7 +53,7 @@ class TestsFlextLdifOudToOidMigration:
         """
         return FlextLdifServersOid()
 
-    @pytest.fixture
+    @u.Tests.fixture
     def client() -> p.Ldif.LdifClient:
         """Create the public ldif client used to re-parse migrated output.
 
@@ -65,7 +63,7 @@ class TestsFlextLdifOudToOidMigration:
         """
         return ldif()
 
-    @pytest.fixture
+    @u.Tests.fixture
     def oud_entries() -> str:
         """Load the OUD entries LDIF fixture.
 
@@ -76,7 +74,7 @@ class TestsFlextLdifOudToOidMigration:
         fixture: str = u.Tests.load(c.Tests.OUD, c.Tests.ENTRIES)
         return fixture
 
-    @pytest.fixture
+    @u.Tests.fixture
     def oud_integration() -> str:
         """Load the OUD integration LDIF fixture (real entries with DNs).
 
@@ -87,7 +85,7 @@ class TestsFlextLdifOudToOidMigration:
         fixture: str = u.Tests.load(c.Tests.OUD, c.Tests.INTEGRATION)
         return fixture
 
-    @pytest.fixture
+    @u.Tests.fixture
     def oud_schema() -> str:
         """Load the OUD schema LDIF fixture.
 
@@ -99,7 +97,7 @@ class TestsFlextLdifOudToOidMigration:
         return fixture
 
     @staticmethod
-    def _dn_set(entries: Sequence[m.Ldif.Entry]) -> set[str]:
+    def _dn_set(entries: Sequence[p.Ldif.Entry]) -> set[str]:
         """Collect whitespace-normalized DN values from parsed entries.
 
         Migration canonicalizes optional whitespace after RDN separators
@@ -163,7 +161,7 @@ class TestsFlextLdifOudToOidMigration:
         reparse = client.parse_ldif(migrated_content)
         tm.ok(reparse)
 
-    @pytest.mark.parametrize("fixture_name", [c.Tests.ENTRIES, c.Tests.INTEGRATION])
+    @c.Tests.MARK.parametrize("fixture_name", [c.Tests.ENTRIES, c.Tests.INTEGRATION])
     def test_pipeline_preserves_dn_set_across_migration(
         self,
         tmp_path: Path,

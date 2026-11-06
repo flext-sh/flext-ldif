@@ -56,15 +56,20 @@ class FlextLdifConstantsAclConvert:
 
     @unique
     class AclSubjectOutcomeKind(StrEnum):
-        """What OID→OUD conversion did with one by-clause subject."""
+        """What ACL conversion did with one by-clause subject.
+
+        ``GRANTED`` keeps an effective allow (plus a deny for its denied
+        rights); ``DENIED`` denies some rights and grants nothing;
+        ``DENIED_ALL`` denies every right of the target kind; ``CANCELLED``
+        grants only rights that a catch-all subject of the same rule denies;
+        ``OUT_OF_SCOPE`` binds a DN outside the migration base.
+        """
 
         GRANTED = "granted"
-        EXCLUDED_DEAD_CODE = "excluded_dead_code"
-        EXCLUDED_DENY_NONE = "excluded_deny_none"
-        EXCLUDED_CONTAINER = "excluded_container"
-        UNSUPPORTED = "unsupported"
+        DENIED = "denied"
+        DENIED_ALL = "denied_all"
+        CANCELLED = "cancelled"
         OUT_OF_SCOPE = "out_of_scope"
-        UNGRANTED = "ungranted"
 
     ACL_ACCESS_TO: ClassVar[str] = "access to"
     ACL_WILDCARD: ClassVar[str] = "*"
@@ -100,7 +105,7 @@ class FlextLdifConstantsAclConvert:
 
     # by-clause subject matchers; group→subject mapping is the SUBJECT_MATCHERS SSOT.
     SUBJ_SUPERUSER_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"by\s+SuperUser\s*\(([^)]+)\)",
+        rf"by\s+SuperUser{_SUBJ_MODIFIERS}\s*\(([^)]+)\){_SUBJ_MODIFIERS}\s*$",
         re.IGNORECASE,
     )
     SUBJ_GROUP_RE: ClassVar[t.RegexPattern] = re.compile(
@@ -127,15 +132,18 @@ class FlextLdifConstantsAclConvert:
         re.IGNORECASE,
     )
     SUBJ_DNATTR_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"by\s+dnattr\s*=\s*\(([^)]+)\)\s*\(([^)]+)\)",
+        rf"by\s+dnattr\s*=\s*\(([^)]+)\){_SUBJ_MODIFIERS}\s*\(([^)]+)\)"
+        rf"{_SUBJ_MODIFIERS}\s*$",
         re.IGNORECASE,
     )
     SUBJ_GROUPATTR_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"by\s+groupattr\s*=\s*\(([^)]+)\)\s*\(([^)]+)\)",
+        rf"by\s+groupattr\s*=\s*\(([^)]+)\){_SUBJ_MODIFIERS}\s*\(([^)]+)\)"
+        rf"{_SUBJ_MODIFIERS}\s*$",
         re.IGNORECASE,
     )
     SUBJ_GUIDATTR_RE: ClassVar[t.RegexPattern] = re.compile(
-        r"by\s+guidattr\s*=\s*\(([^)]+)\)\s*\(([^)]+)\)",
+        rf"by\s+guidattr\s*=\s*\(([^)]+)\){_SUBJ_MODIFIERS}\s*\(([^)]+)\)"
+        rf"{_SUBJ_MODIFIERS}\s*$",
         re.IGNORECASE,
     )
 
@@ -144,12 +152,12 @@ class FlextLdifConstantsAclConvert:
         rf'group\s*=\s*"[^"]+"{_SUBJ_MODIFIERS}\s*\([^)]+\){_SUBJ_MODIFIERS}'
         rf'|dn\s*=\s*"[^"]+"{_SUBJ_MODIFIERS}\s*\([^)]+\){_SUBJ_MODIFIERS}'
         rf'|"[^"]+"{_SUBJ_MODIFIERS}\s*\([^)]+\){_SUBJ_MODIFIERS}'
-        r"|SuperUser\s*\([^)]+\)"
+        rf"|SuperUser{_SUBJ_MODIFIERS}\s*\([^)]+\){_SUBJ_MODIFIERS}"
         rf"|self{_SUBJ_MODIFIERS}\s*\([^)]+\){_SUBJ_MODIFIERS}"
         rf"|\*{_SUBJ_MODIFIERS}\s*\([^)]+\){_SUBJ_MODIFIERS}"
-        r"|dnattr\s*=\s*\([^)]+\)\s*\([^)]+\)"
-        r"|groupattr\s*=\s*\([^)]+\)\s*\([^)]+\)"
-        r"|guidattr\s*=\s*\([^)]+\)\s*\([^)]+\)"
+        rf"|dnattr\s*=\s*\([^)]+\){_SUBJ_MODIFIERS}\s*\([^)]+\){_SUBJ_MODIFIERS}"
+        rf"|groupattr\s*=\s*\([^)]+\){_SUBJ_MODIFIERS}\s*\([^)]+\){_SUBJ_MODIFIERS}"
+        rf"|guidattr\s*=\s*\([^)]+\){_SUBJ_MODIFIERS}\s*\([^)]+\){_SUBJ_MODIFIERS}"
         r")",
         re.IGNORECASE,
     )
@@ -160,16 +168,6 @@ class FlextLdifConstantsAclConvert:
         re.IGNORECASE,
     )
     "by-clause modifier: g1=kind, g2=paren-value, g3=quoted-value."
-
-    # Ordered OID-regex → OUD-wildcard replacements (applied to bind DNs).
-    OID_REGEX_REPLACEMENTS: ClassVar[tuple[tuple[str, str], ...]] = (
-        (".*", "*"),
-        (".+", "*"),
-        (r"\.", "."),
-        (r"\,", ","),
-    )
-    OID_REGEX_RESIDUAL_RE: ClassVar[t.RegexPattern] = re.compile(r"[\[\]{}|^$+?()]")
-    "Residual regex metacharacters → DN too complex to wildcard (keep original)."
 
 
 __all__: list[str] = ["FlextLdifConstantsAclConvert"]

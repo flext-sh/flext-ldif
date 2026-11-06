@@ -7,42 +7,40 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, m
-from flext_ldif._constants import FlextLdifConstantsServersOud
+from flext_ldif import c, m, p
 
 
 class FlextLdifUtilitiesServersOud:
     """Oracle Unified Directory-specific utilities."""
 
     @staticmethod
-    def resolve_parser_config() -> m.Ldif.AciParserConfig:
+    def resolve_parser_config() -> p.Ldif.AciParserConfig:
         """Create AciParserConfig for OUD ACL parsing.
 
         Returns:
             The resulting ``m.Ldif.AciParserConfig``.
 
         """
-        constants = FlextLdifConstantsServersOud
-        config: m.Ldif.AciParserConfig = m.Ldif.AciParserConfig.model_validate({
+        config: p.Ldif.AciParserConfig = m.Ldif.AciParserConfig.model_validate({
             "server_type": c.Ldif.ServerTypes.OUD,
             "aci_prefix": "aci:",
-            "version_acl_pattern": constants.ACL_VERSION_ACL_PATTERN,
-            "targetattr_pattern": constants.ACL_TARGETATTR_PATTERN,
-            "allow_deny_pattern": constants.ACL_ALLOW_DENY_PATTERN,
-            "bind_patterns": constants.ACL_BIND_PATTERNS,
-            "permission_map": dict(constants.ACL_PERMISSION_TOKEN_MAP),
+            "version_acl_pattern": c.Ldif.ACL_VERSION_ACL_PATTERN,
+            "targetattr_pattern": c.Ldif.ACL_TARGETATTR_PATTERN,
+            "allow_deny_pattern": c.Ldif.ACL_ALLOW_DENY_PATTERN,
+            "bind_patterns": c.Ldif.ACL_BIND_PATTERNS,
+            "permission_map": dict(c.Ldif.ACL_PERMISSION_TOKEN_MAP),
             "special_subjects": {},
             "extra_patterns": {
-                "targetscope": constants.ACL_TARGETSCOPE_PATTERN,
-                "targattrfilters": constants.ACL_TARGATTRFILTERS_PATTERN,
-                "targetcontrol": constants.ACL_TARGETCONTROL_PATTERN,
-                "extop": constants.ACL_EXTOP_PATTERN,
-                "ip": constants.ACL_IP_PATTERN,
-                "dns": constants.ACL_DNS_PATTERN,
-                "dayofweek": constants.ACL_DAYOFWEEK_PATTERN,
-                "timeofday": constants.ACL_TIMEOFDAY_PATTERN,
-                "authmethod": constants.ACL_AUTHMETHOD_PATTERN,
-                "ssf": constants.ACL_SSF_PATTERN,
+                "targetscope": c.Ldif.ACL_TARGETSCOPE_PATTERN,
+                "targattrfilters": c.Ldif.ACL_TARGATTRFILTERS_PATTERN,
+                "targetcontrol": c.Ldif.ACL_TARGETCONTROL_PATTERN,
+                "extop": c.Ldif.ACL_EXTOP_PATTERN,
+                "ip": c.Ldif.ACL_IP_PATTERN,
+                "dns": c.Ldif.ACL_DNS_PATTERN,
+                "dayofweek": c.Ldif.ACL_DAYOFWEEK_PATTERN,
+                "timeofday": c.Ldif.ACL_TIMEOFDAY_PATTERN,
+                "authmethod": c.Ldif.ACL_AUTHMETHOD_PATTERN,
+                "ssf": c.Ldif.ACL_SSF_PATTERN,
             },
         })
         return config

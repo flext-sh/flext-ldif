@@ -10,7 +10,7 @@ from typing import Annotated, ClassVar
 
 from flext_cli import m
 
-from flext_ldif import c
+from flext_ldif import c, t
 
 
 class FlextLdifModelsDomainEntryControl:
@@ -25,7 +25,7 @@ class FlextLdifModelsDomainEntryControl:
         control payload is optional; a modify value is not).
         """
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(use_enum_values=False)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(use_enum_values=False)
 
         control_type: Annotated[
             str,

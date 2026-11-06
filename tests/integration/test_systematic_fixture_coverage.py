@@ -12,15 +12,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
-from tests import ldif, p, tm
+from tests import c, ldif, p, t, tm, u
 
 
 class TestsFlextLdifSystematicFixtureCoverage:
     """Public parse/write contract across the serverxfixture-type matrix."""
 
-    @pytest.fixture(scope="class")
+    @u.Tests.fixture(scope="class")
     @staticmethod
     def api() -> p.Ldif.LdifClient:
         """Public LDIF client under test.
@@ -32,7 +30,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
         return ldif()
 
     @staticmethod
-    def _fixture_content(request: pytest.FixtureRequest, name: str) -> str:
+    def _fixture_content(request: t.Tests.FixtureRequest, name: str) -> str:
         """Require native nonempty fixture text at its input boundary.
 
         Returns:
@@ -128,7 +126,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
     # ------------------------------------------------------------------
     # Schema fixtures.
     # ------------------------------------------------------------------
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "server_fixture",
         ["oid_schema_fixture", "oud_schema_fixture"],
         ids=["OID Schema", "OUD Schema"],
@@ -137,7 +135,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
         self,
         api: p.Ldif.LdifClient,
         server_fixture: str,
-        request: pytest.FixtureRequest,
+        request: t.Tests.FixtureRequest,
     ) -> None:
         """Schema fixtures parse to entries preserved across the roundtrip."""
         fixture_data = self._fixture_content(request, server_fixture)
@@ -150,7 +148,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
     # ACL fixtures (ACLs are attributes on entries, not standalone entries).
     # ------------------------------------------------------------------
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "server_fixture",
         ["oid_acl_fixture", "oud_acl_fixture"],
         ids=["OID ACL", "OUD ACL"],
@@ -158,7 +156,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
     def test_acl_fixture_parses_and_writes(
         api: p.Ldif.LdifClient,
         server_fixture: str,
-        request: pytest.FixtureRequest,
+        request: t.Tests.FixtureRequest,
     ) -> None:
         """ACL fixtures parse successfully and re-serialize non-empty output."""
         fixture_data = TestsFlextLdifSystematicFixtureCoverage._fixture_content(
@@ -178,7 +176,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
     # ------------------------------------------------------------------
     # Entry fixtures.
     # ------------------------------------------------------------------
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "server_fixture",
         ["oid_entries_fixture", "oud_entries_fixture"],
         ids=["OID Entries", "OUD Entries"],
@@ -187,7 +185,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
         self,
         api: p.Ldif.LdifClient,
         server_fixture: str,
-        request: pytest.FixtureRequest,
+        request: t.Tests.FixtureRequest,
     ) -> None:
         """Each parsed entry exposes a DN and attributes; roundtrip is stable."""
         fixture_data = self._fixture_content(request, server_fixture)
@@ -212,7 +210,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
     # ------------------------------------------------------------------
     # Integration fixtures (full directory exports).
     # ------------------------------------------------------------------
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "server_fixture",
         ["oid_integration_fixture", "oud_integration_fixture"],
         ids=["OID Integration", "OUD Integration"],
@@ -221,7 +219,7 @@ class TestsFlextLdifSystematicFixtureCoverage:
         self,
         api: p.Ldif.LdifClient,
         server_fixture: str,
-        request: pytest.FixtureRequest,
+        request: t.Tests.FixtureRequest,
     ) -> None:
         """Large exports keep unique DNs and roughly their size on rewrite."""
         fixture_data = self._fixture_content(request, server_fixture)

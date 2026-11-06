@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_ldif import c, m, p, t, u
+from flext_ldif import c, p, t, u
 from flext_ldif.servers._oud import FlextLdifConstantsServersOud
 from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 
@@ -44,7 +44,7 @@ class FlextLdifServersOudAclSubject(FlextLdifServersRfcAcl):
         """
         return isinstance(value, (str, int, float, bool, list))
 
-    def _build_aci_subject(self, acl_data: m.Ldif.Acl) -> str:
+    def _build_aci_subject(self, acl_data: p.Ldif.Acl) -> str:
         """Build ACI bind rules (subject) clause from ACL model.
 
         Returns:
@@ -81,7 +81,7 @@ class FlextLdifServersOudAclSubject(FlextLdifServersRfcAcl):
 
     def _extract_and_resolve_acl_subject(
         self,
-        acl_data: m.Ldif.Acl,
+        acl_data: p.Ldif.Acl,
     ) -> tuple[str | None, str, str]:
         """Extract metadata and resolve subject type and value in one pass.
 
@@ -117,7 +117,7 @@ class FlextLdifServersOudAclSubject(FlextLdifServersRfcAcl):
 
     @staticmethod
     def _resolved_bind_rules_subject_type(
-        subject: m.Ldif.AclSubject | None,
+        subject: p.Ldif.AclSubject | None,
         source_subject_type: str | None,
     ) -> str:
         """Resolve the subject type hidden behind a bind-rules subject value.

@@ -9,8 +9,6 @@ from __future__ import annotations
 from collections.abc import MutableSequence, Sequence
 from typing import Literal
 
-import pytest
-
 from flext_ldif import FlextLdif
 from flext_ldif.services import FlextLdifProcessingPipeline
 from tests import c, m, p, tm, u
@@ -20,14 +18,14 @@ class TestsFlextLdifProcessingService:
     """Cover batch/parallel processing through the public facade only."""
 
     @staticmethod
-    def _entry(dn: str) -> m.Ldif.Entry:
+    def _entry(dn: str) -> p.Ldif.Entry:
         return u.Tests.create_real_entry(
             dn=dn,
             attributes=c.Tests.PROCESSING_ATTRS,
             server_type=c.Tests.RFC,
         )
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("processor_name", c.ProcessingMode.PARALLEL, "batch_size", "max_workers"),
         list(c.Tests.PROCESSING_OPTIONS_CASES.values()),
         ids=list(c.Tests.PROCESSING_OPTIONS_CASES.keys()),
@@ -108,7 +106,7 @@ class TestsFlextLdifProcessingService:
             attributes=m.Ldif.Attributes(attributes={"cn": ["x"]}),
         )
 
-        with pytest.raises(ValueError, match="Entry DN cannot be None"):
+        with u.Tests.raises(ValueError, match="Entry DN cannot be None"):
             _ = api.process_entries(
                 [invalid_entry],
                 processor_name="validate",

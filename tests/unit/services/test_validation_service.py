@@ -8,14 +8,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
-
-from tests import c, tm, u
+from tests import c, p, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-from tests import p
 
 _INVALID_DESCRIPTORS: tuple[str, ...] = ("invalid name", "", " ", "has space")
 
@@ -37,7 +34,7 @@ class TestsFlextLdifValidationService:
     """Cover descriptor validation through the public facade only."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "name",
         c.Tests.VALIDATION_VALID_OC_NAMES,
         ids=c.Tests.VALIDATION_VALID_OC_NAMES,
@@ -50,7 +47,7 @@ class TestsFlextLdifValidationService:
         _assert_descriptor(api.validate_attribute_name, name, is_valid=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "name",
         _INVALID_DESCRIPTORS,
         ids=("named", "empty", "space", "embedded-space"),
@@ -63,7 +60,7 @@ class TestsFlextLdifValidationService:
         _assert_descriptor(api.validate_attribute_name, name, is_valid=False)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "name",
         c.Tests.VALIDATION_VALID_OC_NAMES,
         ids=c.Tests.VALIDATION_VALID_OC_NAMES,
@@ -76,7 +73,7 @@ class TestsFlextLdifValidationService:
         _assert_descriptor(api.validate_objectclass_name, name, is_valid=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "name",
         _INVALID_DESCRIPTORS,
         ids=("named", "empty", "space", "embedded-space"),
@@ -89,7 +86,7 @@ class TestsFlextLdifValidationService:
         _assert_descriptor(api.validate_objectclass_name, name, is_valid=False)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "name",
         [*c.Tests.VALIDATION_VALID_OC_NAMES, *_INVALID_DESCRIPTORS],
     )
@@ -106,7 +103,7 @@ class TestsFlextLdifValidationService:
         tm.that(objectclass_verdict, eq=attribute_verdict)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "name",
         [c.Tests.VALIDATION_VALID_OC_NAMES[0], c.Tests.VALIDATION_INVALID_DESCRIPTOR],
     )

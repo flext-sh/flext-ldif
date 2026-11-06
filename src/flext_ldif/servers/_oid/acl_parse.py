@@ -158,7 +158,7 @@ class FlextLdifServersOidAclParse(FlextLdifServersOidAclSubject):
         return can_handle
 
     @override
-    def _parse_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+    def _parse_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
         """Parse an Oracle OID ACL line into the internal model.
 
         Args:
@@ -181,16 +181,16 @@ class FlextLdifServersOidAclParse(FlextLdifServersOidAclSubject):
             )
         ):
             updated_acl = self._update_acl_with_oid_metadata(acl_data, acl_line)
-            return r[m.Ldif.Acl].ok(updated_acl)
+            return r[p.Ldif.Acl].ok(updated_acl)
         if (
             parent_result.success
             and (acl_data := parent_result.value)
             and (not self.can_handle_acl(acl_line))
         ):
-            return r[m.Ldif.Acl].ok(acl_data)
+            return r[p.Ldif.Acl].ok(acl_data)
         return self._parse_oid_specific_acl(acl_line)
 
-    def _parse_oid_specific_acl(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+    def _parse_oid_specific_acl(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
         """Parse the OID-specific ACL format when the RFC parser fails.
 
         Args:
@@ -212,9 +212,9 @@ class FlextLdifServersOidAclParse(FlextLdifServersOidAclSubject):
                 acl_line=acl_preview,
                 acl_line_length=len(acl_line),
             )
-            return r[m.Ldif.Acl].fail_op("OID ACL parsing", e)
+            return r[p.Ldif.Acl].fail_op("OID ACL parsing", e)
 
-    def _parse_oid_specific_acl_core(self, acl_line: str) -> p.Result[m.Ldif.Acl]:
+    def _parse_oid_specific_acl_core(self, acl_line: str) -> p.Result[p.Ldif.Acl]:
         """Parse OID-specific ACL data into the canonical ACL model.
 
         Args:
@@ -269,7 +269,7 @@ class FlextLdifServersOidAclParse(FlextLdifServersOidAclSubject):
             "raw_line": acl_line,
             "validation_violations": [],
         })
-        return r[m.Ldif.Acl].ok(acl_model)
+        return r[p.Ldif.Acl].ok(acl_model)
 
     def _resolve_oid_subject(
         self,
@@ -358,9 +358,9 @@ class FlextLdifServersOidAclParse(FlextLdifServersOidAclSubject):
 
     @staticmethod
     def _update_acl_with_oid_metadata(
-        acl_data: m.Ldif.Acl,
+        acl_data: p.Ldif.Acl,
         _acl_line: str,
-    ) -> m.Ldif.Acl:
+    ) -> p.Ldif.Acl:
         """Stamp the OID server type and metadata onto a parsed ACL.
 
         Args:
@@ -378,7 +378,7 @@ class FlextLdifServersOidAclParse(FlextLdifServersOidAclSubject):
             if acl_data.metadata
             else u.Ldif.server_metadata_for(server_type)
         )
-        updated_acl: m.Ldif.Acl = acl_data.model_copy(
+        updated_acl: p.Ldif.Acl = acl_data.model_copy(
             update={"server_type": server_type, "metadata": updated_metadata},
         )
         return updated_acl

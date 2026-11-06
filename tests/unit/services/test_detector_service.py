@@ -8,14 +8,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
-
-from tests import c, m, tm, u
+from tests import c, m, p, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-from tests import p
 
 
 class TestsFlextLdifDetectorService:
@@ -99,7 +95,7 @@ class TestsFlextLdifDetectorService:
         tm.ok(any("ACL" in pattern for pattern in detection.patterns_found))
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("scenario", "snippet", "expected_type"),
         tuple(
             (scenario, data[0], data[1])
@@ -136,7 +132,7 @@ class TestsFlextLdifDetectorService:
         tm.ok(0.0 <= detection.confidence <= 1.0)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("scenario", "snippet"),
         [
             ("oud", c.Tests.DETECTOR_OUD_SNIPPET),

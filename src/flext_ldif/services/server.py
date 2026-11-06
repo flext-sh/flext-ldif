@@ -14,7 +14,9 @@ from flext_ldif import c, m, p, r, s, t, u
 class FlextLdifServer(s[p.Ldif.Response], m.Ldif.RegistryPortOptions):
     """Share one dialect registry port through the consuming service MRO."""
 
-    def register_server(self, server: p.Ldif.ServerServer | p.Model) -> p.Result[bool]:
+    def register_server(
+        self, server: p.Ldif.ServerServer | p.BaseModel
+    ) -> p.Result[bool]:
         """Register the original dialect object without copying or overwriting.
 
         Returns:

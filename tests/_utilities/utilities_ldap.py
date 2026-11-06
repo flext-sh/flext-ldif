@@ -1,7 +1,7 @@
 """LDAP client connectivity and shared-container test helpers.
 
 Focused utility module split out of ``tests.utilities``; the public surface is
-re-exported through ``tests.utilities`` (see ``TestsFlextLdifLdapClientMixin``).
+re-exported through ``tests.utilities`` (see ``TestsFlextLdifLdapClient``).
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,16 +14,16 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Final
 
-import pytest
 from flext_tests.docker import FlextTestsDocker
 
+from flext_ldif import u
 from tests import c, p, tk
 
 if TYPE_CHECKING:
     from types import ModuleType
 
 
-class TestsFlextLdifLdapClientMixin:
+class TestsFlextLdifLdapClient:
     """Helpers that drive the optional real-directory LDAP client.
 
     The real-directory tests drive a live LDAP server through the FLEXT LDAP
@@ -60,7 +60,7 @@ class TestsFlextLdifLdapClientMixin:
     @classmethod
     def require_ldap_client(cls) -> ModuleType:
         """Return the LDAP client module, skipping when it is unavailable."""
-        module: ModuleType = pytest.importorskip(
+        module: ModuleType = u.Tests.importorskip(
             cls._LDAP_CLIENT_MODULE,
             reason=cls._LDAP_CLIENT_MISSING_REASON,
         )
@@ -69,7 +69,7 @@ class TestsFlextLdifLdapClientMixin:
     @classmethod
     def create_ldap_entry_adapter(cls) -> p.Ldap3EntryAdapter:
         """Return an ldap3-to-LDIF entry adapter, skipping when unavailable."""
-        module: ModuleType = pytest.importorskip(
+        module: ModuleType = u.Tests.importorskip(
             cls._LDAP_ENTRY_ADAPTER_MODULE,
             reason=cls._LDAP_CLIENT_MISSING_REASON,
         )
@@ -91,7 +91,7 @@ class TestsFlextLdifLdapClientMixin:
         )
         if find_spec(cls._LDAP_CLIENT_MODULE) is None:
             return transport
-        client: ModuleType = pytest.importorskip(
+        client: ModuleType = u.Tests.importorskip(
             cls._LDAP_CLIENT_MODULE,
             reason=cls._LDAP_CLIENT_MISSING_REASON,
         )
@@ -152,7 +152,7 @@ class TestsFlextLdifLdapClientMixin:
             The resulting ``p.Ldap3Connection``.
 
         """
-        client = TestsFlextLdifLdapClientMixin.require_ldap_client()
+        client = TestsFlextLdifLdapClient.require_ldap_client()
         create = client.FlextLdapUtilities.Ldap.create_connection
         if receive_timeout is None:
             connection: p.Ldap3Connection = create(
@@ -267,4 +267,4 @@ class TestsFlextLdifLdapClientMixin:
         )
 
 
-__all__: list[str] = ["TestsFlextLdifLdapClientMixin"]
+__all__: list[str] = ["TestsFlextLdifLdapClient"]

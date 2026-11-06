@@ -37,11 +37,11 @@ class FlextLdifServersOpenldap1Entry(FlextLdifServersRfcEntry):
         return not is_config_dn and (not has_olc_attrs)
 
     @staticmethod
-    def process_entry(entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+    def process_entry(entry: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
         """Process entry for OpenLDAP 1.x format.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[p.Ldif.Entry]``.
 
         """
         try:
@@ -54,9 +54,9 @@ class FlextLdifServersOpenldap1Entry(FlextLdifServersRfcEntry):
                 attributes=entry.attributes,
                 metadata=metadata,
             )
-            return r[m.Ldif.Entry].ok(processed_entry)
+            return r[p.Ldif.Entry].ok(processed_entry)
         except c.Ldif.EXC_LDIF_PARSE as e:
-            return r[m.Ldif.Entry].fail_op("OpenLDAP 1.x entry processing", e)
+            return r[p.Ldif.Entry].fail_op("OpenLDAP 1.x entry processing", e)
 
 
 __all__: list[str] = ["FlextLdifServersOpenldap1Entry"]

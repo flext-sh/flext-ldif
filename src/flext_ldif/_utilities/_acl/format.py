@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from flext_ldif import c, m, t
+from flext_ldif import c, p, t
 
 
 class FlextLdifUtilitiesACLFormat:
@@ -99,7 +99,7 @@ class FlextLdifUtilitiesACLFormat:
         return (sanitized, was_sanitized)
 
     @staticmethod
-    def format_aci_line(settings: m.Ldif.AciLineFormatConfig) -> str:
+    def format_aci_line(settings: p.Ldif.AciLineFormatConfig) -> str:
         r"""Format complete ACI line from components.
 
         Args:
@@ -127,7 +127,7 @@ class FlextLdifUtilitiesACLFormat:
 
     @staticmethod
     def build_metadata_extensions(
-        settings: m.Ldif.AclMetadataConfig,
+        settings: p.Ldif.AclMetadataConfig,
     ) -> t.Ldif.MutableMetadataMapping:
         """Build ServerMetadata extensions for ACL.
 

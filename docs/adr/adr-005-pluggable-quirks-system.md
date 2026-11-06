@@ -52,23 +52,25 @@ from flext_ldif import p
 class ServerBase(ABC):
 """Base class for server-specific server implementations."""
 
-    @property
-    @abstractmethod
-    def server_name(self) -> str:
-        """Server identifier."""
+```text
+@property
+@abstractmethod
+def server_name(self) -> str:
+    """Server identifier."""
 
-    @property
-    @abstractmethod
-    def priority(self) -> int:
-        """Resolution priority (lower = higher priority)."""
+@property
+@abstractmethod
+def priority(self) -> int:
+    """Resolution priority (lower = higher priority)."""
 
-    @abstractmethod
-    def to_rfc(self, data: str, data_type: str) -> p.Result[str]:
-        """Convert server format to RFC standard."""
+@abstractmethod
+def to_rfc(self, data: str, data_type: str) -> p.Result[str]:
+    """Convert server format to RFC standard."""
 
-    @abstractmethod
-    def from_rfc(self, data: str, data_type: str) -> p.Result[str]:
-        """Convert RFC standard to server format."""
+@abstractmethod
+def from_rfc(self, data: str, data_type: str) -> p.Result[str]:
+    """Convert RFC standard to server format."""
+```
 
 **Implementation**:
 

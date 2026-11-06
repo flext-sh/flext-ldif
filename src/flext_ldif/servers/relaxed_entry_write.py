@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import override
 
-from flext_ldif import c, m, p, r, t
+from flext_ldif import c, p, r, t
 from flext_ldif.servers._relaxed import FlextLdifConstantsServersRelaxed
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
@@ -33,7 +33,7 @@ class FlextLdifServersRelaxedEntryWrite(FlextLdifServersRfcEntry):
         return True
 
     @override
-    def can_handle_attribute(self, attribute: m.Ldif.SchemaAttribute) -> bool:
+    def can_handle_attribute(self, attribute: p.Ldif.SchemaAttribute) -> bool:
         """Check if this Entry server has special attribute handling.
 
         Returns:
@@ -44,7 +44,7 @@ class FlextLdifServersRelaxedEntryWrite(FlextLdifServersRfcEntry):
         return True
 
     @override
-    def can_handle_objectclass(self, objectclass: m.Ldif.SchemaObjectClass) -> bool:
+    def can_handle_objectclass(self, objectclass: p.Ldif.SchemaObjectClass) -> bool:
         """Check if this Entry server has special objectClass handling.
 
         Returns:
@@ -55,17 +55,17 @@ class FlextLdifServersRelaxedEntryWrite(FlextLdifServersRfcEntry):
         return True
 
     @staticmethod
-    def process_entry(entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+    def process_entry(entry: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
         """Process entry for relaxed mode.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[p.Ldif.Entry]``.
 
         """
-        return r[m.Ldif.Entry].ok(entry)
+        return r[p.Ldif.Entry].ok(entry)
 
     @override
-    def _write_entry(self, entry_data: m.Ldif.Entry) -> p.Result[str]:
+    def _write_entry(self, entry_data: p.Ldif.Entry) -> p.Result[str]:
         """Write Entry model to RFC-compliant LDIF string format (internal).
 
         Returns:
@@ -86,7 +86,7 @@ class FlextLdifServersRelaxedEntryWrite(FlextLdifServersRfcEntry):
             return r[str].fail(f"Failed to write entry: {e}", exception=e)
 
     @staticmethod
-    def _write_relaxed_entry(entry_data: m.Ldif.Entry) -> p.Result[str]:
+    def _write_relaxed_entry(entry_data: p.Ldif.Entry) -> p.Result[str]:
         """Write entry in relaxed LDIF format.
 
         Returns:

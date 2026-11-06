@@ -9,8 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_ldif.servers import FlextLdifServersApache
 from tests import c, m, p, t, tm, u
 
@@ -42,13 +40,13 @@ class TestsFlextLdifApacheServers:
     """
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "test_case",
         u.Tests.attribute_test_cases(c.Tests.APACHE_ATTRIBUTE_CASE_ROWS),
         ids=lambda tc: tc.scenario,
     )
     def test_schema_attribute_can_handle(
-        test_case: m.Tests.AttributeTestCase,
+        test_case: p.Tests.AttributeTestCase,
     ) -> None:
         """Test attribute detection for various scenarios."""
         server = FlextLdifServersApache()
@@ -112,12 +110,12 @@ class TestsFlextLdifApacheServers:
         )
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "test_case",
         u.Tests.objectclass_test_cases(c.Tests.APACHE_OBJECTCLASS_CASE_ROWS),
     )
     def test_schema_objectclass_can_handle(
-        test_case: m.Tests.ObjectClassTestCase,
+        test_case: p.Tests.ObjectClassTestCase,
     ) -> None:
         """Test objectClass detection for various scenarios."""
         server = FlextLdifServersApache()
@@ -309,12 +307,12 @@ class TestsFlextLdifApacheServers:
         )
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "test_case",
         u.Tests.entry_test_cases(c.Tests.APACHE_ENTRY_CASE_ROWS),
         ids=lambda tc: tc.scenario,
     )
-    def test_entry_can_handle(test_case: m.Tests.EntryTestCase) -> None:
+    def test_entry_can_handle(test_case: p.Tests.EntryTestCase) -> None:
         """Test entry detection for various scenarios."""
         server = FlextLdifServersApache()
         entry_server = tm.instance(server.entry_server, FlextLdifServersApache.Entry)
@@ -338,7 +336,7 @@ class TestsFlextLdifApacheServers:
                 ldif += f"{attr}: {values}\n"
         return ldif
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "test_case",
         [
             tc
@@ -348,7 +346,7 @@ class TestsFlextLdifApacheServers:
     )
     def test_entry_parse_ldif_yields_entry_with_source_dn(
         self,
-        test_case: m.Tests.EntryTestCase,
+        test_case: p.Tests.EntryTestCase,
     ) -> None:
         """parse_server succeeds and returns one Entry carrying the source DN."""
         server = FlextLdifServersApache()

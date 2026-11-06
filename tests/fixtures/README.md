@@ -107,7 +107,7 @@ tm.that(tm.ok(u.Ldif.extract_from_definition(definition)), eq="2.5.4.3")
 
 <!-- pytest-markdown-docs: next-code-block: ignore -->
 
-```python notest
+```python
 from tests import c, r
 from tests import FixtureValidator
 
@@ -121,7 +121,7 @@ if result.is_success:
 ## Example Test Pattern
 
 ```text
-@pytest.mark.parametrize("attr_index", range(10))
+@c.Tests.MARK.parametrize("attr_index", range(10))
 def test_parse_real_attributes(oid_schema_attributes, attr_index):
     """Test parsing multiple real attributes from fixtures."""
     if attr_index >= len(oid_schema_attributes):
@@ -155,7 +155,7 @@ Run fixture coverage report:
 
 <!-- pytest-markdown-docs: next-code-block: ignore -->
 
-```python notest
+```python
 from tests import c, r
 from tests import FixtureCoverageReport
 

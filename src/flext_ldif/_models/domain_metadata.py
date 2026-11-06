@@ -30,7 +30,7 @@ class FlextLdifModelsDomainMetadata:
     class CommentedAttributeValues(m.RootModel[t.StrSequenceMapping]):
         """Original text values retained by attribute name for LDIF comments."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(strict=True, frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(strict=True, frozen=True)
         root: Annotated[
             t.StrSequenceMapping,
             m.Field(description="Original comment values indexed by attribute name"),

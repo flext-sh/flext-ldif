@@ -25,15 +25,16 @@ from flext_ldif._utilities import (
     FlextLdifUtilitiesPipeline,
     FlextLdifUtilitiesSchema,
     FlextLdifUtilitiesServer,
+    FlextLdifUtilitiesServersOud,
     FlextLdifUtilitiesTransformers,
     FlextLdifUtilitiesValidation,
     FlextLdifUtilitiesWriter,
 )
 from flext_ldif._utilities._lazy import FlextLdifUtilitiesLazyMeta
-from flext_ldif.servers._oud import FlextLdifUtilitiesServersOud
 
 
 class FlextLdifUtilities(
+    flext_cli_u,
     FlextLdifUtilitiesACL,
     FlextLdifUtilitiesAttribute,
     FlextLdifUtilitiesCollectionLdif,
@@ -47,13 +48,12 @@ class FlextLdifUtilities(
     FlextLdifUtilitiesObjectClass,
     FlextLdifUtilitiesOID,
     FlextLdifUtilitiesParser,
+    FlextLdifUtilitiesPipeline,
     FlextLdifUtilitiesSchema,
     FlextLdifUtilitiesServer,
     FlextLdifUtilitiesTransformers,
     FlextLdifUtilitiesValidation,
     FlextLdifUtilitiesWriter,
-    FlextLdifUtilitiesPipeline,
-    flext_cli_u,
     metaclass=FlextLdifUtilitiesLazyMeta,
 ):
     """Centralized helpers with domain collection behavior under ``Ldif``.

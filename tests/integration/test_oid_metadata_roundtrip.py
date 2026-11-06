@@ -6,8 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from tests import c, m, p, tm
 
 
@@ -15,8 +13,8 @@ class TestsFlextLdifOidMetadataRoundtrip:
     """Exercise the public parse/write boundary used by OID migrations."""
 
     @staticmethod
-    @pytest.mark.parametrize("acl", ["", "orclaci: access to entry by * (browse)\n"])
-    @pytest.mark.parametrize("comment_acl", [False, True])
+    @c.Tests.MARK.parametrize("acl", ["", "orclaci: access to entry by * (browse)\n"])
+    @c.Tests.MARK.parametrize("comment_acl", [False, True])
     def test_oid_metadata_survives_oud_phase_write(
         api: p.Ldif.LdifClient,
         acl: str,

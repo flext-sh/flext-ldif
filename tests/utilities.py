@@ -19,9 +19,8 @@ from flext_tests import u as flext_tests_u
 from flext_ldif import u as flext_ldif_u
 from tests import c, m, p, t
 from tests._utilities import (
-    TestsFlextLdifEntryBuildersMixin,
-    TestsFlextLdifLdapClientMixin,
-    TestsFlextLdifSchemaExpectations,
+    TestsFlextLdifEntryBuilders,
+    TestsFlextLdifLdapClient,
     TestsSchemaAclAssertionsMixin,
 )
 
@@ -30,10 +29,10 @@ class TestsFlextLdifUtilities(flext_tests_u, flext_ldif_u):
     """Project test utility namespace extension."""
 
     class Tests(
-        TestsFlextLdifEntryBuildersMixin,
-        TestsFlextLdifLdapClientMixin,
-        TestsSchemaAclAssertionsMixin,
         flext_tests_u.Tests,
+        TestsFlextLdifEntryBuilders,
+        TestsFlextLdifLdapClient,
+        TestsSchemaAclAssertionsMixin,
     ):
         """Flat test utility namespace for flext-ldif."""
 
@@ -43,7 +42,7 @@ class TestsFlextLdifUtilities(flext_tests_u, flext_ldif_u):
         def server_attribute_test_cases(
             cls,
             server: str,
-        ) -> tuple[m.Tests.AttributeTestCase, ...]:
+        ) -> tuple[p.Tests.AttributeTestCase, ...]:
             """Materialize the selected dialect's canonical attribute cases.
 
             Args:
@@ -70,7 +69,7 @@ class TestsFlextLdifUtilities(flext_tests_u, flext_ldif_u):
         @staticmethod
         def attribute_test_cases(
             rows: Sequence[t.Tests.AttributeCaseRow],
-        ) -> tuple[m.Tests.AttributeTestCase, ...]:
+        ) -> tuple[p.Tests.AttributeTestCase, ...]:
             """Construct attribute cases from immutable declaration data.
 
             Args:
@@ -94,7 +93,7 @@ class TestsFlextLdifUtilities(flext_tests_u, flext_ldif_u):
         @staticmethod
         def objectclass_test_cases(
             rows: Sequence[t.Tests.ObjectClassCaseRow],
-        ) -> tuple[m.Tests.ObjectClassTestCase, ...]:
+        ) -> tuple[p.Tests.ObjectClassTestCase, ...]:
             """Construct objectClass cases from immutable declaration data.
 
             Args:
@@ -119,7 +118,7 @@ class TestsFlextLdifUtilities(flext_tests_u, flext_ldif_u):
         @staticmethod
         def entry_test_cases(
             rows: Sequence[t.Tests.EntryCaseRow],
-        ) -> tuple[m.Tests.EntryTestCase, ...]:
+        ) -> tuple[p.Tests.EntryTestCase, ...]:
             """Construct entry cases with fresh mutable protocol attributes.
 
             Args:
@@ -144,7 +143,6 @@ class TestsFlextLdifUtilities(flext_tests_u, flext_ldif_u):
 
 u = TestsFlextLdifUtilities
 __all__: list[str] = [
-    "TestsFlextLdifSchemaExpectations",
     "TestsFlextLdifUtilities",
     "u",
 ]

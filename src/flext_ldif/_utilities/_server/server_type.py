@@ -9,7 +9,9 @@ from __future__ import annotations
 import sys
 from typing import TypeIs
 
-from flext_ldif import c, p, r, t
+from flext_cli import r
+
+from flext_ldif import c, p, t
 
 
 class FlextLdifUtilitiesServerServerType:

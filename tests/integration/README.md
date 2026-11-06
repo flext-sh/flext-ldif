@@ -46,7 +46,7 @@ across multiple LDAP server types (OID, OUD, OpenLDAP, RFC).
 
 ### Test Structure
 
-```
+```text
 tests/integration/
 ├── README.md                                      # This file
 ├── conftest.py                                    # Centralized pytest fixtures
@@ -321,7 +321,7 @@ class TestAllServers:
         """ldif API instance."""
         return ldif.get_instance()
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "server_fixture",
         ["oid_schema_fixture", "oud_schema_fixture"],
         ids=["OID", "OUD"],
@@ -419,7 +419,7 @@ def test_entries(self, api: ldif) -> None:
 ✅ **DO**: Parametrize across server types
 
 ```text
-@pytest.mark.parametrize(
+@c.Tests.MARK.parametrize(
     "server_fixture",
     ["oid_entries_fixture", "oud_entries_fixture"],
     ids=["OID", "OUD"],
@@ -553,7 +553,7 @@ class TestMyNewFeature:
 ### Step 4: Add Parametrization for Multi-Server Testing
 
 ```text
-@pytest.mark.parametrize(
+@c.Tests.MARK.parametrize(
     "server_fixture",
     ["oid_entries_fixture", "oud_entries_fixture"],
     ids=["OID", "OUD"],

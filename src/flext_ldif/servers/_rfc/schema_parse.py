@@ -28,7 +28,7 @@ class FlextLdifServersRfcSchemaParse(
     def _detect_oc_via_constants(
         oc_definition: str | m.Ldif.SchemaObjectClass,
         *,
-        settings: m.Ldif.ServerPatternsConfig,
+        settings: p.Ldif.ServerPatternsConfig,
         name_regex: str,
     ) -> bool:
         """Detect objectClass definitions through centralized server pattern settings.
@@ -61,16 +61,16 @@ class FlextLdifServersRfcSchemaParse(
     ) -> p.Result[
         MutableMapping[
             str,
-            MutableSequence[m.Ldif.SchemaAttribute]
-            | MutableSequence[m.Ldif.SchemaObjectClass],
+            MutableSequence[p.Ldif.SchemaAttribute]
+            | MutableSequence[p.Ldif.SchemaObjectClass],
         ]
     ]:
         """Extract schema definitions from LDIF using u.
 
         Returns:
             The resulting ``p.Result[MutableMapping[str,
-                MutableSequence[m.Ldif.SchemaAttribute] |
-                MutableSequence[m.Ldif.SchemaObjectClass]]]``.
+                MutableSequence[p.Ldif.SchemaAttribute] |
+                MutableSequence[p.Ldif.SchemaObjectClass]]]``.
 
         """
         try:
@@ -85,8 +85,8 @@ class FlextLdifServersRfcSchemaParse(
             return r[
                 MutableMapping[
                     str,
-                    MutableSequence[m.Ldif.SchemaAttribute]
-                    | MutableSequence[m.Ldif.SchemaObjectClass],
+                    MutableSequence[p.Ldif.SchemaAttribute]
+                    | MutableSequence[p.Ldif.SchemaObjectClass],
                 ]
             ].fail_op("Schema extraction", e)
 
@@ -98,16 +98,16 @@ class FlextLdifServersRfcSchemaParse(
     ) -> p.Result[
         MutableMapping[
             str,
-            MutableSequence[m.Ldif.SchemaAttribute]
-            | MutableSequence[m.Ldif.SchemaObjectClass],
+            MutableSequence[p.Ldif.SchemaAttribute]
+            | MutableSequence[p.Ldif.SchemaObjectClass],
         ]
     ]:
         """Extract schema definitions and optionally validate dependencies.
 
         Returns:
             The resulting ``p.Result[MutableMapping[str,
-                MutableSequence[m.Ldif.SchemaAttribute] |
-                MutableSequence[m.Ldif.SchemaObjectClass]]]``.
+                MutableSequence[p.Ldif.SchemaAttribute] |
+                MutableSequence[p.Ldif.SchemaObjectClass]]]``.
 
         """
         attributes_parsed = u.Ldif.extract_attributes_from_lines(
@@ -124,8 +124,8 @@ class FlextLdifServersRfcSchemaParse(
                 return r[
                     MutableMapping[
                         str,
-                        MutableSequence[m.Ldif.SchemaAttribute]
-                        | MutableSequence[m.Ldif.SchemaObjectClass],
+                        MutableSequence[p.Ldif.SchemaAttribute]
+                        | MutableSequence[p.Ldif.SchemaObjectClass],
                     ]
                 ].fail_op("Attribute validation", validation_result.error)
 
@@ -135,8 +135,8 @@ class FlextLdifServersRfcSchemaParse(
         )
         schema_dict: MutableMapping[
             str,
-            MutableSequence[m.Ldif.SchemaAttribute]
-            | MutableSequence[m.Ldif.SchemaObjectClass],
+            MutableSequence[p.Ldif.SchemaAttribute]
+            | MutableSequence[p.Ldif.SchemaObjectClass],
         ] = {
             str(c.Ldif.DictKeys.ATTRIBUTES): attributes_parsed,
             str(c.Ldif.DictKeys.OBJECTCLASS): objectclasses_parsed,
@@ -144,8 +144,8 @@ class FlextLdifServersRfcSchemaParse(
         return r[
             MutableMapping[
                 str,
-                MutableSequence[m.Ldif.SchemaAttribute]
-                | MutableSequence[m.Ldif.SchemaObjectClass],
+                MutableSequence[p.Ldif.SchemaAttribute]
+                | MutableSequence[p.Ldif.SchemaObjectClass],
             ]
         ].ok(schema_dict)
 
@@ -156,7 +156,7 @@ class FlextLdifServersRfcSchemaParse(
             str,
             MutableSequence[str] | str | bool | None,
         ],
-    ) -> m.Ldif.ServerMetadata:
+    ) -> p.Ldif.ServerMetadata:
         """Build objectClass metadata with extensions.
 
         Returns:
@@ -182,11 +182,11 @@ class FlextLdifServersRfcSchemaParse(
     def _parse_objectclass_core(
         self,
         oc_definition: str,
-    ) -> p.Result[m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[p.Ldif.SchemaObjectClass]:
         """Core RFC 4512 objectClass parsing per Section 4.1.1.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.SchemaObjectClass]``.
+            The resulting ``p.Result[p.Ldif.SchemaObjectClass]``.
 
         """
         try:
@@ -195,16 +195,16 @@ class FlextLdifServersRfcSchemaParse(
             self._module_logger.exception(
                 "RFC objectClass parsing exception",
             )
-            return r[m.Ldif.SchemaObjectClass].fail_op("RFC objectClass parsing", e)
+            return r[p.Ldif.SchemaObjectClass].fail_op("RFC objectClass parsing", e)
 
     def _parse_rfc_objectclass_core(
         self,
         oc_definition: str,
-    ) -> p.Result[m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[p.Ldif.SchemaObjectClass]:
         """Parse RFC objectClass definition into the canonical model.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.SchemaObjectClass]``.
+            The resulting ``p.Result[p.Ldif.SchemaObjectClass]``.
 
         """
         parsed = u.Ldif.parse_objectclass(oc_definition)
@@ -260,7 +260,7 @@ class FlextLdifServersRfcSchemaParse(
             "may": self._to_string_list(parsed.get("may")),
             "metadata": metadata,
         })
-        return r[m.Ldif.SchemaObjectClass].ok(objectclass)
+        return r[p.Ldif.SchemaObjectClass].ok(objectclass)
 
     @staticmethod
     def _validate_oid_list(

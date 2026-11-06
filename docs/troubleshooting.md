@@ -51,26 +51,28 @@ def diagnose_ldif_format(content: str) -> None:
 """Diagnose LDIF format issues."""
 lines = content.strip().split("\n")
 
-    u.Cli.print(f"Total lines: {len(lines)}")
-    u.Cli.print("First few lines:")
-    for i, line in enumerate(lines[:5]):
-        u.Cli.print(f"{i + 1}: '{line}'")
+```text
+u.Cli.print(f"Total lines: {len(lines)}")
+u.Cli.print("First few lines:")
+for i, line in enumerate(lines[:5]):
+    u.Cli.print(f"{i + 1}: '{line}'")
 
-    # Check for common issues
-    if not any(line.startswith("dn:") for line in lines):
-        u.Cli.print("❌ No DN found - LDIF entries must start with 'dn:'")
+# Check for common issues
+if not any(line.startswith("dn:") for line in lines):
+    u.Cli.print("❌ No DN found - LDIF entries must start with 'dn:'")
 
-    # Check line folding issues
-    for i, line in enumerate(lines):
-        if line.startswith(" ") and i == 0:
-            u.Cli.print(f"❌ Line {i + 1} starts with space but is first line")
+# Check line folding issues
+for i, line in enumerate(lines):
+    if line.startswith(" ") and i == 0:
+        u.Cli.print(f"❌ Line {i + 1} starts with space but is first line")
 
-    # Check character encoding
-    try:
-        content.encode("utf-8")
-        u.Cli.print("✓ UTF-8 encoding valid")
-    except UnicodeError as e:
-        u.Cli.print(f"❌ Encoding issue: {e}")
+# Check character encoding
+try:
+    content.encode("utf-8")
+    u.Cli.print("✓ UTF-8 encoding valid")
+except UnicodeError as e:
+    u.Cli.print(f"❌ Encoding issue: {e}")
+```
 
 #### Character Encoding Issues
 
@@ -93,18 +95,20 @@ def handle_encoding_issues(file_path: str) -> p.Result[str]:
 """Handle various character encodings."""
 encodings_to_try = ["utf-8", "latin-1", "cp1252", "iso-8859-1"]
 
-    for encoding in encodings_to_try:
-        try:
-            content = pathlib.Path(file_path).read_text(encoding=encoding)
-            u.Cli.print(f"✓ Successfully read with {encoding} encoding")
-            return r[str].ok(content)
-        except UnicodeDecodeError:
-            u.Cli.print(f"✗ Failed with {encoding} encoding")
-            continue
+```text
+for encoding in encodings_to_try:
+    try:
+        content = pathlib.Path(file_path).read_text(encoding=encoding)
+        u.Cli.print(f"✓ Successfully read with {encoding} encoding")
+        return r[str].ok(content)
+    except UnicodeDecodeError:
+        u.Cli.print(f"✗ Failed with {encoding} encoding")
+        continue
 
-    return r[str].fail("Unable to decode file with any supported encoding")
+return r[str].fail("Unable to decode file with any supported encoding")
+```
 
-# Usage with custom encoding
+## Usage with custom encoding
 
 def parse_with_encoding_detection(file_path: str) -> p.Result[list]:
 """Parse LDIF with automatic encoding detection."""
@@ -112,8 +116,10 @@ content_result = handle_encoding_issues(file_path)
 if content_result.failure:
 return r[list].fail(content_result.error)
 
-    api = ldif()
-    return api.parse_string(content_result.unwrap())
+```text
+api = ldif()
+return api.parse_string(content_result.unwrap())
+```
 
 ### Memory Issues
 
@@ -148,7 +154,7 @@ import psutil
 from flext_ldif import FlextLdifModels, ldif, m, p, r, u
 
 
-def process_large_file_safely(file_path: str) -> p.Result[m.Dict]:
+def process_large_file_safely(file_path: str) -> p.Result[p.Dict]:
     """Process large LDIF files with memory management."""
     # Check available memory
     available_memory_gb = psutil.virtual_memory().available / (1024**3)
@@ -158,7 +164,7 @@ def process_large_file_safely(file_path: str) -> p.Result[m.Dict]:
     u.Cli.print(f"Available memory: {available_memory_gb:.2f} GB")
 
     if file_size_gb > available_memory_gb * 0.5:
-        return r[m.Dict].fail(
+        return r[p.Dict].fail(
             f"File too large for available memory. "
             f"File: {file_size_gb:.2f}GB, Available: {available_memory_gb:.2f}GB",
         )
@@ -198,7 +204,7 @@ def _iter_chunks(
         yield current_chunk
 
 
-def chunk_process_file(file_path: str, chunk_size: int = 10000) -> p.Result[m.Dict]:
+def chunk_process_file(file_path: str, chunk_size: int = 10000) -> p.Result[p.Dict]:
     """Process file in chunks to manage memory."""
     results: dict[str, int] = {"total_entries": 0, "processed_chunks": 0}
 
@@ -210,9 +216,9 @@ def chunk_process_file(file_path: str, chunk_size: int = 10000) -> p.Result[m.Di
                     results["total_entries"] += len(current_chunk)
                     results["processed_chunks"] += 1
     except OSError as e:
-        return r[m.Dict].fail(f"Chunk processing failed: {e}")
+        return r[p.Dict].fail(f"Chunk processing failed: {e}")
 
-    return r[m.Dict].ok(results)
+    return r[p.Dict].ok(results)
 
 
 def process_chunk(chunk_entries: list[str]) -> p.Result[bool]:
@@ -223,9 +229,9 @@ def process_chunk(chunk_entries: list[str]) -> p.Result[bool]:
     return result.map(lambda _: None)
 ```
 
-### Validation Errors
+#### Validation Errors
 
-#### Strict Validation Failures
+##### Strict Validation Failures
 
 **Symptom**: Validation fails with strict mode enabled.
 
@@ -249,56 +255,60 @@ def handle_validation_errors(entries: list) -> p.Result[list]:
 strict_config = FlextLdifModels.Config(strict_validation=True)
 strict_api = ldif(settings=strict_config)
 
-    strict_result = strict_api.validate_entries(entries)
-    if strict_result.success:
-        u.Cli.print("✓ All entries pass strict validation")
-        return r[list].ok(entries)
+```text
+strict_result = strict_api.validate_entries(entries)
+if strict_result.success:
+    u.Cli.print("✓ All entries pass strict validation")
+    return r[list].ok(entries)
 
-    u.Cli.print(f"✗ Strict validation failed: {strict_result.error}")
+u.Cli.print(f"✗ Strict validation failed: {strict_result.error}")
 
-    # Try with permissive validation
-    permissive_config = FlextLdifModels.Config(
-        strict_validation=False, ignore_unknown_attributes=True
-    )
-    permissive_api = ldif(settings=permissive_config)
+# Try with permissive validation
+permissive_config = FlextLdifModels.Config(
+    strict_validation=False, ignore_unknown_attributes=True
+)
+permissive_api = ldif(settings=permissive_config)
 
-    permissive_result = permissive_api.validate_entries(entries)
-    if permissive_result.success:
-        u.Cli.print("✓ Entries pass permissive validation")
-        u.Cli.print("⚠️  Consider reviewing data quality")
-        return r[list].ok(entries)
+permissive_result = permissive_api.validate_entries(entries)
+if permissive_result.success:
+    u.Cli.print("✓ Entries pass permissive validation")
+    u.Cli.print("⚠️  Consider reviewing data quality")
+    return r[list].ok(entries)
 
-    return r[list].fail(f"Validation failed: {permissive_result.error}")
+return r[list].fail(f"Validation failed: {permissive_result.error}")
+```
 
 def analyze_entry_issues(entries: list) -> None:
 """Analyze common entry validation issues."""
 for i, entry in enumerate(entries):
 u.Cli.print(f"\nEntry {i + 1}: {entry.dn}")
 
-        # Check DN format
-        if not entry.dn or "=" not in entry.dn:
-            u.Cli.print("  ❌ Invalid DN format")
+```text
+    # Check DN format
+    if not entry.dn or "=" not in entry.dn:
+        u.Cli.print("  ❌ Invalid DN format")
 
-        # Check object classes
-        object_classes = entry.get_object_classes()
-        if not object_classes:
-            u.Cli.print("  ❌ Missing object class")
+    # Check object classes
+    object_classes = entry.get_object_classes()
+    if not object_classes:
+        u.Cli.print("  ❌ Missing object class")
 
-        # Check required attributes for person entries
-        if "person" in object_classes:
-            if not entry.get_attribute_values("cn"):
-                u.Cli.print("  ❌ Person missing required 'cn' attribute")
-            if not entry.get_attribute_values("sn"):
-                u.Cli.print("  ❌ Person missing required 'sn' attribute")
+    # Check required attributes for person entries
+    if "person" in object_classes:
+        if not entry.get_attribute_values("cn"):
+            u.Cli.print("  ❌ Person missing required 'cn' attribute")
+        if not entry.get_attribute_values("sn"):
+            u.Cli.print("  ❌ Person missing required 'sn' attribute")
 
-        # Check for empty attributes
-        for attr_name, attr_values in entry.attributes.items():
-            if not attr_values or any(not v.strip() for v in attr_values):
-                u.Cli.print(f"  ⚠️  Empty values in attribute '{attr_name}'")
+    # Check for empty attributes
+    for attr_name, attr_values in entry.attributes.items():
+        if not attr_values or any(not v.strip() for v in attr_values):
+            u.Cli.print(f"  ⚠️  Empty values in attribute '{attr_name}'")
+```
 
-### Performance Issues
+#### Performance Issues
 
-#### Slow Processing
+##### Slow Processing
 
 **Symptom**: LDIF processing takes significantly longer than expected.
 
@@ -367,18 +377,20 @@ ignore_unknown_attributes=True, # Skip unknown attributes
 buffer_size=32768, # Larger buffer for I/O
 )
 
-def process_with_optimization(file_path: str) -> p.Result[m.Dict]:
+def process_with_optimization(file_path: str) -> p.Result[p.Dict]:
 """Process LDIF with performance optimizations."""
 settings = optimize_processing_config()
 api = ldif(settings=settings)
 
-    return api.parse_file(file_path).map(
-        lambda entries: {"entry_count": len(entries), "processing_optimized": True}
-    )
+```text
+return api.parse_file(file_path).map(
+    lambda entries: {"entry_count": len(entries), "processing_optimized": True}
+)
+```
 
-### Integration Issues
+#### Integration Issues
 
-#### FlextContainer Registration Problems
+##### FlextContainer Registration Problems
 
 **Symptom**: Services fail to register or retrieve from FlextContainer.
 
@@ -458,7 +470,7 @@ def safe_service_registration() -> p.Result[ldif]:
     return r[ldif].ok(retrieval_result.unwrap())
 ```
 
-#### r Chain Errors
+##### r Chain Errors
 
 **Symptom**: Railway-oriented programming chains fail unexpectedly.
 
@@ -486,58 +498,62 @@ def correct_railway_chaining(file_path: str) -> p.Result[list]:
 """Demonstrate correct r chaining."""
 api = ldif()
 
-    return (
-        # Parse file
-        api
-        .parse_file(file_path)
-        # Validate entries (return original entries on success)
-        .flat_map(
-            lambda entries: api.validate_entries(entries).map(lambda _: entries)
-        )  # Discard bool, return entries
-        # Filter persons
-        .flat_map(api.filter_persons)
-        # Add error context
-        .map_error(lambda error: f"Processing chain failed: {error}")
-    )
+```text
+return (
+    # Parse file
+    api
+    .parse_file(file_path)
+    # Validate entries (return original entries on success)
+    .flat_map(
+        lambda entries: api.validate_entries(entries).map(lambda _: entries)
+    )  # Discard bool, return entries
+    # Filter persons
+    .flat_map(api.filter_persons)
+    # Add error context
+    .map_error(lambda error: f"Processing chain failed: {error}")
+)
+```
 
 def debug_railway_chain(file_path: str) -> p.Result[list]:
 """Debug railway-oriented programming chains."""
 api = ldif()
 
-    # Step 1: Parse
-    u.Cli.print("Step 1: Parsing file...")
-    parse_result = api.parse_file(file_path)
-    if parse_result.failure:
-        u.Cli.print(f"❌ Parse failed: {parse_result.error}")
-        return parse_result
+```text
+# Step 1: Parse
+u.Cli.print("Step 1: Parsing file...")
+parse_result = api.parse_file(file_path)
+if parse_result.failure:
+    u.Cli.print(f"❌ Parse failed: {parse_result.error}")
+    return parse_result
 
-    entries = parse_result.unwrap()
-    u.Cli.print(f"✓ Parsed {len(entries)} entries")
+entries = parse_result.unwrap()
+u.Cli.print(f"✓ Parsed {len(entries)} entries")
 
-    # Step 2: Validate
-    u.Cli.print("Step 2: Validating entries...")
-    validation_result = api.validate_entries(entries)
-    if validation_result.failure:
-        u.Cli.print(f"❌ Validation failed: {validation_result.error}")
-        return r[list].fail(validation_result.error)
+# Step 2: Validate
+u.Cli.print("Step 2: Validating entries...")
+validation_result = api.validate_entries(entries)
+if validation_result.failure:
+    u.Cli.print(f"❌ Validation failed: {validation_result.error}")
+    return r[list].fail(validation_result.error)
 
-    u.Cli.print("✓ Validation passed")
+u.Cli.print("✓ Validation passed")
 
-    # Step 3: Filter
-    u.Cli.print("Step 3: Filtering persons...")
-    filter_result = api.filter_persons(entries)
-    if filter_result.failure:
-        u.Cli.print(f"❌ Filtering failed: {filter_result.error}")
-        return filter_result
+# Step 3: Filter
+u.Cli.print("Step 3: Filtering persons...")
+filter_result = api.filter_persons(entries)
+if filter_result.failure:
+    u.Cli.print(f"❌ Filtering failed: {filter_result.error}")
+    return filter_result
 
-    persons = filter_result.unwrap()
-    u.Cli.print(f"✓ Found {len(persons)} person entries")
+persons = filter_result.unwrap()
+u.Cli.print(f"✓ Found {len(persons)} person entries")
 
-    return r[list].ok(persons)
+return r[list].ok(persons)
+```
 
-## Diagnostic Tools
+### Diagnostic Tools
 
-### Health Check Utility
+#### Health Check Utility
 
 ```python
 from __future__ import annotations
@@ -635,7 +651,7 @@ def print_health_check_report() -> None:
     u.Cli.print("For additional help, see: docs/troubleshooting.md")
 ```
 
-### Debug Mode Configuration
+#### Debug Mode Configuration
 
 ```python
 from __future__ import annotations
@@ -675,16 +691,16 @@ def enable_debug_mode() -> FlextLdif:
     return api
 ```
 
-## Getting Help
+### Getting Help
 
-### Support Resources
+#### Support Resources
 
 - **Documentation**: Complete documentation
 - **API Reference**: API documentation
 - **Examples**: Usage examples
 - **Issues**: [GitHub Issues](https://github.com/flext-sh/flext-ldif/issues)
 
-### Creating Support Requests
+#### Creating Support Requests
 
 When creating support requests, include:
 
@@ -720,7 +736,7 @@ def generate_support_info() -> t.JsonMapping:
     }
 ```
 
-### Emergency Contacts
+#### Emergency Contacts
 
 For critical production issues:
 
@@ -734,3 +750,14 @@ For critical production issues:
 
 This troubleshooting guide provides comprehensive solutions for common FLEXT-LDIF issues
 while maintaining integration with FLEXT ecosystem support patterns.
+
+#### Immutable rule-view serialization
+
+`CategoryRules.category_markers` and `WhitelistRules.schema_oid_filters` expose
+immutable mapping views. Their Pydantic computed-field serializers now render those
+views as dictionaries for model dumps while preserving immutable property access.
+Previously JSON serialization raised `PydanticSerializationError` and Python dumps
+emitted serializer warnings for `mappingproxy`. The real-model reproduction now
+serializes both fields without warnings. The regression test is
+`tests/unit/test_rules_serialization.py`; its native pytest run remains unverified until
+the separate LDIF facade schema failure is fixed.

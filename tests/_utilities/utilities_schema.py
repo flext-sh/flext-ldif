@@ -143,7 +143,7 @@ class TestsSchemaAclAssertionsMixin:
     def _parse_schema_definition(
         server: p.Ldif.SchemaServer,
         schema_def: str,
-    ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
+    ) -> p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
         """Parse one schema definition through the kind-matching server method.
 
         Args:
@@ -157,19 +157,19 @@ class TestsSchemaAclAssertionsMixin:
         is_objectclass = TestsSchemaAclAssertionsMixin._schema_definition_is_objectclass
         if is_objectclass(schema_def):
             value_raw = tm.ok(server.parse_objectclass(schema_def))
-            value: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass = (
+            value: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass = (
                 m.Ldif.SchemaObjectClass.model_validate(value_raw)
             )
             return value
         attribute_raw = tm.ok(server.parse_attribute(schema_def))
-        attribute: m.Ldif.SchemaAttribute = m.Ldif.SchemaAttribute.model_validate(
+        attribute: p.Ldif.SchemaAttribute = m.Ldif.SchemaAttribute.model_validate(
             attribute_raw,
         )
         return attribute
 
     @staticmethod
     def _assert_common_expectations(
-        value: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        value: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
         expectations: TestsFlextLdifSchemaExpectations,
     ) -> None:
         """Assert the OID/NAME/DESC fields shared by both schema kinds."""
@@ -183,7 +183,7 @@ class TestsSchemaAclAssertionsMixin:
 
     @staticmethod
     def _assert_attribute_expectations(
-        value: m.Ldif.SchemaAttribute,
+        value: p.Ldif.SchemaAttribute,
         expectations: TestsFlextLdifSchemaExpectations,
     ) -> None:
         """Assert the attribute-only SYNTAX/SINGLE-VALUE/length fields."""
@@ -197,7 +197,7 @@ class TestsSchemaAclAssertionsMixin:
 
     @staticmethod
     def _assert_objectclass_expectations(
-        value: m.Ldif.SchemaObjectClass,
+        value: p.Ldif.SchemaObjectClass,
         expectations: TestsFlextLdifSchemaExpectations,
     ) -> None:
         """Assert the objectClass-only KIND/SUP/MUST/MAY fields."""
@@ -225,7 +225,7 @@ class TestsSchemaAclAssertionsMixin:
         schema_def: str,
         *,
         expectations: TestsFlextLdifSchemaExpectations,
-    ) -> m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
+    ) -> p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
         """Parse schema content and assert the expected properties.
 
         Args:
@@ -278,7 +278,7 @@ class TestsSchemaAclAssertionsMixin:
             tm.reject(msg)
         method: Callable[
             [str],
-            p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl],
+            p.Result[p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl],
         ] = getattr(server, method_name)
         result = method(content)
         if should_succeed is False:
@@ -303,11 +303,11 @@ class TestsSchemaAclAssertionsMixin:
     def acl_parse_and_unwrap(
         server: p.Tests.ParseAclServer,
         content: str,
-        expected_type: type[m.Ldif.Acl] | None = None,
+        expected_type: type[p.Ldif.Acl] | None = None,
         *,
         should_succeed: bool | None = None,
         message: str | None = None,
-    ) -> m.Ldif.Acl | None:
+    ) -> p.Ldif.Acl | None:
         """Parse ACL content and unwrap the resulting model.
 
         Args:
@@ -333,7 +333,7 @@ class TestsSchemaAclAssertionsMixin:
             tm.reject(
                 message or f"Expected success but parse failed: {result.error}",
             )
-        value: m.Ldif.Acl = result.unwrap()
+        value: p.Ldif.Acl = result.unwrap()
         if expected_type is not None and not isinstance(value, expected_type):
             msg = f"Expected {expected_type.__name__}, got {type(value).__name__}"
             tm.reject(msg)
@@ -344,7 +344,7 @@ class TestsSchemaAclAssertionsMixin:
         server: p.Tests.WriteAttributeServer
         | p.Tests.WriteObjectClassServer
         | p.Tests.WriteAclServer,
-        data: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl,
+        data: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl,
         write_method: t.Tests.WriteMethod = "write",
         must_contain: Sequence[str] | None = None,
         message: str | None = None,
@@ -368,7 +368,7 @@ class TestsSchemaAclAssertionsMixin:
         """
         dispatch: Mapping[
             t.Tests.WriteMethod,
-            tuple[type, type[m.BaseModel]],
+            tuple[type, type[p.BaseModel]],
         ] = {
             "_write_attribute": (
                 p.Tests.WriteAttributeServer,
@@ -398,7 +398,7 @@ class TestsSchemaAclAssertionsMixin:
         if not isinstance(data, data_cls):
             msg = f"{write_method} requires a {data_cls.__name__}"
             raise TypeError(msg)
-        method: Callable[[m.BaseModel], p.Result[str]] = getattr(
+        method: Callable[[p.BaseModel], p.Result[str]] = getattr(
             server,
             write_method,
         )
@@ -413,7 +413,7 @@ class TestsSchemaAclAssertionsMixin:
     @staticmethod
     def acl_write_and_unwrap(
         server: p.Tests.WriteAclContentServer,
-        data: m.Ldif.Acl,
+        data: p.Ldif.Acl,
         must_contain: Sequence[str] | None = None,
         message: str | None = None,
     ) -> str:

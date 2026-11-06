@@ -18,7 +18,7 @@ class FlextLdifConversionAclPreserve(s[p.Ldif.Response]):
 
     @staticmethod
     def _get_extensions_dict(
-        acl: m.Ldif.Acl,
+        acl: p.Ldif.Acl,
     ) -> t.Ldif.MutableMetadataInputMapping:
         """Extract extensions dict from ACL metadata.
 
@@ -43,12 +43,12 @@ class FlextLdifConversionAclPreserve(s[p.Ldif.Response]):
 
     def _apply_permission_mapping(
         self,
-        original_acl: m.Ldif.Acl,
-        converted_acl: m.Ldif.Acl,
+        original_acl: p.Ldif.Acl,
+        converted_acl: p.Ldif.Acl,
         *,
         source_server_type: c.Ldif.ServerTypes | None,
         target_server_type: c.Ldif.ServerTypes | None,
-    ) -> m.Ldif.Acl:
+    ) -> p.Ldif.Acl:
         """Map original permissions onto the converted ACL.
 
         Returns:
@@ -104,7 +104,7 @@ class FlextLdifConversionAclPreserve(s[p.Ldif.Response]):
             ),
         }.get(server_pair)
         mapping_type = "none"
-        replacement_permissions: m.Ldif.AclPermissions | None = None
+        replacement_permissions: p.Ldif.AclPermissions | None = None
         match permission_mapping:
             case (mapping_type, permission_mapper):
                 mapped_perms = permission_mapper(permission_settings.orig_perms_dict)
@@ -135,7 +135,7 @@ class FlextLdifConversionAclPreserve(s[p.Ldif.Response]):
             if replacement_permissions is None
             else replacement_permissions
         )
-        updated_acl: m.Ldif.Acl = permission_settings.converted_acl.model_copy(
+        updated_acl: p.Ldif.Acl = permission_settings.converted_acl.model_copy(
             update={"permissions": resolved_permissions},
             deep=True,
         )
@@ -149,11 +149,11 @@ class FlextLdifConversionAclPreserve(s[p.Ldif.Response]):
 
     def _preserve_acl_metadata(
         self,
-        original_acl: m.Ldif.Acl,
-        converted_acl: m.Ldif.Acl,
+        original_acl: p.Ldif.Acl,
+        converted_acl: p.Ldif.Acl,
         source_server_type: c.Ldif.ServerTypes | None = None,
         target_server_type: c.Ldif.ServerTypes | None = None,
-    ) -> m.Ldif.Acl:
+    ) -> p.Ldif.Acl:
         """Preserve permissions and metadata from original ACL.
 
         Returns:
@@ -195,7 +195,7 @@ class FlextLdifConversionAclPreserve(s[p.Ldif.Response]):
             update={"extensions": merged_ext_raw},
             deep=True,
         )
-        preserved_acl: m.Ldif.Acl = acl_step1.model_copy(
+        preserved_acl: p.Ldif.Acl = acl_step1.model_copy(
             update={"metadata": updated_metadata},
             deep=True,
         )

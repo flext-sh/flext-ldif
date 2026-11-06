@@ -9,6 +9,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Self
 
+from flext_core import FlextRegistry
+
 from flext_ldif import c, m, p, t, u
 from flext_ldif.servers import (
     FlextLdifServersAd,
@@ -39,6 +41,7 @@ from flext_ldif.services import (
     FlextLdifValidation,
     FlextLdifWriter,
 )
+from flext_ldif.services.oid_acl import FlextLdifOidAcl
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -46,6 +49,7 @@ if TYPE_CHECKING:
 
 class FlextLdifFacade(
     FlextLdifAcl,
+    FlextLdifOidAcl,
     FlextLdifCategorization,
     FlextLdifTransformer,
     FlextLdifDetector,
@@ -64,7 +68,7 @@ class FlextLdifFacade(
     """
 
     registry: t.Port[p.Registry] = m.Field(
-        default_factory=u.build_registry,
+        default_factory=FlextRegistry.create,
         exclude=True,
         description="Instance-scoped dialect registry composed by the facade",
     )
@@ -77,7 +81,7 @@ class FlextLdifFacade(
         settings_type: p.SettingsType | None = None,
         settings_overrides: t.JsonMapping | None = None,
         initial_context: p.Context | None = None,
-        **fields: t.ModelInput[p.Model] | Sequence[p.Model],
+        **fields: t.ModelInput[p.BaseModel] | Sequence[p.BaseModel],
     ) -> None:
         """Compose isolated registry/runtime dependencies and builtin dialects.
 
@@ -126,7 +130,7 @@ class FlextLdifFacade(
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
         registry: p.Registry | None = None,
-        **fields: t.ModelInput[p.Model] | Sequence[p.Model],
+        **fields: t.ModelInput[p.BaseModel] | Sequence[p.BaseModel],
     ) -> Self:
         """Return a configured facade instance while keeping the DSL alias callable.
 
@@ -155,7 +159,7 @@ class FlextLdifFacade(
     def categorization(
         self,
         *,
-        options: m.Ldif.MigrateOptions | None = None,
+        options: p.Ldif.MigrateOptions | None = None,
         base_dn: str | None = None,
         server_type: str = c.Ldif.ServerTypes.RFC.value,
     ) -> p.Ldif.CategorizationService:
@@ -222,9 +226,9 @@ class FlextLdifFacade(
 
     @staticmethod
     def filter_schema_attribute_values(
-        entry: m.Ldif.Entry,
-        allowed_oids: m.Ldif.WhitelistRules | t.FrozensetMapping,
-    ) -> m.Ldif.Entry:
+        entry: p.Ldif.Entry,
+        allowed_oids: p.Ldif.WhitelistRules | t.FrozensetMapping,
+    ) -> p.Ldif.Entry:
         """Expose schema-attribute OID filtering through the facade DSL.
 
         Args:
@@ -248,7 +252,7 @@ class FlextLdifFacade(
         target_server: str | c.Ldif.ServerTypes | None = None,
         base_dn: str = "",
         runtime_settings: p.Ldif.Settings | None = None,
-        **fields: t.ModelInput[p.Model] | Sequence[p.Model],
+        **fields: t.ModelInput[p.BaseModel] | Sequence[p.BaseModel],
     ) -> p.Ldif.ProcessingPipeline:
         """Create a processing pipeline from explicit config or server pair.
 

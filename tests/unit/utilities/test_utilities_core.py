@@ -11,13 +11,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
 from examples import ExamplesFlextLdifUtilities
 
 from tests import c, m, t, tm, u
 
 
-@pytest.mark.unit
+@c.Tests.MARK.unit
 class TestsFlextLdifUtilitiesCore:
     """Public contract of DN, schema, and server-type LDIF utilities."""
 
@@ -33,7 +32,7 @@ class TestsFlextLdifUtilitiesCore:
     # ---- DN splitting -------------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("dn", "expected"),
         [
             (
@@ -72,7 +71,7 @@ class TestsFlextLdifUtilitiesCore:
     # ---- DN validation ------------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "dn",
         [
             "cn=John,dc=example,dc=com",
@@ -90,7 +89,7 @@ class TestsFlextLdifUtilitiesCore:
         tm.ok(u.Ldif.validate(dn))
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "dn",
         [
             "",
@@ -120,7 +119,7 @@ class TestsFlextLdifUtilitiesCore:
         tm.that(list(parsed), eq=[("cn", "John"), ("ou", "Users"), ("dc", "example")])
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("bad_dn", "error_fragment"),
         [("", "empty"), ("no_equals", "missing '=' separator")],
     )
@@ -163,7 +162,7 @@ class TestsFlextLdifUtilitiesCore:
     # ---- DN value escaping -------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "value",
         ["Test, Value", "plain", "a+b=c", "trailing ", " leading"],
     )
@@ -199,12 +198,12 @@ class TestsFlextLdifUtilitiesCore:
         tm.that(u.Ldif.clean_dn(once), eq=once)
 
 
-@pytest.mark.unit
+@c.Tests.MARK.unit
 class TestsFlextLdifUtilitiesObjectClass:
     """Public in-place ObjectClass repair behavior."""
 
     @staticmethod
-    @pytest.mark.parametrize("kind", ["AUXILIARY", c.Ldif.SchemaKind.AUXILIARY])
+    @c.Tests.MARK.parametrize("kind", ["AUXILIARY", c.Ldif.SchemaKind.AUXILIARY])
     def test_fix_missing_sup_sets_top_for_auxiliary_without_sup(
         kind: str,
     ) -> None:
@@ -243,7 +242,7 @@ class TestsFlextLdifUtilitiesObjectClass:
         tm.that(oc.sup, none=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("start_kind", "sup", "expected_kind"),
         [
             (
@@ -298,7 +297,7 @@ class TestsFlextLdifUtilitiesCoreSchemaAndLdif:
         tm.that(u.Ldif.normalize_name(None), none=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("equality", "substr", "expected"),
         [
             (None, None, (None, None)),
@@ -356,7 +355,7 @@ class TestsFlextLdifUtilitiesCoreSchemaAndLdif:
     # ---- Server-type operations --------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("raw", "expected"),
         [("oracle_oid", "oid"), ("rfc", "rfc")],
     )
@@ -374,7 +373,7 @@ class TestsFlextLdifUtilitiesCoreSchemaAndLdif:
         tm.fail(u.Ldif.matches("ad", "oid", "oud"))
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("server_type", "flag", "expected"),
         [
             ("openldap", "requires_binary_option", True),

@@ -17,7 +17,7 @@ class FlextLdifAnalysis(s[p.Ldif.Response]):
 
     @staticmethod
     def _validate_entry_attributes(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         dn_str: str,
         validation_service: p.Ldif.ValidationService,
     ) -> tuple[bool, MutableSequence[str]]:
@@ -41,7 +41,7 @@ class FlextLdifAnalysis(s[p.Ldif.Response]):
 
     @staticmethod
     def _validate_entry_dn(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
     ) -> tuple[bool, str, MutableSequence[str]]:
         """Validate entry DN.
 
@@ -61,7 +61,7 @@ class FlextLdifAnalysis(s[p.Ldif.Response]):
 
     @staticmethod
     def _validate_entry_objectclasses(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         dn_str: str,
         validation_service: p.Ldif.ValidationService,
     ) -> tuple[bool, MutableSequence[str]]:
@@ -83,7 +83,7 @@ class FlextLdifAnalysis(s[p.Ldif.Response]):
 
     @staticmethod
     def _validate_single_entry(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         validation_service: p.Ldif.ValidationService,
     ) -> tuple[bool, MutableSequence[str]]:
         """Validate a single LDIF entry.
@@ -145,7 +145,7 @@ class FlextLdifAnalysis(s[p.Ldif.Response]):
         else:
             svc = FlextLdifValidation()
 
-        def validate_entry(entry: m.Ldif.Entry) -> bool:
+        def validate_entry(entry: p.Ldif.Entry) -> bool:
             """Validate single entry and collect errors.
 
             Returns:

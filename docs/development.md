@@ -79,18 +79,20 @@ from flext_ldif import t
 
 from collections.abc import Iterator
 
-# Current implementation approach
+## Current implementation approach
 
 class _ParserHelper:
 """Custom LDIF parser - loads entire files into memory."""
 
-    def __init__(self, content: str) -> None:
-        self._content = content
-        self._lines = content.splitlines()  # Loads all lines into memory
+```text
+def __init__(self, content: str) -> None:
+    self._content = content
+    self._lines = content.splitlines()  # Loads all lines into memory
 
-    def parse(self) -> Iterator[tuple[str, Mapping[str, list[str]]]]:
-        """Parse LDIF content and yield (dn, attributes) tuples."""
-        # Process all lines already in memory
+def parse(self) -> Iterator[tuple[str, Mapping[str, list[str]]]]:
+    """Parse LDIF content and yield (dn, attributes) tuples."""
+    # Process all lines already in memory
+```
 
 **Memory Characteristics**:
 
@@ -127,13 +129,13 @@ result = api.parse_file("small_directory.ldif")
 # grep "objectClass: person" large_directory.ldif | processing...
 ```
 
-#### LDIF Validation Patterns
+##### LDIF Validation Patterns
 
 from **future** import annotations
 
 from flext_ldif import FlextLdifModels, p, r, t
 
-# LDIF-specific validation
+## LDIF-specific validation
 
 def validate_ldif_structure(
 entries: Sequence[FlextLdifModels.Entry],
@@ -143,13 +145,15 @@ for entry in entries: # Check DN format
 if not entry.dn.value:
 return r[bool].fail("Empty DN found")
 
-        # Check required attributes
-        if "objectClass" not in entry.attributes.data:
-            return r[bool].fail(f"Missing objectClass in {entry.dn.value}")
+```text
+    # Check required attributes
+    if "objectClass" not in entry.attributes.data:
+        return r[bool].fail(f"Missing objectClass in {entry.dn.value}")
 
-    return r[bool].ok(value=True)
+return r[bool].ok(value=True)
+```
 
-#### Memory-Conscious Processing
+### Memory-Conscious Processing
 
 ```bash
 # For large LDIF files, consider external processing
@@ -166,14 +170,14 @@ for chunk in chunk_*; do
 done
 ```
 
-## Testing LDIF Functionality
+### Testing LDIF Functionality
 
-### LDIF Test Data
+#### LDIF Test Data
 
 from **future** import annotations
 from flext_ldif import ldif
 
-# Create test LDIF content
+## Create test LDIF content
 
 def create_test_ldif() -> str:
 """Create valid LDIF content for testing."""
@@ -189,7 +193,7 @@ objectClass: person
 description: Administrator account
 """
 
-# Test parsing with various LDIF formats
+## Test parsing with various LDIF formats
 
 def test_ldif_parsing():
 api = ldif()
@@ -238,16 +242,16 @@ def test_memory_usage() -> None:
     assert memory_increase < file_size * 3  # Allow 3x overhead
 ```
 
-## Performance Considerations
+### Performance Considerations
 
-### Current Limitations
+#### Current Limitations
 
 1. **Memory Usage**: Entire file loaded into memory
 1. **Single-threaded**: No parallel processing
 1. **No Progress Reporting**: Long operations provide no feedback
 1. **No Streaming**: Cannot process files larger than available memory
 
-### Performance Guidelines
+#### Performance Guidelines
 
 ```python
 from __future__ import annotations
@@ -267,32 +271,32 @@ from flext_ldif import ldif, m, p, r
 
 
 # Good: Process small files directly
-def process_small_ldif(file_path: str) -> p.Result[m.Dict]:
+def process_small_ldif(file_path: str) -> p.Result[p.Dict]:
     """Process LDIF files under 100MB."""
     api = ldif()
     return api.parse_file(file_path)
 
 
 # Consider: External tools for large files
-def process_large_ldif(file_path: str) -> p.Result[m.Dict]:
+def process_large_ldif(file_path: str) -> p.Result[p.Dict]:
     """Process large LDIF files using external tools."""
     # Use grep, awk, or other streaming tools
     # Then process results with FLEXT-LDIF
 
 
 # Monitor: Memory usage for production systems
-def process_with_monitoring(file_path: str) -> p.Result[m.Dict]:
+def process_with_monitoring(file_path: str) -> p.Result[p.Dict]:
     """Process LDIF with memory monitoring."""
     file_size = pathlib.Path(file_path).stat().st_size
     if file_size > 100 * 1024 * 1024:  # 100MB
-        return r[m.Dict].fail("File too large for current implementation")
+        return r[p.Dict].fail("File too large for current implementation")
 
     return process_small_ldif(file_path)
 ```
 
-## Contributing Guidelines
+### Contributing Guidelines
 
-### LDIF-Specific Code Review
+#### LDIF-Specific Code Review
 
 When reviewing LDIF-related code, check for:
 
@@ -301,16 +305,16 @@ When reviewing LDIF-related code, check for:
 1. **Error Handling**: Are LDIF format errors handled appropriately?
 1. **Test Coverage**: Are LDIF edge cases tested?
 
-### Future Development Priorities
+#### Future Development Priorities
 
 1. **Streaming Parser**: Replace custom parser with streaming approach
 1. **Memory Monitoring**: Add memory usage tracking and warnings
 1. **External Library Integration**: Evaluate ldap3 for streaming capabilities
 1. **Performance Testing**: Establish benchmarks for different file sizes
 
-## Common LDIF Development Issues
+### Common LDIF Development Issues
 
-### LDIF Format Edge Cases
+#### LDIF Format Edge Cases
 
 ```python
 # Handle continuation lines
@@ -330,7 +334,7 @@ photo:< file:///path/to/photo.jpg
 """
 ```
 
-### Memory Debugging
+#### Memory Debugging
 
 ```bash
 # Monitor memory usage during development
@@ -343,7 +347,7 @@ kernprof -l -v ldif_script.py
 top -p $(pgrep -f python)
 ```
 
-## Integration with FLEXT Ecosystem
+### Integration with FLEXT Ecosystem
 
 For FLEXT ecosystem integration patterns, see
 [flext-core documentation](https://github.com/flext-sh/flext/tree/0.12.0-dev/flext-core/AGENTS.md).

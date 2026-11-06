@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import ClassVar, override
 
-from flext_ldif import m, u
+from flext_ldif import m, p, u
 from flext_ldif.servers._rfc import FlextLdifServersRfcSchema
 
 
@@ -20,8 +20,8 @@ class FlextLdifServersDialectSchema(FlextLdifServersRfcSchema):
     detection then flows through the centralized pattern matcher.
     """
 
-    _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
-    _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[m.Ldif.ServerPatternsConfig]
+    _ATTRIBUTE_PATTERN_SETTINGS: ClassVar[p.Ldif.ServerPatternsConfig]
+    _OBJECTCLASS_PATTERN_SETTINGS: ClassVar[p.Ldif.ServerPatternsConfig]
 
     @override
     def can_handle_attribute(
@@ -60,8 +60,8 @@ class FlextLdifServersDialectSchema(FlextLdifServersRfcSchema):
     @classmethod
     def bind_pattern_settings(
         cls,
-        attribute_settings: m.Ldif.ServerPatternsConfig,
-        objectclass_settings: m.Ldif.ServerPatternsConfig,
+        attribute_settings: p.Ldif.ServerPatternsConfig,
+        objectclass_settings: p.Ldif.ServerPatternsConfig,
     ) -> None:
         """Bind the dialect ``Constants`` pattern settings to this schema class.
 

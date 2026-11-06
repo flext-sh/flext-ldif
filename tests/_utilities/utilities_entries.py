@@ -1,7 +1,7 @@
 """Real entry and LDIF fixture-content builders for tests.
 
 Focused utility module split out of ``tests.utilities``; the public surface is
-re-exported through ``tests.utilities`` (see ``TestsFlextLdifEntryBuildersMixin``).
+re-exported through ``tests.utilities`` (see ``TestsFlextLdifEntryBuilders``).
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -16,10 +16,10 @@ from typing import ClassVar
 
 from flext_tests import FlextTestsUtilitiesFixturesDSL
 
-from tests import c, m, t
+from tests import c, m, p, t
 
 
-class TestsFlextLdifEntryBuildersMixin(FlextTestsUtilitiesFixturesDSL):
+class TestsFlextLdifEntryBuilders(FlextTestsUtilitiesFixturesDSL):
     """Builders for real entry models, LDIF content, and fixture metadata."""
 
     _FIXTURES_ROOT: ClassVar[Path | None] = c.Tests.FIXTURES_DIR
@@ -33,7 +33,7 @@ class TestsFlextLdifEntryBuildersMixin(FlextTestsUtilitiesFixturesDSL):
         dn: str | None = None,
         attributes: Mapping[str, Sequence[str]] | None = None,
         server_type: str = "generic",
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Create a real Entry model with valid data.
 
         Returns:
@@ -47,7 +47,7 @@ class TestsFlextLdifEntryBuildersMixin(FlextTestsUtilitiesFixturesDSL):
             "mail": [f"test-{entry_id}@example.com"],
             "objectClass": ["person", "organizationalPerson", "inetOrgPerson"],
         }
-        entry: m.Ldif.Entry = m.Ldif.Entry.model_validate({
+        entry: p.Ldif.Entry = m.Ldif.Entry.model_validate({
             "dn": {"value": dn or f"cn=test-{entry_id},ou=users,dc=example,dc=com"},
             "attributes": {
                 "attributes": {k: list(v) for k, v in payload_attrs.items()},
@@ -57,7 +57,7 @@ class TestsFlextLdifEntryBuildersMixin(FlextTestsUtilitiesFixturesDSL):
         return entry
 
     @classmethod
-    def orclaci_base_dn_entry(cls, dn: str = "cn=users,dc=ctbc") -> m.Ldif.Entry:
+    def orclaci_base_dn_entry(cls, dn: str = "cn=users,dc=ctbc") -> p.Ldif.Entry:
         """Build a real LDIF entry with an out-of-scope ``orclaci`` OID line.
 
         The OID line doubles as a base-DN filter test payload.
@@ -116,11 +116,11 @@ class TestsFlextLdifEntryBuildersMixin(FlextTestsUtilitiesFixturesDSL):
         return "\n".join(blocks)
 
     @staticmethod
-    def parametrize_real_data() -> Sequence[m.Tests.LdifTestData]:
+    def parametrize_real_data() -> Sequence[p.Tests.LdifTestData]:
         """Generate parametrized test data for comprehensive coverage.
 
         Returns:
-            The resulting ``Sequence[m.Tests.LdifTestData]``.
+            The resulting ``Sequence[p.Tests.LdifTestData]``.
 
         """
         return [
@@ -141,7 +141,7 @@ class TestsFlextLdifEntryBuildersMixin(FlextTestsUtilitiesFixturesDSL):
         cls,
         server_type: t.Tests.FixtureServer,
         fixture_type: t.Tests.FixtureKind,
-    ) -> m.Tests.FixtureMetadata:
+    ) -> p.Tests.FixtureMetadata:
         """Return metadata for one fixture file (cached per file path)."""
         file_path = cls.path(server_type, fixture_type)
         cached = cls._fixture_metadata_cache.get(file_path)
@@ -161,4 +161,4 @@ class TestsFlextLdifEntryBuildersMixin(FlextTestsUtilitiesFixturesDSL):
         return metadata
 
 
-__all__: list[str] = ["TestsFlextLdifEntryBuildersMixin"]
+__all__: list[str] = ["TestsFlextLdifEntryBuilders"]

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from flext_ldif import c, m, t, u
+from flext_ldif import c, m, p, t, u
 from flext_ldif.servers._oud import FlextLdifConstantsServersOud
 
 
@@ -20,7 +20,7 @@ class FlextLdifServersOudAclMetadata:
 
     @staticmethod
     def extract_acl_metadata(
-        entry_data: m.Ldif.Entry,
+        entry_data: p.Ldif.Entry,
     ) -> tuple[str | None, m.Ldif.DnRegistry | None]:
         """Extract base_dn and dn_registry from entry metadata for ACL processing.
 
@@ -29,7 +29,7 @@ class FlextLdifServersOudAclMetadata:
 
         """
         base_dn: str | None = None
-        dn_registry: m.Ldif.DnRegistry | None = None
+        dn_registry: p.Ldif.DnRegistry | None = None
         metadata = entry_data.metadata
         extensions = metadata.extensions if metadata is not None else None
         if extensions is not None:
@@ -70,7 +70,7 @@ class FlextLdifServersOudAclMetadata:
                 acl_metadata_extensions[dest_key] = u.normalize_to_json_value(value_raw)
 
     @staticmethod
-    def resolve_original_acl_attr(entry: m.Ldif.Entry) -> str:
+    def resolve_original_acl_attr(entry: p.Ldif.Entry) -> str:
         """Get original ACL attribute name (orclaci) from transformations or metadata.
 
         Returns:
@@ -99,9 +99,9 @@ class FlextLdifServersOudAclMetadata:
 
     @staticmethod
     def merge_acl_metadata_to_entry(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         acl_metadata_extensions: t.Ldif.MutableMetadataInputMapping,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Merge ACL metadata extensions into entry metadata.
 
         Returns:
@@ -111,7 +111,7 @@ class FlextLdifServersOudAclMetadata:
         if not acl_metadata_extensions:
             return entry
         if entry.metadata is None:
-            new_metadata_entry: m.Ldif.Entry = entry.model_copy(
+            new_metadata_entry: p.Ldif.Entry = entry.model_copy(
                 update={
                     "metadata": u.Ldif.server_metadata_for(
                         "oud",
@@ -127,7 +127,7 @@ class FlextLdifServersOudAclMetadata:
             dict(entry.metadata.extensions) if entry.metadata.extensions else {}
         )
         current.update(acl_metadata_extensions)
-        updated_entry: m.Ldif.Entry = entry.model_copy(
+        updated_entry: p.Ldif.Entry = entry.model_copy(
             update={
                 "metadata": entry.metadata.model_copy(
                     update={"extensions": current},

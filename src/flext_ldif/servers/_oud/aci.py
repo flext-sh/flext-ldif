@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from flext_ldif import c, m, t, u
+from flext_ldif import c, p, t, u
 from flext_ldif.servers._oud import (
     FlextLdifServersOudAciProcess,
     FlextLdifServersOudAclExtract,
@@ -65,7 +65,7 @@ class FlextLdifServersOudAci(FlextLdifServersOudAciProcess):
 
     @staticmethod
     def _aci_from_commented_extensions(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
     ) -> MutableSequence[str] | str | None:
         """Find ACI values stored as commented values in entry metadata.
 
@@ -95,7 +95,7 @@ class FlextLdifServersOudAci(FlextLdifServersOudAciProcess):
 
     @staticmethod
     def find_aci_values(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         original_attrs: t.AttributeMapping,
     ) -> MutableSequence[str] | str | None:
         """Find ACI values from entry attributes, original_attrs, or commented metadata.
@@ -121,7 +121,7 @@ class FlextLdifServersOudAci(FlextLdifServersOudAciProcess):
     def normalize_aci_value(
         aci_value: str,
         _base_dn: str | None,
-        _dn_registry: m.Ldif.DnRegistry | None,
+        _dn_registry: p.Ldif.DnRegistry | None,
     ) -> tuple[str, bool]:
         """Normalize ACI value DNs (already RFC canonical, no changes needed).
 

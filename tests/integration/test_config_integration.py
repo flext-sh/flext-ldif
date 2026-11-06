@@ -20,9 +20,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-import pytest
-
-from tests import TestsFlextLdifSettings, c, ldif, m, s, tm
+from tests import TestsFlextLdifSettings, c, ldif, p, s, tm, u
 
 # Expected DN observable in CONFIG_BASIC_ENTRY.
 _BASIC_DN = "cn=Test,dc=example,dc=com"
@@ -50,7 +48,7 @@ class TestsFlextLdifConfigIntegration:
         return settings
 
     @staticmethod
-    def dn_values(entries: Sequence[m.Ldif.Entry]) -> list[str]:
+    def dn_values(entries: Sequence[p.Ldif.Entry]) -> list[str]:
         """Return each entry's public DN string (asserting the DN is present)."""
         values: list[str] = []
         for entry in entries:
@@ -60,7 +58,7 @@ class TestsFlextLdifConfigIntegration:
 
     def test_default_facade_parses_basic_entry_preserving_dn(self) -> None:
         """Default facade parses one entry and preserves its DN verbatim."""
-        parsed: m.Ldif.ParseResponse = tm.ok(
+        parsed: p.Ldif.ParseResponse = tm.ok(
             ldif.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY),
         )
 
@@ -88,7 +86,7 @@ class TestsFlextLdifConfigIntegration:
             eq=second.Ldif.ldif_strict_validation,
         )
 
-    @pytest.mark.parametrize("server_type", c.Tests.CONFIG_SERVER_TYPES)
+    @c.Tests.MARK.parametrize("server_type", c.Tests.CONFIG_SERVER_TYPES)
     def test_configured_facade_parses_entry_for_each_server_type(
         self,
         server_type: str,
@@ -96,14 +94,14 @@ class TestsFlextLdifConfigIntegration:
         """A configured facade parses the basic entry identically per server."""
         api = ldif(settings=self.create_settings())
 
-        parsed: m.Ldif.ParseResponse = tm.ok(
+        parsed: p.Ldif.ParseResponse = tm.ok(
             api.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY, server_type=server_type),
         )
 
         tm.that(len(parsed.entries), eq=1)
         tm.that(self.dn_values(parsed.entries)[0], eq=_BASIC_DN)
 
-    @pytest.mark.parametrize(("server_type", "label"), _SERVER_TYPE_LABELS)
+    @c.Tests.MARK.parametrize(("server_type", "label"), _SERVER_TYPE_LABELS)
     def test_server_specific_content_round_trips_dn(
         self,
         server_type: str,
@@ -113,7 +111,7 @@ class TestsFlextLdifConfigIntegration:
         api = ldif(settings=self.create_settings())
         content: str = c.Tests.CONFIG_SERVER_CONTENT[server_type]
 
-        parsed: m.Ldif.ParseResponse = tm.ok(
+        parsed: p.Ldif.ParseResponse = tm.ok(
             api.parse_ldif(content, server_type=server_type),
         )
 
@@ -128,10 +126,10 @@ class TestsFlextLdifConfigIntegration:
         api_oid = ldif(settings=self.create_settings())
         api_openldap = ldif(settings=self.create_settings())
 
-        parsed_oid: m.Ldif.ParseResponse = tm.ok(
+        parsed_oid: p.Ldif.ParseResponse = tm.ok(
             api_oid.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY, server_type=c.Tests.OID),
         )
-        parsed_openldap: m.Ldif.ParseResponse = tm.ok(
+        parsed_openldap: p.Ldif.ParseResponse = tm.ok(
             api_openldap.parse_ldif(
                 c.Tests.CONFIG_BASIC_ENTRY,
                 server_type=c.Tests.OPENLDAP,
@@ -146,8 +144,8 @@ class TestsFlextLdifConfigIntegration:
         """The same facade parsing the same input twice yields the same DN."""
         api = ldif(settings=self.create_settings())
 
-        first: m.Ldif.ParseResponse = tm.ok(api.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY))
-        second: m.Ldif.ParseResponse = tm.ok(api.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY))
+        first: p.Ldif.ParseResponse = tm.ok(api.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY))
+        second: p.Ldif.ParseResponse = tm.ok(api.parse_ldif(c.Tests.CONFIG_BASIC_ENTRY))
 
         first_dn = self.dn_values(first.entries)[0]
         tm.that(first_dn, eq=_BASIC_DN)
@@ -163,8 +161,8 @@ class TestsFlextLdifConfigIntegration:
             "dn: cn=Test2,dc=example,dc=com\ncn: Test2\nobjectClass: person\n"
         )
 
-        parsed1: m.Ldif.ParseResponse = tm.ok(api.parse_ldif(content1))
-        parsed2: m.Ldif.ParseResponse = tm.ok(api.parse_ldif(content2))
+        parsed1: p.Ldif.ParseResponse = tm.ok(api.parse_ldif(content1))
+        parsed2: p.Ldif.ParseResponse = tm.ok(api.parse_ldif(content2))
 
         tm.that(self.dn_values(parsed1.entries)[0], eq="cn=Test1,dc=example,dc=com")
         tm.that(self.dn_values(parsed2.entries)[0], eq="cn=Test2,dc=example,dc=com")
@@ -173,7 +171,7 @@ class TestsFlextLdifConfigIntegration:
         """Multi-entry input yields every entry with its DN in order."""
         api = ldif(settings=self.create_settings())
 
-        parsed: m.Ldif.ParseResponse = tm.ok(
+        parsed: p.Ldif.ParseResponse = tm.ok(
             api.parse_ldif(c.Tests.CONFIG_MULTIPLE_ENTRIES),
         )
 
@@ -191,10 +189,10 @@ class TestsFlextLdifConfigIntegration:
         """Empty input succeeds and fabricates no entries (no-invention invariant)."""
         api = ldif(settings=self.create_settings())
 
-        parsed: m.Ldif.ParseResponse = tm.ok(api.parse_ldif(""))
+        parsed: p.Ldif.ParseResponse = tm.ok(api.parse_ldif(""))
 
         tm.that(len(parsed.entries), eq=0)
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+    u.Tests.main([__file__, "-v"])

@@ -13,14 +13,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
-
 from flext_ldif.services import (
     FlextLdifCategorization,
     FlextLdifMigrationPipeline,
     FlextLdifStatistics,
 )
-from tests import c, ldif, m, tm
+from tests import c, ldif, m, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -34,7 +32,7 @@ class TestsFlextLdifApiIntegration:
     # ------------------------------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("ldif_content", "expected_entries"),
         [(c.Tests.RFC_SAMPLE_LDIF_BASIC, 1), (c.Tests.RFC_SAMPLE_LDIF_MULTIPLE, 2)],
     )
@@ -57,7 +55,7 @@ class TestsFlextLdifApiIntegration:
             tm.that(attributes.attributes, truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "lenient_content",
         ["", "this is not ldif at all", "objectClass: person\ncn: no-dn\n"],
     )
@@ -323,4 +321,4 @@ class TestsFlextLdifApiIntegration:
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+    u.Tests.main([__file__, "-v"])

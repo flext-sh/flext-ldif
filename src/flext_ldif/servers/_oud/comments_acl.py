@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence, Sequence
 
-from flext_ldif import c, m, t
+from flext_ldif import c, m, p, t
 from flext_ldif.servers._oud import FlextLdifServersOudAclMetadata
 
 
@@ -35,7 +35,7 @@ class FlextLdifServersOudCommentsAcl:
 
     @staticmethod
     def _collect_acl_from_extensions(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         acl_comments_dict: t.MutableStrSequenceMapping,
         acl_attr_names_to_skip: set[str],
     ) -> None:
@@ -77,7 +77,7 @@ class FlextLdifServersOudCommentsAcl:
 
     @staticmethod
     def _collect_acl_from_transformations(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         acl_comments_dict: t.MutableStrSequenceMapping,
         acl_attr_names_to_skip: set[str],
     ) -> None:

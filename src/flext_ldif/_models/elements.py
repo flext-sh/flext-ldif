@@ -21,7 +21,7 @@ class FlextLdifModelsBasesParts:
     a single nested class hierarchy using MRO inheritance.
 
     Usage::
-        from flext_cli import m
+        from flext_cli import m, p
         from flext_ldif._models import FlextLdifModelsBases
 
         Base = m.StrictModel

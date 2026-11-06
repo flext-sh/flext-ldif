@@ -7,14 +7,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from tests._utilities.utilities_entries import TestsFlextLdifEntryBuildersMixin
-    from tests._utilities.utilities_ldap import TestsFlextLdifLdapClientMixin
+    from tests._utilities.utilities_entries import TestsFlextLdifEntryBuilders
+    from tests._utilities.utilities_ldap import TestsFlextLdifLdapClient
     from tests._utilities.utilities_schema import (
         PARSE_DISPATCH,
         TestsFlextLdifSchemaExpectations,
@@ -26,8 +25,8 @@ if TYPE_CHECKING:
 
 __all__: tuple[str, ...] = (
     "PARSE_DISPATCH",
-    "TestsFlextLdifEntryBuildersMixin",
-    "TestsFlextLdifLdapClientMixin",
+    "TestsFlextLdifEntryBuilders",
+    "TestsFlextLdifLdapClient",
     "TestsFlextLdifSchemaExpectations",
     "TestsSchemaAclAssertionsMixin",
     "assert_field_eq",
@@ -37,14 +36,14 @@ __all__: tuple[str, ...] = (
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({
+    {
         "PARSE_DISPATCH": ".utilities_schema",
-        "TestsFlextLdifEntryBuildersMixin": ".utilities_entries",
-        "TestsFlextLdifLdapClientMixin": ".utilities_ldap",
+        "TestsFlextLdifEntryBuilders": ".utilities_entries",
+        "TestsFlextLdifLdapClient": ".utilities_ldap",
         "TestsFlextLdifSchemaExpectations": ".utilities_schema",
         "TestsSchemaAclAssertionsMixin": ".utilities_schema",
         "assert_field_eq": ".utilities_schema",
         "assert_must_contain": ".utilities_schema",
-    }),
+    },
     public_exports=__all__,
 )

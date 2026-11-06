@@ -10,8 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from tests import c, tm, u
 
 
@@ -21,7 +19,7 @@ class TestsFlextLdifUtilitiesComprehensive:
     # --- server type normalization -------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("raw", "expected"),
         [
             ("oud", "oud"),
@@ -45,7 +43,7 @@ class TestsFlextLdifUtilitiesComprehensive:
     @staticmethod
     def test_normalize_server_type_rejects_unknown_type() -> None:
         """An unknown server type raises ValueError naming the invalid input."""
-        with pytest.raises(ValueError, match="bogus"):
+        with u.Tests.raises(ValueError, match="bogus"):
             u.Ldif.normalize_server_type("bogus")
 
     @staticmethod
@@ -58,7 +56,7 @@ class TestsFlextLdifUtilitiesComprehensive:
     # --- DN value escaping ---------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "value",
         ["a,b+c", 'quote"here', "back\\slash", "semi;colon", "plain", ""],
     )
@@ -77,7 +75,7 @@ class TestsFlextLdifUtilitiesComprehensive:
     # --- base64 detection ----------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [("hello", False), (" leading", True), ("café", True)],
     )

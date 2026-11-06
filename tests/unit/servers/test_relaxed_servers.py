@@ -9,14 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_ldif.servers import (
     FlextLdifServersRelaxed,
     FlextLdifServersRelaxedEntry,
     FlextLdifServersRelaxedSchema,
 )
-from tests import c, m, p, t, tm
+from tests import c, m, p, t, tm, u
 
 
 def _schema_attribute(
@@ -24,7 +22,7 @@ def _schema_attribute(
     name: str,
     desc: str,
     syntax: str,
-) -> m.Ldif.SchemaAttribute:
+) -> p.Ldif.SchemaAttribute:
     """Build a minimal RFC attribute model with every optional field unset.
 
     Returns:
@@ -62,21 +60,21 @@ def _assert_parse_input_success(
 
 
 _CAN_HANDLE_ATTRIBUTE_CASES = (
-    pytest.param("( 1.2.3 NAME 'test' )", True, id="valid_attr"),
-    pytest.param("MALFORMED", False, id="malformed_no_oid"),
-    pytest.param("", False, id="empty"),
-    pytest.param("   ", False, id="whitespace"),
+    u.Tests.param("( 1.2.3 NAME 'test' )", True, id="valid_attr"),
+    u.Tests.param("MALFORMED", False, id="malformed_no_oid"),
+    u.Tests.param("", False, id="empty"),
+    u.Tests.param("   ", False, id="whitespace"),
 )
 
 _CAN_HANDLE_OBJECTCLASS_CASES = (
-    pytest.param("( 1.2.3 NAME 'test' STRUCTURAL )", True, id="valid_oc"),
-    pytest.param("BROKEN CLASS", False, id="malformed_no_oid"),
-    pytest.param("", False, id="empty"),
-    pytest.param("   ", False, id="whitespace"),
+    u.Tests.param("( 1.2.3 NAME 'test' STRUCTURAL )", True, id="valid_oc"),
+    u.Tests.param("BROKEN CLASS", False, id="malformed_no_oid"),
+    u.Tests.param("", False, id="empty"),
+    u.Tests.param("   ", False, id="whitespace"),
 )
 
 
-@pytest.mark.unit
+@c.Tests.MARK.unit
 class TestsFlextLdifRelaxed:
     """Behavioral test suite for the Relaxed server public contract.
 
@@ -87,7 +85,7 @@ class TestsFlextLdifRelaxed:
     - Error recovery and edge cases via public model state
     """
 
-    @pytest.fixture
+    @u.Tests.fixture
     def schema_server() -> FlextLdifServersRelaxedSchema:
         """Create relaxed schema server instance.
 
@@ -97,7 +95,7 @@ class TestsFlextLdifRelaxed:
         """
         return FlextLdifServersRelaxedSchema()
 
-    @pytest.fixture
+    @u.Tests.fixture
     def acl_server() -> FlextLdifServersRelaxed.Acl:
         """Create relaxed ACL server instance.
 
@@ -107,8 +105,8 @@ class TestsFlextLdifRelaxed:
         """
         return FlextLdifServersRelaxed.Acl()
 
+    @u.Tests.fixture
     @staticmethod
-    @pytest.fixture
     def entry_server(
         acl_server: FlextLdifServersRelaxed.Acl,
     ) -> FlextLdifServersRelaxedEntry:
@@ -121,7 +119,7 @@ class TestsFlextLdifRelaxed:
         return FlextLdifServersRelaxedEntry(acl_server=acl_server)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("scenario", "definition_data"),
         list(c.Tests.RELAXED_ATTRIBUTE_DEFINITIONS.items()),
         ids=list(c.Tests.RELAXED_ATTRIBUTE_DEFINITIONS.keys()),
@@ -155,14 +153,13 @@ class TestsFlextLdifRelaxed:
             _ = tm.ok(result.failure)
 
     @staticmethod
-    @pytest.mark.parametrize(
-        ("_scenario", "definition_data"),
-        list(c.Tests.RELAXED_OBJECTCLASS_DEFINITIONS.items()),
+    @c.Tests.MARK.parametrize(
+        "definition_data",
+        list(c.Tests.RELAXED_OBJECTCLASS_DEFINITIONS.values()),
         ids=list(c.Tests.RELAXED_OBJECTCLASS_DEFINITIONS.keys()),
     )
     def test_parse_objectclass_scenarios(
         schema_server: FlextLdifServersRelaxedSchema,
-        _scenario: str,
         definition_data: tuple[str, bool],
     ) -> None:
         """Test parse_objectclass with various scenarios."""
@@ -176,7 +173,7 @@ class TestsFlextLdifRelaxed:
     ) -> None:
         """Test parse_attribute stores original definition for recovery."""
         original = "( 1.2.3.4 NAME 'test' SYNTAX 1.2.3 )"
-        parsed: m.Ldif.SchemaAttribute = tm.ok(schema_server.parse_attribute(original))
+        parsed: p.Ldif.SchemaAttribute = tm.ok(schema_server.parse_attribute(original))
         metadata = tm.not_none(parsed.metadata)
         tm.that(metadata.extensions.get("original_format"), eq=original)
 
@@ -196,14 +193,13 @@ class TestsFlextLdifRelaxed:
         tm.that(len(written), gt=0)
 
     @staticmethod
-    @pytest.mark.parametrize(
-        ("_name", "acl_data"),
-        list(c.Tests.RELAXED_ACL_DEFINITIONS.items()),
+    @c.Tests.MARK.parametrize(
+        "acl_data",
+        list(c.Tests.RELAXED_ACL_DEFINITIONS.values()),
         ids=list(c.Tests.RELAXED_ACL_DEFINITIONS.keys()),
     )
     def test_parse_acl_scenarios(
         acl_server: FlextLdifServersRelaxed.Acl,
-        _name: str,
         acl_data: tuple[str, bool],
     ) -> None:
         """Test ACL parsing in relaxed mode with various scenarios."""
@@ -232,7 +228,7 @@ class TestsFlextLdifRelaxed:
         tm.that(tm.ok(acl_server.write(acl_data)), eq=raw_acl)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("raw_dn", "normalized"),
         [
             ("cn=Test, dc=Example", "cn=Test,dc=Example"),
@@ -252,7 +248,7 @@ class TestsFlextLdifRelaxed:
         tm.that(tm.ok(result), eq=normalized)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("bad_dn", "error_fragment"),
         [("", "empty"), ("not a dn at all", "missing '=' separator")],
         ids=["empty_dn", "no_separator"],
@@ -268,7 +264,7 @@ class TestsFlextLdifRelaxed:
         tm.that(result.error, has=[error_fragment])
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("parse_type", "bad_input"),
         [
             ("attribute", "( 1.2.3.4 \x00\x01\x02 INVALID )"),
@@ -282,14 +278,14 @@ class TestsFlextLdifRelaxed:
         bad_input: str,
     ) -> None:
         """Test relaxed mode recovers from binary content if OID present."""
-        parsed: m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
+        parsed: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
         if parse_type == "attribute":
-            attribute_result: p.Result[m.Ldif.SchemaAttribute] = (
+            attribute_result: p.Result[p.Ldif.SchemaAttribute] = (
                 schema_server.parse_attribute(bad_input)
             )
             parsed = tm.ok(attribute_result)
         else:
-            objectclass_result: p.Result[m.Ldif.SchemaObjectClass] = (
+            objectclass_result: p.Result[p.Ldif.SchemaObjectClass] = (
                 schema_server.parse_objectclass(bad_input)
             )
             parsed = tm.ok(objectclass_result)
@@ -302,7 +298,7 @@ class TestsFlextLdifRelaxed:
         )
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("parse_type", "definition", "expected_success"),
         [
             ("attribute", "( \x00 )", False),
@@ -325,7 +321,7 @@ class TestsFlextLdifRelaxed:
         expected_success: bool,
     ) -> None:
         """Test relaxed fallback requires an OID to recover binary definitions."""
-        result: p.Result[m.Ldif.SchemaAttribute] | p.Result[m.Ldif.SchemaObjectClass]
+        result: p.Result[p.Ldif.SchemaAttribute] | p.Result[p.Ldif.SchemaObjectClass]
         if parse_type == "attribute":
             result = schema_server.parse_attribute(definition)
         else:
@@ -333,7 +329,7 @@ class TestsFlextLdifRelaxed:
         tm.that(result.success, eq=expected_success)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "definition",
         ["( 1.2.3 NAME 'valid' )", "MALFORMED", "( 1.2.3 \x00 garbage )"],
         ids=["valid", "malformed", "binary_noise"],
@@ -346,7 +342,7 @@ class TestsFlextLdifRelaxed:
         tm.ok(schema_server.can_handle_attribute(definition))
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "definition",
         ["( 1.2.3 NAME 'valid' STRUCTURAL )", "BROKEN CLASS", "( 1.2.3 \x00 garbage )"],
         ids=["valid", "malformed", "binary_noise"],
@@ -359,7 +355,7 @@ class TestsFlextLdifRelaxed:
         tm.ok(schema_server.can_handle_objectclass(definition))
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("entry_dn", "attributes"),
         [("cn=x,dc=y", {"cn": ["x"]}), ("", {}), ("garbled dn", {"weird": ["v"]})],
         ids=["well_formed", "empty", "malformed"],
@@ -373,7 +369,7 @@ class TestsFlextLdifRelaxed:
         tm.ok(entry_server.can_handle(entry_dn, attributes))
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("definition", "expected_success"),
         _CAN_HANDLE_ATTRIBUTE_CASES,
     )
@@ -391,7 +387,7 @@ class TestsFlextLdifRelaxed:
         )
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("definition", "expected_success"),
         _CAN_HANDLE_OBJECTCLASS_CASES,
     )

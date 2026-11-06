@@ -24,12 +24,12 @@ class FlextLdifCategorizationRules(FlextLdifServer):
     @staticmethod
     def _build_rejection_tracker() -> MutableMapping[
         str,
-        MutableSequence[m.Ldif.Entry],
+        MutableSequence[p.Ldif.Entry],
     ]:
         """Build the canonical rejection tracker structure for one categorization run.
 
         Returns:
-            The resulting ``MutableMapping[str, MutableSequence[m.Ldif.Entry]]``.
+            The resulting ``MutableMapping[str, MutableSequence[p.Ldif.Entry]]``.
 
         """
         return {
@@ -98,7 +98,10 @@ class FlextLdifCategorizationRules(FlextLdifServer):
         ),
     ] = c.Ldif.ServerTypes.RFC.value
     rejection_tracker: Annotated[
-        MutableMapping[str, MutableSequence[m.Ldif.Entry]],
+        MutableMapping[
+            str,
+            MutableSequence[Annotated[p.Ldif.Entry, t.schema_for_model(m.Ldif.Entry)]],
+        ],
         m.Field(
             default_factory=_build_rejection_tracker,
             exclude=True,
@@ -106,19 +109,19 @@ class FlextLdifCategorizationRules(FlextLdifServer):
         ),
     ] = m.Field(default_factory=_build_rejection_tracker)
 
-    def _normalize_initial_category_rules(self) -> m.Ldif.CategoryRules:
+    def _normalize_initial_category_rules(self) -> p.Ldif.CategoryRules:
         """Normalize initial categorization rules into the canonical model.
 
         Returns:
             The resulting ``m.Ldif.CategoryRules``.
 
         """
-        validated_rules: m.Ldif.CategoryRules = m.Ldif.CategoryRules.model_validate(
+        validated_rules: p.Ldif.CategoryRules = m.Ldif.CategoryRules.model_validate(
             self.categorization_rules or {},
         )
         return validated_rules
 
-    def _whitelist_rules_with_oid_filters(self) -> m.Ldif.WhitelistRules | None:
+    def _whitelist_rules_with_oid_filters(self) -> p.Ldif.WhitelistRules | None:
         """Return normalized whitelist rules only when OID filters are configured."""
         whitelist_rules = self.schema_whitelist_rules
         if whitelist_rules is None or not whitelist_rules.has_oid_filters:
@@ -160,7 +163,7 @@ class FlextLdifCategorizationRules(FlextLdifServer):
         category_map[key_str] = existing | normalized_value
 
     @staticmethod
-    def matches_schema_entry(entry: m.Ldif.Entry) -> bool:
+    def matches_schema_entry(entry: p.Ldif.Entry) -> bool:
         """Check if entry is a schema definition.
 
         Returns:
@@ -175,7 +178,7 @@ class FlextLdifCategorizationRules(FlextLdifServer):
 
     @staticmethod
     def _check_hierarchy_priority(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         constants: type[p.Ldif.ServerConstants],
     ) -> bool:
         """Check if entry matches HIERARCHY_PRIORITY_OBJECTCLASSES.
@@ -200,8 +203,8 @@ class FlextLdifCategorizationRules(FlextLdifServer):
             The resulting ``MutableSequence[str]``.
 
         """
-        if constants is None:
-            return list(c.Ldif.DEFAULT_CATEGORIZATION_PRIORITY)
+        if constants is None or not constants.CATEGORIZATION_PRIORITY:
+            return [cat.value for cat in c.Ldif.DEFAULT_CATEGORIZATION_PRIORITY]
         return [
             item
             for item in constants.CATEGORIZATION_PRIORITY
@@ -222,7 +225,7 @@ class FlextLdifCategorizationRules(FlextLdifServer):
 
     @staticmethod
     def _match_entry_to_category(
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         priority_order: MutableSequence[str],
         category_map: t.MutableFrozensetMapping,
     ) -> tuple[str, str | None]:
@@ -295,19 +298,19 @@ class FlextLdifCategorizationRules(FlextLdifServer):
 
     def _normalize_rules(
         self,
-        rules: m.Ldif.CategoryRules | t.MutableJsonMapping | None,
-    ) -> p.Result[m.Ldif.CategoryRules]:
+        rules: p.Ldif.CategoryRules | t.MutableJsonMapping | None,
+    ) -> p.Result[p.Ldif.CategoryRules]:
         """Normalize rules to CategoryRules model.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.CategoryRules]``.
+            The resulting ``p.Result[p.Ldif.CategoryRules]``.
 
         """
         if isinstance(rules, m.Ldif.CategoryRules):
-            return r[m.Ldif.CategoryRules].ok(rules)
+            return r[p.Ldif.CategoryRules].ok(rules)
         if rules is None:
-            return r[m.Ldif.CategoryRules].ok(self._normalize_initial_category_rules())
-        return r[m.Ldif.CategoryRules].from_result(
+            return r[p.Ldif.CategoryRules].ok(self._normalize_initial_category_rules())
+        return r[p.Ldif.CategoryRules].from_result(
             u.try_(
                 lambda: m.Ldif.CategoryRules.model_validate(rules),
                 catch=(

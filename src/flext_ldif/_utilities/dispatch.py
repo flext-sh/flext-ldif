@@ -32,7 +32,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def as_entry(
-        value: t.ModelInput[t.Ldif.EntryLike] | p.Model,
+        value: t.ModelInput[t.Ldif.EntryLike] | p.BaseModel,
     ) -> FlextLdifModels.Ldif.Entry:
         """Coerce an entry-like value into the canonical LDIF entry model.
 

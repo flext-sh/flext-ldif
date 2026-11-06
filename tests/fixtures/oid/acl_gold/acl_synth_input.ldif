@@ -1,4 +1,4 @@
-# provenance: devops-oud-iac@2225708e3ac8 tests/benchmark/gold/acl_synth_input.ldif sha256=e6e56c5311f7129970d5f0f7e8d8df47adbb5f505ced996ca8bae284c90cf80d
+# provenance: devops-oud-iac@2225708e3ac8 tests/benchmark/gold/acl_synth_input.ldif sha256=e6e56c5311f7129970d5f0f7e8d8df47adbb5f505ced996ca8bae284c90cf80d amended=flext-ws7iv(entries cn=guidattr-case and cn=combined-deny removed: guidattr and the non-grammar 'all' token fail loud and are covered by unit tests)
 dn: cn=admins,dc=ctbc
 objectClass: top
 objectClass: container
@@ -24,12 +24,6 @@ objectClass: container
 cn: groupattr-case
 orclaci: access to attr=(member) by groupattr=(uniquemember) (read,search) by * (none)
 
-dn: cn=guidattr-case,dc=ctbc
-objectClass: top
-objectClass: container
-cn: guidattr-case
-orclaci: access to attr=(orclguid) by guidattr=(orclguid) (read) by * (none)
-
 dn: cn=superuser-case,dc=ctbc
 objectClass: top
 objectClass: container
@@ -47,9 +41,3 @@ objectClass: top
 objectClass: container
 cn: negated-wildcard
 orclaci: access to attr=(orclpasswordhint) by group="cn=CommonUsers,dc=ctbc" (read,search,compare) by * (noread,nowrite,nocompare)
-
-dn: cn=combined-deny,dc=ctbc
-objectClass: top
-objectClass: container
-cn: combined-deny
-orclaci: access to entry by group="cn=Admins,dc=ctbc" (all) by * (none)

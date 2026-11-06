@@ -11,7 +11,7 @@ from typing import ClassVar
 
 from flext_cli import u
 
-from flext_ldif import c, m, t
+from flext_ldif import c, m, p, t
 from flext_ldif._utilities._metadata import (
     FlextLdifUtilitiesMetadataMatch,
     FlextLdifUtilitiesMetadataNameDesc,
@@ -147,7 +147,7 @@ class FlextLdifUtilitiesMetadataSchemaAnalysis:
     def _build_schema_format_model(
         definition: str,
         combined: t.Ldif.MutableMetadataMapping,
-    ) -> m.Ldif.SchemaFormatDetails:
+    ) -> p.Ldif.SchemaFormatDetails:
         """Build SchemaFormatDetails model from combined details.
 
         Returns:
@@ -182,7 +182,7 @@ class FlextLdifUtilitiesMetadataSchemaAnalysis:
     @staticmethod
     def analyze_schema_formatting(
         definition: str,
-    ) -> m.Ldif.SchemaFormatDetails:
+    ) -> p.Ldif.SchemaFormatDetails:
         """Analyze schema definition to extract ALL formatting details.
 
         Returns:
@@ -199,7 +199,7 @@ class FlextLdifUtilitiesMetadataSchemaAnalysis:
 
     @staticmethod
     def preserve_schema_formatting(
-        metadata: m.Ldif.ServerMetadata,
+        metadata: p.Ldif.ServerMetadata,
         definition: str,
     ) -> None:
         """Preserve complete schema formatting details for round-trip."""
@@ -208,7 +208,7 @@ class FlextLdifUtilitiesMetadataSchemaAnalysis:
                 definition,
             )
         )
-        target: m.Ldif.ServerMetadata = metadata
+        target: p.Ldif.ServerMetadata = metadata
         target.schema_format_details = formatting_details
 
 

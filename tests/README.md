@@ -71,7 +71,7 @@ pytest -m performance
 
 ### Test File Structure
 
-```
+```text
 tests/
 ├── conftest.py                     # Pytest configuration and fixtures
 ├── docker_fixtures.py             # Docker-based integration test fixtures
@@ -120,7 +120,7 @@ def test_flext_ldif_entry_validation(sample_entry):
 
     # Test business rule violations
     invalid_entry = FlextLdifModels.Entry(dn="", attributes={})
-    with pytest.raises(FlextLdifValidationError):
+    with u.Tests.raises(FlextLdifValidationError):
         result = invalid_entry.validate_business_rules()
         assert not result.is_success
 ```
@@ -353,7 +353,7 @@ def ldap_server():
 
 ### Sample LDIF Files
 
-```
+```text
 tests/data/
 ├── sample_basic.ldif              # Basic LDIF with standard entries
 ├── sample_complex.ldif            # Complex LDIF with all features

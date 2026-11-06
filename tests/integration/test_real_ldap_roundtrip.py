@@ -18,9 +18,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
-
-from tests import ldif, m, tm, u
+from tests import c, ldif, m, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -37,7 +35,7 @@ _LDIF_OPERATIONAL_ATTRS: frozenset[str] = frozenset({
 })
 
 
-@pytest.fixture
+@u.Tests.fixture
 def flext_api() -> p.Ldif.LdifClient:
     """Live ``ldif()`` API instance.
 
@@ -48,8 +46,8 @@ def flext_api() -> p.Ldif.LdifClient:
     return ldif()
 
 
-@pytest.mark.docker
-@pytest.mark.integration
+@c.Tests.MARK.docker
+@c.Tests.MARK.integration
 class TestsFlextLdifRealLdapRoundtrip:
     """Behavioral contract: LDAP -> LDIF -> LDAP preserves entry state."""
 
@@ -80,8 +78,8 @@ class TestsFlextLdifRealLdapRoundtrip:
     @staticmethod
     def _write_parse_entry(
         flext_api: p.Ldif.LdifClient,
-        source_entry: m.Ldif.Entry,
-    ) -> m.Ldif.Entry:
+        source_entry: p.Ldif.Entry,
+    ) -> p.Ldif.Entry:
         """Serialize one entry to LDIF and parse the LDIF text back (boundary).
 
         Returns:

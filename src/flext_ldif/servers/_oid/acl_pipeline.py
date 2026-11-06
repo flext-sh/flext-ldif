@@ -32,54 +32,52 @@ class FlextLdifServersOidAclPipeline:
         oid_acl_lines: Sequence[str],
         *,
         base_dn: str = "",
-    ) -> p.Result[tuple[m.Ldif.AciRule, ...]]:
+    ) -> p.Result[tuple[p.Ldif.AciRule, ...]]:
         """Parse and assemble each OID ACL line into one typed OUD aci rule.
 
-        Each rule carries its rendered-ready allows and the per-subject
+        Each rule carries its allow and deny clauses and the per-subject
         :class:`m.Ldif.AclSubjectOutcome` records. A malformed line or unknown
         perm token surfaces as ``r.fail``.
 
         Returns:
-            The resulting ``p.Result[tuple[m.Ldif.AciRule, ...]]``.
+            The resulting ``p.Result[tuple[p.Ldif.AciRule, ...]]``.
 
         """
-        rules: list[m.Ldif.AciRule] = []
+        rules: list[p.Ldif.AciRule] = []
         for line in oid_acl_lines:
             rule = FlextLdifServersOidAclConvert.parse_oid_acl_line(dn, line)
             if rule.failure:
-                return r[tuple[m.Ldif.AciRule, ...]].from_failure(rule)
+                return r[tuple[p.Ldif.AciRule, ...]].from_failure(rule)
             aci = FlextLdifServersOidAclAssemble.build_aci_rule(
                 rule.value,
                 base_dn=base_dn,
             )
             if aci.failure:
-                return r[tuple[m.Ldif.AciRule, ...]].from_failure(aci)
+                return r[tuple[p.Ldif.AciRule, ...]].from_failure(aci)
             rules.append(aci.value)
-        return r[tuple[m.Ldif.AciRule, ...]].ok(tuple(rules))
+        return r[tuple[p.Ldif.AciRule, ...]].ok(tuple(rules))
 
     @staticmethod
-    def render_aci_values(rules: tuple[m.Ldif.AciRule, ...]) -> Sequence[str]:
-        """Render rules with allows to deduplicated raw ``aci`` attribute values.
+    def render_aci_values(rules: tuple[p.Ldif.AciRule, ...]) -> Sequence[str]:
+        """Render every allow and deny clause to deduplicated ``aci`` values.
 
-        Duplicate values (whitespace- and case-normalized) keep first order.
+        Each rule renders one value per clause targetscope; duplicate values
+        (whitespace- and case-normalized) keep first order.
 
         Returns:
-            The resulting ``Sequence[str]``.
+            The raw ``aci`` attribute values.
 
         """
         values: list[str] = []
         seen: set[str] = set()
         for aci in rules:
-            if not aci.allows:
-                continue
-            rendered = FlextLdifServersOidAclRender.render_aci_string(
-                aci,
-            ).removeprefix(c.Ldif.ACI_PREFIX)
-            normalized = c.Ldif.WHITESPACE_RE.sub(" ", rendered.strip().lower())
-            if normalized in seen:
-                continue
-            seen.add(normalized)
-            values.append(rendered)
+            for line in FlextLdifServersOidAclRender.render_aci_strings(aci):
+                rendered = line.removeprefix(c.Ldif.ACI_PREFIX)
+                normalized = c.Ldif.WHITESPACE_RE.sub(" ", rendered.strip().lower())
+                if normalized in seen:
+                    continue
+                seen.add(normalized)
+                values.append(rendered)
         return tuple(values)
 
     @classmethod
@@ -93,10 +91,11 @@ class FlextLdifServersOidAclPipeline:
         """Convert an entry's OID ACL lines to deduplicated OUD ``aci`` values.
 
         Each ``orclaci:``/``orclentrylevelaci:`` line is parsed → built →
-        rendered; deny-only rules emit nothing; duplicate aci values (whitespace-
-        and case-normalized) are merged keeping first order. A malformed line or
-        unknown perm token surfaces as ``r.fail``. Returned values exclude the
-        ``aci: `` prefix (they are raw ``aci`` attribute values).
+        rendered with its allow and deny clauses; duplicate aci values
+        (whitespace- and case-normalized) are merged keeping first order. A
+        malformed line or unknown perm token surfaces as ``r.fail``. Returned
+        values exclude the ``aci: `` prefix (they are raw ``aci`` attribute
+        values).
 
         Returns:
             The resulting ``p.Result[Sequence[str]]``.
@@ -109,11 +108,11 @@ class FlextLdifServersOidAclPipeline:
     @classmethod
     def convert_entry_acls(
         cls,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         source_type_norm: str,
         target_type_norm: str,
         base_dn: str = "",
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Rewrite an OID entry's ACL attributes to a single OUD ``aci`` attribute.
 
         Fires only for oid→oud entries carrying ``orclaci``/``orclentrylevelaci``;
@@ -126,33 +125,33 @@ class FlextLdifServersOidAclPipeline:
         ``r.fail``; non-matching entries pass through unchanged.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[p.Ldif.Entry]``.
 
         """
         if not (
             source_type_norm == c.Ldif.ServerTypes.OID
             and target_type_norm == c.Ldif.ServerTypes.OUD
         ):
-            return r[m.Ldif.Entry].ok(entry)
+            return r[p.Ldif.Entry].ok(entry)
         attrs_model = entry.attributes
         if attrs_model is None or not attrs_model.attributes:
-            return r[m.Ldif.Entry].ok(entry)
+            return r[p.Ldif.Entry].ok(entry)
         current = dict(attrs_model.attributes)
         acl_names = [name for name in current if name.lower() in c.Ldif.AclConvertType]
         if not acl_names:
-            return r[m.Ldif.Entry].ok(entry)
+            return r[p.Ldif.Entry].ok(entry)
         dn_value = entry.dn.value if entry.dn else ""
         oid_lines = [
             f"{name}: {value}" for name in acl_names for value in current[name]
         ]
         skipped = any(rule.match(dn_value) for rule in c.Ldif.ORACLE_INTERNAL_DN_RES)
         rules = (
-            r[tuple[m.Ldif.AciRule, ...]].ok(())
+            r[tuple[p.Ldif.AciRule, ...]].ok(())
             if skipped
             else cls.build_aci_rules(dn_value, oid_lines, base_dn=base_dn)
         )
         if rules.failure:
-            return r[m.Ldif.Entry].from_failure(rules)
+            return r[p.Ldif.Entry].from_failure(rules)
         for name in acl_names:
             del current[name]
         if values := cls.render_aci_values(rules.value):
@@ -177,7 +176,7 @@ class FlextLdifServersOidAclPipeline:
                 acl_conversion=conversion,
             )
         )
-        return r[m.Ldif.Entry].ok(
+        return r[p.Ldif.Entry].ok(
             entry.model_copy(update={"attributes": new_attrs, "metadata": metadata}),
         )
 

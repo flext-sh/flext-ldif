@@ -75,7 +75,7 @@ def _active_logical_lines(ldif_text: str) -> list[str]:
     return logical_lines
 
 
-def _write_oud_phase(api: p.Ldif.LdifClient, parsed: m.Ldif.ParseResponse) -> str:
+def _write_oud_phase(api: p.Ldif.LdifClient, parsed: p.Ldif.ParseResponse) -> str:
     """Write parsed entries through the OUD phase path and return the content.
 
     Returns:

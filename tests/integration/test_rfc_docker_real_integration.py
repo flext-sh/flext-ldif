@@ -14,17 +14,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from flext_ldif import FlextLdif
 from flext_ldif.services import FlextLdifParser, FlextLdifServer, FlextLdifWriter
-from tests import c, m, tm
+from tests import c, m, tm, u
 
 
 class TestsFlextLdifRfcDockerRealIntegration:
     """Behavioral contract of parser/writer against real LDIF fixtures."""
 
-    @pytest.fixture
+    @u.Tests.fixture
     def server() -> FlextLdifServer:
         """Real server registry used as writer collaborator.
 
@@ -34,7 +32,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         """
         return FlextLdifServer(registry=FlextLdif().registry)
 
-    @pytest.fixture
+    @u.Tests.fixture
     def parser() -> FlextLdifParser:
         """Parser under test.
 
@@ -47,7 +45,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
     # --- parse: real fixtures ------------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("subdir", "filename"),
         [
             (c.Tests.OID, "oid_entries_fixtures.ldif"),
@@ -63,7 +61,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         """Parsing real entries succeeds and statistics agree with entry list."""
         entries_file = c.Tests.FIXTURES_DIR / subdir / filename
         if not entries_file.exists():
-            pytest.skip(f"Fixture not found: {entries_file}")
+            u.Tests.skip(f"Fixture not found: {entries_file}")
 
         result = parser.parse_ldif_file(entries_file)
 
@@ -75,7 +73,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         tm.that(response.detected_server_type, where=bool)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("subdir", "filename"),
         [
             (c.Tests.OID, "oid_schema_fixtures.ldif"),
@@ -90,7 +88,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         """Parsing real schema definitions returns a successful result."""
         schema_file = c.Tests.FIXTURES_DIR / subdir / filename
         if not schema_file.exists():
-            pytest.skip(f"Fixture not found: {schema_file}")
+            u.Tests.skip(f"Fixture not found: {schema_file}")
 
         result = parser.parse_ldif_file(schema_file)
 
@@ -108,7 +106,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         """WriteResponse output_path and content mirror the file on disk."""
         source_file = c.Tests.FIXTURES_DIR / c.Tests.OID / "oid_entries_fixtures.ldif"
         if not source_file.exists():
-            pytest.skip(f"Fixture not found: {source_file}")
+            u.Tests.skip(f"Fixture not found: {source_file}")
         response = parser.parse_ldif_file(source_file).unwrap()
 
         output_file = tmp_path / "written.ldif"
@@ -139,10 +137,10 @@ class TestsFlextLdifRfcDockerRealIntegration:
         """OUD ACL entries write to a non-empty file via the public API."""
         acl_file = c.Tests.FIXTURES_DIR / c.Tests.OUD / "oud_acl_fixtures.ldif"
         if not acl_file.exists():
-            pytest.skip(f"Fixture not found: {acl_file}")
+            u.Tests.skip(f"Fixture not found: {acl_file}")
         parse_result = parser.parse_ldif_file(acl_file)
         if not parse_result.success:
-            pytest.skip(f"Failed to parse ACL fixture: {parse_result.error}")
+            u.Tests.skip(f"Failed to parse ACL fixture: {parse_result.error}")
 
         output_file = tmp_path / "acl_output.ldif"
         writer = FlextLdifWriter(registry=server.registry)
@@ -167,7 +165,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
         """Parse -> write -> reparse preserves entry count and DN identities."""
         source_file = c.Tests.FIXTURES_DIR / c.Tests.OID / "oid_entries_fixtures.ldif"
         if not source_file.exists():
-            pytest.skip(f"Fixture not found: {source_file}")
+            u.Tests.skip(f"Fixture not found: {source_file}")
         original = parser.parse_ldif_file(source_file).unwrap()
         original_dns = {
             entry.dn.value for entry in original.entries if entry.dn is not None
@@ -201,7 +199,7 @@ class TestsFlextLdifRfcDockerRealIntegration:
 
         tm.fail(result)
         tm.not_none(result.error)
-        with pytest.raises(RuntimeError):
+        with u.Tests.raises(RuntimeError):
             result.unwrap()
 
     @staticmethod

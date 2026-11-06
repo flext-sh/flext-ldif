@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from flext_ldif import c, m, t, u
+from flext_ldif import c, p, t, u
 from flext_ldif.servers._oud import (
     FlextLdifServersOudCommentsAcl,
     FlextLdifServersOudTransform,
@@ -25,7 +25,7 @@ class FlextLdifServersOudComments(FlextLdifServersOudCommentsAcl):
     def _add_attribute_transformation_comments(
         comment_lines: MutableSequence[str],
         attr_name: str,
-        _transformation: m.Ldif.AttributeTransformation,
+        _transformation: p.Ldif.AttributeTransformation,
         comment_type: str,
     ) -> None:
         """Add comment for attribute transformation."""
@@ -34,8 +34,8 @@ class FlextLdifServersOudComments(FlextLdifServersOudCommentsAcl):
 
     @staticmethod
     def add_original_entry_comments(
-        entry_data: m.Ldif.Entry,
-        write_options: m.Ldif.WriteFormatOptions | None,
+        entry_data: p.Ldif.Entry,
+        write_options: p.Ldif.WriteFormatOptions | None,
     ) -> MutableSequence[str]:
         """Add original entry as commented LDIF block.
 
@@ -72,8 +72,8 @@ class FlextLdifServersOudComments(FlextLdifServersOudCommentsAcl):
     @staticmethod
     def add_oud_acl_comments(
         comment_lines: MutableSequence[str],
-        entry: m.Ldif.Entry,
-        format_options: m.Ldif.WriteFormatOptions | None = None,
+        entry: p.Ldif.Entry,
+        format_options: p.Ldif.WriteFormatOptions | None = None,
     ) -> set[str]:
         """Add OUD-specific ACL comments for phases 01-03.
 
@@ -109,7 +109,7 @@ class FlextLdifServersOudComments(FlextLdifServersOudCommentsAcl):
     @staticmethod
     def _add_rejection_reason_comments(
         comment_lines: MutableSequence[str],
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
     ) -> None:
         """Add comments with rejection reason if entry was rejected."""
         if (
@@ -141,13 +141,12 @@ class FlextLdifServersOudComments(FlextLdifServersOudCommentsAcl):
     @staticmethod
     def _add_transformation_comments(
         comment_lines: MutableSequence[str],
-        entry: m.Ldif.Entry,
-        format_options: m.Ldif.WriteFormatOptions | None = None,
+        entry: p.Ldif.Entry,
+        format_options: p.Ldif.WriteFormatOptions | None = None,
     ) -> None:
         """Add transformation comments for attribute changes.
 
         Includes OUD-specific ACL handling.
-
 
         handling.
         """
@@ -177,8 +176,8 @@ class FlextLdifServersOudComments(FlextLdifServersOudCommentsAcl):
     @staticmethod
     def _add_attribute_comments(
         comment_lines: MutableSequence[str],
-        entry: m.Ldif.Entry,
-        format_options: m.Ldif.WriteFormatOptions | None,
+        entry: p.Ldif.Entry,
+        format_options: p.Ldif.WriteFormatOptions | None,
         acl_attr_names_to_skip: set[str],
     ) -> set[str]:
         """Add transformation comments and return the processed attribute names.
@@ -221,8 +220,8 @@ class FlextLdifServersOudComments(FlextLdifServersOudCommentsAcl):
     @staticmethod
     def _add_removed_attribute_comments(
         comment_lines: MutableSequence[str],
-        entry: m.Ldif.Entry,
-        format_options: m.Ldif.WriteFormatOptions | None,
+        entry: p.Ldif.Entry,
+        format_options: p.Ldif.WriteFormatOptions | None,
         acl_attr_names_to_skip: set[str],
         processed_attrs: set[str],
     ) -> None:

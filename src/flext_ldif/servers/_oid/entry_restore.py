@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from flext_ldif import m, t, u
+from flext_ldif import p, t, u
 from flext_ldif.servers._oid import FlextLdifServersOidEntryBoolean
 from flext_ldif.servers._rfc import FlextLdifServersRfcEntry
 
@@ -19,7 +19,7 @@ class FlextLdifServersOidEntryRestore(
 ):
     """OID entry round-trip attribute denormalization from metadata."""
 
-    def restore_entry_from_metadata(self, entry_data: m.Ldif.Entry) -> m.Ldif.Entry:
+    def restore_entry_from_metadata(self, entry_data: p.Ldif.Entry) -> p.Ldif.Entry:
         """Restore OID-specific formats from metadata (RFC → OID denormalization).
 
         Returns:

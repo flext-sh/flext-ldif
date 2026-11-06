@@ -38,7 +38,7 @@ class FlextLdifServersBaseSchemaValues:
         if isinstance(value, str):
             return value
         try:
-            attribute: m.Ldif.SchemaAttribute = m.Ldif.SchemaAttribute.model_validate(
+            attribute: p.Ldif.SchemaAttribute = m.Ldif.SchemaAttribute.model_validate(
                 value,
             )
         except (
@@ -89,38 +89,38 @@ class FlextLdifServersBaseSchemaValues:
     @staticmethod
     def _coerce_attribute_model(
         value: t.JsonValue | t.Ldif.SchemaConversionValue,
-    ) -> p.Result[m.Ldif.SchemaAttribute]:
+    ) -> p.Result[p.Ldif.SchemaAttribute]:
         """Coerce raw value to a schema attribute model, propagating failures.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.SchemaAttribute]``.
+            The resulting ``p.Result[p.Ldif.SchemaAttribute]``.
 
         """
         try:
-            attribute: m.Ldif.SchemaAttribute = m.Ldif.SchemaAttribute.model_validate(
+            attribute: p.Ldif.SchemaAttribute = m.Ldif.SchemaAttribute.model_validate(
                 value,
             )
         except c.Ldif.EXC_LDIF_PARSE as exc:
-            return r[m.Ldif.SchemaAttribute].fail(str(exc), exception=exc)
-        return r[m.Ldif.SchemaAttribute].ok(attribute)
+            return r[p.Ldif.SchemaAttribute].fail(str(exc), exception=exc)
+        return r[p.Ldif.SchemaAttribute].ok(attribute)
 
     @staticmethod
     def _coerce_objectclass_model(
         value: t.JsonValue | t.Ldif.SchemaConversionValue,
-    ) -> p.Result[m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[p.Ldif.SchemaObjectClass]:
         """Coerce raw value to a schema objectClass model, propagating failures.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.SchemaObjectClass]``.
+            The resulting ``p.Result[p.Ldif.SchemaObjectClass]``.
 
         """
         try:
-            objectclass: m.Ldif.SchemaObjectClass = (
+            objectclass: p.Ldif.SchemaObjectClass = (
                 m.Ldif.SchemaObjectClass.model_validate(value)
             )
         except c.Ldif.EXC_LDIF_PARSE as exc:
-            return r[m.Ldif.SchemaObjectClass].fail(str(exc), exception=exc)
-        return r[m.Ldif.SchemaObjectClass].ok(objectclass)
+            return r[p.Ldif.SchemaObjectClass].fail(str(exc), exception=exc)
+        return r[p.Ldif.SchemaObjectClass].ok(objectclass)
 
     def _resolve_data(
         self,

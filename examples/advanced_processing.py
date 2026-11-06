@@ -18,7 +18,7 @@ from collections.abc import MutableSequence
 from datetime import UTC, datetime
 from pathlib import Path
 
-from examples import ExamplesFlextLdifUtilities, ldif, m, p, u
+from examples import ExamplesFlextLdifUtilities, ldif, p, u
 
 BYTES_PER_UNIT = 1024.0
 
@@ -50,7 +50,7 @@ def parallel_processing() -> None:
     Demonstrates creating entries directly via models and validating in batch.
     """
     api: p.Ldif.LdifClient = ldif
-    entries: list[m.Ldif.Entry] = [
+    entries: list[p.Ldif.Entry] = [
         ExamplesFlextLdifUtilities.create_user_entry(i) for i in range(10)
     ]
     validation_result = api.validate_entries(entries)
@@ -160,7 +160,7 @@ def complete_processing_pipeline() -> None:
     parse_response = parse_result.unwrap()
     entries = parse_response.entries
 
-    valid_entries: MutableSequence[m.Ldif.Entry] = []
+    valid_entries: MutableSequence[p.Ldif.Entry] = []
     for entry in entries:
         dn_result = u.Ldif.parse_dn(entry.dn.value if entry.dn else "")
         if dn_result.success:

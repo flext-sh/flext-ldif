@@ -11,8 +11,7 @@ from typing import Annotated, ClassVar, Self
 
 from flext_core import m
 
-from flext_ldif import FlextLdifShared, t
-from flext_ldif._constants import FlextLdifConstantsEnums
+from flext_ldif import FlextLdifShared, c, t
 from flext_ldif._models._settings import FlextLdifModelsSettingsNormalization
 
 
@@ -22,7 +21,7 @@ class FlextLdifModelsSettingsProcessing:
     class ProcessConfig(m.StrictModel):
         """Configuration for processing operations."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(use_enum_values=False)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(use_enum_values=False)
 
         @m.field_validator("source_server", "target_server", mode="before")
         @classmethod
@@ -51,11 +50,11 @@ class FlextLdifModelsSettingsProcessing:
             m.Field(description="Maximum retry attempts on failure"),
         ] = 3
         source_server: Annotated[
-            FlextLdifConstantsEnums.ServerTypes | None,
+            c.Ldif.ServerTypes | None,
             m.Field(description="Source LDAP server type identifier"),
         ] = None
         target_server: Annotated[
-            FlextLdifConstantsEnums.ServerTypes | None,
+            c.Ldif.ServerTypes | None,
             m.Field(description="Target LDAP server type identifier"),
         ] = None
         base_dn: Annotated[
@@ -75,8 +74,8 @@ class FlextLdifModelsSettingsProcessing:
         def servers(
             cls,
             *,
-            source_server: str | FlextLdifConstantsEnums.ServerTypes | None,
-            target_server: str | FlextLdifConstantsEnums.ServerTypes | None,
+            source_server: str | c.Ldif.ServerTypes | None,
+            target_server: str | c.Ldif.ServerTypes | None,
             base_dn: str = "",
         ) -> Self:
             """Build processing config keeping model defaults untouched.
@@ -123,8 +122,8 @@ class FlextLdifModelsSettingsProcessing:
         def servers(
             cls,
             *,
-            source_server: str | FlextLdifConstantsEnums.ServerTypes | None,
-            target_server: str | FlextLdifConstantsEnums.ServerTypes | None,
+            source_server: str | c.Ldif.ServerTypes | None,
+            target_server: str | c.Ldif.ServerTypes | None,
             base_dn: str = "",
         ) -> Self:
             """Build transform config for server-to-server conversion only.

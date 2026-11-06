@@ -9,7 +9,9 @@ from __future__ import annotations
 from collections.abc import MutableSequence, Sequence
 from typing import override
 
-from flext_ldif import c, m, p, r, t
+from flext_cli import r
+
+from flext_ldif import c, p, t
 from flext_ldif._utilities import FlextLdifUtilitiesEntry
 
 
@@ -78,7 +80,7 @@ class FlextLdifUtilitiesPipeline:
 
         def validate(
             self,
-            entries: Sequence[m.Ldif.Entry],
+            entries: Sequence[p.Ldif.Entry],
         ) -> p.Result[MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]]:
             """Validate a sequence of entries.
 
@@ -124,7 +126,7 @@ class FlextLdifUtilitiesPipeline:
 
         def _collect_dn_errors(
             self,
-            entry: m.Ldif.Entry,
+            entry: p.Ldif.Entry,
             errors: MutableSequence[str],
         ) -> None:
             """Collect DN-related violations for one entry."""
@@ -138,7 +140,7 @@ class FlextLdifUtilitiesPipeline:
 
         def _collect_attribute_messages(
             self,
-            entry: m.Ldif.Entry,
+            entry: p.Ldif.Entry,
             errors: MutableSequence[str],
             warnings: MutableSequence[str],
         ) -> None:
@@ -163,7 +165,7 @@ class FlextLdifUtilitiesPipeline:
 
         def validate_one(
             self,
-            entry: m.Ldif.Entry,
+            entry: p.Ldif.Entry,
         ) -> p.Result[FlextLdifUtilitiesPipeline.ValidationResult]:
             """Validate a single entry.
 

@@ -42,7 +42,7 @@ delegate to services.
 
 ### As Is
 
-```
+```text
 FlextLdifServersRfc
 ├── Schema (nested class)
 │   ├── _parse_attribute()
@@ -81,7 +81,7 @@ FlextLdifServersOud (extends FlextLdifServersRfc)
 
 ### To Be
 
-```
+```text
 FlextLdifSchemaService
 ├── parse_attribute() - uses RFC parser + server settings
 ├── parse_objectclass() - uses RFC parser + server settings

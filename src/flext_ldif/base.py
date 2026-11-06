@@ -70,7 +70,7 @@ class FlextLdifServiceBase[TDomainResult](
             str,
             t.JsonValue | p.Registry | p.Ldif.Settings | None,
         ] = dict(fields)
-        component: p.Model = self
+        component: p.BaseModel = self
         if server is not None and registry is not None:
             message = "Provide one explicit registry dependency"
             raise ValueError(message)

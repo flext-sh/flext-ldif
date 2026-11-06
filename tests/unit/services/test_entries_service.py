@@ -22,10 +22,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 
-import pytest
-
 from flext_ldif.services import FlextLdifEntries
-from tests import c, m, t, tm, u
+from tests import c, m, p, t, tm, u
 
 
 class TestsFlextLdifEntries:
@@ -34,7 +32,7 @@ class TestsFlextLdifEntries:
     @staticmethod
     def _basic_entry(
         extra_attrs: Mapping[str, list[str]] | None = None,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         attrs: MutableMapping[str, list[str]] = {
             "objectClass": list(c.Tests.ENTRIES_OBJECTCLASS_PERSON),
             "cn": ["entries-test"],
@@ -46,7 +44,7 @@ class TestsFlextLdifEntries:
         return u.Tests.create_real_entry(dn=c.Tests.ENTRIES_DN_VALID, attributes=attrs)
 
     @staticmethod
-    def _entry_without_attributes() -> m.Ldif.Entry:
+    def _entry_without_attributes() -> p.Ldif.Entry:
         entry = u.Tests.create_real_entry(
             dn=c.Tests.ENTRIES_DN_VALID,
             attributes={c.Tests.NAME_CN: [c.Tests.ATTR_VALUE_TEST]},
@@ -71,7 +69,7 @@ class TestsFlextLdifEntries:
             c.Tests.ENTRIES_DN_VALID,
             {"cn": ["x"], "objectClass": ["top"]},
         )
-        entry: m.Ldif.Entry = u.Tests.assert_success(result)
+        entry: p.Ldif.Entry = u.Tests.assert_success(result)
         attributes = tm.not_none(entry.attributes).attributes
         tm.ok("cn" in attributes)
         tm.that(attributes["cn"], eq=["x"])
@@ -84,7 +82,7 @@ class TestsFlextLdifEntries:
             {"cn": ["x"]},
             objectclasses=list(c.Tests.ENTRIES_OBJECTCLASS_PERSON),
         )
-        entry: m.Ldif.Entry = u.Tests.assert_success(result)
+        entry: p.Ldif.Entry = u.Tests.assert_success(result)
         attributes = tm.not_none(entry.attributes).attributes
         tm.ok(c.Tests.NAME_OBJECTCLASS in attributes)
         tm.that(
@@ -104,7 +102,7 @@ class TestsFlextLdifEntries:
     # ── normalize_attribute_values ────────────────────────────────────────────
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("scenario", "value", "should_succeed"),
         tuple(
             (scenario, data[0], data[1])
@@ -147,7 +145,7 @@ class TestsFlextLdifEntries:
         result = FlextLdifEntries.resolve_entry_dn(entry)
         tm.fail(result, has="DN")
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("scenario", "entry_dict", "should_succeed"),
         tuple(
             (scenario, data[0], data[1])
@@ -229,7 +227,7 @@ class TestsFlextLdifEntries:
             entry,
             list(c.Tests.ENTRIES_ATTR_REMOVE_SET),
         )
-        cleaned: m.Ldif.Entry = u.Tests.assert_success(result)
+        cleaned: p.Ldif.Entry = u.Tests.assert_success(result)
         remaining = {k.lower() for k in tm.not_none(cleaned.attributes).attributes}
         tm.ok(remaining.isdisjoint(c.Tests.ENTRIES_ATTR_REMOVE_SET))
         tm.ok("cn" in remaining)
@@ -238,13 +236,13 @@ class TestsFlextLdifEntries:
     def test_remove_attributes_is_idempotent(self) -> None:
         """Test remove attributes is idempotent."""
         entry = self._basic_entry()
-        once: m.Ldif.Entry = u.Tests.assert_success(
+        once: p.Ldif.Entry = u.Tests.assert_success(
             FlextLdifEntries.remove_attributes(
                 entry,
                 list(c.Tests.ENTRIES_ATTR_REMOVE_SET),
             ),
         )
-        twice: m.Ldif.Entry = u.Tests.assert_success(
+        twice: p.Ldif.Entry = u.Tests.assert_success(
             FlextLdifEntries.remove_attributes(
                 once,
                 list(c.Tests.ENTRIES_ATTR_REMOVE_SET),
@@ -260,14 +258,14 @@ class TestsFlextLdifEntries:
     def test_remove_attributes_noop_when_entry_has_no_attributes(self) -> None:
         """Test remove attributes noop when entry has no attributes."""
         entry = self._entry_without_attributes()
-        cleaned: m.Ldif.Entry = u.Tests.assert_success(
+        cleaned: p.Ldif.Entry = u.Tests.assert_success(
             FlextLdifEntries.remove_attributes(entry, ["cn"]),
         )
         tm.ok(cleaned.attributes is None)
 
     # ── run_configured_operation ──────────────────────────────────────────────
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("scenario", "op", "should_succeed"),
         tuple(
             (scenario, data[0], data[1])
@@ -292,7 +290,7 @@ class TestsFlextLdifEntries:
         if not should_succeed:
             tm.fail(result)
             return
-        cleaned: MutableSequence[m.Ldif.Entry] = u.Tests.assert_success(result)
+        cleaned: MutableSequence[p.Ldif.Entry] = u.Tests.assert_success(result)
         tm.ok(len(cleaned) == 1)
         stripped = cleaned[0]
         remaining = {k.lower() for k in tm.not_none(stripped.attributes).attributes}

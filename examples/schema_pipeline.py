@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from examples import create_entry_or_none, ldif, m, p, r, t, u
+from examples import create_entry_or_none, ldif, p, r, t, u
 from examples.schema_building import intelligent_schema_building
 
 
@@ -20,11 +20,11 @@ class ExamplesFlextLdifSchemaPipeline:
     """Railway-oriented schema pipeline example namespace."""
 
     @staticmethod
-    def _pipeline_test_entries() -> list[m.Ldif.Entry]:
+    def _pipeline_test_entries() -> list[p.Ldif.Entry]:
         """Build the user and group test entries driven through the pipeline.
 
         Returns:
-            The resulting ``list[m.Ldif.Entry]``.
+            The resulting ``list[p.Ldif.Entry]``.
 
         """
         return [
@@ -81,11 +81,11 @@ class ExamplesFlextLdifSchemaPipeline:
                     .map_error(lambda error: f"Schema validation failed: {error}")
                     .flat_map(
                         lambda schema_report: (
-                            r[tuple[list[m.Ldif.Entry], int]].fail(
+                            r[tuple[list[p.Ldif.Entry], int]].fail(
                                 f"Schema entries invalid: {schema_report.errors}",
                             )
                             if not schema_report.valid
-                            else r[tuple[list[m.Ldif.Entry], int]].ok((
+                            else r[tuple[list[p.Ldif.Entry], int]].ok((
                                 list(schema_entries),
                                 schema_report.valid_entries,
                             ))
@@ -100,11 +100,11 @@ class ExamplesFlextLdifSchemaPipeline:
                     .map_error(lambda error: f"Entry validation failed: {error}")
                     .flat_map(
                         lambda entry_report: (
-                            r[tuple[list[m.Ldif.Entry], int, int]].fail(
+                            r[tuple[list[p.Ldif.Entry], int, int]].fail(
                                 f"Test entries invalid: {entry_report.errors}",
                             )
                             if not entry_report.valid
-                            else r[tuple[list[m.Ldif.Entry], int, int]].ok((
+                            else r[tuple[list[p.Ldif.Entry], int, int]].ok((
                                 schema_data[0],
                                 schema_data[1],
                                 entry_report.valid_entries,

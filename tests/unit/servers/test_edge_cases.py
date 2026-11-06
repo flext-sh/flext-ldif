@@ -11,9 +11,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
-
-from tests import c, ldif, tm
+from tests import c, ldif, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -21,7 +19,7 @@ if TYPE_CHECKING:
 from tests import p
 
 
-@pytest.fixture
+@u.Tests.fixture
 def ldif_api() -> p.Ldif.LdifClient:
     """Provide a ldif API instance for the test function.
 
@@ -36,7 +34,7 @@ class TestsFlextLdifEdgeCases:
     """Test edge cases with real fixture files."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         (
             "ldif_content",
             "expected_entry_count",
@@ -91,7 +89,7 @@ class TestsFlextLdifEdgeCases:
         tm.that(max_values, gte=c.Tests.EDGE_CASE_MIN_MULTIVALUE_COUNT)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("ldif_content", "output_name"),
         list(c.Tests.EDGE_CASE_ROUNDTRIP_CASES.values()),
         ids=list(c.Tests.EDGE_CASE_ROUNDTRIP_CASES.keys()),

@@ -2,7 +2,6 @@
 
 OID/RFC subject mapping helpers.
 
-
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -12,7 +11,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import ClassVar
 
-from flext_ldif import c, m, p, r, t, u
+from flext_ldif import c, p, r, t, u
 from flext_ldif.servers._oid import FlextLdifConstantsServersOid
 from flext_ldif.servers._rfc import FlextLdifServersRfcAcl
 
@@ -41,7 +40,7 @@ class FlextLdifServersOidAclSubject(FlextLdifServersRfcAcl):
 
     def _get_source_subject_type(
         self,
-        metadata: m.Ldif.ServerMetadata | None,
+        metadata: p.Ldif.ServerMetadata | None,
     ) -> str | None:
         """Get source subject type from metadata.
 
@@ -143,8 +142,8 @@ class FlextLdifServersOidAclSubject(FlextLdifServersRfcAcl):
 
     def _map_rfc_subject_to_oid(
         self,
-        rfc_subject: m.Ldif.AclSubject,
-        metadata: m.Ldif.ServerMetadata | None,
+        rfc_subject: p.Ldif.AclSubject,
+        metadata: p.Ldif.ServerMetadata | None,
     ) -> str:
         """Map RFC subject type to OID subject type for writing.
 

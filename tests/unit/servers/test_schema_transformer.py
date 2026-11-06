@@ -13,9 +13,7 @@ from __future__ import annotations
 
 from collections.abc import MutableMapping
 
-import pytest
-
-from tests import tm, u
+from tests import c, tm, u
 
 
 class TestsFlextLdifSchemaTransformer:
@@ -26,7 +24,7 @@ class TestsFlextLdifSchemaTransformer:
     # ------------------------------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("name_value", "suffixes", "replacements", "expected"),
         [
             ("userCertificate;binary", [";binary"], None, "userCertificate"),
@@ -57,7 +55,7 @@ class TestsFlextLdifSchemaTransformer:
         tm.that(result, eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("name_value", "expected"),
         [
             ("userCertificate;binary", "userCertificate"),
@@ -75,7 +73,7 @@ class TestsFlextLdifSchemaTransformer:
         tm.that(result, eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize("empty", ["", None])
+    @c.Tests.MARK.parametrize("empty", ["", None])
     def test_normalize_name_returns_falsy_input_unchanged(
         empty: str | None,
     ) -> None:
@@ -142,7 +140,7 @@ class TestsFlextLdifSchemaTransformer:
         tm.that(substr, none=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("equality", "substr", "exp_equality", "exp_substr"),
         [
             ("caseIgnoreMatch", None, "caseIgnoreMatch", None),
@@ -195,7 +193,7 @@ class TestsFlextLdifSchemaTransformer:
     # ------------------------------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("syntax", "replacements", "expected"),
         [
             ("'1.3.6.1.4.1.1466.115.121.1.15'", None, "1.3.6.1.4.1.1466.115.121.1.15"),
@@ -222,7 +220,7 @@ class TestsFlextLdifSchemaTransformer:
         tm.that(result, eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize("empty", ["", None])
+    @c.Tests.MARK.parametrize("empty", ["", None])
     def test_syntax_oid_returns_falsy_input_unchanged(empty: str | None) -> None:
         """Empty string and None are returned unchanged."""
         result = u.Ldif.normalize_syntax_oid(empty)

@@ -33,8 +33,14 @@ compatibility.
 
 **Key Components**:
 
+Conversion services consume the registry by reference through
+`t.Port[p.Ldif.DnRegistry]`. The default constructor remains
+`m.Ldif.DnRegistry`; the protocol is a dependency contract, not a payload schema
+or a constructor. This retains Pydantic's native port validation without enabling
+arbitrary types on the service model.
+
 ```python
-from flext_ldif import m
+from flext_ldif import m, p
 
 # Tracks canonical DN case for migration consistency (first-seen wins).
 registry = m.Ldif.DnRegistry()

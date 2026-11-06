@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from flext_ldif import c, m, p, r, u
+from flext_ldif import c, p, r, u
 from flext_ldif._models import FlextLdifModelsDomainEntryStatistics
 from flext_ldif.servers._base import (
     FlextLdifServersEntryLineEmitter,
@@ -22,9 +22,9 @@ class FlextLdifServersEntryWriteContext(FlextLdifServersEntryWriteBodyEmitter):
 
     def __init__(
         self,
-        entry_data: m.Ldif.Entry,
+        entry_data: p.Ldif.Entry,
         server_type: str,
-        format_options: m.Ldif.WriteFormatOptions | None,
+        format_options: p.Ldif.WriteFormatOptions | None,
     ) -> None:
         """Resolve write options and the effective line emitter."""
         self._entry = entry_data
@@ -44,9 +44,9 @@ class FlextLdifServersEntryWriteContext(FlextLdifServersEntryWriteBodyEmitter):
     @classmethod
     def build(
         cls,
-        entry_data: m.Ldif.Entry,
+        entry_data: p.Ldif.Entry,
         server_type: str,
-        format_options: m.Ldif.WriteFormatOptions | None,
+        format_options: p.Ldif.WriteFormatOptions | None,
     ) -> FlextLdifServersEntryWriteContext:
         """Build the write context for one entry serialization pass.
 

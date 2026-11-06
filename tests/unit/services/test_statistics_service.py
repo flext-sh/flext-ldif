@@ -12,8 +12,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from tests import c, m, p, tm, u
 
 
@@ -21,7 +19,7 @@ class TestsFlextLdifStatisticsService:
     """Validate entries statistics generation through public methods only."""
 
     @staticmethod
-    def _entry(dn: str, server_type: str) -> m.Ldif.Entry:
+    def _entry(dn: str, server_type: str) -> p.Ldif.Entry:
         """Build a real Entry carrying ``server_type`` in its public metadata.
 
         Returns:
@@ -45,11 +43,11 @@ class TestsFlextLdifStatisticsService:
         )
         return entry.model_copy(update={"metadata": metadata_with_server})
 
-    def _entries(self, count: int) -> list[m.Ldif.Entry]:
+    def _entries(self, count: int) -> list[p.Ldif.Entry]:
         """Build ``count`` entries alternating across the known server types.
 
         Returns:
-            The resulting ``list[m.Ldif.Entry]``.
+            The resulting ``list[p.Ldif.Entry]``.
 
         """
         server_types = c.Tests.STATS_SERVER_TYPES
@@ -71,7 +69,7 @@ class TestsFlextLdifStatisticsService:
         stats: p.Ldif.EntriesStatistics = u.Tests.assert_success(result)
         tm.that(stats, is_=m.Ldif.EntriesStatistics)
 
-    @pytest.mark.parametrize(c.Aggregation.COUNT, [0, 1, 2, 5])
+    @c.Tests.MARK.parametrize(c.Aggregation.COUNT, [0, 1, 2, 5])
     def test_total_entries_equals_input_count(
         self,
         api: p.Ldif.LdifClient,
@@ -113,7 +111,7 @@ class TestsFlextLdifStatisticsService:
         tm.that(stats.server_type_distribution.get(c.Tests.RFC, 0), eq=1)
         tm.that(stats.server_type_distribution.get(c.Tests.OID, 0), eq=1)
 
-    @pytest.mark.parametrize("server_type", [c.Tests.RFC, c.Tests.OID])
+    @c.Tests.MARK.parametrize("server_type", [c.Tests.RFC, c.Tests.OID])
     def test_single_server_type_produces_single_count(
         self,
         api: p.Ldif.LdifClient,

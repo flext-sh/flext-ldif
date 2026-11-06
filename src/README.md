@@ -38,7 +38,7 @@ architectural concerns.
 
 ## Package Structure
 
-```
+```text
 src/flext_ldif/
 ├── __init__.py                 # Public API exports and version information
 ├── api.py                      # Application Layer - Main API service

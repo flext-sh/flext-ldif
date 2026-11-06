@@ -8,15 +8,13 @@ from __future__ import annotations
 
 from collections import UserDict
 
-import pytest
-
 from tests import c, m, p, t, tm, u
 
 
 class TestsFlextLdifAclService:
     """Cover ACL behavior through the public ldif facade."""
 
-    @pytest.fixture
+    @u.Tests.fixture
     def svc(self: p.Ldif.LdifClient) -> p.Ldif.LdifClient:
         """Provide ``svc``.
 
@@ -71,7 +69,7 @@ class TestsFlextLdifAclService:
         tm.fail(eval_result.granted)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "required",
         [c.Tests.ACL_PERMISSIONS_EMPTY, c.Tests.ACL_PERMISSIONS_READ_ONLY],
     )
@@ -88,7 +86,7 @@ class TestsFlextLdifAclService:
             tm.that(tm.not_none(evaluation.matched_acl).name, eq=acl.name)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("scenario", "acl_string", "server_type"),
         tuple(
             (scenario, case[0], case[1])
@@ -119,7 +117,7 @@ class TestsFlextLdifAclService:
         u.Tests.assert_success(result)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("scenario", "acl_string", "server_type"),
         tuple((sc, data[0], data[1]) for sc, data in c.Tests.ACL_SERVER_CASES.items()),
     )

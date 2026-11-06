@@ -12,10 +12,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_ldif.servers import FlextLdifServersDs389
-from tests import c, m, t, tm, u
+from tests import c, m, p, t, tm, u
 
 
 class TestsFlextLdifDs389Servers:
@@ -31,12 +29,12 @@ class TestsFlextLdifDs389Servers:
     # Attribute detection + parsing
     # ------------------------------------------------------------------
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "test_case", u.Tests.server_attribute_test_cases(c.Tests.DS389)
     )
     def test_can_handle_attribute_matches_expected(
         self,
-        test_case: m.Tests.AttributeTestCase,
+        test_case: p.Tests.AttributeTestCase,
     ) -> None:
         """can_handle_attribute reflects DS389 ownership per case table."""
         tm.that(
@@ -103,14 +101,14 @@ class TestsFlextLdifDs389Servers:
     # objectClass detection + parsing + writing
     # ------------------------------------------------------------------
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "test_case",
         u.Tests.objectclass_test_cases(c.Tests.DS389_OBJECTCLASS_CASE_ROWS),
         ids=lambda tc: tc.scenario,
     )
     def test_can_handle_objectclass_matches_expected(
         self,
-        test_case: m.Tests.ObjectClassTestCase,
+        test_case: p.Tests.ObjectClassTestCase,
     ) -> None:
         """can_handle_objectclass reflects DS389 ownership per case table."""
         tm.that(
@@ -197,13 +195,13 @@ class TestsFlextLdifDs389Servers:
     # ------------------------------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "test_case",
         u.Tests.entry_test_cases(c.Tests.DS389_ENTRY_CASE_ROWS),
         ids=lambda tc: tc.scenario,
     )
     def test_entry_can_handle_matches_expected(
-        test_case: m.Tests.EntryTestCase,
+        test_case: p.Tests.EntryTestCase,
     ) -> None:
         """Entry.can_handle reflects DS389 ownership per case table."""
         entry_server = tm.instance(
@@ -226,13 +224,13 @@ class TestsFlextLdifDs389Servers:
     # ------------------------------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("acl_line", "expected"),
         [
-            pytest.param('aci: (version 3.0) acl "x"', True, id="aci-prefix"),
-            pytest.param('(version 3.0) acl "x"', True, id="version-prefix"),
-            pytest.param("cn: some value", False, id="non-acl-attribute"),
-            pytest.param("   ", False, id="blank"),
+            u.Tests.param('aci: (version 3.0) acl "x"', True, id="aci-prefix"),
+            u.Tests.param('(version 3.0) acl "x"', True, id="version-prefix"),
+            u.Tests.param("cn: some value", False, id="non-acl-attribute"),
+            u.Tests.param("   ", False, id="blank"),
         ],
     )
     def test_acl_can_handle_matches_expected(

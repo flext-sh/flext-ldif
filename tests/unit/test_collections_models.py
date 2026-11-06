@@ -8,16 +8,14 @@ from __future__ import annotations
 
 from collections.abc import Iterable, MutableSequence
 
-import pytest
-
-from tests import c, m, t, tm, u
+from tests import c, m, p, t, tm, u
 
 
 class TestsFlextLdifModelsCollections:
     """Cover DynamicCounts, SchemaContent, and FlexibleCategories behavior."""
 
     @staticmethod
-    def _entry(cn_value: str) -> m.Ldif.Entry:
+    def _entry(cn_value: str) -> p.Ldif.Entry:
         return u.Tests.create_real_entry(
             dn=c.Tests.ENTRIES_DN_VALID,
             attributes={
@@ -47,10 +45,10 @@ class TestsFlextLdifModelsCollections:
         tm.that(counts.model_dump(), eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize("value", [True, "2", 2.5, None])
+    @c.Tests.MARK.parametrize("value", [True, "2", 2.5, None])
     def test_dynamic_counts_rejects_non_integer_values(value: t.JsonValue) -> None:
         """Invalid counts fail at admission rather than becoming zero on reads."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             m.Ldif.DynamicCounts.model_validate({c.Ldif.Category.USERS.value: value})
 
     @staticmethod
@@ -58,7 +56,7 @@ class TestsFlextLdifModelsCollections:
         """Test dynamic counts missing key raises key error."""
         counts = m.Ldif.DynamicCounts()
 
-        with pytest.raises(KeyError, match="missing"):
+        with u.Tests.raises(KeyError, match="missing"):
             _ = counts["missing"]
 
     @staticmethod
@@ -105,7 +103,7 @@ class TestsFlextLdifModelsCollections:
     def test_flexible_categories_setitem_copies_entries(self) -> None:
         """Test flexible categories setitem copies entries."""
         categories = m.Ldif.FlexibleCategories()
-        original_entries: MutableSequence[m.Ldif.Entry] = [self._entry("alpha")]
+        original_entries: MutableSequence[p.Ldif.Entry] = [self._entry("alpha")]
 
         categories[c.Ldif.Category.USERS.value] = original_entries
         original_entries.append(self._entry("beta"))
@@ -139,7 +137,7 @@ class TestsFlextLdifModelsCollections:
         tm.that(len(list(categories.values())), eq=1)
         tm.that(len(list(categories.items())), eq=1)
 
-        with pytest.raises(TypeError, match="unhashable"):
+        with u.Tests.raises(TypeError, match="unhashable"):
             _ = hash(categories)
 
     @staticmethod

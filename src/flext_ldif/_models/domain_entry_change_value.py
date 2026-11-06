@@ -10,7 +10,7 @@ from typing import Annotated, ClassVar
 
 from flext_cli import m
 
-from flext_ldif import c
+from flext_ldif import c, t
 
 
 class FlextLdifModelsDomainEntryChangeOperationValue:
@@ -19,7 +19,7 @@ class FlextLdifModelsDomainEntryChangeOperationValue:
     class ChangeOperationValue(m.Value):
         """Single value captured inside a modify operation block."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(use_enum_values=False)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(use_enum_values=False)
 
         value: Annotated[
             str,

@@ -117,17 +117,17 @@ class FlextLdifServersOidEntryParse(
 
     def _hook_finalize_entry_parse(
         self,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
         original_dn: str,
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Preserve typed OID metadata for serialization and phase-aware ACL writes.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[p.Ldif.Entry]``.
 
         """
         if not entry.attributes:
-            return r[m.Ldif.Entry].ok(entry)
+            return r[p.Ldif.Entry].ok(entry)
         normalized_attrs = entry.attributes.attributes
         metadata_values = dict(entry.metadata) if entry.metadata is not None else {}
         entry.metadata = m.Ldif.ServerMetadata.model_validate({
@@ -145,7 +145,7 @@ class FlextLdifServersOidEntryParse(
             orclaci_values = list(orclaci_raw)
         processed = self._process_orclaci_values(orclaci_values, current_extensions)
         if processed.failure:
-            return r[m.Ldif.Entry].from_failure(processed)
+            return r[p.Ldif.Entry].from_failure(processed)
         rfc_violations, attribute_conflicts = self._detect_rfc_violations(
             normalized_attrs,
         )
@@ -169,14 +169,14 @@ class FlextLdifServersOidEntryParse(
         # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: assign the plain
         # mapping built above (already JSON-normalized).
         entry.metadata.extensions = current_extensions
-        return r[m.Ldif.Entry].ok(entry)
+        return r[p.Ldif.Entry].ok(entry)
 
     @override
-    def _hook_post_parse_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+    def _hook_post_parse_entry(self, entry: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
         """Transform parsed entry using OID-specific enhancements.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[p.Ldif.Entry]``.
 
         """
         try:
@@ -185,17 +185,17 @@ class FlextLdifServersOidEntryParse(
             FlextLdifServersOidEntryParse._module_logger.exception(
                 "OID post-parse entry hook failed",
             )
-            return r[m.Ldif.Entry].fail_op("OID post-parse entry hook", e)
+            return r[p.Ldif.Entry].fail_op("OID post-parse entry hook", e)
 
-    def _post_parse_oid_entry(self, entry: m.Ldif.Entry) -> p.Result[m.Ldif.Entry]:
+    def _post_parse_oid_entry(self, entry: p.Ldif.Entry) -> p.Result[p.Ldif.Entry]:
         """Normalize OID entry attributes after RFC parsing.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[p.Ldif.Entry]``.
 
         """
         if not entry.attributes or not entry.dn:
-            return r[m.Ldif.Entry].ok(entry)
+            return r[p.Ldif.Entry].ok(entry)
         converted_attributes, converted_attrs, boolean_conversions = (
             self._convert_boolean_attributes_to_rfc(entry.attributes.attributes)
         )
@@ -250,7 +250,7 @@ class FlextLdifServersOidEntryParse(
             if name_renames:
                 rename_metadata: t.JsonDict = dict(name_renames)
                 entry.metadata.extensions["attribute_name_renames"] = rename_metadata
-        return r[m.Ldif.Entry].ok(entry)
+        return r[p.Ldif.Entry].ok(entry)
 
     @staticmethod
     def _hook_transform_entry_raw(

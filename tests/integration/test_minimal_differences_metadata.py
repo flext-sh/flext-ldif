@@ -15,17 +15,15 @@ from __future__ import annotations
 from collections.abc import Mapping
 from pathlib import Path
 
-import pytest
-
 from flext_ldif import FlextLdif
 from flext_ldif.services import FlextLdifParser
-from tests import c, ldif, m, p, tm
+from tests import c, ldif, m, p, tm, u
 
 
 class TestsFlextLdifMinimalDifferencesMetadata:
     """Public-contract tests for minimal-differences metadata capture."""
 
-    @pytest.fixture
+    @u.Tests.fixture
     def parser() -> FlextLdifParser:
         """Provide a parser instance.
 
@@ -35,7 +33,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         """
         return FlextLdifParser(registry=FlextLdif().registry)
 
-    @pytest.fixture
+    @u.Tests.fixture
     def writer() -> p.Ldif.LdifClient:
         """Provide a writer client via the public ``ldif()`` entry point.
 
@@ -45,7 +43,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         """
         return ldif()
 
-    @pytest.fixture
+    @u.Tests.fixture
     def fixtures_dir() -> Path:
         """Locate the shared LDIF fixtures directory.
 
@@ -58,7 +56,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
     # -- server_type propagation ------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("server_type", "effective_server_type"),
         [
             (c.Tests.OID, c.Tests.OID),
@@ -94,7 +92,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
     # -- fixture-driven capture -------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("server_type", "effective_server_type", "fixture_name"),
         [
             (c.Tests.OID, c.Tests.OID, "oid_entries_fixtures.ldif"),
@@ -155,7 +153,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
     # -- boolean conversion metadata --------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("attribute", "raw_value", "converted_value"),
         [
             ("orcldasisenabled", c.ParserBooleanToken.ONE, "TRUE"),
@@ -233,7 +231,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
     # -- operational attribute preservation -------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("attribute", "value"),
         [
             ("creatorsName", "cn=Directory Manager"),

@@ -22,7 +22,7 @@ class FlextLdifConversionSupport(FlextLdifServer):
     pydantic ``model_construct`` signatures.
     """
 
-    dn_registry: m.Ldif.DnRegistry = m.Field(
+    dn_registry: t.Port[p.Ldif.DnRegistry] = m.Field(
         default_factory=m.Ldif.DnRegistry,
         description="DN registry for tracking distinguished names during conversion",
     )
@@ -32,7 +32,7 @@ class FlextLdifConversionSupport(FlextLdifServer):
             default=None,
             description=(
                 "Migration base DN; when set, OID→OUD ACL conversion filters "
-                "out-of-scope bind DNs and high-level-container anyone rules"
+                "out-of-scope bind DNs"
             ),
         ),
     ] = None
@@ -170,7 +170,7 @@ class FlextLdifConversionSupport(FlextLdifServer):
 
     @staticmethod
     def _record_schema_support(
-        parse_result: p.ResultView[m.Ldif.SchemaElement],
+        parse_result: p.ResultView[p.Ldif.SchemaElement],
         support_key: str,
         support: t.MutableIntMapping,
     ) -> t.MutableIntMapping:

@@ -14,10 +14,9 @@ from __future__ import annotations
 
 import inspect
 
-import pytest
-
 import flext_ldif
-from tests import tm
+from flext_ldif import FlextLdif
+from tests import c, ldif, tm, u
 from tests.unit import TestsFlextLdifTypingsUnit
 
 REQUIRED_PUBLIC_API: tuple[TestsFlextLdifTypingsUnit.PublicSymbol, ...] = (
@@ -73,7 +72,7 @@ METADATA_STRING_SYMBOLS: tuple[TestsFlextLdifTypingsUnit.PublicSymbol, ...] = (
 )
 
 # Facade alias -> canonical owner name. Aliases MUST be the *same object* so that
-# `isinstance(x, flext_ldif.m.Entry)` and `flext_ldif.FlextLdifModels.Entry`
+# `isinstance(x, m.Entry)` and `flext_ldif.FlextLdifModels.Entry`
 # agree for every consumer.
 FACADE_ALIAS_OWNERS: tuple[
     tuple[
@@ -125,7 +124,7 @@ class TestsFlextLdifApiFreeze:
         tm.that(set(PUBLIC_API) & set(PRIVATE_ROOT_SYMBOLS), eq=set[str]())
 
     @staticmethod
-    @pytest.mark.parametrize("symbol", PUBLIC_API)
+    @c.Tests.MARK.parametrize("symbol", PUBLIC_API)
     def test_public_symbol_resolves_to_a_real_object(
         symbol: TestsFlextLdifTypingsUnit.PublicSymbol,
     ) -> None:
@@ -133,7 +132,7 @@ class TestsFlextLdifApiFreeze:
         tm.that(getattr(flext_ldif, symbol), ne=None)
 
     @staticmethod
-    @pytest.mark.parametrize("symbol", PUBLIC_API)
+    @c.Tests.MARK.parametrize("symbol", PUBLIC_API)
     def test_lazy_resolution_is_idempotent(
         symbol: TestsFlextLdifTypingsUnit.PublicSymbol,
     ) -> None:
@@ -143,7 +142,7 @@ class TestsFlextLdifApiFreeze:
         tm.ok(first is second)
 
     @staticmethod
-    @pytest.mark.parametrize("symbol", PUBLIC_API)
+    @c.Tests.MARK.parametrize("symbol", PUBLIC_API)
     def test_public_symbol_is_discoverable_via_dir(
         symbol: TestsFlextLdifTypingsUnit.PublicSymbol,
     ) -> None:
@@ -151,7 +150,7 @@ class TestsFlextLdifApiFreeze:
         tm.ok(symbol in dir(flext_ldif))
 
     @staticmethod
-    @pytest.mark.parametrize("symbol", CLASS_SYMBOLS)
+    @c.Tests.MARK.parametrize("symbol", CLASS_SYMBOLS)
     def test_flext_symbols_resolve_to_classes(
         symbol: TestsFlextLdifTypingsUnit.PublicSymbol,
     ) -> None:
@@ -159,7 +158,7 @@ class TestsFlextLdifApiFreeze:
         tm.ok(inspect.isclass(getattr(flext_ldif, symbol)))
 
     @staticmethod
-    @pytest.mark.parametrize(("alias", "owner"), FACADE_ALIAS_OWNERS)
+    @c.Tests.MARK.parametrize(("alias", "owner"), FACADE_ALIAS_OWNERS)
     def test_facade_alias_is_its_canonical_owner(
         alias: TestsFlextLdifTypingsUnit.PublicSymbol,
         owner: TestsFlextLdifTypingsUnit.PublicSymbol,
@@ -170,10 +169,10 @@ class TestsFlextLdifApiFreeze:
     @staticmethod
     def test_ldif_singleton_is_a_flext_ldif_instance() -> None:
         """The ``ldif`` convenience handle is an instance of ``FlextLdif``."""
-        tm.that(type(flext_ldif.ldif), eq=flext_ldif.FlextLdif)
+        tm.that(type(ldif), eq=FlextLdif)
 
     @staticmethod
-    @pytest.mark.parametrize("symbol", METADATA_STRING_SYMBOLS)
+    @c.Tests.MARK.parametrize("symbol", METADATA_STRING_SYMBOLS)
     def test_metadata_strings_are_non_empty_strings(
         symbol: TestsFlextLdifTypingsUnit.PublicSymbol,
     ) -> None:
@@ -188,7 +187,7 @@ class TestsFlextLdifApiFreeze:
         tm.that(flext_ldif.__version_info__, is_=tuple)
 
     @staticmethod
-    @pytest.mark.parametrize("symbol", PRIVATE_ROOT_SYMBOLS)
+    @c.Tests.MARK.parametrize("symbol", PRIVATE_ROOT_SYMBOLS)
     def test_private_symbol_is_not_advertised(
         symbol: TestsFlextLdifTypingsUnit.PublicSymbol,
     ) -> None:
@@ -196,17 +195,17 @@ class TestsFlextLdifApiFreeze:
         tm.fail(symbol in flext_ldif.__all__)
 
     @staticmethod
-    @pytest.mark.parametrize("symbol", PRIVATE_ROOT_SYMBOLS)
+    @c.Tests.MARK.parametrize("symbol", PRIVATE_ROOT_SYMBOLS)
     def test_private_symbol_is_not_accessible_from_root(
         symbol: TestsFlextLdifTypingsUnit.PublicSymbol,
     ) -> None:
         """Accessing a private implementation class raises ``AttributeError``."""
-        with pytest.raises(AttributeError):
+        with u.Tests.raises(AttributeError):
             getattr(flext_ldif, symbol)
 
     @staticmethod
     def test_unknown_attribute_raises_attribute_error() -> None:
         """The lazy ``__getattr__`` rejects names outside the public surface."""
         missing_name = "FlextLdifDoesNotExist"
-        with pytest.raises(AttributeError):
+        with u.Tests.raises(AttributeError):
             getattr(flext_ldif, missing_name)

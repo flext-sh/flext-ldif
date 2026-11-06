@@ -2,6 +2,7 @@ Infra:
   refactor_csv_campaigns:
     campaigns:
       - csv: rules/ldif-settings-namespace.csv
+        id: csv:ldif-settings-namespace
         rename_definitions: true
         bindings:
           "":
