@@ -130,31 +130,56 @@ class FlextLdifOidAcl:
         rule: p.Ldif.OidAclRule,
         *,
         base_dn: str = "",
+        access_groups: frozenset[str] = frozenset(),
+        sibling_attrs: t.StrSequence = (),
     ) -> p.Result[p.Ldif.AciRule]:
         """Build one OUD ACI rule from a parsed OID ACL rule.
+
+        A group subject outside ``access_groups`` (the source dialect's
+        ``access_group_dns``) fails; ``sibling_attrs`` holds the attributes
+        other ACIs of the same ACP name explicitly.
 
         Returns:
             The assembled ACI rule or the first conversion failure.
 
         """
-        return FlextLdifServersOidAclAssemble.build_aci_rule(rule, base_dn=base_dn)
+        return FlextLdifServersOidAclAssemble.build_aci_rule(
+            rule,
+            base_dn=base_dn,
+            access_groups=access_groups,
+            sibling_attrs=sibling_attrs,
+        )
 
     @staticmethod
+    @deprecated(
+        "compat: render_aci_string -> render_aci_strings; "
+        "fix: render every aci line of the rule",
+    )
     def render_aci_string(aci: p.Ldif.AciRule) -> str:
-        """Render a typed OUD ACI rule as newline-joined ``aci:`` lines.
+        """Render a rule that needs exactly one ``aci:`` line.
 
         Returns:
-            One ``aci:`` line per clause targetscope.
+            The single :meth:`render_aci_strings` line.
+
+        Raises:
+            ValueError: The rule renders no line or more than one line.
 
         """
-        return FlextLdifServersOidAclRender.render_aci_string(aci)
+        lines = FlextLdifServersOidAclRender.render_aci_strings(aci)
+        if len(lines) != 1:
+            msg = (
+                f"ACI rule {aci.acl_name!r} renders {len(lines)} aci lines; "
+                "render_aci_string returns exactly one (use render_aci_strings)"
+            )
+            raise ValueError(msg)
+        return lines[0]
 
     @staticmethod
     def render_aci_strings(aci: p.Ldif.AciRule) -> t.StrSequence:
         """Render a typed OUD ACI rule as its ``aci:`` lines.
 
         Returns:
-            One ``aci:`` line per clause targetscope.
+            One ``aci:`` line per clause targetattr/targetscope pair.
 
         """
         return FlextLdifServersOidAclRender.render_aci_strings(aci)

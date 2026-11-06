@@ -1,11 +1,12 @@
 """OID→OUD ACL conversion — typed OidAclRule parts → OUD aci value objects.
 
 Each by-clause subject maps to one OUD bind-rule (``m.Ldif.AciAllow``);
-subjects with no OUD equivalent (``guidattr``/unknown) surface as ``r.fail``
-carrying the manual review note. Permission lists resolve to typed grant and
-deny sets (OID 12.2.1.3 ch. 30 §30.1.4.3: each access level is granted or
-denied independently and ``noxxx`` denies ``xxx``). Tokens outside the OID
-access grammar, modifiers and regex DNs without an exact OUD form surface as
+subjects with no exact OUD equivalent (``SuperUser``/``groupattr``/
+``guidattr``/unknown) surface as ``r.fail`` carrying the manual review note.
+Permission lists resolve to typed grant and deny sets (OID 12.2.1.3 ch. 30
+§30.1.4.3: each access level is granted or denied independently and
+``noxxx`` denies ``xxx``). Tokens outside the OID access grammar, modifiers,
+regex DNs, filters and targets without an exact OUD form surface as
 ``r.fail``.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
@@ -29,6 +30,11 @@ class FlextLdifServersOidAclToOud:
         normalized: str = c.Ldif.DN_NORMALIZE_COMMA_RE.sub(",", dn)
         normalized = c.Ldif.DN_NORMALIZE_EQUALS_RE.sub("=", normalized)
         return normalized.strip()
+
+    @classmethod
+    def dn_key(cls, dn: str) -> str:
+        """Return the comparison key of a DN: separator spaces removed, case folded."""
+        return cls._normalize_dn(dn).lower()
 
     @staticmethod
     def container_dns(base_dn: str) -> frozenset[str]:
@@ -154,8 +160,8 @@ class FlextLdifServersOidAclToOud:
         ``BindIPFilter`` is an LDAP filter on ``orclipaddress`` (OID-30
         §30.1.4.2.3); OUD ``ip`` takes an address list (OUD 12.2.1.4 §9.4.5).
         One equality term, or an OR of equality terms, translates exactly to a
-        comma-separated list; ``&``, ``!``/``!=`` and other shapes surface as
-        ``r.fail``. An empty value yields ``""``.
+        comma-separated list; ``&``, ``!``/``!=``, an empty filter and other
+        shapes surface as ``r.fail``.
 
         Returns:
             The OUD ip value, or the typed failure.
@@ -163,8 +169,6 @@ class FlextLdifServersOidAclToOud:
         """
         constants = FlextLdifConstantsServersOid
         text = value.strip()
-        if not text:
-            return r[str].ok("")
         term = constants.OID_IP_FILTER_TERM_RE.match(text)
         alternatives = constants.OID_IP_FILTER_OR_RE.match(text)
         if term is not None:
@@ -187,6 +191,57 @@ class FlextLdifServersOidAclToOud:
         )
 
     @classmethod
+    def _filter_end(cls, text: str, start: int) -> int:
+        """Return the index after the RFC 4515 filter at ``start``, or ``-1``."""
+        constants = FlextLdifConstantsServersOid
+        if start >= len(text) or text[start] != "(":
+            return -1
+        operator = text[start + 1 : start + 2]
+        if operator in constants.OID_LDAP_FILTER_OPERATORS:
+            return cls._compound_end(text, start + 2, single=operator == "!")
+        close = text.find(")", start + 1)
+        item = text[start + 1 : close] if close >= 0 else ""
+        valid = constants.OID_LDAP_FILTER_ITEM_RE.match(
+            item,
+        ) or constants.OID_LDAP_FILTER_EXTENSIBLE_RE.match(item)
+        return close + 1 if close >= 0 and valid else -1
+
+    @classmethod
+    def _compound_end(cls, text: str, position: int, *, single: bool) -> int:
+        """Return the index after a compound filter's closing ``)``, or ``-1``."""
+        count = 0
+        while 0 <= position < len(text) and text[position] == "(":
+            position = cls._filter_end(text, position)
+            count += 1
+        valid = position >= 0 and (count == 1 if single else count >= 1)
+        if not valid or position >= len(text) or text[position] != ")":
+            return -1
+        return position + 1
+
+    @classmethod
+    def validate_ldap_filter(cls, value: str) -> p.Result[str]:
+        """Validate an OID ``filter=(...)`` object qualifier as one LDAP filter.
+
+        The OID object filter is an LDAP filter (OID-30 §30.1.4.1) and renders
+        as the OUD ``targetfilter`` (OUD §9.2.2.5). The text must be exactly
+        one RFC 4515 filter: ``&``/``|`` over one or more filters, ``!`` over
+        one, or a simple, present, substring or extensible item. The qualifier
+        body is stored without its outer parentheses, which are restored.
+
+        Returns:
+            The parenthesized filter, or the typed failure.
+
+        """
+        stripped = value.strip()
+        text = stripped if stripped.startswith("(") else f"({stripped})"
+        if cls._filter_end(text, 0) != len(text):
+            return r[str].fail(
+                f"OID ACL filter {value!r} is not one RFC 4515 LDAP filter "
+                "(manual review required)",
+            )
+        return r[str].ok(text)
+
+    @classmethod
     def convert_bind_modifiers(cls, subject: p.Ldif.OidAclSubject) -> p.Result[str]:
         """Translate a subject's OID modifiers into its OUD ``ip`` constraint.
 
@@ -196,10 +251,10 @@ class FlextLdifServersOidAclToOud:
         ``none``/``simple``/``ssl``/``sasl`` (OUD §9.4.8). The added-object
         constraint (OID-30 §30.1.4.2.4) narrows ``add`` and has no exact OUD
         form, so it fails too. ``bindipfilter`` translates through
-        :meth:`convert_bindipfilter`.
+        :meth:`convert_bindipfilter`; a subject without one yields ``""``.
 
         Returns:
-            The OUD ip value (``""`` without a filter), or the typed failure.
+            The OUD ip value, or the typed failure.
 
         """
         if subject.bindmode:
@@ -213,6 +268,8 @@ class FlextLdifServersOidAclToOud:
                 f"{subject.added_object_constraint!r} has no exact OUD "
                 "equivalent (manual review required)",
             )
+        if not subject.bindipfilter:
+            return r[str].ok("")
         return cls.convert_bindipfilter(subject.bindipfilter)
 
     @staticmethod
@@ -245,8 +302,8 @@ class FlextLdifServersOidAclToOud:
         accepted (OID-A7 §A.7.1; OID-30 Table 30-2): ``none``, the entry
         rights ``browse``/``add``/``delete``/``proxy`` or the attribute rights
         ``read``/``search``/``write``/``selfwrite``/``compare``, and their
-        ``no*`` forms. ``all``, ``*``, an empty list and a right of the other
-        object kind surface as ``r.fail``. ``none`` denies every right of the
+        ``no*`` forms. ``all``, ``*``, an empty list or token and a right of
+        the other object kind surface as ``r.fail``. ``none`` denies every right of the
         kind; a right both granted and denied is denied.
 
         Returns:
@@ -256,10 +313,15 @@ class FlextLdifServersOidAclToOud:
         scope = c.Ldif.ALL_ENTRY_PERMS if is_entry else c.Ldif.ALL_ATTR_PERMS
         other = c.Ldif.ALL_ATTR_PERMS if is_entry else c.Ldif.ALL_ENTRY_PERMS
         kind = c.Ldif.AclTargetType.ENTRY if is_entry else c.Ldif.AclTargetType.ATTR
-        tokens = [raw.strip().lower() for raw in permissions if raw.strip()]
+        tokens = [raw.strip().lower() for raw in permissions]
         result = r[tuple[frozenset[str], frozenset[str]]]
         if not tokens:
             return result.fail("Empty OID access list (manual review required)")
+        if not all(tokens):
+            return result.fail(
+                f"Empty token in OID access list {tuple(permissions)!r} "
+                "(OID-A7 §A.7.1; manual review required)",
+            )
         granted: set[str] = set()
         denied: set[str] = set()
         for perm in tokens:
@@ -341,90 +403,205 @@ class FlextLdifServersOidAclToOud:
         )
 
     @staticmethod
-    def resolve_targetattr(rule: p.Ldif.OidAclRule) -> str:
-        """Compute the OUD ``targetattr`` (entry→``*``, list→``a||b``,.
+    def _target_attr_names(rule: p.Ldif.OidAclRule) -> Sequence[str]:
+        """Return the attribute names of an ``attr=``/``attr!=`` target list."""
+        body = rule.target_attrs.removeprefix(c.Ldif.OUD_ATTR_NEGATION)
+        return tuple(name.strip() for name in body.split(",") if name.strip())
 
-        # ``attr!=``→``!=a||b``).
+    @classmethod
+    def named_target_attrs(cls, rule: p.Ldif.OidAclRule) -> Sequence[str]:
+        """Return the attributes an ``attr=(list)`` rule names explicitly.
+
+        Entry targets, ``attr=(*)`` and ``attr!=(list)`` name none.
 
         Returns:
-            The resulting ``str``.
+            The named attributes in input order.
 
         """
-        attr_negation: str = c.Ldif.OUD_ATTR_NEGATION
-        attr_or: str = c.Ldif.OUD_ATTR_OR
-        wildcard: str = c.Ldif.ACL_WILDCARD
+        attrs = rule.target_attrs
+        if (
+            rule.target_type == c.Ldif.AclTargetType.ENTRY
+            or attrs.startswith(c.Ldif.OUD_ATTR_NEGATION)
+            or attrs in {c.Ldif.ACL_WILDCARD, ""}
+        ):
+            return ()
+        return cls._target_attr_names(rule)
+
+    @classmethod
+    def convert_targetattr(
+        cls,
+        rule: p.Ldif.OidAclRule,
+        *,
+        sibling_attrs: Sequence[str] = (),
+    ) -> p.Result[str]:
+        """Compute the OUD ``targetattr`` of a rule, failing on inexact forms.
+
+        An entry target renders ``*``; ``attr=(a,b)`` renders ``a||b`` and
+        ``attr!=(a,b)`` renders ``!=a||b``. When another ACI of the same ACP
+        names attributes explicitly, OID reads that ACP's ``attr=(*)`` as every
+        attribute except those (OID-30 §30.1.6.3), so ``attr=(*)`` renders
+        ``!=`` over ``sibling_attrs``; an ``attr!=`` rule next to such
+        siblings is undefined in OID and fails. A target naming an OID ACL
+        attribute (it does not exist after conversion), mixing OUD
+        operational and user attributes, or negating an operational attribute
+        has no exact OUD form (OUD11-COMPAT) and fails.
+
+        Returns:
+            The OUD targetattr, or the typed failure.
+
+        """
+        result = r[str]
         if rule.target_type == c.Ldif.AclTargetType.ENTRY:
-            return wildcard
-        attrs: str = rule.target_attrs
-        if attrs.startswith(attr_negation):
-            body = attrs[len(attr_negation) :]
-            joined = body.replace(",", attr_or).replace(" ", "")
-            return f"{attr_negation}{joined}"
-        if attrs in {wildcard, ""}:
-            return wildcard
-        return attrs.replace(",", attr_or).replace(" ", "")
+            return result.ok(c.Ldif.ACL_WILDCARD)
+        negated = rule.target_attrs.startswith(c.Ldif.OUD_ATTR_NEGATION)
+        if negated and sibling_attrs:
+            return result.fail(
+                f"OID attr!= target {rule.target_attrs!r} shares its ACP with "
+                f"named-attribute ACIs {tuple(sibling_attrs)!r}; OID leaves that "
+                "combination undefined (OID-30 §30.1.6.3; manual review required)",
+            )
+        names = cls._target_attr_names(rule)
+        if not negated and not cls.named_target_attrs(rule):
+            names = tuple(dict.fromkeys(sibling_attrs))
+            negated = bool(names)
+        if not names:
+            return result.ok(c.Ldif.ACL_WILDCARD)
+        defect = cls._targetattr_defect(rule, names, negated=negated)
+        if defect:
+            return result.fail(defect)
+        joined = c.Ldif.OUD_ATTR_OR.join(names)
+        return result.ok(f"{c.Ldif.OUD_ATTR_NEGATION}{joined}" if negated else joined)
 
     @staticmethod
+    def _targetattr_defect(
+        rule: p.Ldif.OidAclRule,
+        names: Sequence[str],
+        *,
+        negated: bool,
+    ) -> str:
+        """Return why ``names`` has no exact OUD targetattr, or ``""``."""
+        folded = {name.lower() for name in names}
+        acl_attrs = folded & {str(kind) for kind in c.Ldif.AclConvertType}
+        operational = folded & FlextLdifConstantsServersOid.OUD_OPERATIONAL_ATTRS
+        if c.Ldif.ACL_WILDCARD in names:
+            return (
+                f"OID ACL target {rule.target_attrs!r} mixes '*' with attribute "
+                "names, which OUD rejects (OUD11-COMPAT; manual review required)"
+            )
+        if acl_attrs:
+            return (
+                f"OID ACL target names the ACL attributes {sorted(acl_attrs)!r}, "
+                "which do not exist after conversion to OUD aci (manual review "
+                "required)"
+            )
+        if operational and (negated or operational != folded):
+            return (
+                f"OID ACL target {rule.target_attrs!r} would render an OUD "
+                "targetattr that negates or mixes the operational attributes "
+                f"{sorted(operational)!r}, which OUD rejects (OUD11-COMPAT; "
+                "manual review required)"
+            )
+        return ""
+
+    @classmethod
+    @deprecated(
+        "compat: resolve_targetattr -> convert_targetattr; "
+        "fix: consume the typed result",
+    )
+    def resolve_targetattr(cls, rule: p.Ldif.OidAclRule) -> str:
+        """Return :meth:`convert_targetattr` without siblings, raising on failure."""
+        return cls.convert_targetattr(rule).unwrap()
+
+    @staticmethod
+    def rule_targetscope(rule: p.Ldif.OidAclRule) -> str | None:
+        """Compute the OUD ``targetscope`` of a rule.
+
+        ``orclentrylevelaci`` governs only its entry (OID-30 §30.1.3.3) and
+        renders ``base``. An ``orclaci`` is prescriptive over its whole
+        subtree (OID-30 §30.1.3.2), the OUD default, so its targetscope is
+        omitted (``None``).
+
+        Returns:
+            ``base`` or ``None``.
+
+        """
+        if rule.acl_type == c.Ldif.AclConvertType.ORCLENTRYLEVELACI:
+            return c.Ldif.ACL_SCOPE_BASE
+        return None
+
+    @classmethod
+    @deprecated(
+        "compat: calculate_targetscope -> rule_targetscope; "
+        "fix: drop has_anyone_subject (an orclaci is always subtree)",
+    )
     def calculate_targetscope(
+        cls,
         rule: p.Ldif.OidAclRule,
         *,
         has_anyone_subject: bool,
     ) -> str | None:
-        """Compute the OUD ``targetscope`` of the rule's allow clauses.
-
-        ``orclentrylevelaci`` is non-inheritable → always ``base``. An ``orclaci``
-        with a granting ``anyone`` subject is pinned to ``base`` to prevent
-        inheritance to the subtree; otherwise the OUD default (subtree) applies
-        and ``targetscope`` is omitted (``None``).
-
-        Returns:
-            The resulting ``str | None``.
-
-        """
-        acl_scope_base: str = c.Ldif.ACL_SCOPE_BASE
-        if rule.acl_type == c.Ldif.AclConvertType.ORCLENTRYLEVELACI:
-            return acl_scope_base
-        if has_anyone_subject:
-            return acl_scope_base
-        return None
+        """Return :meth:`rule_targetscope`; ``has_anyone_subject`` has no effect."""
+        del has_anyone_subject
+        return cls.rule_targetscope(rule)
 
     @staticmethod
-    def clause_scopes(
+    def _split_by(
+        permissions: Sequence[str],
+        selected: frozenset[str],
+    ) -> tuple[Sequence[str], Sequence[str]]:
+        """Return ``(rights in selected, other rights)`` in input order."""
+        return (
+            tuple(perm for perm in permissions if perm in selected),
+            tuple(perm for perm in permissions if perm not in selected),
+        )
+
+    @classmethod
+    def clause_parts(
+        cls,
         rule: p.Ldif.OidAclRule,
         permissions: Sequence[str],
         *,
         deny: bool,
-        rule_scope: str | None,
-    ) -> Sequence[tuple[str | None, Sequence[str]]]:
-        """Partition one clause's OUD rights by the targetscope they need.
+    ) -> Sequence[tuple[str | None, str | None, Sequence[str]]]:
+        """Partition one clause's OUD rights by the targetattr and scope they need.
 
-        ``orclentrylevelaci`` governs only its entry (OID-30 §30.1.3.3), but
-        OID ``add`` there authorizes adding children while OUD checks ``add``
-        on the new child (OUD 12.2.1.4 §9.2.3.3), so ``add`` renders with
-        ``onelevel`` and the other rights with the rule scope. An ``orclaci``
-        is prescriptive over its whole subtree (OID-30 §30.1.3.2), so its
-        denials render with ``subtree`` even when the rule's allows are
-        pinned to ``base``. ``None`` means the rule's targetscope.
+        OUD returns an entry only with read on one of its attributes (OUD
+        §9.2.3.3) and its default global ACIs grant read, search and compare
+        on named operational attributes (OUD12-28 §28.1.2), which ``*`` does
+        not cover (OUD11-COMPAT). An entry denial of read or search therefore
+        also denies those rights, in its own aci, on those operational
+        attributes, so the entry stays hidden as in OID. ``orclentrylevelaci``
+        governs only its entry (OID-30 §30.1.3.3), but OID ``add`` there
+        authorizes adding children while OUD checks ``add`` on the new child
+        (OUD §9.2.3.3), so ``add`` renders with ``onelevel``. ``None`` means
+        the rule's targetattr or targetscope.
 
         Returns:
-            ``(targetscope, rights)`` pairs with non-empty rights.
+            ``(targetattr, targetscope, rights)`` triples with non-empty rights.
 
         """
         constants = FlextLdifConstantsServersOid
-        if rule.acl_type == c.Ldif.AclConvertType.ORCLENTRYLEVELACI:
-            child = constants.ENTRY_LEVEL_CHILD_PERMS
-            parts: Sequence[tuple[str | None, Sequence[str]]] = (
-                (None, tuple(perm for perm in permissions if perm not in child)),
-                (
-                    constants.ACL_SCOPE_ONELEVEL,
-                    tuple(perm for perm in permissions if perm in child),
-                ),
-            )
-        elif deny and rule_scope is not None:
-            parts = ((constants.ACL_SCOPE_SUBTREE, tuple(permissions)),)
-        else:
-            parts = ((None, tuple(permissions)),)
-        return tuple((scope, perms) for scope, perms in parts if perms)
+        attr_parts: list[tuple[str | None, Sequence[str]]] = [(None, permissions)]
+        if (
+            deny
+            and rule.target_type == c.Ldif.AclTargetType.ENTRY
+            and cls._split_by(permissions, constants.OUD_VISIBILITY_PERMS)[0]
+        ):
+            attr_parts.append((
+                constants.OUD_GLOBAL_OPERATIONAL_TARGETATTR,
+                constants.OUD_GLOBAL_OPERATIONAL_PERMS,
+            ))
+        parts: list[tuple[str | None, str | None, Sequence[str]]] = []
+        for targetattr, perms in attr_parts:
+            if rule.acl_type == c.Ldif.AclConvertType.ORCLENTRYLEVELACI:
+                child, own = cls._split_by(perms, constants.OUD_CHILD_ENTRY_PERMS)
+                parts.extend((
+                    (targetattr, None, own),
+                    (targetattr, constants.ACL_SCOPE_ONELEVEL, child),
+                ))
+            else:
+                parts.append((targetattr, None, perms))
+        return tuple(part for part in parts if part[2])
 
     @classmethod
     def convert_subject_to_oud(
@@ -436,8 +613,10 @@ class FlextLdifServersOidAclToOud:
         Returns an :class:`m.Ldif.AciAllow` whose ``subject_value`` is the
         normalized bind value (``ldap:///`` is applied at aci assembly) and whose
         ``permissions`` are left empty — the assembler fills the resolved
-        rights. ``guidattr``/unknown subjects have no OUD equivalent and
-        surface as ``r.fail`` carrying the manual-review note.
+        rights. ``*`` maps to ``anyone``; the assembler narrows its grants to
+        authenticated sessions. ``SuperUser``, ``groupattr``, ``guidattr`` and
+        unknown subjects have no exact OUD equivalent and surface as
+        ``r.fail`` carrying the manual-review note.
 
         Returns:
             The resulting ``p.Result[p.Ldif.AciAllow]``.
@@ -456,13 +635,30 @@ class FlextLdifServersOidAclToOud:
             case c.Ldif.OidSubjectKind.ANYONE:
                 bind_type, bind_value = oud.USERDN.value, c.Ldif.SUBJECT_ANYONE
             case c.Ldif.OidSubjectKind.SUPERUSER:
-                bind_type, bind_value = oud.USERDN.value, c.Ldif.DIRECTORY_MANAGER_DN
+                return r[p.Ldif.AciAllow].fail(
+                    "OID SuperUser is subject to access control and names the "
+                    "configured superuser DN (OID-30 §30.1.4.2.1; R3.9), while "
+                    "the OUD root user bypasses ACIs (OUD §9.1.4); no OUD bind "
+                    "rule keeps its grants and denials (manual review required)",
+                )
+            case c.Ldif.OidSubjectKind.GROUPATTR:
+                return r[p.Ldif.AciAllow].fail(
+                    f"OID groupattr=({value}) honours only the security groups "
+                    "the attribute names on each entry (OID-30 §30.1.3.4.6), "
+                    "while OUD userattr GROUPDN honours every group; the "
+                    "per-entry values cannot be verified from the ACI (manual "
+                    "review required)",
+                )
+            case c.Ldif.OidSubjectKind.DNATTR if (
+                not FlextLdifConstantsServersOid.OID_ATTR_DESCRIPTOR_RE.match(value)
+            ):
+                return r[p.Ldif.AciAllow].fail(
+                    f"Subject '{kind}' value {value!r} is not one attribute "
+                    "description (manual review required)",
+                )
             case c.Ldif.OidSubjectKind.DNATTR:
                 bind_type = oud.USERATTR.value
                 bind_value = f"{value}{c.Ldif.UserAttrSuffix.USERDN.value}"
-            case c.Ldif.OidSubjectKind.GROUPATTR:
-                bind_type = oud.USERATTR.value
-                bind_value = f"{value}{c.Ldif.UserAttrSuffix.GROUPDN.value}"
             case _:
                 return r[p.Ldif.AciAllow].fail(
                     f"Subject '{kind}' has no OUD equivalent "

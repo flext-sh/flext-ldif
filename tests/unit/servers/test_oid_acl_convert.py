@@ -142,8 +142,23 @@ class TestsFlextLdifOidAclConvert:
                 ),
                 "Unbalanced ACL filter clause",
             ),
-            ("orclaci: access to entry by nonsense", "No subjects in ACL"),
+            ("orclaci: access to entry by nonsense", "Unrecognized OID ACL text"),
             ("orclaci: access to bogustarget by * (read)", "Unknown ACL target"),
+            ("orclaci: access to attr=() by * (read)", "is not '*' or a list"),
+            ("orclaci: access to attr!=(*) by * (read)", "is not '*' or a list"),
+            ("orclaci: access to attr=(cn,,sn) by * (read)", "is not '*' or a list"),
+            (
+                (
+                    "orclaci: access to entry by * "
+                    "bindipfilter=(orclipaddress=1.1.1.1) "
+                    "(browse) bindipfilter=(orclipaddress=2.2.2.2)"
+                ),
+                "Repeated OID 'bindipfilter'",
+            ),
+            (
+                "orclaci: access to entry by * bindipfilter=() (browse)",
+                "Empty OID 'bindipfilter'",
+            ),
         ],
     )
     def test_malformed_line_fails_with_descriptive_error(
@@ -228,6 +243,21 @@ class TestsFlextLdifOidAclConvert:
         tm.that(
             subject.added_object_constraint,
             eq="|(objectclass=orclNetService)(objectclass=orclNetServiceAlias)",
+        )
+
+    @staticmethod
+    @c.Tests.MARK.parametrize(
+        "clause",
+        [
+            "by * bindmode=(Simple) bindmode=(SSL) (browse)",
+            "by * bindipfilter=() (browse)",
+        ],
+    )
+    def test_invalid_modifier_yields_unknown_type(clause: str) -> None:
+        """A repeated or empty modifier is never collapsed into a valid subject."""
+        tm.that(
+            FlextLdifServersOidAclConvert.parse_subject(clause).subject_type,
+            eq="unknown",
         )
 
     @staticmethod

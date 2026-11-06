@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable, MutableSequence
+from collections.abc import Callable, MutableSequence, Sequence
 from typing import Annotated, ClassVar, override
 
 from flext_ldif import c, m, p, r, s, t, u
@@ -55,6 +55,20 @@ class FlextLdifServersBaseSchemaAcl(
         """
         msg = "ACL servers must implement resolve_acl_attributes"
         raise NotImplementedError(msg)
+
+    @staticmethod
+    def access_group_dns(entries: Sequence[p.Ldif.Entry]) -> frozenset[str]:
+        """Return the DN keys of the groups whose membership access honours.
+
+        A dialect without a modelled group-membership rule verifies no group,
+        so ACL conversion fails on every group subject it carries.
+
+        Returns:
+            The verified group DN keys; none for this base dialect.
+
+        """
+        del entries
+        return frozenset()
 
     def matches_acl_attribute(self, attribute_name: str) -> bool:
         """Check whether an attribute name is this server's ACL attribute.

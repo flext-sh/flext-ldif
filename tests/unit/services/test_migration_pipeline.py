@@ -340,13 +340,17 @@ class TestsFlextLdifMigrationPipelineExecution:
         )
 
         migrated = tm.ok(
-            pipeline.migrate_entries([entry]),
+            pipeline.migrate_entries([
+                entry,
+                u.Tests.oid_security_group_entry("cn=a,dc=ctbc"),
+            ]),
         )
         tm.that(
             tm.not_none(migrated[0].attributes).attributes["aci"],
             eq=[
                 (
-                    '(targetattr="*")    (version 3.0; acl "users Entry by x";'
+                    '(targetattr="objectClass")'
+                    '    (version 3.0; acl "users Entry by x";'
                     '     allow (read, search)    groupdn="ldap:///cn=a,dc=ctbc";)'
                 ),
             ],

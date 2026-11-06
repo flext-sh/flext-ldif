@@ -1,4 +1,4 @@
-# provenance: devops-oud-iac@2225708e3ac8 tests/fixtures/synthetic/input/10_aci_dump.ldif sha256=817c68223a3da587461175df5dcb964fbf7b525240437e491e6b6d444355ef9b
+# provenance: devops-oud-iac@2225708e3ac8 tests/fixtures/synthetic/input/10_aci_dump.ldif sha256=817c68223a3da587461175df5dcb964fbf7b525240437e491e6b6d444355ef9b amended=flext-ws7iv(entries for the referenced groups added as OID ACP security groups without members, which group ACL subjects require)
 # Synthetic test data. Generated; never use these credentials in production.
 dn: cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
 orclaci: access to attr=(*) by 
@@ -476,3 +476,177 @@ orclaci: access to entry by
 orclaci: access to attr=(*) by 
  group="cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00
  001,dc=example,dc=invalid" (search,read,nowrite,nocompare) by * (none)
+
+dn: cn=group-00213,cn=node-00111,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00213
+
+dn: cn=group-01851,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-01851
+
+dn: cn=group-00591,cn=node-00039,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00591
+
+dn: cn=group-01465,cn=node-00090,cn=node-00003,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-01465
+
+dn: cn=group-00284,cn=node-00014,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00284
+
+dn: cn=group-00594,cn=node-00018,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00594
+
+dn: cn=group-00595,cn=node-00023,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00595
+
+dn: cn=group-00596,cn=node-00036,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00596
+
+dn: cn=group-00597,cn=node-00040,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00597
+
+dn: cn=group-00598,cn=node-00043,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00598
+
+dn: cn=group-00599,cn=node-00045,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00599
+
+dn: cn=group-00600,cn=node-00046,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00600
+
+dn: cn=group-00685,cn=node-00054,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00685
+
+dn: cn=group-00601,cn=node-00058,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00601
+
+dn: cn=group-00587,cn=node-00062,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00587
+
+dn: cn=group-00602,cn=node-00063,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00602
+
+dn: cn=group-00603,cn=node-00066,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00603
+
+dn: cn=group-00604,cn=node-00088,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00604
+
+dn: cn=group-00588,cn=node-00095,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00588
+
+dn: cn=group-00605,cn=node-00103,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00605
+
+dn: cn=group-00606,cn=node-00123,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00606
+
+dn: cn=group-00589,cn=node-00125,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00589
+
+dn: cn=group-00607,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00607
+
+dn: cn=group-00590,cn=node-00131,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00590
+
+dn: cn=group-00608,cn=node-00150,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00608
+
+dn: cn=group-00609,cn=node-00151,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00609
+
+dn: cn=group-00610,cn=node-00158,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00610
+
+dn: cn=group-00611,cn=node-00159,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00611
+
+dn: cn=group-00612,cn=node-00160,cn=node-00004,dc=group-00002,dc=node-00001,dc=example,dc=invalid
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: group-00612

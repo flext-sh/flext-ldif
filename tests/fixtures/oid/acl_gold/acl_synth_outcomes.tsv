@@ -1,4 +1,4 @@
-# provenance: per-rule outcome counts of acl_synth_input.ldif (sha256=91e103d8bf5cac49243692ed2e0312bc1215d25e97cc339cf6450537e51be1e0) through the same pipeline; columns: dn, granted, cancelled, denied_all, denied, out_of_scope
+# provenance: per-rule outcome counts of acl_synth_input.ldif (sha256=72871129f755f6e3f7f854b5f707e60d4a39d838dc1cbfd9f99e2ff4a0c0cb8f) through the same pipeline; columns: dn, granted, cancelled, denied_all, denied, out_of_scope
 cn=admins,dc=ctbc	0	2	1	0	0
 cn=groupattr-case,dc=ctbc	0	1	1	0	0
 cn=negated-wildcard,dc=ctbc	1	0	0	1	0

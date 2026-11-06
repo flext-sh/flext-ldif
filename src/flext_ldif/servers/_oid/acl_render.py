@@ -5,8 +5,8 @@ Renders the aligned OUD form: ``aci: (targetattr=…)`` then the indented
 and one indented ``allow (perms) bindrule;`` / ``deny (perms) bindrule;``
 clause per permission set. Same-permission subjects collapse into one clause
 with ``or``-joined bind-rules. A rule whose clauses need different
-targetscopes renders one ``aci`` value per scope. Pure string assembly —
-total function, no failure channel.
+targetattrs or targetscopes renders one ``aci`` value per pair. Values are
+validated at assembly; rendering is pure string assembly.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -15,9 +15,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
+from warnings import deprecated
 
 from flext_ldif import c, m, p
-from flext_ldif.servers._oid import FlextLdifConstantsServersOid
 
 
 class FlextLdifServersOidAclRender:
@@ -68,39 +68,75 @@ class FlextLdifServersOidAclRender:
         return tuple(parts)
 
     @staticmethod
-    def _scope_key(clause: p.Ldif.AciBindClause, aci: p.Ldif.AciRule) -> str | None:
-        """Return the rendered targetscope of a clause (subtree renders as None)."""
-        scope = clause.targetscope or aci.targetscope
+    def _target_key(
+        clause: p.Ldif.AciBindClause,
+        aci: p.Ldif.AciRule,
+    ) -> tuple[str, str | None]:
+        """Return the rendered ``(targetattr, targetscope)`` of a clause."""
         return (
-            None if scope == FlextLdifConstantsServersOid.ACL_SCOPE_SUBTREE else scope
+            clause.targetattr or aci.targetattr,
+            clause.targetscope or aci.targetscope,
         )
 
+    @staticmethod
+    def group_clauses(
+        clauses: Sequence[p.Ldif.AciBindClause],
+        binds: Sequence[str],
+    ) -> Sequence[p.Ldif.AciAllowGroup]:
+        """Group rendered bind rules by permission set and bind modifiers.
+
+        Returns:
+            The groups in first-seen order.
+
+        """
+        groups: list[p.Ldif.AciAllowGroup] = []
+        for clause, bind in zip(clauses, binds, strict=True):
+            key = (tuple(clause.permissions), clause.authmethod, clause.ip)
+            index = next(
+                (
+                    position
+                    for position, group in enumerate(groups)
+                    if (tuple(group.permissions), group.authmethod, group.ip) == key
+                ),
+                None,
+            )
+            if index is None:
+                groups.append(
+                    m.Ldif.AciAllowGroup(
+                        permissions=key[0],
+                        binds=(bind,),
+                        authmethod=clause.authmethod,
+                        ip=clause.ip,
+                    ),
+                )
+                continue
+            group = groups[index]
+            groups[index] = group.model_copy(update={"binds": (*group.binds, bind)})
+        return tuple(groups)
+
     @classmethod
-    def _render_scope(
+    def _render_target(
         cls,
         aci: p.Ldif.AciRule,
         allows: Sequence[p.Ldif.AciBindClause],
         denies: Sequence[p.Ldif.AciBindClause],
     ) -> str:
-        """Render the clauses of one targetscope as one ``aci:`` line.
+        """Render the clauses of one targetattr/targetscope as one ``aci:`` line.
 
         Returns:
             The aligned ``aci:`` line.
 
         """
-        sections: list[tuple[str, p.Ldif.AciAllowGroups]] = []
-        for keyword, clauses in (
-            (c.Ldif.ACI_ALLOW, allows),
-            (c.Ldif.ACI_DENY, denies),
-        ):
-            grouped = m.Ldif.AciAllowGroups()
-            for clause in clauses:
-                grouped = grouped.with_allow(clause, cls.render_bind(clause))
-            sections.append((keyword, grouped))
         heads = tuple(
             (f"{keyword} ({', '.join(group.permissions)})", group)
-            for keyword, grouped in sections
-            for group in grouped.groups
+            for keyword, clauses in (
+                (c.Ldif.ACI_ALLOW, allows),
+                (c.Ldif.ACI_DENY, denies),
+            )
+            for group in cls.group_clauses(
+                clauses,
+                [cls.render_bind(clause) for clause in clauses],
+            )
         )
         head_width = max((len(head) for head, _ in heads), default=0)
         bind_column = len(c.Ldif.ACI_CLAUSE_INDENT) + head_width + c.Ldif.ACI_BIND_GAP
@@ -121,50 +157,64 @@ class FlextLdifServersOidAclRender:
     def render_aci_strings(cls, aci: p.Ldif.AciRule) -> Sequence[str]:
         """Render an :class:`m.Ldif.AciRule` to its OUD ``aci:`` lines.
 
-        Clauses group by targetscope (first-seen order, allows before
-        denies); each scope renders one ``aci:`` line. Within a line, clauses
-        with an identical permission set become one ``allow (perms) bind1 or
-        bind2;`` / ``deny (perms) …;`` clause. Target parts and ``(version``
-        follow ``c.Ldif.ACI_PART_INDENT``, each clause follows
+        Clauses group by targetattr and targetscope (first-seen order, allows
+        before denies); each pair renders one ``aci:`` line. Within a line,
+        clauses with an identical permission set become one ``allow (perms)
+        bind1 or bind2;`` / ``deny (perms) …;`` clause. Target parts and
+        ``(version`` follow ``c.Ldif.ACI_PART_INDENT``, each clause follows
         ``c.Ldif.ACI_CLAUSE_INDENT``, bind-rules start in one column after the
         longest clause head, and each further bind-rule's ``or`` keyword ends
         in that column. A rule without clauses renders nothing.
 
         Returns:
-            One ``aci:`` line per targetscope.
+            One ``aci:`` line per targetattr/targetscope pair.
 
         """
-        scopes: list[str | None] = []
+        keys: list[tuple[str, str | None]] = []
         for clause in (*aci.allows, *aci.denies):
-            key = cls._scope_key(clause, aci)
-            if key not in scopes:
-                scopes.append(key)
+            key = cls._target_key(clause, aci)
+            if key not in keys:
+                keys.append(key)
         return tuple(
-            cls._render_scope(
-                aci.model_copy(update={"targetscope": scope}),
+            cls._render_target(
+                aci.model_copy(update={"targetattr": attr, "targetscope": scope}),
                 [
-                    clause
-                    for clause in aci.allows
-                    if cls._scope_key(clause, aci) == scope
+                    item
+                    for item in aci.allows
+                    if cls._target_key(item, aci) == (attr, scope)
                 ],
                 [
-                    clause
-                    for clause in aci.denies
-                    if cls._scope_key(clause, aci) == scope
+                    item
+                    for item in aci.denies
+                    if cls._target_key(item, aci) == (attr, scope)
                 ],
             )
-            for scope in scopes
+            for attr, scope in keys
         )
 
     @classmethod
+    @deprecated(
+        "compat: render_aci_string -> render_aci_strings; "
+        "fix: render every aci line of the rule",
+    )
     def render_aci_string(cls, aci: p.Ldif.AciRule) -> str:
-        """Render an :class:`m.Ldif.AciRule` to its newline-joined ``aci:`` lines.
+        """Render a rule that needs exactly one ``aci:`` line.
 
         Returns:
-            The :meth:`render_aci_strings` lines joined by a newline.
+            The single :meth:`render_aci_strings` line.
+
+        Raises:
+            ValueError: The rule renders no line or more than one line.
 
         """
-        return "\n".join(cls.render_aci_strings(aci))
+        lines = cls.render_aci_strings(aci)
+        if len(lines) != 1:
+            msg = (
+                f"ACI rule {aci.acl_name!r} renders {len(lines)} aci lines; "
+                "render_aci_string returns exactly one (use render_aci_strings)"
+            )
+            raise ValueError(msg)
+        return lines[0]
 
 
 __all__: list[str] = ["FlextLdifServersOidAclRender"]

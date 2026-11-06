@@ -1,4 +1,4 @@
-# provenance: flext-ldif FlextLdif().migration_pipeline oid->oud base_dn=dc=ctbc output of acl_synth_input.ldif (sha256=91e103d8bf5cac49243692ed2e0312bc1215d25e97cc339cf6450537e51be1e0); flext-ws7iv semantics: union of grants minus denials per ACI (OID-30 30.1.6.2), denials rendered as OUD deny (OUD 9.1.4); regenerate on any intended conversion change
+# provenance: flext-ldif FlextLdif().migration_pipeline oid->oud base_dn=dc=ctbc output of acl_synth_input.ldif (sha256=72871129f755f6e3f7f854b5f707e60d4a39d838dc1cbfd9f99e2ff4a0c0cb8f); flext-ws7iv semantics: union of grants minus denials per ACI (OID-30 30.1.6.2), denials rendered as OUD deny (OUD 9.1.4); regenerate on any intended conversion change
 version: 1
 
 dn: cn=admins,dc=ctbc
@@ -7,6 +7,9 @@ replace: aci
 aci: (targetattr="*")
      (version 3.0; acl "admins Entry by SecurityAdmins";
       deny (read, search, add, delete, proxy)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (version 3.0; acl "admins Entry by SecurityAdmins";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 -
 
 dn: cn=groupattr-case,dc=ctbc
@@ -37,6 +40,10 @@ aci: (targetattr="*")
      (targetscope="onelevel")
      (version 3.0; acl "owner-groups Entry by owner";
       deny (add)    userdn="ldap:///anyone";)
+aci: (targetattr="createTimestamp||creatorsName||modifiersName||modifyTimestamp||entryDN||entryUUID||subschemaSubentry||orclguid||nsuniqueid")
+     (targetscope="base")
+     (version 3.0; acl "owner-groups Entry by owner";
+      deny (read, search, compare)    userdn="ldap:///anyone";)
 aci: (targetattr="uniquemember")
      (targetscope="base")
      (version 3.0; acl "owner-groups Attrs by owner";

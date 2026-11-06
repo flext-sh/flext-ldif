@@ -169,6 +169,7 @@ class FlextLdifConversionEntry(
             source_type_norm,
             target_type_norm,
             base_dn=self.base_dn or "",
+            access_groups=self.access_groups,
         )
         if acl_conversion.failure:
             return r[t.Ldif.ConvertedModel].from_failure(acl_conversion)

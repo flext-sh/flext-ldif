@@ -15,7 +15,8 @@ from __future__ import annotations
 
 import re
 from enum import StrEnum, unique
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Annotated, ClassVar
+from warnings import deprecated
 
 from flext_ldif._constants import FlextLdifConstantsBase
 
@@ -103,66 +104,162 @@ class FlextLdifConstantsAclConvert:
     )
     _SUBJ_MODIFIERS = rf"(?:{_SUBJ_MODIFIER_PATTERN})*"
 
-    # by-clause subject matchers; group→subject mapping is the SUBJECT_MATCHERS SSOT.
-    SUBJ_SUPERUSER_RE: ClassVar[t.RegexPattern] = re.compile(
-        rf"by\s+SuperUser{_SUBJ_MODIFIERS}\s*\(([^)]+)\){_SUBJ_MODIFIERS}\s*$",
+    # Deprecated by-clause grammar; the OID dialect constants own the current one.
+    SUBJ_SUPERUSER_RE: ClassVar[
+        Annotated[
+            t.RegexPattern,
+            deprecated(
+                "compat: c.Ldif.SUBJ_SUPERUSER_RE -> "
+                "FlextLdifConstantsServersOid.OID_SUBJ_SUPERUSER_RE; "
+                "fix: read the OID dialect grammar",
+            ),
+        ]
+    ] = re.compile(
+        r"by\s+SuperUser\s*\(([^)]+)\)",
         re.IGNORECASE,
     )
-    SUBJ_GROUP_RE: ClassVar[t.RegexPattern] = re.compile(
+    SUBJ_GROUP_RE: ClassVar[
+        Annotated[
+            t.RegexPattern,
+            deprecated(
+                "compat: c.Ldif.SUBJ_GROUP_RE -> "
+                "FlextLdifConstantsServersOid.OID_SUBJ_GROUP_RE; "
+                "fix: read the OID dialect grammar",
+            ),
+        ]
+    ] = re.compile(
         rf'by\s+group\s*=\s*"([^"]+)"{_SUBJ_MODIFIERS}\s*\(([^)]+)\)'
         rf"{_SUBJ_MODIFIERS}\s*$",
         re.IGNORECASE,
     )
-    SUBJ_DN_RE: ClassVar[t.RegexPattern] = re.compile(
+    SUBJ_DN_RE: ClassVar[
+        Annotated[
+            t.RegexPattern,
+            deprecated(
+                "compat: c.Ldif.SUBJ_DN_RE -> "
+                "FlextLdifConstantsServersOid.OID_SUBJ_DN_RE; "
+                "fix: read the OID dialect grammar",
+            ),
+        ]
+    ] = re.compile(
         rf'by\s+dn\s*=\s*"([^"]+)"{_SUBJ_MODIFIERS}\s*\(([^)]+)\)'
         rf"{_SUBJ_MODIFIERS}\s*$",
         re.IGNORECASE,
     )
-    SUBJ_QUOTED_DN_RE: ClassVar[t.RegexPattern] = re.compile(
+    SUBJ_QUOTED_DN_RE: ClassVar[
+        Annotated[
+            t.RegexPattern,
+            deprecated(
+                "compat: c.Ldif.SUBJ_QUOTED_DN_RE -> "
+                "FlextLdifConstantsServersOid.OID_SUBJ_QUOTED_DN_RE; "
+                "fix: read the OID dialect grammar",
+            ),
+        ]
+    ] = re.compile(
         rf'by\s+"([^"]+)"{_SUBJ_MODIFIERS}\s*\(([^)]+)\)'
         rf"{_SUBJ_MODIFIERS}\s*$",
         re.IGNORECASE,
     )
-    SUBJ_SELF_RE: ClassVar[t.RegexPattern] = re.compile(
+    SUBJ_SELF_RE: ClassVar[
+        Annotated[
+            t.RegexPattern,
+            deprecated(
+                "compat: c.Ldif.SUBJ_SELF_RE -> "
+                "FlextLdifConstantsServersOid.OID_SUBJ_SELF_RE; "
+                "fix: read the OID dialect grammar",
+            ),
+        ]
+    ] = re.compile(
         rf"by\s+self{_SUBJ_MODIFIERS}\s*\(([^)]+)\){_SUBJ_MODIFIERS}\s*$",
         re.IGNORECASE,
     )
-    SUBJ_ANYONE_RE: ClassVar[t.RegexPattern] = re.compile(
+    SUBJ_ANYONE_RE: ClassVar[
+        Annotated[
+            t.RegexPattern,
+            deprecated(
+                "compat: c.Ldif.SUBJ_ANYONE_RE -> "
+                "FlextLdifConstantsServersOid.OID_SUBJ_ANYONE_RE; "
+                "fix: read the OID dialect grammar",
+            ),
+        ]
+    ] = re.compile(
         rf"by\s+\*{_SUBJ_MODIFIERS}\s*\(([^)]+)\){_SUBJ_MODIFIERS}\s*$",
         re.IGNORECASE,
     )
-    SUBJ_DNATTR_RE: ClassVar[t.RegexPattern] = re.compile(
-        rf"by\s+dnattr\s*=\s*\(([^)]+)\){_SUBJ_MODIFIERS}\s*\(([^)]+)\)"
-        rf"{_SUBJ_MODIFIERS}\s*$",
+    SUBJ_DNATTR_RE: ClassVar[
+        Annotated[
+            t.RegexPattern,
+            deprecated(
+                "compat: c.Ldif.SUBJ_DNATTR_RE -> "
+                "FlextLdifConstantsServersOid.OID_SUBJ_DNATTR_RE; "
+                "fix: read the OID dialect grammar",
+            ),
+        ]
+    ] = re.compile(
+        r"by\s+dnattr\s*=\s*\(([^)]+)\)\s*\(([^)]+)\)",
         re.IGNORECASE,
     )
-    SUBJ_GROUPATTR_RE: ClassVar[t.RegexPattern] = re.compile(
-        rf"by\s+groupattr\s*=\s*\(([^)]+)\){_SUBJ_MODIFIERS}\s*\(([^)]+)\)"
-        rf"{_SUBJ_MODIFIERS}\s*$",
+    SUBJ_GROUPATTR_RE: ClassVar[
+        Annotated[
+            t.RegexPattern,
+            deprecated(
+                "compat: c.Ldif.SUBJ_GROUPATTR_RE -> "
+                "FlextLdifConstantsServersOid.OID_SUBJ_GROUPATTR_RE; "
+                "fix: read the OID dialect grammar",
+            ),
+        ]
+    ] = re.compile(
+        r"by\s+groupattr\s*=\s*\(([^)]+)\)\s*\(([^)]+)\)",
         re.IGNORECASE,
     )
-    SUBJ_GUIDATTR_RE: ClassVar[t.RegexPattern] = re.compile(
-        rf"by\s+guidattr\s*=\s*\(([^)]+)\){_SUBJ_MODIFIERS}\s*\(([^)]+)\)"
-        rf"{_SUBJ_MODIFIERS}\s*$",
+    SUBJ_GUIDATTR_RE: ClassVar[
+        Annotated[
+            t.RegexPattern,
+            deprecated(
+                "compat: c.Ldif.SUBJ_GUIDATTR_RE -> "
+                "FlextLdifConstantsServersOid.OID_SUBJ_GUIDATTR_RE; "
+                "fix: read the OID dialect grammar",
+            ),
+        ]
+    ] = re.compile(
+        r"by\s+guidattr\s*=\s*\(([^)]+)\)\s*\(([^)]+)\)",
         re.IGNORECASE,
     )
 
-    BY_CLAUSE_RE: ClassVar[t.RegexPattern] = re.compile(
+    BY_CLAUSE_RE: ClassVar[
+        Annotated[
+            t.RegexPattern,
+            deprecated(
+                "compat: c.Ldif.BY_CLAUSE_RE -> "
+                "FlextLdifConstantsServersOid.OID_BY_CLAUSE_RE; "
+                "fix: read the OID dialect grammar",
+            ),
+        ]
+    ] = re.compile(
         r"by\s+(?:"
         rf'group\s*=\s*"[^"]+"{_SUBJ_MODIFIERS}\s*\([^)]+\){_SUBJ_MODIFIERS}'
         rf'|dn\s*=\s*"[^"]+"{_SUBJ_MODIFIERS}\s*\([^)]+\){_SUBJ_MODIFIERS}'
         rf'|"[^"]+"{_SUBJ_MODIFIERS}\s*\([^)]+\){_SUBJ_MODIFIERS}'
-        rf"|SuperUser{_SUBJ_MODIFIERS}\s*\([^)]+\){_SUBJ_MODIFIERS}"
+        r"|SuperUser\s*\([^)]+\)"
         rf"|self{_SUBJ_MODIFIERS}\s*\([^)]+\){_SUBJ_MODIFIERS}"
         rf"|\*{_SUBJ_MODIFIERS}\s*\([^)]+\){_SUBJ_MODIFIERS}"
-        rf"|dnattr\s*=\s*\([^)]+\){_SUBJ_MODIFIERS}\s*\([^)]+\){_SUBJ_MODIFIERS}"
-        rf"|groupattr\s*=\s*\([^)]+\){_SUBJ_MODIFIERS}\s*\([^)]+\){_SUBJ_MODIFIERS}"
-        rf"|guidattr\s*=\s*\([^)]+\){_SUBJ_MODIFIERS}\s*\([^)]+\){_SUBJ_MODIFIERS}"
+        r"|dnattr\s*=\s*\([^)]+\)\s*\([^)]+\)"
+        r"|groupattr\s*=\s*\([^)]+\)\s*\([^)]+\)"
+        r"|guidattr\s*=\s*\([^)]+\)\s*\([^)]+\)"
         r")",
         re.IGNORECASE,
     )
     "Finds each ``by <subject> (perms)`` clause in an OID ACL (optional modifiers)."
-    SUBJ_MODIFIER_RE: ClassVar[t.RegexPattern] = re.compile(
+    SUBJ_MODIFIER_RE: ClassVar[
+        Annotated[
+            t.RegexPattern,
+            deprecated(
+                "compat: c.Ldif.SUBJ_MODIFIER_RE -> "
+                "FlextLdifConstantsServersOid.OID_SUBJ_MODIFIER_RE; "
+                "fix: read the OID dialect grammar",
+            ),
+        ]
+    ] = re.compile(
         r"(bindmode|bindipfilter|added_object_constraint|constraintonaddedobject)\s*=\s*"
         rf'(?:\(({FlextLdifConstantsBase.LDAP_FILTER_BODY_PATTERN})\)|"([^"]+)")',
         re.IGNORECASE,

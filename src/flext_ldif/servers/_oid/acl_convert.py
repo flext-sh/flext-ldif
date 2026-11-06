@@ -26,55 +26,55 @@ class FlextLdifServersOidAclConvert:
         return m.Ldif.AclSubjectMatcherCatalog(
             matchers=(
                 m.Ldif.AclSubjectMatcher(
-                    pattern=c.Ldif.SUBJ_SUPERUSER_RE,
+                    pattern=FlextLdifConstantsServersOid.OID_SUBJ_SUPERUSER_RE,
                     subj_type="superuser",
                     value_group="cn=Directory Manager",
                     perms_group=1,
                 ),
                 m.Ldif.AclSubjectMatcher(
-                    pattern=c.Ldif.SUBJ_GROUP_RE,
+                    pattern=FlextLdifConstantsServersOid.OID_SUBJ_GROUP_RE,
                     subj_type="group",
                     value_group=1,
                     perms_group=2,
                 ),
                 m.Ldif.AclSubjectMatcher(
-                    pattern=c.Ldif.SUBJ_DN_RE,
+                    pattern=FlextLdifConstantsServersOid.OID_SUBJ_DN_RE,
                     subj_type=c.ContextScope.USER,
                     value_group=1,
                     perms_group=2,
                 ),
                 m.Ldif.AclSubjectMatcher(
-                    pattern=c.Ldif.SUBJ_QUOTED_DN_RE,
+                    pattern=FlextLdifConstantsServersOid.OID_SUBJ_QUOTED_DN_RE,
                     subj_type=c.ContextScope.USER,
                     value_group=1,
                     perms_group=2,
                 ),
                 m.Ldif.AclSubjectMatcher(
-                    pattern=c.Ldif.SUBJ_SELF_RE,
+                    pattern=FlextLdifConstantsServersOid.OID_SUBJ_SELF_RE,
                     subj_type="self",
                     value_group="self",
                     perms_group=1,
                 ),
                 m.Ldif.AclSubjectMatcher(
-                    pattern=c.Ldif.SUBJ_ANYONE_RE,
+                    pattern=FlextLdifConstantsServersOid.OID_SUBJ_ANYONE_RE,
                     subj_type="anyone",
                     value_group="anyone",
                     perms_group=1,
                 ),
                 m.Ldif.AclSubjectMatcher(
-                    pattern=c.Ldif.SUBJ_DNATTR_RE,
+                    pattern=FlextLdifConstantsServersOid.OID_SUBJ_DNATTR_RE,
                     subj_type="dnattr",
                     value_group=1,
                     perms_group=2,
                 ),
                 m.Ldif.AclSubjectMatcher(
-                    pattern=c.Ldif.SUBJ_GROUPATTR_RE,
+                    pattern=FlextLdifConstantsServersOid.OID_SUBJ_GROUPATTR_RE,
                     subj_type="groupattr",
                     value_group=1,
                     perms_group=2,
                 ),
                 m.Ldif.AclSubjectMatcher(
-                    pattern=c.Ldif.SUBJ_GUIDATTR_RE,
+                    pattern=FlextLdifConstantsServersOid.OID_SUBJ_GUIDATTR_RE,
                     subj_type="guidattr",
                     value_group=1,
                     perms_group=2,
@@ -84,45 +84,68 @@ class FlextLdifServersOidAclConvert:
 
     @staticmethod
     def _split_perms(raw: str) -> Sequence[str]:
-        return tuple(token.strip() for token in raw.split(",") if token.strip())
+        """Split an access list on commas, keeping empty tokens for rejection.
+
+        Returns:
+            The stripped tokens; an all-blank list yields none.
+
+        """
+        if not raw.strip():
+            return ()
+        return tuple(token.strip() for token in raw.split(","))
 
     @staticmethod
-    def _subject_modifiers(subject_str: str) -> p.Ldif.OidAclSubjectModifiers:
-        bindmode = ""
-        bindipfilter = ""
-        added_object_constraint = ""
-        for modifier in c.Ldif.SUBJ_MODIFIER_RE.finditer(subject_str):
-            value = modifier.group(2) or modifier.group(3) or ""
-            match modifier.group(1).lower():
-                case "bindmode":
-                    bindmode = value
-                case "bindipfilter":
-                    bindipfilter = value
-                case "added_object_constraint":
-                    added_object_constraint = value
-                case "constraintonaddedobject":
-                    added_object_constraint = value
-                case _:
-                    continue
-        return m.Ldif.OidAclSubjectModifiers(
-            bindmode=bindmode,
-            bindipfilter=bindipfilter,
-            added_object_constraint=added_object_constraint,
-        )
+    def subject_modifiers(
+        subject_str: str,
+    ) -> p.Result[p.Ldif.OidAclSubjectModifiers]:
+        """Read the optional modifiers of one ``by`` clause.
+
+        Each modifier may appear once per clause with a non-empty value; a
+        repeated or empty modifier surfaces as ``r.fail``.
+
+        Returns:
+            The typed modifiers, or the typed failure.
+
+        """
+        constants = FlextLdifConstantsServersOid
+        result = r[p.Ldif.OidAclSubjectModifiers]
+        modifiers = m.Ldif.OidAclSubjectModifiers()
+        seen: set[str] = set()
+        for modifier in constants.OID_SUBJ_MODIFIER_RE.finditer(subject_str):
+            name = modifier.group(1)
+            kind = name.lower()
+            if kind in constants.OID_ADDED_OBJECT_MODIFIERS:
+                kind = c.Ldif.ACL_CONSTRAINT
+            value = (modifier.group(2) or modifier.group(3) or "").strip()
+            if not value:
+                return result.fail(
+                    f"Empty OID {name!r} modifier in by-clause "
+                    f"(manual review required): {subject_str!r}",
+                )
+            if kind in seen:
+                return result.fail(
+                    f"Repeated OID {name!r} modifier in by-clause "
+                    f"(manual review required): {subject_str!r}",
+                )
+            seen.add(kind)
+            modifiers = modifiers.model_copy(update={kind: value})
+        return result.ok(modifiers)
 
     @classmethod
     def parse_subject(cls, subject_str: str) -> p.Ldif.OidAclSubject:
         """Identify one ``by <subject> (perms)`` clause as a typed subject.
 
-        Returns ``subject_type="unknown"`` when no matcher applies; the line
-        parser fails on it.
+        Returns ``subject_type="unknown"`` when no matcher applies or a
+        modifier is repeated or empty; the line parser fails on it.
 
         Returns:
             The resulting ``m.Ldif.OidAclSubject``.
 
         """
         text = subject_str.strip()
-        modifiers = cls._subject_modifiers(text)
+        modifiers = cls.subject_modifiers(text)
+        if modifiers.failure:
+            return m.Ldif.OidAclSubject(subject_type=c.Ldif.OidSubjectKind.UNKNOWN)
         for matcher in cls.subject_matcher_catalog().matchers:
             match = matcher.pattern.match(text)
             if match is None:
@@ -136,11 +159,11 @@ class FlextLdifServersOidAclConvert:
                 subject_type=matcher.subj_type,
                 value=str(value) if value else "",
                 permissions=cls._split_perms(match.group(matcher.perms_group) or ""),
-                bindmode=modifiers.bindmode,
-                bindipfilter=modifiers.bindipfilter,
-                added_object_constraint=modifiers.added_object_constraint,
+                bindmode=modifiers.value.bindmode,
+                bindipfilter=modifiers.value.bindipfilter,
+                added_object_constraint=modifiers.value.added_object_constraint,
             )
-        return m.Ldif.OidAclSubject(subject_type="unknown")
+        return m.Ldif.OidAclSubject(subject_type=c.Ldif.OidSubjectKind.UNKNOWN)
 
     @classmethod
     def _strip_acl_prefix(cls, line: str) -> tuple[str, str] | None:
@@ -165,15 +188,38 @@ class FlextLdifServersOidAclConvert:
             if match is None:
                 return c.Ldif.AclTargetType.ATTR.value, c.Ldif.ACL_WILDCARD, content
             operator, attrs = match.group(1), match.group(2)
-            target_attrs = (
-                f"!={attrs}" if operator == "!=" else (attrs or c.Ldif.ACL_WILDCARD)
-            )
+            target_attrs = f"!={attrs}" if operator == "!=" else attrs
             return (
                 c.Ldif.AclTargetType.ATTR.value,
                 target_attrs,
                 content[match.end() :].strip(),
             )
         return None
+
+    @staticmethod
+    def _check_target_attrs(target_attrs: str) -> p.Result[bool]:
+        """Accept ``*`` or a list of attribute descriptions, optionally negated.
+
+        An empty list, an empty element, ``*`` inside a list or a negated
+        ``*`` has no exact OUD targetattr and surfaces as ``r.fail``, as does
+        any element outside the attribute-description grammar.
+
+        Returns:
+            Success, or the typed failure.
+
+        """
+        negation = c.Ldif.OUD_ATTR_NEGATION
+        body = target_attrs.removeprefix(negation)
+        if body == c.Ldif.ACL_WILDCARD and body == target_attrs:
+            return r[bool].ok(value=True)
+        names = [name.strip() for name in body.split(",")]
+        descriptor = FlextLdifConstantsServersOid.OID_ATTR_DESCRIPTOR_RE
+        if not all(descriptor.match(name) for name in names):
+            return r[bool].fail(
+                f"OID attribute target {target_attrs!r} is not '*' or a list of "
+                "attribute descriptions (manual review required)",
+            )
+        return r[bool].ok(value=True)
 
     @classmethod
     def _extract_filter(cls, content: str) -> p.Result[tuple[str | None, str]]:
@@ -244,6 +290,9 @@ class FlextLdifServersOidAclConvert:
                 f"Unknown ACL target: {content[:40]!r}",
             )
         target_type, target_attrs, content = target
+        attrs_check = cls._check_target_attrs(target_attrs)
+        if attrs_check.failure:
+            return r[tuple[str, str, str | None, str]].from_failure(attrs_check)
         filter_result = cls._extract_filter(content)
         if filter_result.failure:
             return r[tuple[str, str, str | None, str]].from_failure(filter_result)
@@ -294,11 +343,14 @@ class FlextLdifServersOidAclConvert:
         """
         subjects: list[p.Ldif.OidAclSubject] = []
         cursor = 0
-        for clause in c.Ldif.BY_CLAUSE_RE.finditer(content):
+        for clause in FlextLdifConstantsServersOid.OID_BY_CLAUSE_RE.finditer(content):
             gap = content[cursor : clause.start()].strip()
             cursor = clause.end()
             if gap:
                 return cls._unrecognized(gap)
+            modifiers = cls.subject_modifiers(clause.group(0))
+            if modifiers.failure:
+                return r[tuple[p.Ldif.OidAclSubject, ...]].from_failure(modifiers)
             subject = cls.parse_subject(clause.group(0))
             if subject.subject_type == c.Ldif.OidSubjectKind.UNKNOWN:
                 return r[tuple[p.Ldif.OidAclSubject, ...]].fail(

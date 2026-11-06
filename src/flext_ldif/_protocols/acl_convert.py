@@ -123,6 +123,15 @@ class FlextLdifProtocolsAclConvert:
             ...
 
         @property
+        def targetattr(self) -> str | None:
+            """Structural member projected from the owning model.
+
+            OUD targetattr of the aci this clause renders in; None renders it under
+            the rule's targetattr.
+            """
+            ...
+
+        @property
         def targetscope(self) -> str | None:
             """Structural member projected from the owning model.
 
@@ -279,21 +288,6 @@ class FlextLdifProtocolsAclConvert:
         @property
         def ip(self) -> str:
             """Shared ip modifier for this group."""
-            ...
-
-    @runtime_checkable
-    class AciAllowGroups(FlextCliProtocols.BaseModel, Protocol):
-        """Structural data contract projected from the owning model."""
-
-        @property
-        def groups(self) -> tuple[FlextLdifProtocolsAclConvert.AciAllowGroup, ...]:
-            """Allow groups in first-seen render order."""
-            ...
-
-        def with_allow(
-            self, allow: FlextLdifProtocolsAclConvert.AciBindClause, bind: str
-        ) -> FlextLdifProtocolsAclConvert.AciAllowGroups:
-            """Return grouped clause state with one rendered bind rule appended."""
             ...
 
     @runtime_checkable

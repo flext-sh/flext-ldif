@@ -141,7 +141,10 @@ class TestsFlextLdifProcessingService:
         result = FlextLdifProcessingPipeline(
             registry=FlextLdif().registry,
             transform_config=config,
-            entries_input=[entry],
+            entries_input=[
+                entry,
+                u.Tests.oid_security_group_entry("cn=a,dc=ctbc"),
+            ],
         ).execute()
         converted: Sequence[p.Ldif.Entry] = u.Tests.assert_success(result)
         attrs = tm.not_none(converted[0].attributes).attributes
@@ -150,7 +153,8 @@ class TestsFlextLdifProcessingService:
             attrs["aci"],
             eq=[
                 (
-                    '(targetattr="*")    (version 3.0; acl "users Entry by x";'
+                    '(targetattr="objectClass")'
+                    '    (version 3.0; acl "users Entry by x";'
                     '     allow (read, search)    groupdn="ldap:///cn=a,dc=ctbc";)'
                 ),
             ],

@@ -9,7 +9,8 @@ drops. The inputs derive from devops-oud-iac fixtures (their provenance lines
 record the source and any amendment); the expected outputs are flext-ldif's
 own conversion under the documented OID semantics (OID-30 §30.1.6.2: union of
 grants minus union of denials per ACI) with every denial rendered as an OUD
-``deny`` (OUD §9.1.4), not the consumer's gold.
+``deny`` (OUD §9.1.4), not the consumer's gold. Group subjects convert only
+for the OID security groups the input itself carries.
 
 The per-subject outcomes recorded on ``entry.metadata.acl_conversion`` must
 match ``*_outcomes.tsv``: for every rule of every entry, in output order, the

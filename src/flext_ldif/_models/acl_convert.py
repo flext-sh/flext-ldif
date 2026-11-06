@@ -103,6 +103,13 @@ class FlextLdifModelsAclConvert:
             str,
             m.Field(description="OUD ip bind-rule constraint (from bindipfilter)"),
         ] = ""
+        targetattr: Annotated[
+            str | None,
+            m.Field(
+                description="OUD targetattr of the aci this clause renders in; "
+                "None renders it under the rule's targetattr",
+            ),
+        ] = None
         targetscope: Annotated[
             str | None,
             m.Field(
@@ -264,7 +271,7 @@ class FlextLdifModelsAclConvert:
         ] = False
 
     class AciAllowGroup(m.FrozenModel):
-        """One render-time allow group keyed by identical OUD permission tokens."""
+        """One render-time allow/deny group keyed by identical OUD permission tokens."""
 
         permissions: Annotated[
             Sequence[str],
@@ -281,53 +288,6 @@ class FlextLdifModelsAclConvert:
         ip: Annotated[str, m.Field(description="Shared ip modifier for this group")] = (
             ""
         )
-
-    class AciAllowGroups(m.FrozenModel):
-        """Pydantic render grouping model replacing ad-hoc dict/list state."""
-
-        groups: Annotated[
-            tuple[FlextLdifModelsAclConvert.AciAllowGroup, ...],
-            m.Field(description="Allow groups in first-seen render order"),
-        ] = ()
-
-        def with_allow(
-            self,
-            allow: p.Ldif.AciBindClause,
-            bind: str,
-        ) -> FlextLdifModelsAclConvert.AciAllowGroups:
-            """Return grouped clause state with one rendered bind rule appended."""
-            permissions = tuple(allow.permissions)
-            updated: tuple[FlextLdifModelsAclConvert.AciAllowGroup, ...] = ()
-            matched = False
-            for group in self.groups:
-                same_permissions = tuple(group.permissions) == permissions
-                same_modifiers = (
-                    group.authmethod == allow.authmethod and group.ip == allow.ip
-                )
-                if same_permissions and same_modifiers:
-                    updated = (
-                        *updated,
-                        FlextLdifModelsAclConvert.AciAllowGroup(
-                            permissions=group.permissions,
-                            binds=(*group.binds, bind),
-                            authmethod=group.authmethod,
-                            ip=group.ip,
-                        ),
-                    )
-                    matched = True
-                    continue
-                updated = (*updated, group)
-            if not matched:
-                updated = (
-                    *updated,
-                    FlextLdifModelsAclConvert.AciAllowGroup(
-                        permissions=permissions,
-                        binds=(bind,),
-                        authmethod=allow.authmethod,
-                        ip=allow.ip,
-                    ),
-                )
-            return FlextLdifModelsAclConvert.AciAllowGroups(groups=updated)
 
     class AclSubjectMatcher(m.ArbitraryTypesModel):
         """Parse descriptor: a compiled by-clause regex + group extraction map.
