@@ -52,12 +52,12 @@ def _assert_definition_roundtrip(
     target_schema = _resolve_schema_server(registry, target)
     parse: Callable[
         [str],
-        p.Result[p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass],
+        p.Result[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass],
     ] = getattr(source_schema, parse_method)
     parse_result = parse(definition)
     tm.ok(parse_result)
     write: Callable[
-        [p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass],
+        [p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass],
         p.Result[str],
     ] = getattr(
         target_schema,

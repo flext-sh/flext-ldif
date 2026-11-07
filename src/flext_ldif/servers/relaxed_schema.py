@@ -18,9 +18,9 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
 
     def _enhance_schema_item_metadata(
         self,
-        schema_item: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        schema_item: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
         original_definition: str,
-    ) -> p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
+    ) -> p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass:
         """Attach relaxed-mode metadata to a parsed schema item.
 
         Args:
@@ -125,7 +125,7 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
     @override
     def can_handle_attribute(
         self,
-        attr_definition: str | m.Ldif.SchemaAttribute,
+        attr_definition: str | p.Ldif.SchemaAttribute,
     ) -> bool:
         """Accept any non-empty attribute definition in relaxed mode.
 
@@ -143,7 +143,7 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
     @override
     def can_handle_objectclass(
         self,
-        oc_definition: str | m.Ldif.SchemaObjectClass,
+        oc_definition: str | p.Ldif.SchemaObjectClass,
     ) -> bool:
         """Accept any non-empty objectClass definition in relaxed mode.
 
@@ -329,7 +329,7 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
 
     @staticmethod
     def _relaxed_original_output(
-        schema_data: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        schema_data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
     ) -> str | None:
         """Return the preserved original-format text for a relaxed schema item.
 

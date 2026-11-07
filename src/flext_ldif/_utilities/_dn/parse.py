@@ -35,10 +35,10 @@ class FlextLdifUtilitiesDNParse:
 
     @overload
     @staticmethod
-    def split(dn: FlextLdifModels.Ldif.DN) -> MutableSequence[str]: ...
+    def split(dn: p.Ldif.DN) -> MutableSequence[str]: ...
 
     @staticmethod
-    def split(dn: str | FlextLdifModels.Ldif.DN) -> MutableSequence[str]:
+    def split(dn: str | p.Ldif.DN) -> MutableSequence[str]:
         r"""Split DN string into individual RDN components per RFC 4514.
 
         RFC 4514 Section 2 ABNF:
@@ -88,11 +88,11 @@ class FlextLdifUtilitiesDNParse:
 
     @overload
     @staticmethod
-    def parse_dn(dn: FlextLdifModels.Ldif.DN) -> p.Result[t.MutableStrPairSequence]: ...
+    def parse_dn(dn: p.Ldif.DN) -> p.Result[t.MutableStrPairSequence]: ...
 
     @staticmethod
     def parse_dn(
-        dn: str | FlextLdifModels.Ldif.DN | None,
+        dn: str | p.Ldif.DN | None,
     ) -> p.Result[t.MutableStrPairSequence]:
         """Parse DN into RFC 4514 components (attr, value pairs).
 

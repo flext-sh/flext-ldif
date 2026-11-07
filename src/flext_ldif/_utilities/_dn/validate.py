@@ -10,7 +10,7 @@ from collections.abc import Callable, MutableSequence
 
 from flext_cli import u
 
-from flext_ldif import FlextLdifModels, c
+from flext_ldif import FlextLdifModels, c, p
 from flext_ldif._utilities._dn import FlextLdifUtilitiesDNParse
 
 
@@ -147,7 +147,7 @@ class FlextLdifUtilitiesDNValidate:
         return all(check() for check in checks)
 
     @staticmethod
-    def validate_dn(dn: str | FlextLdifModels.Ldif.DN) -> bool:
+    def validate_dn(dn: str | p.Ldif.DN) -> bool:
         r"""Validate DN format according to RFC 4514.
 
         Properly handles escaped characters. Checks for:

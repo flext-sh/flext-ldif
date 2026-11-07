@@ -20,7 +20,7 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
 
     def _ensure_entry_model(
         self,
-        value: t.JsonValue | m.BaseModel | m.Ldif.Entry,
+        value: t.JsonValue | m.BaseModel | p.Ldif.Entry,
     ) -> p.Ldif.Entry | None:
         if isinstance(value, m.Ldif.Entry):
             return value

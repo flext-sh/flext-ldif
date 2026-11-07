@@ -20,7 +20,7 @@ class FlextLdifUtilitiesMetadataTracking:
 
     @staticmethod
     def track_boolean_conversion(
-        metadata: FlextLdifModels.Ldif.ServerMetadata,
+        metadata: p.Ldif.ServerMetadata,
         attr_name: str,
         original_value: str,
         converted_value: str,

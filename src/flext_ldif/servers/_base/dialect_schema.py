@@ -26,7 +26,7 @@ class FlextLdifServersDialectSchema(FlextLdifServersRfcSchema):
     @override
     def can_handle_attribute(
         self,
-        attr_definition: str | m.Ldif.SchemaAttribute,
+        attr_definition: str | p.Ldif.SchemaAttribute,
     ) -> bool:
         """Detect dialect attribute definitions using bound pattern settings.
 
@@ -43,7 +43,7 @@ class FlextLdifServersDialectSchema(FlextLdifServersRfcSchema):
     @override
     def can_handle_objectclass(
         self,
-        oc_definition: str | m.Ldif.SchemaObjectClass,
+        oc_definition: str | p.Ldif.SchemaObjectClass,
     ) -> bool:
         """Detect dialect objectClass definitions using bound pattern settings.
 

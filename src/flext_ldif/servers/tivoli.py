@@ -135,7 +135,7 @@ class FlextLdifServersTivoli(FlextLdifServersRfc):
         """IBM Tivoli Directory Server ACL servers implementation."""
 
         @override
-        def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+        def can_handle_acl(self, acl_line: str | p.Ldif.Acl) -> bool:
             """Detect Tivoli DS ACL values.
 
             Returns:

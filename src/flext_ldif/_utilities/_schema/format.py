@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 from flext_cli import u
 
-from flext_ldif import c
+from flext_ldif import c, p
 
 if TYPE_CHECKING:
     from flext_ldif import FlextLdifModels
@@ -22,8 +22,8 @@ class FlextLdifUtilitiesSchemaFormat:
 
     @staticmethod
     def apply_trailing_spaces(
-        attr_data: FlextLdifModels.Ldif.SchemaAttribute
-        | FlextLdifModels.Ldif.SchemaObjectClass,
+        attr_data: p.Ldif.SchemaAttribute
+        | p.Ldif.SchemaObjectClass,
         parts: MutableSequence[str],
     ) -> None:
         """Apply trailing spaces from metadata if available."""
@@ -39,8 +39,8 @@ class FlextLdifUtilitiesSchemaFormat:
 
     @staticmethod
     def build_name_part(
-        attr_data: FlextLdifModels.Ldif.SchemaAttribute
-        | FlextLdifModels.Ldif.SchemaObjectClass,
+        attr_data: p.Ldif.SchemaAttribute
+        | p.Ldif.SchemaObjectClass,
         *,
         restore_format: bool = False,
     ) -> str | None:
@@ -65,8 +65,8 @@ class FlextLdifUtilitiesSchemaFormat:
 
     @staticmethod
     def build_obsolete_part(
-        attr_data: FlextLdifModels.Ldif.SchemaAttribute
-        | FlextLdifModels.Ldif.SchemaObjectClass,
+        attr_data: p.Ldif.SchemaAttribute
+        | p.Ldif.SchemaObjectClass,
         parts: MutableSequence[str],
         field_order: MutableSequence[str] | None,
         *,
@@ -95,8 +95,8 @@ class FlextLdifUtilitiesSchemaFormat:
 
     @staticmethod
     def build_x_origin_part(
-        attr_data: FlextLdifModels.Ldif.SchemaAttribute
-        | FlextLdifModels.Ldif.SchemaObjectClass,
+        attr_data: p.Ldif.SchemaAttribute
+        | p.Ldif.SchemaObjectClass,
         *,
         restore_format: bool = False,
     ) -> str | None:
@@ -158,8 +158,8 @@ class FlextLdifUtilitiesSchemaFormat:
 
     @staticmethod
     def resolve_field_order(
-        attr_data: FlextLdifModels.Ldif.SchemaAttribute
-        | FlextLdifModels.Ldif.SchemaObjectClass,
+        attr_data: p.Ldif.SchemaAttribute
+        | p.Ldif.SchemaObjectClass,
     ) -> MutableSequence[str] | None:
         """Extract field order from metadata if available.
 
@@ -180,7 +180,7 @@ class FlextLdifUtilitiesSchemaFormat:
 
     @staticmethod
     def try_restore_objectclass_original_format(
-        oc_data: FlextLdifModels.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
         *,
         restore_original: bool = True,
     ) -> MutableSequence[str] | None:
@@ -205,7 +205,7 @@ class FlextLdifUtilitiesSchemaFormat:
 
     @staticmethod
     def try_restore_original_format(
-        attr_data: FlextLdifModels.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
     ) -> MutableSequence[str] | None:
         """Try to restore original format from metadata for perfect round-trip.
 

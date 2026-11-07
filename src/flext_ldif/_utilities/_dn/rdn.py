@@ -36,7 +36,7 @@ class FlextLdifUtilitiesDNRdn:
         char: str,
         rdn: str,
         i: int,
-        settings: FlextLdifModels.Ldif.RdnProcessingConfig,
+        settings: p.Ldif.RdnProcessingConfig,
     ) -> tuple[str, str, bool, int, bool]:
         """Process single character in RDN parsing.
 
@@ -81,7 +81,7 @@ class FlextLdifUtilitiesDNRdn:
         char: str,
         rdn: str,
         position: int,
-        settings: FlextLdifModels.Ldif.RdnProcessingConfig,
+        settings: p.Ldif.RdnProcessingConfig,
     ) -> tuple[str, str, bool, int]:
         """Advance position during RDN parsing and return new state.
 

@@ -26,7 +26,7 @@ class FlextLdifServersRfcSchemaParse(
 
     @staticmethod
     def _detect_oc_via_constants(
-        oc_definition: str | m.Ldif.SchemaObjectClass,
+        oc_definition: str | p.Ldif.SchemaObjectClass,
         *,
         settings: p.Ldif.ServerPatternsConfig,
         name_regex: str,

@@ -43,12 +43,12 @@ class FlextLdifServersRfcSchema(
         data: str,
         *,
         operation: str | None = None,
-    ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass: ...
+    ) -> str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass: ...
 
     @overload
     def __call__(
         self,
-        data: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
         operation: str | None = None,
     ) -> str: ...
 
@@ -58,20 +58,20 @@ class FlextLdifServersRfcSchema(
         data: None = None,
         *,
         operation: str | None = None,
-    ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass: ...
+    ) -> str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass: ...
 
     def __call__(
         self,
         data: t.JsonValue
-        | m.Ldif.SchemaAttribute
-        | m.Ldif.SchemaObjectClass
+        | p.Ldif.SchemaAttribute
+        | p.Ldif.SchemaObjectClass
         | None = None,
         operation: t.JsonValue | None = None,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
         registry: p.Registry | None = None,
         **fields: t.JsonValue,
-    ) -> Self | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | str:
+    ) -> Self | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | str:
         """Callable interface - automatic polymorphic processor.
 
         Returns:
@@ -116,7 +116,7 @@ class FlextLdifServersRfcSchema(
     @override
     def can_handle_attribute(
         self,
-        attr_definition: str | m.Ldif.SchemaAttribute,
+        attr_definition: str | p.Ldif.SchemaAttribute,
     ) -> bool:
         """Check if RFC server can handle attribute definitions (abstract impl).
 
@@ -130,7 +130,7 @@ class FlextLdifServersRfcSchema(
     @override
     def can_handle_objectclass(
         self,
-        oc_definition: str | m.Ldif.SchemaObjectClass,
+        oc_definition: str | p.Ldif.SchemaObjectClass,
     ) -> bool:
         """Check if RFC server can handle objectClass definitions (abstract impl).
 

@@ -22,10 +22,10 @@ class FlextLdifUtilitiesDNNormalize:
 
     @overload
     @staticmethod
-    def norm(dn: FlextLdifModels.Ldif.DN) -> p.Result[str]: ...
+    def norm(dn: p.Ldif.DN) -> p.Result[str]: ...
 
     @staticmethod
-    def norm(dn: str | FlextLdifModels.Ldif.DN | None) -> p.Result[str]:
+    def norm(dn: str | p.Ldif.DN | None) -> p.Result[str]:
         """Normalize DN per RFC 4514 (lowercase attrs, preserve values).
 
         Returns:

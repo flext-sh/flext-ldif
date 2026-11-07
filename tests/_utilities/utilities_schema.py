@@ -143,7 +143,7 @@ class TestsSchemaAclAssertionsMixin:
     def _parse_schema_definition(
         server: p.Ldif.SchemaServer,
         schema_def: str,
-    ) -> p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
+    ) -> p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass:
         """Parse one schema definition through the kind-matching server method.
 
         Args:
@@ -157,7 +157,7 @@ class TestsSchemaAclAssertionsMixin:
         is_objectclass = TestsSchemaAclAssertionsMixin._schema_definition_is_objectclass
         if is_objectclass(schema_def):
             value_raw = tm.ok(server.parse_objectclass(schema_def))
-            value: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass = (
+            value: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass = (
                 m.Ldif.SchemaObjectClass.model_validate(value_raw)
             )
             return value
@@ -169,7 +169,7 @@ class TestsSchemaAclAssertionsMixin:
 
     @staticmethod
     def _assert_common_expectations(
-        value: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        value: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
         expectations: TestsFlextLdifSchemaExpectations,
     ) -> None:
         """Assert the OID/NAME/DESC fields shared by both schema kinds."""
@@ -225,7 +225,7 @@ class TestsSchemaAclAssertionsMixin:
         schema_def: str,
         *,
         expectations: TestsFlextLdifSchemaExpectations,
-    ) -> p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass:
+    ) -> p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass:
         """Parse schema content and assert the expected properties.
 
         Args:
@@ -278,7 +278,7 @@ class TestsSchemaAclAssertionsMixin:
             tm.reject(msg)
         method: Callable[
             [str],
-            p.Result[p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl],
+            p.Result[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | p.Ldif.Acl],
         ] = getattr(server, method_name)
         result = method(content)
         if should_succeed is False:
@@ -344,7 +344,7 @@ class TestsSchemaAclAssertionsMixin:
         server: p.Tests.WriteAttributeServer
         | p.Tests.WriteObjectClassServer
         | p.Tests.WriteAclServer,
-        data: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | m.Ldif.Acl,
+        data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | p.Ldif.Acl,
         write_method: t.Tests.WriteMethod = "write",
         must_contain: Sequence[str] | None = None,
         message: str | None = None,

@@ -66,7 +66,7 @@ class FlextLdifServersOudEntry(
     def parse_entry(
         self,
         entry_dn: str,
-        entry_attrs: t.MutableStrSequenceMapping | m.Ldif.Entry,
+        entry_attrs: t.MutableStrSequenceMapping | p.Ldif.Entry,
     ) -> p.Result[p.Ldif.Entry]:
         """Delegate RFC parse, then enrich entry metadata with OUD round-trip context.
 
