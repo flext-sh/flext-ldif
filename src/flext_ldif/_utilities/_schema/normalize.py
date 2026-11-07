@@ -10,7 +10,7 @@ from collections.abc import Mapping, MutableSequence
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModels, t
+    from flext_ldif import FlextLdifModels, p, t
 
 
 class FlextLdifUtilitiesSchemaNormalize:
@@ -18,7 +18,7 @@ class FlextLdifUtilitiesSchemaNormalize:
 
     @staticmethod
     def build_available_attributes_set(
-        attributes: MutableSequence[FlextLdifModels.Ldif.SchemaAttribute],
+        attributes: MutableSequence[p.Ldif.SchemaAttribute],
     ) -> set[str]:
         """Build set of available attribute names (lowercase) for dependency validation.
 

@@ -55,7 +55,7 @@ class FlextLdifServersBaseSchema(
     @abstractmethod
     def can_handle_attribute(
         self,
-        attr_definition: str | m.Ldif.SchemaAttribute,
+        attr_definition: str | p.Ldif.SchemaAttribute,
     ) -> bool:
         """Check whether this server can handle the attribute definition.
 
@@ -73,7 +73,7 @@ class FlextLdifServersBaseSchema(
     @abstractmethod
     def can_handle_objectclass(
         self,
-        oc_definition: str | m.Ldif.SchemaObjectClass,
+        oc_definition: str | p.Ldif.SchemaObjectClass,
     ) -> bool:
         """Check whether this server can handle the objectClass definition.
 
@@ -92,7 +92,7 @@ class FlextLdifServersBaseSchema(
     def execute(
         self,
         *,
-        data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None = None,
+        data: str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | None = None,
         operation: str | None = None,
         **kwargs: t.Ldif.Scalar,
     ) -> p.Result[t.Ldif.SchemaConversionValue]:
@@ -124,7 +124,7 @@ class FlextLdifServersBaseSchema(
     def parse_server(
         self,
         value: str,
-    ) -> p.Result[p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]:
         """Parse a schema definition (attribute or objectClass).
 
         Args:
@@ -139,7 +139,7 @@ class FlextLdifServersBaseSchema(
     def parse_input(
         self,
         schema_text: str,
-    ) -> p.Result[p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]:
         """Compatibility parser entrypoint for direct schema server consumers.
 
         Args:
@@ -178,7 +178,7 @@ class FlextLdifServersBaseSchema(
     def route_parse(
         self,
         definition: str,
-    ) -> p.Result[p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
+    ) -> p.Result[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]:
         """Route a schema definition to the appropriate parse method.
 
         Args:
@@ -194,7 +194,7 @@ class FlextLdifServersBaseSchema(
                 return r[
                     m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
                 ].from_failure(oc_result)
-            parsed_objectclass: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass = (
+            parsed_objectclass: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass = (
                 oc_result.unwrap()
             )
             return r[p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(
@@ -205,7 +205,7 @@ class FlextLdifServersBaseSchema(
             return r[p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].from_failure(
                 attr_result,
             )
-        parsed_attribute: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass = (
+        parsed_attribute: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass = (
             attr_result.unwrap()
         )
         return r[p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(parsed_attribute)
@@ -440,7 +440,7 @@ class FlextLdifServersBaseSchema(
 
     def _route_operation(
         self,
-        data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        data: str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
         operation: str,
     ) -> p.Result[t.Ldif.SchemaConversionValue]:
         """Route data to the appropriate parse or write handler.

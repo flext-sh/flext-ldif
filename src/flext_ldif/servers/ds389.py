@@ -215,7 +215,7 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             return anonymous_subject
 
         @override
-        def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+        def can_handle_acl(self, acl_line: str | p.Ldif.Acl) -> bool:
             """Detect 389 DS ACI lines.
 
             Args:

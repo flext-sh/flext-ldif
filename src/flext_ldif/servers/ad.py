@@ -186,7 +186,7 @@ class FlextLdifServersAd(FlextLdifServersRfc):
         """Active Directory ACL server handling nTSecurityDescriptor entries."""
 
         @override
-        def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+        def can_handle_acl(self, acl_line: str | p.Ldif.Acl) -> bool:
             """Check whether the ACL line belongs to an AD security descriptor.
 
             Returns:

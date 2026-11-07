@@ -10,7 +10,7 @@ from collections.abc import Mapping, MutableSequence
 
 from flext_cli import u
 
-from flext_ldif import FlextLdifModels, c, t
+from flext_ldif import FlextLdifModels, c, p, t
 from flext_ldif._utilities import FlextLdifUtilitiesMetadata, FlextLdifUtilitiesServer
 from flext_ldif._utilities._parser import FlextLdifUtilitiesParserSchemaFields
 
@@ -81,7 +81,7 @@ class FlextLdifUtilitiesParserMetadata:
         comments: MutableSequence[str],
         *,
         dn_was_base64: bool = False,
-    ) -> FlextLdifModels.Ldif.ServerMetadata:
+    ) -> p.Ldif.ServerMetadata:
         """Build RFC metadata for a parsed LDIF record.
 
         Returns:
@@ -106,7 +106,7 @@ class FlextLdifUtilitiesParserMetadata:
         syntax: str | None,
         syntax_validation_error: str | None,
         server_type: str | None = None,
-    ) -> FlextLdifModels.Ldif.ServerMetadata | None:
+    ) -> p.Ldif.ServerMetadata | None:
         """Build metadata for attribute including extensions.
 
         Returns:

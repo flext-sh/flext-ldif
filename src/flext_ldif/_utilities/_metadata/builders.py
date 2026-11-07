@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import MutableMapping, MutableSequence
 
-from flext_ldif import FlextLdifModels, c, t
+from flext_ldif import FlextLdifModels, c, p, t
 
 
 class FlextLdifUtilitiesMetadataBuilders:
@@ -18,7 +18,7 @@ class FlextLdifUtilitiesMetadataBuilders:
     def server_metadata_for(
         server_type: str | c.Ldif.ServerTypes | None = None,
         extensions: t.MutableJsonMapping | t.Ldif.MetadataInputMapping | None = None,
-    ) -> FlextLdifModels.Ldif.ServerMetadata:
+    ) -> p.Ldif.ServerMetadata:
         """Create ServerMetadata with extensions validated at the model boundary.
 
         Args:
@@ -36,7 +36,7 @@ class FlextLdifUtilitiesMetadataBuilders:
         extensions_map: t.MutableJsonMapping = (
             {} if extensions is None else dict(extensions)
         )
-        validated: FlextLdifModels.Ldif.ServerMetadata = (
+        validated: p.Ldif.ServerMetadata = (
             FlextLdifModels.Ldif.ServerMetadata.model_validate({
                 "server_type": default_server_type,
                 "extensions": extensions_map,
@@ -82,7 +82,7 @@ class FlextLdifUtilitiesMetadataBuilders:
 
     @staticmethod
     def _collect_parse_server_data(
-        settings: FlextLdifModels.Ldif.EntryParseMetadataConfig,
+        settings: p.Ldif.EntryParseMetadataConfig,
     ) -> t.Ldif.MutableMetadataMapping:
         """Collect server-specific data fields from parse settings.
 
@@ -106,7 +106,7 @@ class FlextLdifUtilitiesMetadataBuilders:
 
     @staticmethod
     def _collect_original_ldif(
-        settings: FlextLdifModels.Ldif.EntryParseMetadataConfig,
+        settings: p.Ldif.EntryParseMetadataConfig,
     ) -> str:
         """Reassemble the original LDIF text from parse settings.
 
@@ -123,8 +123,8 @@ class FlextLdifUtilitiesMetadataBuilders:
 
     @staticmethod
     def build_entry_parse_metadata(
-        settings: FlextLdifModels.Ldif.EntryParseMetadataConfig,
-    ) -> FlextLdifModels.Ldif.ServerMetadata:
+        settings: p.Ldif.EntryParseMetadataConfig,
+    ) -> p.Ldif.ServerMetadata:
         """Build ServerMetadata for entry parsing with format preservation.
 
         Returns:
@@ -155,7 +155,7 @@ class FlextLdifUtilitiesMetadataBuilders:
     def build_original_format_details(
         server_type: str,
         **extra: t.Ldif.Scalar,
-    ) -> FlextLdifModels.Ldif.FormatDetails:
+    ) -> p.Ldif.FormatDetails:
         """Build original format details for round-trip preservation.
 
         Returns:

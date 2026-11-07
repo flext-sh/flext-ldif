@@ -181,7 +181,7 @@ class FlextLdifServersRfcSchemaWrite(
 
     def _write_schema_item(
         self,
-        data: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
     ) -> p.Result[str]:
         """Write a schema item to RFC-compliant format.
 
@@ -208,7 +208,7 @@ class FlextLdifServersRfcSchemaWrite(
 
     def _write_schema_item_core(
         self,
-        data: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
     ) -> p.Result[str]:
         """Write a schema item after server-specific transforms.
 

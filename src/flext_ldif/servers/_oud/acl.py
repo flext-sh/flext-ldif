@@ -22,7 +22,7 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWrite):
     _module_logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     @override
-    def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
+    def can_handle(self, acl_line: str | p.Ldif.Acl) -> bool:
         """Check if this is an Oracle OUD ACL (public method).
 
         Returns:
@@ -56,7 +56,7 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWrite):
         )
 
     @override
-    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | p.Ldif.Acl) -> bool:
         """Check if this is an Oracle OUD ACL line (implements abstract method from.
 
         base.py).
@@ -154,7 +154,7 @@ class FlextLdifServersOudAcl(FlextLdifServersOudAclWrite):
             server_type_value,
             extensions=extensions,
         )
-        update_dict: MutableMapping[str, m.Ldif.ServerMetadata] = {
+        update_dict: MutableMapping[str, p.Ldif.ServerMetadata] = {
             "metadata": new_metadata,
         }
         acl_updated = acl.model_copy(update=update_dict)
