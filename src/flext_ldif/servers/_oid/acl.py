@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import ClassVar, override
 
-from flext_ldif import p, u
+from flext_ldif import c, m, p, r, u
 from flext_ldif.servers._oid import (
     FlextLdifServersOidAclFormat,
     FlextLdifServersOidAclParse,
@@ -33,15 +33,22 @@ class FlextLdifServersOidAcl(
 
     @staticmethod
     @override
-    def access_group_dns(entries: Sequence[p.Ldif.Entry]) -> frozenset[str]:
-        """Return the DN keys of the exact OID security groups among ``entries``.
+    def convert_directory_acls(
+        entries: Sequence[p.Ldif.Entry],
+        *,
+        target_server_type: str,
+        suffix: str,
+    ) -> p.Result[p.Ldif.AclDirectoryConversion]:
+        """Convert the directory's OID ACLs when the target is OUD.
 
         Returns:
-            The group DN keys of
-            :meth:`FlextLdifServersOidAclPipeline.security_group_dns`.
+            :meth:`FlextLdifServersOidAclPipeline.convert_directory` for an OUD
+            target; the empty conversion for any other target.
 
         """
-        return FlextLdifServersOidAclPipeline.security_group_dns(entries)
+        if target_server_type != c.Ldif.ServerTypes.OUD:
+            return r[p.Ldif.AclDirectoryConversion].ok(m.Ldif.AclDirectoryConversion())
+        return FlextLdifServersOidAclPipeline.convert_directory(entries, suffix=suffix)
 
 
 __all__: list[str] = ["FlextLdifServersOidAcl"]

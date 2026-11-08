@@ -57,18 +57,20 @@ class FlextLdifServersBaseSchemaAcl(
         raise NotImplementedError(msg)
 
     @staticmethod
-    def access_group_dns(entries: Sequence[p.Ldif.Entry]) -> frozenset[str]:
-        """Return the DN keys of the groups whose membership access honours.
-
-        A dialect without a modelled group-membership rule verifies no group,
-        so ACL conversion fails on every group subject it carries.
+    def convert_directory_acls(
+        entries: Sequence[p.Ldif.Entry],
+        *,
+        target_server_type: str,
+        suffix: str,
+    ) -> p.Result[p.Ldif.AclDirectoryConversion]:
+        """Return no directory conversion: this dialect pair converts none.
 
         Returns:
-            The verified group DN keys; none for this base dialect.
+            The empty directory conversion.
 
         """
-        del entries
-        return frozenset()
+        del entries, target_server_type, suffix
+        return r[p.Ldif.AclDirectoryConversion].ok(m.Ldif.AclDirectoryConversion())
 
     def matches_acl_attribute(self, attribute_name: str) -> bool:
         """Check whether an attribute name is this server's ACL attribute.
