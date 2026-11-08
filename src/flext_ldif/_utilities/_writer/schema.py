@@ -11,6 +11,7 @@ from collections.abc import MutableSequence
 from flext_ldif import c, p
 
 
+
 class FlextLdifUtilitiesWriterSchema:
     """Assemble schema definition part lists and finalize LDIF text."""
 

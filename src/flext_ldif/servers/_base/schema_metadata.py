@@ -44,7 +44,7 @@ class FlextLdifServersBaseSchemaMetadata:
 
     @staticmethod
     def _preserve_formatting(
-        metadata: p.Ldif.ServerMetadata,
+        metadata: m.Ldif.ServerMetadata,
         attr_definition: str,
     ) -> None:
         """Preserve schema formatting via FlextLdifUtilities.Metadata."""
@@ -99,7 +99,7 @@ class FlextLdifServersBaseSchemaMetadata:
         syntax_validation_error: str | None,
         parsed_definition: t.Ldif.MutableMetadataMapping,
         server_type: str | None = None,
-    ) -> p.Ldif.ServerMetadata | None:
+    ) -> m.Ldif.ServerMetadata | None:
         """Build metadata for attribute including extensions and OID validation.
 
         Returns:

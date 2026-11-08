@@ -450,9 +450,11 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     subject_value=first_who,
                 ),
                 permissions=self._openldap1_permissions(first_access),
-                metadata=u.Ldif.server_metadata_for(
-                    server_type=self._get_server_type(),
-                    extensions={"original_format": acl_line},
+                metadata=m.Ldif.ServerMetadata.model_validate(
+                    u.Ldif.server_metadata_for(
+                        server_type=self._get_server_type(),
+                        extensions={"original_format": acl_line},
+                    ),
                 ),
                 raw_acl=acl_line,
             )
@@ -507,7 +509,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             return (target_dn, target_attrs)
 
         @staticmethod
-        def _openldap1_permissions(first_access: str) -> p.Ldif.AclPermissions:
+        def _openldap1_permissions(first_access: str) -> m.Ldif.AclPermissions:
             """Build permissions from the first OpenLDAP 1.x access token.
 
             Args:

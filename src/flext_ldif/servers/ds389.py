@@ -373,7 +373,9 @@ class FlextLdifServersDs389(FlextLdifServersRfc):
             )
             target_attributes = self._parse_target_attributes(content)
             target_dn = self._parse_target_dn(content)
-            metadata = u.Ldif.server_metadata_for(self._get_server_type())
+            metadata = m.Ldif.ServerMetadata.model_validate(
+                u.Ldif.server_metadata_for(self._get_server_type()),
+            )
             metadata.extensions["original_format"] = acl_line.strip()
             acl_name = (
                 acl_name_match.group(1)

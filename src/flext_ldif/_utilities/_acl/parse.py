@@ -328,9 +328,11 @@ class FlextLdifUtilitiesACLParse:
             permissions=m.Ldif.AclPermissions(**permissions_dict),
             server_type=settings.server_type,
             raw_acl=acl_line,
-            metadata=FlextLdifUtilitiesMetadata.server_metadata_for(
-                settings.server_type,
-                extensions=extensions or None,
+            metadata=m.Ldif.ServerMetadata.model_validate(
+                FlextLdifUtilitiesMetadata.server_metadata_for(
+                    settings.server_type,
+                    extensions=extensions or None,
+                ),
             ),
         )
         return r[p.Ldif.Acl].ok(acl_model)

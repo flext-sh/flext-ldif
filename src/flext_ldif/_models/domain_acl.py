@@ -11,7 +11,7 @@ from typing import Annotated, Self
 
 from flext_cli import m
 
-from flext_ldif import c, p, t
+from flext_ldif import c, t
 from flext_ldif._models import FlextLdifModelsBases, FlextLdifModelsDomainMetadata
 
 
@@ -147,32 +147,17 @@ class FlextLdifModelsDomainAcl:
 
         name: Annotated[str, m.Field(description="ACL name")] = ""
         target: Annotated[
-            p.Ldif.AclTarget | None,
-            t.schema_for_model(
-                lambda: FlextLdifModelsDomainAcl.AclTarget,
-            ),
-        ] = m.Field(
-            default=None,
-            description="ACL target specification",
-        )
+            FlextLdifModelsDomainAcl.AclTarget | None,
+            m.Field(description="ACL target specification"),
+        ] = None
         subject: Annotated[
-            p.Ldif.AclSubject | None,
-            t.schema_for_model(
-                lambda: FlextLdifModelsDomainAcl.AclSubject,
-            ),
-        ] = m.Field(
-            default=None,
-            description="ACL subject specification",
-        )
+            FlextLdifModelsDomainAcl.AclSubject | None,
+            m.Field(description="ACL subject specification"),
+        ] = None
         permissions: Annotated[
-            p.Ldif.AclPermissions | None,
-            t.schema_for_model(
-                lambda: FlextLdifModelsDomainAcl.AclPermissions,
-            ),
-        ] = m.Field(
-            default=None,
-            description="ACL permission flags",
-        )
+            FlextLdifModelsDomainAcl.AclPermissions | None,
+            m.Field(description="ACL permission flags"),
+        ] = None
         raw_line: Annotated[
             str,
             m.Field(description="Original raw ACL line from LDIF"),
@@ -182,14 +167,9 @@ class FlextLdifModelsDomainAcl:
             m.Field(description="Original ACL string from LDIF"),
         ] = ""
         metadata: Annotated[
-            p.Ldif.ServerMetadata | None,
-            t.schema_for_model(
-                lambda: FlextLdifModelsDomainMetadata.ServerMetadata,
-            ),
-        ] = m.Field(
-            default=None,
-            description="Server-specific metadata for ACL processing",
-        )
+            FlextLdifModelsDomainMetadata.ServerMetadata | None,
+            m.Field(description="Server-specific metadata for ACL processing"),
+        ] = None
 
         @classmethod
         def resolve_acl_format(cls) -> str:
