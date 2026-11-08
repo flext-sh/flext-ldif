@@ -437,7 +437,9 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
         child of the anchor read from the injected directory; a child on a
         path to a nearer level is placed again, so the split descends only
         along those paths. Identical to OID for the directory as converted;
-        an entry created later directly under the anchor gets no denial.
+        an entry created later directly under the anchor gets no denial. The
+        split statements carry rule E11 in their name, so the anchors whose
+        new children go uncovered stay visible.
 
         Returns:
             The per-child statements, or the failure.
@@ -447,6 +449,13 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
         to_oud = FlextLdifServersOidAclToOud
         result = r[list[m.Ldif.AciStatement]]
         anchor = region.anchor
+        split = decision.model_copy(
+            update={
+                "form": decision.form.model_copy(
+                    update={"rule": constants.AclRule.E11},
+                ),
+            },
+        )
         children = sorted(
             key
             for key in self._directory.entries
@@ -458,7 +467,7 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
         if region.scope is None:
             statements.append(
                 self.statement(
-                    decision,
+                    split,
                     region.model_copy(update={"scope": constants.AclScope.BASE}),
                 ),
             )
@@ -467,7 +476,7 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
             on_path = any(to_oud.is_ancestor_or_self(child, key) for key in keys)
             child_region = m.Ldif.AclRegion(anchor=child)
             if not on_path:
-                statements.append(self.statement(decision, child_region))
+                statements.append(self.statement(split, child_region))
                 placed.append(child)
                 continue
             grants = self.acp_grants_at(decision, child)
