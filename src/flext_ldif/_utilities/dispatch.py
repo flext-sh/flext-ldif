@@ -110,7 +110,7 @@ class FlextLdifUtilitiesDispatch:
     ) -> p.Result[t.Ldif.MutableMetadataMapping]: ...
 
     @staticmethod
-    def parse_definition(
+    def parse_definition(  # ruff: ignore[too-many-branches]
         definition: str | p.Ldif.DN | None,
         server_type: str | None = None,
         parse_parts_hook: Callable[[str], t.Ldif.MutableMetadataMapping]

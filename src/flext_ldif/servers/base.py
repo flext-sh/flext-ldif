@@ -284,4 +284,4 @@ class FlextLdifServersBase(
     Schema: ClassVar[type[FlextLdifServersBaseSchema]]
 
 
-__all__: list[str] = ["FlextLdifServersBase"]
+__all__: list[str] = ["FlextLdifServersBase", "FlextLdifServersBaseSchema"]

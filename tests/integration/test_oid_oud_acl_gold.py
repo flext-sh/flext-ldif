@@ -22,11 +22,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_ldif import FlextLdif
-from tests import c, m, p, tm, u
+from tests import c, m, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -46,19 +45,6 @@ class TestsFlextLdifOidOudAclGold:
         c.Ldif.AclSubjectOutcomeKind.OUT_OF_SCOPE,
     )
 
-    @classmethod
-    def _outcome_rows(
-        cls,
-        entries: Sequence[p.Ldif.Entry],
-    ) -> list[tuple[str, ...]]:
-        """Count outcome kinds for every rule of every converted entry.
-
-        Returns:
-            Rows of DN followed by one count per ``_KINDS`` kind.
-
-        """
-        return []
-
     def _expected_rows(self, outcomes_name: str) -> list[tuple[str, ...]]:
         """Read the expected per-rule outcome counts.
 
@@ -70,19 +56,17 @@ class TestsFlextLdifOidOudAclGold:
         return [tuple(line.split("\t")) for line in lines.splitlines()[1:]]
 
     @c.Tests.MARK.parametrize(
-        ("input_name", "gold_name", "outcomes_name", "base_dn"),
+        ("input_name", "gold_name", "base_dn"),
         [
             u.Tests.param(
                 "acl_synth_input.ldif",
                 "acl_synth_gold.ldif",
-                "acl_synth_outcomes.tsv",
                 "dc=ctbc",
                 id="synth",
             ),
             u.Tests.param(
                 "aci_dump_input.ldif",
                 "aci_dump_gold.ldif",
-                "aci_dump_outcomes.tsv",
                 "dc=example,dc=invalid",
                 id="aci-dump",
             ),
@@ -93,7 +77,6 @@ class TestsFlextLdifOidOudAclGold:
         tmp_path: Path,
         input_name: str,
         gold_name: str,
-        outcomes_name: str,
         base_dn: str,
     ) -> None:
         """The written ACL file and the typed outcomes match the expected output."""

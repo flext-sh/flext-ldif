@@ -13,7 +13,7 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import Annotated, ClassVar, Final, cast
 
 from flext_ldif import FlextLdifModels
-from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
+from flext_ldif.servers.base import FlextLdifServersBaseSchema
 from tests import c, m, p, t, tm
 
 

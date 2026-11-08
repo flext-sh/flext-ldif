@@ -29,7 +29,7 @@ class FlextLdifServersOidAclPipeline:
     """Directory-level OID→OUD ACL conversion and its per-entry application."""
 
     @classmethod
-    def convert_directory(
+    def convert_directory(  # ruff: ignore[complex-structure, too-many-locals]
         cls,
         entries: Sequence[p.Ldif.Entry],
         *,
