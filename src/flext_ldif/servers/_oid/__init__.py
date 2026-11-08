@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from flext_ldif.servers._oid.acl_pipeline import FlextLdifServersOidAclPipeline
     from flext_ldif.servers._oid.acl_region import FlextLdifServersOidAclRegion
     from flext_ldif.servers._oid.acl_render import FlextLdifServersOidAclRender
+    from flext_ldif.servers._oid.acl_scope import FlextLdifServersOidAclScope
     from flext_ldif.servers._oid.acl_subjects import FlextLdifServersOidAclSubject
     from flext_ldif.servers._oid.acl_write import FlextLdifServersOidAclWrite
     from flext_ldif.servers._oid.entry import FlextLdifServersOidEntry
@@ -48,6 +49,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersOidAclPipeline",
     "FlextLdifServersOidAclRegion",
     "FlextLdifServersOidAclRender",
+    "FlextLdifServersOidAclScope",
     "FlextLdifServersOidAclSubject",
     "FlextLdifServersOidAclToOud",
     "FlextLdifServersOidAclWrite",
@@ -74,6 +76,7 @@ install_lazy_exports(
         "FlextLdifServersOidAclPipeline": ".acl_pipeline",
         "FlextLdifServersOidAclRegion": ".acl_region",
         "FlextLdifServersOidAclRender": ".acl_render",
+        "FlextLdifServersOidAclScope": ".acl_scope",
         "FlextLdifServersOidAclSubject": ".acl_subjects",
         "FlextLdifServersOidAclToOud": ".acl_convert_oud",
         "FlextLdifServersOidAclWrite": ".acl_write",
