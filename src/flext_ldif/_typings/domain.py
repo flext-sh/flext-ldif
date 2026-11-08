@@ -36,6 +36,15 @@ class FlextLdifTypesDomain:
     type MigrationPipelineResultLike = FlextLdifProtocols.Ldif.MigrationPipelineResult
     type WriteResponseLike = FlextLdifProtocols.Ldif.WriteResponse
     type ServerServerLike = FlextLdifProtocols.Ldif.ServerServer
+    type AclBrowsePlacement = tuple[
+        FlextLdifProtocols.Ldif.AclBindLeaf,
+        FlextLdifProtocols.Ldif.AclBindLeaf | None,
+        str | None,
+        str,
+        str | None,
+    ]
+    """R1 placement of a read or compare grant: subject, subject the session
+    must also hold, targetfilter, anchor key, targetscope."""
 
 
 __all__: list[str] = ["FlextLdifTypesDomain"]
