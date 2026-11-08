@@ -100,7 +100,7 @@ class FlextLdifServersRfcAcl(
         # does); narrow the dict-value union before _narrow_operation, which
         # accepts t.JsonValue | None and does not accept m.Ldif.Acl.
         narrowed_operation = self._narrow_operation(
-            None if isinstance(operation_raw, m.Ldif.Acl) else operation_raw,
+            None if isinstance(operation_raw, p.Ldif.Acl) else operation_raw,
         )
         result = self.execute(data=narrowed_data, operation=narrowed_operation)
         if isinstance(result.value, str):

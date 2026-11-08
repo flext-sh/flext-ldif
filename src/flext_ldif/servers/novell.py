@@ -413,7 +413,8 @@ class FlextLdifServersNovell(FlextLdifServersRfc):
             if not permissions:
                 return active_perms
             perms_dict = {
-                key: getattr(permissions, key) for key in type(permissions).model_fields
+                key: getattr(permissions, key)
+                for key in m.Ldif.AclPermissions.model_fields
             }
             for perm_name, perm_value in perms_dict.items():
                 if perm_value is True and perm_name in cls._NOVELL_PERMISSION_MAP:

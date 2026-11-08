@@ -22,7 +22,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence
+from collections.abc import MutableSequence, Sequence
 
 from tests import c, ldif, m, p, tm, u
 
@@ -93,7 +93,7 @@ class TestsFlextLdifCategorizationRealData:
     def _categorize_filter_and_split(
         self,
         categorization: p.Ldif.CategorizationService,
-        entries: MutableSequence[p.Ldif.Entry],
+        entries: Sequence[p.Ldif.Entry],
     ) -> tuple[set[str], set[str], set[str]]:
         """Validate, categorize, base-DN filter, then split category DN sets.
 
@@ -101,7 +101,7 @@ class TestsFlextLdifCategorizationRealData:
             The resulting ``tuple[set[str], set[str], set[str]]``.
 
         """
-        validated = categorization.validate_dns(entries)
+        validated = categorization.validate_dns(list(entries))
         tm.ok(validated)
         categorized = categorization.categorize_entries(validated.value)
         tm.ok(categorized)

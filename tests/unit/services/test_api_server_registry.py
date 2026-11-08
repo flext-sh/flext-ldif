@@ -231,7 +231,7 @@ class TestsFlextLdifApiServerRegistry:
             "mail: plain@example.com \n"
         )
         parsed = api.parse_string(source, server_type=route).unwrap()
-        values = parsed.entries[0].attributes.attributes
+        values = tm.not_none(parsed.entries[0].attributes).attributes
         tm.that(values["sn"], eq=[" lead"])
         tm.that(values["displayName"], eq=["trail "])
         tm.that(values["mail"], eq=["plain@example.com"])
@@ -240,7 +240,7 @@ class TestsFlextLdifApiServerRegistry:
             server_type=route,
         ).unwrap()
         reparsed = api.parse_string(written, server_type=route).unwrap()
-        tm.that(reparsed.entries[0].attributes.attributes, eq=values)
+        tm.that(tm.not_none(reparsed.entries[0].attributes).attributes, eq=values)
         tm.that(written, has="mail: plain@example.com")
 
     @staticmethod

@@ -99,7 +99,7 @@ class FlextLdifServersOudEntry(
             "original_attribute_case": original_attribute_case,
         })
         metadata = u.Ldif.build_entry_parse_metadata(metadata_config)
-        entry.metadata = metadata
+        entry = entry.model_copy(update={"metadata": metadata})
         return r[p.Ldif.Entry].ok(entry)
 
     @override

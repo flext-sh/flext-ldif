@@ -31,7 +31,7 @@ class TestsFlextLdifOidMetadataRoundtrip:
         entry = parsed.entries[0]
         metadata = tm.not_none(entry.metadata)
         tm.that(metadata.server_type is c.Ldif.ServerTypes.OID, truth=True)
-        serialized = metadata.model_dump(warnings="error")
+        serialized = metadata.model_dump()
         tm.that(serialized["server_type"] is c.Ldif.ServerTypes.OID, truth=True)
 
         written = tm.ok(

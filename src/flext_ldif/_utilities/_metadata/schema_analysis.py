@@ -199,7 +199,7 @@ class FlextLdifUtilitiesMetadataSchemaAnalysis:
 
     @staticmethod
     def preserve_schema_formatting(
-        metadata: p.Ldif.ServerMetadata,
+        metadata: m.Ldif.ServerMetadata,
         definition: str,
     ) -> None:
         """Preserve complete schema formatting details for round-trip."""
@@ -208,7 +208,7 @@ class FlextLdifUtilitiesMetadataSchemaAnalysis:
                 definition,
             )
         )
-        target: p.Ldif.ServerMetadata = metadata
+        target: m.Ldif.ServerMetadata = metadata
         target.schema_format_details = formatting_details
 
 

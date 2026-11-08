@@ -69,7 +69,11 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering):
     def categorize_entry(
         self,
         entry: p.Ldif.Entry,
-        rules: p.Ldif.CategoryRules | t.MutableJsonMapping | None = None,
+        rules: m.Ldif.CategoryRules
+        | p.Ldif.CategoryRules
+        | MutableMapping[str, str | MutableSequence[str] | None]
+        | t.MutableJsonMapping
+        | None = None,
         server_type: str | None = None,
     ) -> tuple[str, str | None]:
         """Categorize single entry using provided or instance categorization rules.

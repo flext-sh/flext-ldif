@@ -298,7 +298,11 @@ class FlextLdifCategorizationRules(FlextLdifServer):
 
     def _normalize_rules(
         self,
-        rules: p.Ldif.CategoryRules | t.MutableJsonMapping | None,
+        rules: m.Ldif.CategoryRules
+        | p.Ldif.CategoryRules
+        | MutableMapping[str, str | MutableSequence[str] | None]
+        | t.MutableJsonMapping
+        | None,
     ) -> p.Result[p.Ldif.CategoryRules]:
         """Normalize rules to CategoryRules model.
 

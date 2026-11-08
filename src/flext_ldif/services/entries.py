@@ -208,7 +208,7 @@ class FlextLdifEntries(s[p.Ldif.Response]):
             for k, v in entry.attributes.attributes.items()
             if k.lower() not in attrs_to_remove_lower
         }
-        dn_value = entry.dn if entry.dn is not None else entry.dn_str
+        dn_value = entry.dn.value if entry.dn is not None else entry.dn_str
         return m.Ldif.Entry.create(
             dn=dn_value,
             attributes=new_attrs,

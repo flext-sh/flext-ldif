@@ -110,7 +110,7 @@ class FlextLdifConversionSchema(s[p.Ldif.Response], ABC):
             (item kind, schema field name, written source value).
 
         """
-        if isinstance(item, m.Ldif.SchemaAttribute):
+        if isinstance(item, p.Ldif.SchemaAttribute):
             item_name = c.Ldif.SchemaItemKind.ATTRIBUTE.value
             field_name = c.Ldif.ATTRIBUTE_TYPES
             write_result = source_schema.write_attribute(item)
