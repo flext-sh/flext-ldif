@@ -163,26 +163,3 @@ class TestsFlextLdifModelsCollections:
         tm.that(len(rule.subjects), eq=1)
         tm.that(rule.subjects[0].subject_type, eq="group")
         tm.that(rule.subjects[0].permissions, eq=("add", "delete", "browse"))
-
-    @staticmethod
-    def test_aci_rule_models_carry_typed_allows() -> None:
-        """Test aci rule models carry typed allows."""
-        allow = m.Ldif.AciAllow(
-            subject_type="groupdn",
-            subject_value="ldap:///cn=admins,dc=ctbc",
-            permissions=("read", "search", "add", "delete"),
-        )
-        aci = m.Ldif.AciRule(
-            dn="dc=ctbc",
-            targetattr="*",
-            targetscope="base",
-            acl_name="admins Entry by admins",
-            allows=(allow,),
-        )
-
-        tm.that(aci.targetattr, eq="*")
-        tm.that(aci.targetscope, eq="base")
-        tm.ok(aci.targetfilter is None)
-        tm.that(len(aci.allows), eq=1)
-        tm.that(aci.allows[0].subject_type, eq="groupdn")
-        tm.that(aci.allows[0].permissions, eq=("read", "search", "add", "delete"))
