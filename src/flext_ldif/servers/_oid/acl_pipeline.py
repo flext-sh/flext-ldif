@@ -47,7 +47,7 @@ class FlextLdifServersOidAclPipeline:
             The directory conversion, or the first failure with its DN.
 
         """
-        result = r[m.Ldif.AclDirectoryConversion]
+        result = r[p.Ldif.AclDirectoryConversion]
         to_oud = FlextLdifServersOidAclToOud
         directory = to_oud.acl_directory(entries)
         rules: list[p.Ldif.AclLevelRule] = []

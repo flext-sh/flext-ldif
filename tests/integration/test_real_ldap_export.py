@@ -49,7 +49,7 @@ class TestsFlextLdifRealLdapExport:
 
     @staticmethod
     def _to_ldif_entries(
-        ldap3_entries: Sequence[p.Ldap3Entry],
+        ldap3_entries: Sequence[p.Ldif.Ldap3Entry],
     ) -> list[p.Ldif.Entry]:
         """Convert ldap3 search results into ldif entries via the public adapter.
 
@@ -88,7 +88,7 @@ class TestsFlextLdifRealLdapExport:
 
     def test_single_entry_export_round_trips_dn_and_attributes(
         self,
-        ldap_connection: p.Ldap3Connection,
+        ldap_connection: p.Ldif.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
@@ -121,7 +121,7 @@ class TestsFlextLdifRealLdapExport:
 
     def test_multiple_entries_export_round_trips_every_dn(
         self,
-        ldap_connection: p.Ldap3Connection,
+        ldap_connection: p.Ldif.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
@@ -153,7 +153,7 @@ class TestsFlextLdifRealLdapExport:
 
     def test_hierarchical_export_round_trips_containers_and_leaves(
         self,
-        ldap_connection: p.Ldap3Connection,
+        ldap_connection: p.Ldif.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
@@ -197,7 +197,7 @@ class TestsFlextLdifRealLdapExport:
 
     def test_export_is_idempotent_for_fixed_entries(
         self,
-        ldap_connection: p.Ldap3Connection,
+        ldap_connection: p.Ldif.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
@@ -222,7 +222,7 @@ class TestsFlextLdifRealLdapExport:
 
     def test_export_to_file_writes_parseable_ldif(
         self,
-        ldap_connection: p.Ldap3Connection,
+        ldap_connection: p.Ldif.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
         tmp_path: Path,

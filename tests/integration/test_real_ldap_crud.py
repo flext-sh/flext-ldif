@@ -45,7 +45,7 @@ class TestsFlextLdifRealLdapCrud:
 
     @staticmethod
     def _add_entry(
-        ldap_connection: p.Ldap3Connection,
+        ldap_connection: p.Ldif.Ldap3Connection,
         entry: p.Ldif.Entry,
     ) -> None:
         """Store an entry in LDAP using only its public model surface."""
@@ -85,7 +85,7 @@ class TestsFlextLdifRealLdapCrud:
 
     def test_complete_crud_cycle_roundtrips_through_ldap(
         self,
-        ldap_connection: p.Ldap3Connection,
+        ldap_connection: p.Ldif.Ldap3Connection,
         clean_test_ou: str,
         make_test_username: Callable[[str], str],
     ) -> None:
@@ -132,7 +132,7 @@ class TestsFlextLdifRealLdapCrud:
 
     def test_batch_creation_validates_every_entry(
         self,
-        ldap_connection: p.Ldap3Connection,
+        ldap_connection: p.Ldif.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
@@ -162,7 +162,7 @@ class TestsFlextLdifRealLdapCrud:
 
     @staticmethod
     def test_ldif_export_import_preserves_dns_and_attributes(
-        ldap_connection: p.Ldap3Connection,
+        ldap_connection: p.Ldif.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
         tmp_path: Path,

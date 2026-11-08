@@ -69,7 +69,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
 
         """
         rule = decision.rule
-        result = r[list[m.Ldif.AclBindLeaf]]
+        result = r[list[p.Ldif.AclBindLeaf]]
         own_acp = self.rules_at(rule.key, c.Ldif.AclConvertType.ORCLACI.value)
         if any(item.rule.deny_group_override for item in (*own_acp, rule)):
             return result.ok([])
@@ -256,7 +256,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
 
         """
         constants = FlextLdifConstantsServersOid
-        result = r[list[m.Ldif.AclForm]]
+        result = r[list[p.Ldif.AclForm]]
         entry_level = rule.level == c.Ldif.AclConvertType.ORCLENTRYLEVELACI
         scope = constants.AclScope.BASE.value if entry_level else None
         deny = resolution.effect == constants.AclEffect.DENY
@@ -304,7 +304,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
 
         """
         constants = FlextLdifConstantsServersOid
-        result = r[list[m.Ldif.AclForm]]
+        result = r[list[p.Ldif.AclForm]]
         deny = resolution.effect == constants.AclEffect.DENY
         if rule.target_filter is not None:
             if deny:
@@ -415,7 +415,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         constants = FlextLdifConstantsServersOid
         forms = self.form(rule, resolution)
         if forms.failure:
-            return r[list[m.Ldif.AciStatement]].from_failure(forms)
+            return r[list[p.Ldif.AciStatement]].from_failure(forms)
         no_grants: list[t.Ldif.AclBrowsePlacement] = []
         browse, grants = (
             (True, no_grants)
@@ -473,7 +473,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
                         m.Ldif.AclRegion(anchor=anchor, scope=scope),
                     ),
                 )
-        return r[list[m.Ldif.AciStatement]].ok(statements)
+        return r[list[p.Ldif.AciStatement]].ok(statements)
 
     def deny_statements(
         self,
@@ -490,7 +490,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
 
         """
         constants = FlextLdifConstantsServersOid
-        result = r[list[m.Ldif.AciStatement]]
+        result = r[list[p.Ldif.AciStatement]]
         if not rule.key:
             self._event(
                 constants.AclRule.R9,
@@ -604,14 +604,14 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         constants = FlextLdifConstantsServersOid
         kinds = constants.AclLeafKind
         if leaf.kind == kinds.SELF:
-            return r[m.Ldif.AclBindLeaf].fail(
+            return r[p.Ldif.AclBindLeaf].fail(
                 "R4a: OID 'self' on add names the parent entry, while OUD "
                 "ldap:///self names the entry being added; no OUD form",
             )
         if leaf.kind != kinds.USERATTR:
-            return r[m.Ldif.AclBindLeaf].ok(leaf)
+            return r[p.Ldif.AclBindLeaf].ok(leaf)
         value = f"{constants.OUD_USERATTR_PARENT}{leaf.value}"
-        return r[m.Ldif.AclBindLeaf].ok(
+        return r[p.Ldif.AclBindLeaf].ok(
             leaf.model_copy(update={"value": value, "key": value.lower()}),
         )
 
@@ -624,15 +624,15 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
 
         """
         if FlextLdifConstantsServersOid.ACL_RIGHT_ADD not in statement.rights:
-            return r[m.Ldif.AciStatement].ok(statement)
+            return r[p.Ldif.AciStatement].ok(statement)
         bind = statement.bind
         leaves = r.traverse((bind.include, *bind.exclude), cls._add_leaf)
         if leaves.failure:
-            return r[m.Ldif.AciStatement].fail(
+            return r[p.Ldif.AciStatement].fail(
                 f"{statement.origin_dn}: {leaves.error}",
             )
         include, *exclude = leaves.value
-        return r[m.Ldif.AciStatement].ok(
+        return r[p.Ldif.AciStatement].ok(
             statement.model_copy(
                 update={
                     "bind": m.Ldif.AclBindRule(include=include, exclude=tuple(exclude)),
@@ -673,9 +673,9 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
                             return produced
                         finalized = r.traverse(produced.value, self.finalize)
                         if finalized.failure:
-                            return r[list[m.Ldif.AciStatement]].from_failure(finalized)
+                            return r[list[p.Ldif.AciStatement]].from_failure(finalized)
                         statements.extend(finalized.value)
-        return r[list[m.Ldif.AciStatement]].ok(statements)
+        return r[list[p.Ldif.AciStatement]].ok(statements)
 
     @staticmethod
     def render_leaf(leaf: p.Ldif.AclBindLeaf) -> str:

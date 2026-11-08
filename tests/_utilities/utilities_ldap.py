@@ -67,13 +67,13 @@ class TestsFlextLdifLdapClient:
         return module
 
     @classmethod
-    def create_ldap_entry_adapter(cls) -> p.Ldap3EntryAdapter:
+    def create_ldap_entry_adapter(cls) -> p.Ldif.Ldap3EntryAdapter:
         """Return an ldap3-to-LDIF entry adapter, skipping when unavailable."""
         module: ModuleType = u.Tests.importorskip(
             cls._LDAP_ENTRY_ADAPTER_MODULE,
             reason=cls._LDAP_CLIENT_MISSING_REASON,
         )
-        adapter: p.Ldap3EntryAdapter = module.FlextLdapEntryAdapter()
+        adapter: p.Ldif.Ldap3EntryAdapter = module.FlextLdapEntryAdapter()
         return adapter
 
     @classmethod
@@ -104,17 +104,19 @@ class TestsFlextLdifLdapClient:
         server_url: str,
         *,
         get_info: c.Ldap3GetInfo = c.Ldap3GetInfo.ALL,
-    ) -> p.Ldap3Server:
+    ) -> p.Ldif.Ldap3Server:
         """Create an LDAP server from a URL for test connectivity checks.
 
         Returns:
-            The resulting ``p.Ldap3Server``.
+            The resulting ``p.Ldif.Ldap3Server``.
 
         """
         client = cls.require_ldap_client()
-        server: p.Ldap3Server = client.FlextLdapUtilities.Ldap.create_server_from_url(
-            server_url,
-            get_info=get_info,
+        server: p.Ldif.Ldap3Server = (
+            client.FlextLdapUtilities.Ldap.create_server_from_url(
+                server_url,
+                get_info=get_info,
+            )
         )
         return server
 
@@ -125,11 +127,11 @@ class TestsFlextLdifLdapClient:
         *,
         port: int = c.Tests.DOCKER_PORT,
         get_info: c.Ldap3GetInfo = c.Ldap3GetInfo.NO_INFO,
-    ) -> p.Ldap3Server:
+    ) -> p.Ldif.Ldap3Server:
         """Create a minimal LDAP server for connectivity checks.
 
         Returns:
-            The resulting ``p.Ldap3Server``.
+            The resulting ``p.Ldif.Ldap3Server``.
 
         """
         return cls.create_server_from_url(
@@ -139,30 +141,30 @@ class TestsFlextLdifLdapClient:
 
     @staticmethod
     def create_connection(
-        server: p.Ldap3Server,
+        server: p.Ldif.Ldap3Server,
         user: str,
         password: str,
         *,
         auto_bind: bool = True,
         receive_timeout: int | None = None,
-    ) -> p.Ldap3Connection:
+    ) -> p.Ldif.Ldap3Connection:
         """Create an LDAP connection for test workflows.
 
         Returns:
-            The resulting ``p.Ldap3Connection``.
+            The resulting ``p.Ldif.Ldap3Connection``.
 
         """
         client = TestsFlextLdifLdapClient.require_ldap_client()
         create = client.FlextLdapUtilities.Ldap.create_connection
         if receive_timeout is None:
-            connection: p.Ldap3Connection = create(
+            connection: p.Ldif.Ldap3Connection = create(
                 server,
                 user=user,
                 password=password,
                 auto_bind=auto_bind,
             )
             return connection
-        timed_connection: p.Ldap3Connection = create(
+        timed_connection: p.Ldif.Ldap3Connection = create(
             server,
             user=user,
             password=password,

@@ -62,7 +62,7 @@ class FlextLdifUtilitiesParserRecord:
             self.controls: MutableSequence[
                 FlextLdifModelsDomainEntryControl.Control
             ] = []
-            self.change_operations: MutableSequence[m.Ldif.ChangeOperation] = []
+            self.change_operations: MutableSequence[p.Ldif.ChangeOperation] = []
             self.current_change_operation: m.Ldif.ChangeOperation | None = None
             self.changetype: c.Ldif.ChangeType | None = None
             self.record_kind = c.Ldif.RecordKind.CONTENT
@@ -98,7 +98,7 @@ class FlextLdifUtilitiesParserRecord:
     @staticmethod
     def finalize_change_operation(
         current_op: m.Ldif.ChangeOperation | None,
-        change_operations: MutableSequence[m.Ldif.ChangeOperation],
+        change_operations: MutableSequence[p.Ldif.ChangeOperation],
     ) -> None:
         """Append a pending modify block when present."""
         if current_op is not None:

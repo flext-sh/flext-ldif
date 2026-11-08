@@ -39,7 +39,7 @@ class TestsFlextLdifProtocolsLdap(p):
 
         def ldap3_to_ldif_entry(
             self,
-            ldap3_entry: TestsFlextLdifProtocolsLdap.Ldap3Entry,
+            ldap3_entry: TestsFlextLdifProtocolsLdap.Ldif.Ldap3Entry,
         ) -> p.Result[p.Ldif.Entry]:
             """Convert one ldap3 entry into the LDIF entry model."""
             ...
@@ -53,7 +53,7 @@ class TestsFlextLdifProtocols(
     """Protocol definitions for flext-ldif tests.
 
     The ldap3 client contracts compose in through their focused module so the
-    ``p.Ldap3*`` surface stays unchanged without a second nested namespace.
+    ``p.Ldif.Ldap3*`` surface stays unchanged without a second nested namespace.
     """
 
     class Tests(flext_tests_p.Tests):

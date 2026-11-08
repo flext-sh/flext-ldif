@@ -509,7 +509,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             return (target_dn, target_attrs)
 
         @staticmethod
-        def _openldap1_permissions(first_access: str) -> m.Ldif.AclPermissions:
+        def _openldap1_permissions(first_access: str) -> p.Ldif.AclPermissions:
             """Build permissions from the first OpenLDAP 1.x access token.
 
             Args:
