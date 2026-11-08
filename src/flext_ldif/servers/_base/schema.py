@@ -380,8 +380,12 @@ class FlextLdifServersBaseSchema(
 
         """
         if self._NORMALIZE_OBJECTCLASS:
-            oc = u.Ldif.fix_missing_sup(oc)
-            oc = u.Ldif.fix_kind_mismatch(oc)
+            oc_model = m.Ldif.SchemaObjectClass.model_validate(
+                oc.model_dump(exclude={"has_metadata", "has_server_extensions", "server_type"}),
+            )
+            u.Ldif.fix_missing_sup(oc_model)
+            u.Ldif.fix_kind_mismatch(oc_model)
+            oc = oc_model
         return r[p.Ldif.SchemaObjectClass].ok(oc)
 
     @staticmethod
