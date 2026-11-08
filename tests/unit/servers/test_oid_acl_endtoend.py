@@ -143,6 +143,52 @@ class TestsFlextLdifOidAclEndToEnd:
         acis = self._acis(converted)
         tm.that(acis["ou=people,dc=ctbc"], ne=[])
 
+    @c.Tests.MARK.parametrize(
+        ("acl", "expected"),
+        [
+            u.Tests.param(
+                "access to attr=(member) by groupattr=(uniquemember) (read,search)",
+                'userattr="uniquemember#GROUPDN"',
+                id="groupattr-becomes-groupdn-userattr",
+            ),
+            u.Tests.param(
+                'access to entry by group="cn=admins,dc=ctbc" (proxy)',
+                "allow (proxy)",
+                id="proxy-grant-kept-r4c",
+            ),
+        ],
+    )
+    def test_subject_and_right_conversions(self, acl: str, expected: str) -> None:
+        """Spec v4.2 R8 groupattr and R4c proxy grants convert, not refuse."""
+        converted = tm.ok(
+            self._migrate(self._directory({"cn=users,dc=ctbc": {"orclaci": [acl]}})),
+        )
+        values = self._acis(converted)["cn=users,dc=ctbc"]
+        tm.that(values, where=lambda acis: any(expected in aci for aci in acis))
+
+    @c.Tests.MARK.parametrize(
+        "acl",
+        [
+            u.Tests.param(
+                "access to entry by * bindmode=(Simple) (browse)",
+                id="bindmode",
+            ),
+            u.Tests.param(
+                "access to entry by * bindipfilter=(orclipaddress=10.*) (browse)",
+                id="bindipfilter",
+            ),
+            u.Tests.param(
+                'access to entry by group="cn=*,dc=ctbc" (browse)',
+                id="wildcard-group",
+            ),
+        ],
+    )
+    def test_subjects_without_an_oud_mapping_fail(self, acl: str) -> None:
+        """R8 forms with no measured OUD mapping fail, never pass raw."""
+        tm.fail(
+            self._migrate(self._directory({"cn=users,dc=ctbc": {"orclaci": [acl]}})),
+        )
+
     def test_oracle_internal_entry_denial_fails(self) -> None:
         """Dropping an Oracle-internal denial would grant in OUD; it fails."""
         tm.fail(
