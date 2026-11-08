@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from flext_ldif import c, p
 
 if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModels, t
+    from flext_ldif import t
 
 
 class FlextLdifUtilitiesServerDetect:
@@ -41,9 +41,7 @@ class FlextLdifUtilitiesServerDetect:
 
     @staticmethod
     def _extract_pattern_name_candidates(
-        value: str
-        | p.Ldif.SchemaAttribute
-        | p.Ldif.SchemaObjectClass,
+        value: str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
         settings: p.Ldif.ServerPatternsConfig,
     ) -> list[str]:
         """Extract comparable schema names from a raw definition or parsed model.
@@ -123,9 +121,7 @@ class FlextLdifUtilitiesServerDetect:
 
     @staticmethod
     def matches_server_patterns(
-        value: str
-        | p.Ldif.SchemaAttribute
-        | p.Ldif.SchemaObjectClass,
+        value: str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
         settings: p.Ldif.ServerPatternsConfig,
     ) -> bool:
         r"""Check if value matches server-specific detection patterns.

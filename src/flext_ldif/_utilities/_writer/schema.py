@@ -7,12 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableSequence
-from typing import TYPE_CHECKING
 
 from flext_ldif import c, p
-
-if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModels
 
 
 class FlextLdifUtilitiesWriterSchema:

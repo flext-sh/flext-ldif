@@ -12,7 +12,7 @@ from typing import overload
 
 from flext_cli import u
 
-from flext_ldif import FlextLdifModels, c, p
+from flext_ldif import c, p
 from flext_ldif._utilities._dn import (
     FlextLdifUtilitiesDNNormalize,
     FlextLdifUtilitiesDNParse,
