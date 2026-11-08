@@ -15,7 +15,6 @@ from collections.abc import (
     ValuesView,
 )
 from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
-from warnings import deprecated
 
 from flext_cli import FlextCliProtocols, p, t
 
@@ -23,7 +22,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from flext_ldif._protocols import (
-        FlextLdifProtocolsAclConvert,
         FlextLdifProtocolsDomain,
         FlextLdifProtocolsDomainAcl,
         FlextLdifProtocolsDomainEntry,
@@ -73,68 +71,6 @@ class FlextLdifProtocolsBase:
         def validate_objectclass_name(self, name: str) -> p.Result[bool]:
             """Return whether the objectClass name is valid."""
             ...
-
-    @runtime_checkable
-    class OidAclConversion(Protocol):
-        """Public OID-to-OUD ACL conversion capability."""
-
-        def parse_oid_acl_line(
-            self, dn: str, line: str
-        ) -> p.Result[FlextLdifProtocolsAclConvert.OidAclRule]: ...
-
-        def convert_subject_to_oud(
-            self,
-            subject: FlextLdifProtocolsAclConvert.OidAclSubject,
-        ) -> p.Result[FlextLdifProtocolsAclConvert.AciAllow]: ...
-
-        def resolve_permissions(
-            self,
-            permissions: t.StrSequence,
-            *,
-            is_entry: bool,
-        ) -> p.Result[FlextLdifProtocolsAclConvert.AclPermissionResolution]: ...
-
-        @deprecated(
-            "compat: convert_permissions -> resolve_permissions; "
-            "fix: render the typed deny set",
-        )
-        def convert_permissions(
-            self,
-            permissions: t.StrSequence,
-            *,
-            is_entry: bool,
-        ) -> p.Result[t.StrSequence]: ...
-
-        def regex_dn_to_wildcard(self, value: str) -> p.Result[str]: ...
-
-        @deprecated(
-            "compat: regex_to_wildcard -> regex_dn_to_wildcard; "
-            "fix: consume the typed result",
-        )
-        def regex_to_wildcard(self, value: str) -> str: ...
-
-        def in_scope(self, dn: str, base_dn: str) -> bool: ...
-
-        def build_aci_rule(
-            self,
-            rule: FlextLdifProtocolsAclConvert.OidAclRule,
-            *,
-            base_dn: str = "",
-            access_groups: frozenset[str] = frozenset(),
-            sibling_attrs: t.StrSequence = (),
-        ) -> p.Result[FlextLdifProtocolsAclConvert.AciRule]: ...
-
-        @deprecated(
-            "compat: render_aci_string -> render_aci_strings; "
-            "fix: render every aci line of the rule",
-        )
-        def render_aci_string(
-            self, aci: FlextLdifProtocolsAclConvert.AciRule
-        ) -> str: ...
-
-        def render_aci_strings(
-            self, aci: FlextLdifProtocolsAclConvert.AciRule
-        ) -> t.StrSequence: ...
 
     @runtime_checkable
     class ServerDetectionService(Protocol):

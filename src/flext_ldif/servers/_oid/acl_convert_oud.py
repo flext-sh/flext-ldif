@@ -390,7 +390,7 @@ class FlextLdifServersOidAclToOud:
         ))
 
     @classmethod
-    def subject_leaf(
+    def subject_leaf(  # ruff: ignore[too-many-return-statements]
         cls,
         subject: p.Ldif.OidAclSubject,
         directory: p.Ldif.AclDirectory,

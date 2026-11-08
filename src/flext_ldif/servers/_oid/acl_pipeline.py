@@ -1,10 +1,11 @@
-"""OID→OUD ACL pipeline — entry/line orchestration over the build+render stack.
+"""OID→OUD ACL conversion of a whole directory over the R1-R9 engine.
 
-``build_aci_rules`` parses and assembles an entry's OID ACL lines into typed
-rules with per-subject outcomes; ``convert_acl_values`` renders them (with
-dedup) into raw ``aci`` attribute values; ``convert_entry_acls``
-rewrites a whole OID entry, replacing its ``orclaci``/``orclentrylevelaci``
-attributes with one ``aci`` attribute. Malformed input surfaces as ``r.fail``.
+``convert_directory`` reads every entry's ``orclaci``/``orclentrylevelaci``
+values, resolves them against the injected source directory and emits the
+OUD ACI statements through :class:`FlextLdifServersOidAclRender`, which places
+each statement on the entry its region decides. ``apply_to_entry`` replaces an
+entry's OID ACL attributes with the ``aci`` values that conversion placed on
+it. Malformed input surfaces as ``r.fail``.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -25,164 +26,168 @@ from flext_ldif.servers._oid import (
 
 
 class FlextLdifServersOidAclPipeline:
-    """Top-level OID→OUD ACL conversion orchestration (lines and entries)."""
-
-    @staticmethod
-    def _values(entry: p.Ldif.Entry, names: frozenset[str]) -> Sequence[str]:
-        """Return the values of every attribute of ``entry`` named in ``names``."""
-        attributes = entry.attributes.attributes if entry.attributes else {}
-        return tuple(
-            value
-            for name, values in attributes.items()
-            if name.lower() in names
-            for value in values
-        )
+    """Directory-level OID→OUD ACL conversion and its per-entry application."""
 
     @classmethod
-    def security_group_dns(cls, entries: Sequence[p.Ldif.Entry]) -> frozenset[str]:
-        """Return the DN keys of the entries that are exact OID security groups.
+    def convert_directory(
+        cls,
+        entries: Sequence[p.Ldif.Entry],
+        *,
+        suffix: str,
+    ) -> p.Result[p.Ldif.AclDirectoryConversion]:
+        """Convert the OID ACLs of every entry into placed OUD ACI values.
 
-        OID evaluates group membership for access only for ``orclACPgroup``
-        and ``orclPrivilegeGroup`` groups, through nesting chains of those
-        classes only, and a group carrying both classes evaluates
-        non-deterministically (OID-30 §30.1.3.4.4, §30.1.3.4.6). OUD nesting
-        semantics are not documented. A group qualifies only when it carries
-        exactly one security class, no dynamic membership attribute, and
-        every static member is an entry of ``entries`` that is not a group.
+        Every OID ACL value becomes one level rule (positions start at 1);
+        an Oracle-internal entry contributes none and fails when one of its
+        ACLs denies a right. The render places every statement on its
+        receiving entry; its values are deduplicated per entry in emission
+        order.
 
         Returns:
-            The qualifying group DN keys
-            (:meth:`FlextLdifServersOidAclToOud.dn_key`).
+            The directory conversion, or the first failure with its DN.
 
         """
-        constants = FlextLdifConstantsServersOid
+        result = r[m.Ldif.AclDirectoryConversion]
         to_oud = FlextLdifServersOidAclToOud
-        classes = frozenset({c.Ldif.DictKeys.OBJECTCLASS.lower()})
-        known = {to_oud.dn_key(entry.dn_str) for entry in entries}
-        groups = {
-            to_oud.dn_key(entry.dn_str)
-            for entry in entries
-            if {value.lower() for value in cls._values(entry, classes)}
-            & constants.OID_GROUP_CLASSES
-            or cls._values(entry, constants.OID_GROUP_MEMBER_ATTRS)
-            or cls._values(entry, constants.OID_DYNAMIC_MEMBER_ATTRS)
-        }
-        return frozenset(
-            to_oud.dn_key(entry.dn_str)
-            for entry in entries
-            if len(
-                {value.lower() for value in cls._values(entry, classes)}
-                & constants.OID_SECURITY_GROUP_CLASSES,
-            )
-            == 1
-            and not cls._values(entry, constants.OID_DYNAMIC_MEMBER_ATTRS)
-            and all(
-                to_oud.dn_key(member) in known and to_oud.dn_key(member) not in groups
-                for member in cls._values(entry, constants.OID_GROUP_MEMBER_ATTRS)
-            )
-        )
-
-    @classmethod
-    def build_aci_rules(
-        cls,
-        dn: str,
-        oid_acl_lines: Sequence[str],
-        *,
-        base_dn: str = "",
-        access_groups: frozenset[str] = frozenset(),
-    ) -> p.Result[tuple[p.Ldif.AciRule, ...]]:
-        """Parse and assemble each OID ACL line into one typed OUD aci rule.
-
-        Each rule carries its allow and deny clauses and the per-subject
-        :class:`m.Ldif.AclSubjectOutcome` records. The ACIs of one ACL
-        attribute form one ACP, so an ``attr=(*)`` ACI there excludes the
-        attributes its siblings name (OID-30 §30.1.6.3). A malformed line, an
-        unsupported construct or a group outside ``access_groups``
-        (:meth:`security_group_dns`) surfaces as ``r.fail``.
-
-        Returns:
-            The resulting ``p.Result[tuple[p.Ldif.AciRule, ...]]``.
-
-        """
-        parsed = r.traverse(
-            oid_acl_lines,
-            lambda line: FlextLdifServersOidAclConvert.parse_oid_acl_line(dn, line),
-        )
-        if parsed.failure:
-            return r[tuple[p.Ldif.AciRule, ...]].from_failure(parsed)
-        named = {
-            acl_type: tuple(
-                dict.fromkeys(
-                    attr
-                    for rule in parsed.value
-                    if rule.acl_type == acl_type
-                    for attr in FlextLdifServersOidAclToOud.named_target_attrs(rule)
-                ),
-            )
-            for acl_type in {rule.acl_type for rule in parsed.value}
-        }
-        return r.traverse(
-            parsed.value,
-            lambda rule: FlextLdifServersOidAclAssemble.build_aci_rule(
-                rule,
-                base_dn=base_dn,
-                access_groups=access_groups,
-                sibling_attrs=named[rule.acl_type],
+        directory = to_oud.acl_directory(entries)
+        rules: list[p.Ldif.AclLevelRule] = []
+        events: list[p.Ldif.AclConversionEvent] = []
+        consumed: set[str] = set()
+        for entry in entries:
+            attributes = entry.attributes.attributes if entry.attributes else {}
+            dn = entry.dn.value if entry.dn else ""
+            names = cls._acl_attribute_names(dn, tuple(attributes))
+            if names.failure:
+                return result.from_failure(names)
+            if not names.value:
+                continue
+            consumed.add(to_oud.dn_key(dn))
+            if any(rule.match(dn) for rule in c.Ldif.ORACLE_INTERNAL_DN_RES):
+                internal = cls._internal_denials(
+                    dn,
+                    [
+                        f"{name}: {value}"
+                        for name in names.value
+                        for value in attributes[name]
+                    ],
+                )
+                if internal.failure:
+                    return result.from_failure(internal)
+                continue
+            for name in names.value:
+                for index, value in enumerate(attributes[name], 1):
+                    built = FlextLdifServersOidAclAssemble.build_rule(
+                        name.lower(), dn, value, index, directory
+                    )
+                    if built.failure:
+                        return result.from_failure(built)
+                    rules.append(built.value[0])
+                    events.extend(built.value[1])
+        render = FlextLdifServersOidAclRender(rules, suffix=suffix, directory=directory)
+        emitted = render.emit()
+        if emitted.failure:
+            return result.from_failure(emitted)
+        values: dict[str, list[str]] = {}
+        for statement in emitted.value:
+            rendered = FlextLdifServersOidAclRender.render_statement(statement)
+            placed = values.setdefault(to_oud.dn_key(statement.dn), [])
+            if rendered not in placed:
+                placed.append(rendered)
+        return result.ok(
+            m.Ldif.AclDirectoryConversion(
+                statements=tuple(emitted.value),
+                values={key: tuple(found) for key, found in values.items()},
+                events=(*events, *render.events),
+                consumed=frozenset(consumed),
             ),
-        ).map(tuple)
-
-    @staticmethod
-    def render_aci_values(rules: tuple[p.Ldif.AciRule, ...]) -> Sequence[str]:
-        """Render every allow and deny clause to deduplicated ``aci`` values.
-
-        Each rule renders one value per clause targetscope; duplicate values
-        (whitespace- and case-normalized) keep first order.
-
-        Returns:
-            The raw ``aci`` attribute values.
-
-        """
-        values: list[str] = []
-        seen: set[str] = set()
-        for aci in rules:
-            for line in FlextLdifServersOidAclRender.render_aci_strings(aci):
-                rendered = line.removeprefix(c.Ldif.ACI_PREFIX)
-                normalized = c.Ldif.WHITESPACE_RE.sub(" ", rendered.strip().lower())
-                if normalized in seen:
-                    continue
-                seen.add(normalized)
-                values.append(rendered)
-        return tuple(values)
+        )
 
     @classmethod
-    def convert_acl_values(
+    def apply_to_entry(
         cls,
-        dn: str,
-        oid_acl_lines: Sequence[str],
+        entry: p.Ldif.Entry,
+        conversion: p.Ldif.AclDirectoryConversion,
         *,
-        base_dn: str = "",
-        access_groups: frozenset[str] = frozenset(),
-    ) -> p.Result[Sequence[str]]:
-        """Convert an entry's OID ACL lines to deduplicated OUD ``aci`` values.
+        source_server_type: str,
+        target_server_type: str,
+    ) -> p.Result[p.Ldif.Entry]:
+        """Replace one entry's OID ACL attributes with its converted ``aci``.
 
-        Each ``orclaci:``/``orclentrylevelaci:`` line is parsed → built →
-        rendered with its allow and deny clauses; duplicate aci values
-        (whitespace- and case-normalized) are merged keeping first order. A
-        malformed line or unknown perm token surfaces as ``r.fail``. Returned
-        values exclude the ``aci: `` prefix (they are raw ``aci`` attribute
-        values).
+        The entry keeps every other attribute; it receives the ``aci`` values
+        the directory conversion placed on it (also when it carried no OID
+        ACL) and records them as :class:`m.Ldif.AclEntryConversion`.
+
+        Only an OID→OUD conversion applies. An entry carrying OID ACLs that
+        the directory conversion did not consume fails: converting it alone
+        would leave OID access control unconverted.
 
         Returns:
-            The resulting ``p.Result[Sequence[str]]``.
+            The converted entry, unchanged when the conversion touches nothing.
 
         """
-        return cls.build_aci_rules(
-            dn,
-            oid_acl_lines,
-            base_dn=base_dn,
-            access_groups=access_groups,
-        ).map(
-            cls.render_aci_values,
+        if not (
+            source_server_type == c.Ldif.ServerTypes.OID
+            and target_server_type == c.Ldif.ServerTypes.OUD
+        ):
+            return r[p.Ldif.Entry].ok(entry)
+        to_oud = FlextLdifServersOidAclToOud
+        dn = entry.dn.value if entry.dn else ""
+        key = to_oud.dn_key(dn)
+        placed = conversion.values.get(key, ())
+        attrs_model = entry.attributes
+        current = dict(attrs_model.attributes) if attrs_model else {}
+        names = cls._acl_attribute_names(dn, tuple(current))
+        if names.failure:
+            return r[p.Ldif.Entry].from_failure(names)
+        if names.value and key not in conversion.consumed:
+            return r[p.Ldif.Entry].fail(
+                f"OID entry {dn!r} carries {list(names.value)!r} outside the "
+                "directory ACL conversion; convert the whole source directory "
+                "(placement of OUD ACIs is directory-wide)",
+            )
+        if not names.value and not placed:
+            return r[p.Ldif.Entry].ok(entry)
+        for name in names.value:
+            del current[name]
+        if placed:
+            current[c.Ldif.ACI_ATTR_NAME] = list(placed)
+        attributes = (
+            attrs_model.model_copy(
+                update={
+                    "attributes": current,
+                    "attribute_metadata": {
+                        name: value
+                        for name, value in attrs_model.attribute_metadata.items()
+                        if name not in names.value
+                    },
+                },
+            )
+            if attrs_model
+            else m.Ldif.Attributes(attributes=current)
+        )
+        recorded = m.Ldif.AclEntryConversion(
+            statements=tuple(
+                statement
+                for statement in conversion.statements
+                if to_oud.dn_key(statement.dn) == key
+            ),
+            events=tuple(
+                event for event in conversion.events if to_oud.dn_key(event.dn) == key
+            ),
+            oracle_internal_skip=any(
+                rule.match(dn) for rule in c.Ldif.ORACLE_INTERNAL_DN_RES
+            ),
+        )
+        metadata = (
+            entry.metadata.model_copy(update={"acl_conversion": recorded})
+            if entry.metadata is not None
+            else m.Ldif.ServerMetadata(
+                server_type=c.Ldif.ServerTypes.OID,
+                acl_conversion=recorded,
+            )
+        )
+        return r[p.Ldif.Entry].ok(
+            entry.model_copy(update={"attributes": attributes, "metadata": metadata}),
         )
 
     @classmethod
@@ -255,94 +260,6 @@ class FlextLdifServersOidAclPipeline:
             )
         return r[Sequence[str]].ok(
             tuple(name for name in names if name.lower() in c.Ldif.AclConvertType),
-        )
-
-    @classmethod
-    def convert_entry_acls(
-        cls,
-        entry: p.Ldif.Entry,
-        source_type_norm: str,
-        target_type_norm: str,
-        base_dn: str = "",
-        access_groups: frozenset[str] = frozenset(),
-    ) -> p.Result[p.Ldif.Entry]:
-        """Rewrite an OID entry's ACL attributes to a single OUD ``aci`` attribute.
-
-        Fires only for oid→oud entries carrying ``orclaci``/``orclentrylevelaci``;
-        their values convert (via :meth:`convert_acl_values`) into ``aci`` values
-        and the OID ACL attributes are removed. An Oracle-internal DN
-        (``c.Ldif.ORACLE_INTERNAL_DN_RES``) loses its OID ACLs without any
-        ``aci`` only when none of them denies a right. The typed
-        :class:`m.Ldif.AclEntryConversion` (rules with their per-subject
-        outcomes, or the Oracle-internal skip) is recorded on
-        ``entry.metadata.acl_conversion``. A source ``aci`` attribute (OID does
-        not enforce it, OUD would), an OID ACL attribute carrying options and a
-        malformed ACL surface as ``r.fail``; entries without ACL attributes
-        pass through unchanged.
-
-        Returns:
-            The resulting ``p.Result[p.Ldif.Entry]``.
-
-        """
-        if not (
-            source_type_norm == c.Ldif.ServerTypes.OID
-            and target_type_norm == c.Ldif.ServerTypes.OUD
-        ):
-            return r[p.Ldif.Entry].ok(entry)
-        attrs_model = entry.attributes
-        if attrs_model is None or not attrs_model.attributes:
-            return r[p.Ldif.Entry].ok(entry)
-        current = dict(attrs_model.attributes)
-        dn_value = entry.dn.value if entry.dn else ""
-        names = cls._acl_attribute_names(dn_value, tuple(current))
-        if names.failure:
-            return r[p.Ldif.Entry].from_failure(names)
-        acl_names = names.value
-        if not acl_names:
-            return r[p.Ldif.Entry].ok(entry)
-        oid_lines = [
-            f"{name}: {value}" for name in acl_names for value in current[name]
-        ]
-        skipped = any(rule.match(dn_value) for rule in c.Ldif.ORACLE_INTERNAL_DN_RES)
-        no_rules: tuple[p.Ldif.AciRule, ...] = ()
-        rules = (
-            cls._internal_denials(dn_value, oid_lines).map(lambda _: no_rules)
-            if skipped
-            else cls.build_aci_rules(
-                dn_value,
-                oid_lines,
-                base_dn=base_dn,
-                access_groups=access_groups,
-            )
-        )
-        if rules.failure:
-            return r[p.Ldif.Entry].from_failure(rules)
-        for name in acl_names:
-            del current[name]
-        if values := cls.render_aci_values(rules.value):
-            current[c.Ldif.ACI_ATTR_NAME] = list(values)
-        kept_meta = {
-            key: value
-            for key, value in attrs_model.attribute_metadata.items()
-            if key not in acl_names
-        }
-        new_attrs = attrs_model.model_copy(
-            update={"attributes": current, "attribute_metadata": kept_meta},
-        )
-        conversion = m.Ldif.AclEntryConversion(
-            rules=rules.value,
-            oracle_internal_skip=skipped,
-        )
-        metadata = (
-            entry.metadata.model_copy(update={"acl_conversion": conversion})
-            if entry.metadata is not None
-            else m.Ldif.ServerMetadata(
-                server_type=c.Ldif.ServerTypes.OID,
-                acl_conversion=conversion,
-            )
-        )
-        return r[p.Ldif.Entry].ok(
-            entry.model_copy(update={"attributes": new_attrs, "metadata": metadata}),
         )
 
 
