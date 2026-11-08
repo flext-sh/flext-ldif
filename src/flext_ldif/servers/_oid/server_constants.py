@@ -246,6 +246,18 @@ class FlextLdifConstantsServersOid(
     ACL_RIGHT_ADD: ClassVar[str] = "add"
     ACL_RIGHT_BROWSE: ClassVar[str] = "browse"
     ACL_RIGHT_PROXY: ClassVar[str] = "proxy"
+    # OUD aci rights in rendering order; statements that differ only in their
+    # rights render as one aci listing them in this order.
+    OUD_RIGHTS_ORDER: ClassVar[tuple[str, ...]] = (
+        "read",
+        "search",
+        "write",
+        "selfwrite",
+        "compare",
+        "add",
+        "delete",
+        "proxy",
+    )
     ACL_BROWSE_GRANT_ATTRIBUTE: ClassVar[str] = "objectclass"
     "R4e (operator decision, emulate minimum): the attribute browse exposes."
     ACL_BROWSE_GRANT_RIGHTS: ClassVar[tuple[str, ...]] = ("read", "search")
