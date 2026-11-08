@@ -42,7 +42,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         """Record one operator-review event."""
         self.events.append(m.Ldif.AclConversionEvent(rule=rule, dn=dn, detail=detail))
 
-    def is_privilege(self, leaf: m.Ldif.AclBindLeaf) -> bool:
+    def is_privilege(self, leaf: p.Ldif.AclBindLeaf) -> bool:
         """Return whether a group leaf is a source privilege group (Q5)."""
         constants = FlextLdifConstantsServersOid
         if leaf.kind != constants.AclLeafKind.GROUP:
@@ -54,8 +54,8 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
 
     def privilege_override(
         self,
-        decision: m.Ldif.AclDecision,
-    ) -> p.Result[list[m.Ldif.AclBindLeaf]]:
+        decision: p.Ldif.AclDecision,
+    ) -> p.Result[list[p.Ldif.AclBindLeaf]]:
         """R5: the privilege groups a farther ACP grants the right by group subject.
 
         A denial at a lower ACP stays unresolved for a privilege group member
@@ -73,7 +73,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         own_acp = self.rules_at(rule.key, c.Ldif.AclConvertType.ORCLACI.value)
         if any(item.rule.deny_group_override for item in (*own_acp, rule)):
             return result.ok([])
-        excluded: list[m.Ldif.AclBindLeaf] = []
+        excluded: list[p.Ldif.AclBindLeaf] = []
         for higher in self.farther_rules(rule):
             leaves = [
                 leaf
@@ -97,8 +97,8 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
 
     def browse_resolved(
         self,
-        rule: m.Ldif.AclLevelRule,
-        leaf: m.Ldif.AclBindLeaf,
+        rule: p.Ldif.AclLevelRule,
+        leaf: p.Ldif.AclBindLeaf,
     ) -> bool:
         """R1: return whether some level decides browse for every session of leaf.
 
@@ -125,9 +125,9 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
 
     def form(
         self,
-        rule: m.Ldif.AclLevelRule,
-        resolution: m.Ldif.AclResolution,
-    ) -> p.Result[list[m.Ldif.AclForm]]:
+        rule: p.Ldif.AclLevelRule,
+        resolution: p.Ldif.AclResolution,
+    ) -> p.Result[list[p.Ldif.AclForm]]:
         """Return the OUD rights, attributes, filter, scope and rule of a decision.
 
         Returns:
@@ -165,9 +165,9 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
 
     def add_form(
         self,
-        rule: m.Ldif.AclLevelRule,
-        resolution: m.Ldif.AclResolution,
-    ) -> p.Result[list[m.Ldif.AclForm]]:
+        rule: p.Ldif.AclLevelRule,
+        resolution: p.Ldif.AclResolution,
+    ) -> p.Result[list[p.Ldif.AclForm]]:
         """R4a/R4d: add is decided on the new entry (OUD-9 §9.2.3.3).
 
         An OID filter matches the parent while the OUD add ``targetfilter``
@@ -221,10 +221,10 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
 
     def entry_form(
         self,
-        rule: m.Ldif.AclLevelRule,
-        resolution: m.Ldif.AclResolution,
+        rule: p.Ldif.AclLevelRule,
+        resolution: p.Ldif.AclResolution,
         scope: str | None,
-    ) -> m.Ldif.AclForm:
+    ) -> p.Ldif.AclForm:
         """R4b/R4e and the R5 browse and proxy denials for one entry right.
 
         Returns:
@@ -257,7 +257,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         )
 
     @staticmethod
-    def granted_leaf(leaf: m.Ldif.AclBindLeaf) -> m.Ldif.AclBindLeaf:
+    def granted_leaf(leaf: p.Ldif.AclBindLeaf) -> p.Ldif.AclBindLeaf:
         """R8 (operator decision "Grant all, deny anyone"): ``*`` grants go to all.
 
         Returns:
@@ -275,9 +275,9 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
 
     def allow_statements(
         self,
-        rule: m.Ldif.AclLevelRule,
-        resolution: m.Ldif.AclResolution,
-    ) -> p.Result[list[m.Ldif.AciStatement]]:
+        rule: p.Ldif.AclLevelRule,
+        resolution: p.Ldif.AclResolution,
+    ) -> p.Result[list[p.Ldif.AciStatement]]:
         """R1-R4 and R9 for one grant; a grant wins in its ACI (R6a).
 
         Returns:
@@ -290,7 +290,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
             return r[list[m.Ldif.AciStatement]].from_failure(forms)
         bind = m.Ldif.AclBindRule(include=self.granted_leaf(resolution.leaf))
         browse = rule.attrs is None or self.browse_resolved(rule, resolution.leaf)
-        statements: list[m.Ldif.AciStatement] = []
+        statements: list[p.Ldif.AciStatement] = []
         for form in forms.value:
             rights = tuple(
                 item
@@ -328,9 +328,9 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
 
     def deny_statements(
         self,
-        rule: m.Ldif.AclLevelRule,
-        resolution: m.Ldif.AclResolution,
-    ) -> p.Result[list[m.Ldif.AciStatement]]:
+        rule: p.Ldif.AclLevelRule,
+        resolution: p.Ldif.AclResolution,
+    ) -> p.Result[list[p.Ldif.AciStatement]]:
         """R5 for one denial, with R6b filter precedence and region placement.
 
         A root DSE denial emits nothing (R9): above it only the OUD default
@@ -353,7 +353,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         forms = self.form(rule, resolution)
         if forms.failure:
             return result.from_failure(forms)
-        statements: list[m.Ldif.AciStatement] = []
+        statements: list[p.Ldif.AciStatement] = []
         for form in forms.value:
             decision = m.Ldif.AclDecision(
                 rule=rule,
@@ -380,8 +380,8 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
 
     def filter_precedence(
         self,
-        decision: m.Ldif.AclDecision,
-    ) -> list[m.Ldif.AclDecision]:
+        decision: p.Ldif.AclDecision,
+    ) -> list[p.Ldif.AclDecision]:
         """R6b: a filtered ACI of the level decides before the unfiltered one.
 
         Where a filter matches, the unfiltered denial excludes the subjects
@@ -395,7 +395,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         rule = decision.rule
         if rule.target_filter is not None:
             return [decision]
-        grants: dict[str, list[m.Ldif.AclBindLeaf]] = {}
+        grants: dict[str, list[p.Ldif.AclBindLeaf]] = {}
         for other in self.rules_at(rule.key, rule.level):
             other_attrs = self.effective_attrs(other)
             if (
@@ -440,7 +440,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         return [outside, *inside]
 
     @staticmethod
-    def _add_leaf(leaf: m.Ldif.AclBindLeaf) -> p.Result[m.Ldif.AclBindLeaf]:
+    def _add_leaf(leaf: p.Ldif.AclBindLeaf) -> p.Result[p.Ldif.AclBindLeaf]:
         """R4a: rebind an add subject to the parent of the new entry.
 
         OID add on X authorizes children of X while OUD evaluates add on the
@@ -467,7 +467,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         )
 
     @classmethod
-    def finalize(cls, statement: m.Ldif.AciStatement) -> p.Result[m.Ldif.AciStatement]:
+    def finalize(cls, statement: p.Ldif.AciStatement) -> p.Result[p.Ldif.AciStatement]:
         """Bind every subject of an add statement to the parent entry (R4a).
 
         Returns:
@@ -491,7 +491,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
             ),
         )
 
-    def emit(self) -> p.Result[list[m.Ldif.AciStatement]]:
+    def emit(self) -> p.Result[list[p.Ldif.AciStatement]]:
         """Emit every statement of the policy in level order.
 
         Returns:
@@ -501,7 +501,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         constants = FlextLdifConstantsServersOid
         entry = c.Ldif.AclConvertType.ORCLENTRYLEVELACI.value
         acp = c.Ldif.AclConvertType.ORCLACI.value
-        statements: list[m.Ldif.AciStatement] = []
+        statements: list[p.Ldif.AciStatement] = []
         for rule in self.rules_at("", entry):
             self._event(
                 constants.AclRule.R9,
@@ -529,7 +529,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         return r[list[m.Ldif.AciStatement]].ok(statements)
 
     @staticmethod
-    def render_leaf(leaf: m.Ldif.AclBindLeaf) -> str:
+    def render_leaf(leaf: p.Ldif.AclBindLeaf) -> str:
         """Render one bind-rule subject (R8 table).
 
         Returns:
@@ -553,7 +553,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
                 return f'{userdn}="{prefix}{leaf.value}"'
 
     @classmethod
-    def render_bind(cls, bind: m.Ldif.AclBindRule) -> str:
+    def render_bind(cls, bind: p.Ldif.AclBindRule) -> str:
         """Render a subject with its R5 exclusions: ``(S and not (E1 or E2))``.
 
         Returns:
@@ -569,7 +569,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         return f"({include} and not {excluded})"
 
     @staticmethod
-    def target_parts(statement: m.Ldif.AciStatement) -> list[str]:
+    def target_parts(statement: p.Ldif.AciStatement) -> list[str]:
         """Render the target keywords in OUD order (target, attr, filter, scope).
 
         Returns:
@@ -595,7 +595,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         return parts
 
     @classmethod
-    def render_statement(cls, statement: m.Ldif.AciStatement) -> str:
+    def render_statement(cls, statement: p.Ldif.AciStatement) -> str:
         """Render one statement as a single-line OUD ``aci`` value (no prefix).
 
         Returns:

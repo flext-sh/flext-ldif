@@ -164,12 +164,11 @@ class FlextLdifConversionEntry(
                     }),
                 },
             )
-        acl_conversion = FlextLdifServersOidAclPipeline.convert_entry_acls(
+        acl_conversion = FlextLdifServersOidAclPipeline.apply_to_entry(
             converted_entry,
-            source_type_norm,
-            target_type_norm,
-            base_dn=self.base_dn or "",
-            access_groups=self.access_groups,
+            self.acl_conversion,
+            source_server_type=source_type_norm,
+            target_server_type=target_type_norm,
         )
         if acl_conversion.failure:
             return r[t.Ldif.ConvertedModel].from_failure(acl_conversion)

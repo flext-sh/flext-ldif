@@ -139,17 +139,15 @@ class FlextLdifUtilitiesEvents:
             The resulting ``FlextLdifModels.Ldif.DnEvent``.
 
         """
-        event: p.Ldif.DnEvent = (
-            FlextLdifModels.Ldif.DnEvent.model_validate({
-                "event_type": "ldif.dn",
-                "aggregate_id": settings.input_dn,
-                "dn_operation": settings.dn_operation,
-                "input_dn": settings.input_dn,
-                "output_dn": settings.output_dn,
-                "dn_duration_ms": settings.operation_duration_ms,
-                "validation_result": settings.validation_result,
-            })
-        )
+        event: p.Ldif.DnEvent = FlextLdifModels.Ldif.DnEvent.model_validate({
+            "event_type": "ldif.dn",
+            "aggregate_id": settings.input_dn,
+            "dn_operation": settings.dn_operation,
+            "input_dn": settings.input_dn,
+            "output_dn": settings.output_dn,
+            "dn_duration_ms": settings.operation_duration_ms,
+            "validation_result": settings.validation_result,
+        })
         return event
 
     @staticmethod

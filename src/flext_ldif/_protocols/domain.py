@@ -97,11 +97,17 @@ class FlextLdifProtocolsDomain(Protocol):
 
         def write(self, acl_data: p.Ldif.Acl) -> p.Result[str]: ...
 
-        def access_group_dns(self, entries: Sequence[p.Ldif.Entry]) -> frozenset[str]:
-            """Return the DN keys of the groups whose membership access honours.
+        def convert_directory_acls(
+            self,
+            entries: Sequence[p.Ldif.Entry],
+            *,
+            target_server_type: str,
+            suffix: str,
+        ) -> p.Result[p.Ldif.AclDirectoryConversion]:
+            """Convert the ACLs of a whole source directory for one target.
 
-            Only the entries of ``entries`` qualify; ACL conversion fails on a
-            group subject outside the returned set.
+            A dialect pair without a directory conversion returns an empty
+            conversion; malformed input surfaces as ``r.fail``.
             """
             ...
 
