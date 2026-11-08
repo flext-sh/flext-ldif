@@ -53,11 +53,11 @@ class FlextLdifProtocolsDomain(Protocol):
 
         def parse_server(
             self, value: str
-        ) -> p.Result[p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]: ...
+        ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]: ...
 
         def parse_input(
             self, schema_text: str
-        ) -> p.Result[p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]: ...
+        ) -> p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]: ...
 
         def parse_attribute(
             self, definition: str

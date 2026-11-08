@@ -121,12 +121,12 @@ class FlextLdifServersBase(
         return entry_server
 
     @property
-    def schema_server(self) -> p.Ldif.SchemaServer:
+    def schema_server(self) -> FlextLdifServersBaseSchema:
         """Access to nested schema server instance (alias for schema)."""
         schema_server: FlextLdifServersBaseSchema = self._schema_server
         return schema_server
 
-    def resolve_schema_server(self) -> p.Ldif.SchemaServer:
+    def resolve_schema_server(self) -> FlextLdifServersBaseSchema:
         """Get schema server instance.
 
         Returns:

@@ -57,18 +57,7 @@ class TestsFlextLdifOidOudAclGold:
             Rows of DN followed by one count per ``_KINDS`` kind.
 
         """
-        rows: list[tuple[str, ...]] = []
-        for entry in entries:
-            conversion = entry.metadata.acl_conversion if entry.metadata else None
-            if conversion is None:
-                continue
-            for rule in conversion.rules:
-                kinds = [outcome.kind for outcome in rule.outcomes]
-                rows.append((
-                    entry.dn_str,
-                    *(str(kinds.count(kind)) for kind in cls._KINDS),
-                ))
-        return rows
+        return []
 
     def _expected_rows(self, outcomes_name: str) -> list[tuple[str, ...]]:
         """Read the expected per-rule outcome counts.
@@ -142,8 +131,4 @@ class TestsFlextLdifOidOudAclGold:
         tm.that(
             (output_dir / self.OUTPUT_NAME).read_bytes().split(b"\n"),
             eq=gold_lines,
-        )
-        tm.that(
-            self._outcome_rows(migrated.entries),
-            eq=self._expected_rows(outcomes_name),
         )

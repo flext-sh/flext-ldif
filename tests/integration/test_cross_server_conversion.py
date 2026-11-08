@@ -17,6 +17,7 @@ from collections.abc import MutableSequence, Sequence
 from typing import TYPE_CHECKING
 
 from tests import c, m, p, tm
+from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
 
 if TYPE_CHECKING:
     from flext_ldif.servers import FlextLdifServersBase
@@ -27,8 +28,8 @@ from tests import t
 
 
 def _assert_cross_server_identity(
-    source_schema: p.Ldif.SchemaServer,
-    target_schema: p.Ldif.SchemaServer,
+    source_schema: FlextLdifServersBaseSchema,
+    target_schema: FlextLdifServersBaseSchema,
     definition: str,
     parse_method: t.Tests.ParseMethod,
     tokens: tuple[str, ...],
@@ -36,7 +37,7 @@ def _assert_cross_server_identity(
     """Render via source, re-parse via target, and assert the identity tokens."""
     parse: Callable[
         [str],
-        p.Result[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass],
+        p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass],
     ] = getattr(source_schema, parse_method)
     parsed = parse(definition)
     tm.ok(parsed)
@@ -45,7 +46,7 @@ def _assert_cross_server_identity(
 
     target_parse: Callable[
         [str],
-        p.Result[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass],
+        p.Result[m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass],
     ] = getattr(target_schema, parse_method)
     target_parsed = target_parse(rfc_text.value)
     tm.ok(target_parsed)

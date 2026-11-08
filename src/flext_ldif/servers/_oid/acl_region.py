@@ -24,6 +24,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import override
+
 from collections.abc import Sequence
 
 from flext_ldif import c, m, p, r
@@ -79,11 +81,13 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
         )
 
     @staticmethod
+    @override
     def every_attribute() -> p.Ldif.AclAttrSet:
         """Return ``targetattr="*"`` as the negated empty set."""
         return m.Ldif.AclAttrSet(names=frozenset(), negated=True)
 
     @staticmethod
+    @override
     def intersect(
         left: p.Ldif.AclAttrSet, right: p.Ldif.AclAttrSet
     ) -> p.Ldif.AclAttrSet:
@@ -97,12 +101,14 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
         return m.Ldif.AclAttrSet(names=left.names & right.names)
 
     @classmethod
+    @override
     def overlaps(cls, left: p.Ldif.AclAttrSet, right: p.Ldif.AclAttrSet) -> bool:
         """Return whether two attribute sets share an attribute."""
         both = cls.intersect(left, right)
         return both.negated or bool(both.names)
 
     @classmethod
+    @override
     def contains(cls, outer: p.Ldif.AclAttrSet, inner: p.Ldif.AclAttrSet) -> bool:
         """Return whether ``outer`` holds every attribute of ``inner``."""
         return cls.intersect(outer, inner) == inner
@@ -180,6 +186,7 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
         ]
 
     @staticmethod
+    @override
     def scope_depths(scope: str | None) -> tuple[int, int | None]:
         """Return the depth interval below the anchor a region scope covers."""
         scopes = FlextLdifConstantsServersOid.AclScope
@@ -191,6 +198,7 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
         }
         return depths.get(scope, (0, None))
 
+    @override
     @staticmethod
     def add_scope(level: str) -> str:
         """R4a: the OUD scope of add decided on the new entry, by level.
@@ -205,6 +213,7 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
         return constants.ACL_ENTRYLEVEL_ADD_SCOPE
 
     @classmethod
+    @override
     def level_region(cls, level: str, right: str) -> str | None:
         """Return the OUD region one level decides for one OID right."""
         constants = FlextLdifConstantsServersOid
@@ -215,6 +224,7 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
         return None
 
     @classmethod
+    @override
     def intersects(
         cls,
         region: tuple[int, int | None],
@@ -229,6 +239,7 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
         return (high is None or start <= high) and (end is None or end >= low)
 
     @staticmethod
+    @override
     def simplify(bind: p.Ldif.AclBindRule) -> p.Ldif.AclBindRule | None:
         """Drop exclusions that cannot match; None when one covers the subject.
 
@@ -249,6 +260,7 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
             kept.append(leaf)
         return m.Ldif.AclBindRule(include=bind.include, exclude=tuple(kept))
 
+    @override
     def widen(
         self,
         decision: p.Ldif.AclDecision,
