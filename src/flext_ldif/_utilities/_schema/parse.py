@@ -123,9 +123,7 @@ class FlextLdifUtilitiesSchemaParse:
 
     @staticmethod
     def detect_schema_type(
-        definition: str
-        | FlextLdifModels.Ldif.SchemaAttribute
-        | FlextLdifModels.Ldif.SchemaObjectClass,
+        definition: str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
     ) -> c.Ldif.SchemaItemKind:
         """Detect schema type (attribute or objectclass) for automatic routing.
 
@@ -151,8 +149,8 @@ class FlextLdifUtilitiesSchemaParse:
     @staticmethod
     def extract_attributes_from_lines(
         ldif_content: str,
-        parse_callback: Callable[[str], p.Result[FlextLdifModels.Ldif.SchemaAttribute]],
-    ) -> MutableSequence[FlextLdifModels.Ldif.SchemaAttribute]:
+        parse_callback: Callable[[str], p.Result[p.Ldif.SchemaAttribute]],
+    ) -> MutableSequence[p.Ldif.SchemaAttribute]:
         """Extract and parse all attributeTypes from LDIF content lines.
 
         Returns:
@@ -171,9 +169,9 @@ class FlextLdifUtilitiesSchemaParse:
         ldif_content: str,
         parse_callback: Callable[
             [str],
-            p.Result[FlextLdifModels.Ldif.SchemaObjectClass],
+            p.Result[p.Ldif.SchemaObjectClass],
         ],
-    ) -> MutableSequence[FlextLdifModels.Ldif.SchemaObjectClass]:
+    ) -> MutableSequence[p.Ldif.SchemaObjectClass]:
         """Extract and parse all objectClasses from LDIF content lines.
 
         Returns:
