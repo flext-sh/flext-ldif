@@ -16,13 +16,13 @@ from flext_ldif import c, p, t
 from flext_ldif._models import (
     FlextLdifModelsDomainAttributes,
     FlextLdifModelsDomainDN,
-    FlextLdifModelsDomainEntryChangeOperation,
+    FlextLdifModelsDomainEntryChangeOperation as ChangeOp,
     FlextLdifModelsDomainEntryControl,
     FlextLdifModelsDomainMetadata,
 )
 
 
-class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
+class FlextLdifModelsDomainEntry(ChangeOp):
     """Namespace for LDIF entry domain models."""
 
     class Entry(m.Entity, m.DynamicModel):
@@ -76,18 +76,28 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             ),
         ] = c.Ldif.RecordKind.CONTENT
         controls: Annotated[
-            Sequence[FlextLdifModelsDomainEntryControl.Control],
+            Sequence[
+                Annotated[
+                    p.Ldif.Control,
+                    t.schema_for_model(
+                        lambda: FlextLdifModelsDomainEntryControl.Control,
+                    ),
+                ]
+            ],
             m.Field(description="RFC 2849 control lines associated with the record"),
         ] = m.Field(default_factory=tuple)
         change_operations: Annotated[
-            MutableSequence[FlextLdifModelsDomainEntryChangeOperation.ChangeOperation],
+            MutableSequence[
+                Annotated[
+                    p.Ldif.ChangeOperation,
+                    t.schema_for_model(lambda: ChangeOp.ChangeOperation),
+                ]
+            ],
             m.Field(
                 description="Structured modify operation blocks for changetype=modify",
             ),
         ] = m.Field(
-            default_factory=list[
-                FlextLdifModelsDomainEntryChangeOperation.ChangeOperation
-            ],
+            default_factory=list,
         )
 
         @m.field_validator("attributes", mode="before")

@@ -183,6 +183,16 @@ class FlextLdifModelsAclConvert:
             ],
             m.Field(description="Subjects excluded from the match"),
         ] = ()
+        require: Annotated[
+            tuple[
+                Annotated[
+                    p.Ldif.AclBindLeaf,
+                    t.schema_for_model(FlextLdifModelsAclConvert.AclBindLeaf),
+                ],
+                ...,
+            ],
+            m.Field(description="Subjects a session must also hold (R1)"),
+        ] = ()
 
     class AclAttrSet(m.FrozenModel):
         """An attribute set: listed names, or every attribute but ``names``."""

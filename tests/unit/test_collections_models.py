@@ -163,3 +163,31 @@ class TestsFlextLdifModelsCollections:
         tm.that(len(rule.subjects), eq=1)
         tm.that(rule.subjects[0].subject_type, eq="group")
         tm.that(rule.subjects[0].permissions, eq=("add", "delete", "browse"))
+
+    @staticmethod
+    def test_aci_statement_models_carry_typed_rights() -> None:
+        """Test aci statement models carry typed rights."""
+        statement = m.Ldif.AciStatement(
+            dn="dc=ctbc",
+            effect="allow",
+            rights=("read", "search", "add", "delete"),
+            attrs=m.Ldif.AclAttrSet(names=frozenset({"*"})),
+            targetscope="base",
+            bind=m.Ldif.AclBindRule(
+                include=m.Ldif.AclBindLeaf(
+                    kind="groupdn",
+                    value="ldap:///cn=admins,dc=ctbc",
+                    key="cn=admins,dc=ctbc",
+                ),
+            ),
+            rule="test",
+            name="admins Entry by admins",
+            origin_dn="dc=ctbc",
+            origin_index=1,
+            origin_level="orclaci",
+        )
+
+        tm.that(statement.targetscope, eq="base")
+        tm.ok(statement.targetfilter is None)
+        tm.that(statement.rights, eq=("read", "search", "add", "delete"))
+        tm.that(statement.bind.include.kind, eq="groupdn")

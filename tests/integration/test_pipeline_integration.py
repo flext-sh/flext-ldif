@@ -16,14 +16,12 @@ from __future__ import annotations
 from collections.abc import MutableMapping, MutableSequence
 from typing import TYPE_CHECKING
 
-from tests import c, ldif, tm
+from tests import c, ldif, p, tm
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tests import m
-
-    type _Entry = m.Ldif.Entry
+    type _Entry = p.Ldif.Entry
     type _Attributes = MutableMapping[str, MutableSequence[str]]
 
 

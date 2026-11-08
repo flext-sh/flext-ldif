@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence, Sequence
+from collections.abc import Mapping, MutableSequence, Sequence
 
 from flext_ldif import c, m, p, r, s, t, u
 
@@ -47,12 +47,12 @@ class FlextLdifFilters(s[p.Ldif.Response]):
             The resulting ``t.FrozensetMapping``.
 
         """
-        if isinstance(allowed_oids, m.Ldif.WhitelistRules):
-            return allowed_oids.schema_oid_filters
-        return {
-            attr_name: allowed_oids.get(attr_name, c.Ldif.EMPTY_STR_FROZENSET)
-            for _, attr_name in c.Ldif.WHITELIST_RULE_SCHEMA_ATTRIBUTE_KEYS
-        }
+        if isinstance(allowed_oids, Mapping):
+            return {
+                attr_name: allowed_oids.get(attr_name, c.Ldif.EMPTY_STR_FROZENSET)
+                for _, attr_name in c.Ldif.WHITELIST_RULE_SCHEMA_ATTRIBUTE_KEYS
+            }
+        return allowed_oids.schema_oid_filters
 
     @classmethod
     def _extract_oid_from_schema_attr(

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping
 
-from flext_ldif import c, m, p, s, t, u
+from flext_ldif import c, p, s, t, u
 
 
 class FlextLdifConversionMetadata(s[p.Ldif.Response]):
@@ -103,22 +103,22 @@ class FlextLdifConversionMetadata(s[p.Ldif.Response]):
         ] = {}
         if not source_metadata:
             return conversion_analysis
-        if isinstance(source_metadata, m.Ldif.ServerMetadata):
-            boolean_conversions = source_metadata.boolean_conversions
-            attr_case_val = source_metadata.original_attribute_case
-            format_details = source_metadata.original_format_details
-            format_val: t.JsonMapping = (
-                {} if format_details is None else {"spacing": format_details.spacing}
-            )
-        else:
+        if isinstance(source_metadata, Mapping):
             boolean_conversions = u.Cli.json_as_mapping(
                 source_metadata.get("boolean_conversions"),
             )
             attr_case_val = u.Cli.json_as_mapping(
                 source_metadata.get("original_attribute_case"),
             )
-            format_val = u.Cli.json_as_mapping(
+            format_val: t.JsonMapping = u.Cli.json_as_mapping(
                 source_metadata.get("original_format_details"),
+            )
+        else:
+            boolean_conversions = source_metadata.boolean_conversions
+            attr_case_val = source_metadata.original_attribute_case
+            format_details = source_metadata.original_format_details
+            format_val = (
+                {} if format_details is None else {"spacing": format_details.spacing}
             )
         boolean_analysis = FlextLdifConversionMetadata._analyze_boolean_conversions(
             boolean_conversions,

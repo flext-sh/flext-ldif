@@ -22,7 +22,7 @@ class FlextLdifWriter(FlextLdifServer):
 
     def write(
         self,
-        entries: Sequence[p.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: Sequence[p.Ldif.Entry] | p.Ldif.ParseResponse,
         *,
         server_type: str | None = None,
         format_options: p.Ldif.WriteFormatOptions | None = None,
@@ -34,7 +34,9 @@ class FlextLdifWriter(FlextLdifServer):
 
         """
         batch = (
-            entries.entries if isinstance(entries, m.Ldif.ParseResponse) else entries
+            entries.entries
+            if isinstance(entries, (m.Ldif.ParseResponse, p.Ldif.ParseResponse))
+            else entries
         )
         content_result = self.write_to_string(
             batch,
@@ -55,7 +57,7 @@ class FlextLdifWriter(FlextLdifServer):
 
     def write_ldif_file(
         self,
-        entries: Sequence[p.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: Sequence[p.Ldif.Entry] | p.Ldif.ParseResponse,
         path: PathLike[str],
         *,
         server_type: str | None = None,
@@ -70,7 +72,9 @@ class FlextLdifWriter(FlextLdifServer):
 
         """
         batch = (
-            entries.entries if isinstance(entries, m.Ldif.ParseResponse) else entries
+            entries.entries
+            if isinstance(entries, (m.Ldif.ParseResponse, p.Ldif.ParseResponse))
+            else entries
         )
         content_result = self.write_to_string(
             batch,
@@ -96,7 +100,7 @@ class FlextLdifWriter(FlextLdifServer):
 
     def write_to_string(
         self,
-        entries: Sequence[p.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: Sequence[p.Ldif.Entry] | p.Ldif.ParseResponse,
         server_type: str | None = None,
         format_options: p.Ldif.WriteFormatOptions | None = None,
     ) -> p.Result[str]:
@@ -112,7 +116,9 @@ class FlextLdifWriter(FlextLdifServer):
             else server_type
         )
         batch = (
-            entries.entries if isinstance(entries, m.Ldif.ParseResponse) else entries
+            entries.entries
+            if isinstance(entries, (m.Ldif.ParseResponse, p.Ldif.ParseResponse))
+            else entries
         )
         request = m.Ldif.WriteRequest(
             entries=list(batch),

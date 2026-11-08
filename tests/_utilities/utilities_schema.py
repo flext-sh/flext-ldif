@@ -77,7 +77,7 @@ PARSE_DISPATCH: Final[Mapping[t.Tests.ParseMethod, str]] = {
 
 
 def assert_field_eq(
-    value: FlextLdifModels.BaseModel,
+    value: object,
     field: str,
     expected: t.JsonValue,
     label: str,
@@ -239,7 +239,7 @@ class TestsSchemaAclAssertionsMixin:
         """
         value = cls._parse_schema_definition(server, schema_def)
         cls._assert_common_expectations(value, expectations)
-        if isinstance(value, m.Ldif.SchemaAttribute):
+        if isinstance(value, p.Ldif.SchemaAttribute):
             cls._assert_attribute_expectations(value, expectations)
         else:
             cls._assert_objectclass_expectations(value, expectations)

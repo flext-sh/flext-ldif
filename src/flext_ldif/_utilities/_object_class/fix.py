@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_ldif import c
@@ -39,9 +40,11 @@ class FlextLdifUtilitiesObjectClassFix:
         sup_value = schema_oc.sup
         if isinstance(sup_value, str):
             sup_lower = sup_value.lower() if sup_value else ""
-        else:
+        elif isinstance(sup_value, Sequence):
             first_sup = sup_value[0] if sup_value else ""
             sup_lower = first_sup.lower() if first_sup else ""
+        else:
+            sup_lower = ""
         target: FlextLdifModelsDomainSchema.SchemaObjectClass = schema_oc
         if sup_lower in structural_superiors and target.kind == cls.AUXILIARY:
             target.kind = cls.STRUCTURAL

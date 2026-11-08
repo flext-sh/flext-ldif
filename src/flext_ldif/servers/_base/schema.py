@@ -124,7 +124,7 @@ class FlextLdifServersBaseSchema(
     def parse_server(
         self,
         value: str,
-    ) -> p.Result[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]:
+    ) -> p.Result[p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
         """Parse a schema definition (attribute or objectClass).
 
         Args:
@@ -139,7 +139,7 @@ class FlextLdifServersBaseSchema(
     def parse_input(
         self,
         schema_text: str,
-    ) -> p.Result[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]:
+    ) -> p.Result[p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
         """Compatibility parser entrypoint for direct schema server consumers.
 
         Args:
@@ -178,7 +178,7 @@ class FlextLdifServersBaseSchema(
     def route_parse(
         self,
         definition: str,
-    ) -> p.Result[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]:
+    ) -> p.Result[p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass]:
         """Route a schema definition to the appropriate parse method.
 
         Args:
@@ -192,10 +192,10 @@ class FlextLdifServersBaseSchema(
             oc_result = self.parse_objectclass(definition)
             if oc_result.failure:
                 return r[
-                    m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
+                    p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
                 ].from_failure(oc_result)
-            parsed_objectclass: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass = (
-                oc_result.unwrap()
+            parsed_objectclass = m.Ldif.SchemaObjectClass.model_validate(
+                oc_result.unwrap(),
             )
             return r[p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(
                 parsed_objectclass
@@ -205,14 +205,14 @@ class FlextLdifServersBaseSchema(
             return r[p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].from_failure(
                 attr_result,
             )
-        parsed_attribute: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass = (
+        parsed_attribute: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass = (
             attr_result.unwrap()
         )
         return r[p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass].ok(parsed_attribute)
 
     def write(
         self,
-        model: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
+        model: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
     ) -> p.Result[str]:
         """Write a schema model to its string format.
 
@@ -380,8 +380,14 @@ class FlextLdifServersBaseSchema(
 
         """
         if self._NORMALIZE_OBJECTCLASS:
-            u.Ldif.fix_missing_sup(oc)
-            u.Ldif.fix_kind_mismatch(oc)
+            oc_model = m.Ldif.SchemaObjectClass.model_validate(
+                oc.model_dump(
+                    exclude={"has_metadata", "has_server_extensions", "server_type"}
+                ),
+            )
+            u.Ldif.fix_missing_sup(oc_model)
+            u.Ldif.fix_kind_mismatch(oc_model)
+            oc = oc_model
         return r[p.Ldif.SchemaObjectClass].ok(oc)
 
     @staticmethod

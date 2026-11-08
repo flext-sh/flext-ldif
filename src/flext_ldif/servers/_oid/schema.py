@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import ClassVar, override
 
-from flext_ldif import c, p, r, t, u
+from flext_ldif import c, m, p, r, t, u
 from flext_ldif.servers._oid import (
     FlextLdifConstantsServersOid,
     FlextLdifServersOidSchemaNormalize,
@@ -214,16 +214,25 @@ class FlextLdifServersOidSchema(
         attr_data = result.value
         target_values = self._capture_attribute_values(attr_data)
         if not attr_data.metadata:
-            attr_data.metadata = self.create_metadata(attr_definition.strip())
-        if attr_data.metadata:
-            attr_data.metadata.extensions[c.Ldif.SCHEMA_ORIGINAL_FORMAT] = (
-                attr_definition.strip()
+            attr_data = attr_data.model_copy(
+                update={"metadata": self.create_metadata(attr_definition.strip())},
             )
-            attr_data.metadata.extensions[c.Ldif.SCHEMA_ORIGINAL_STRING_COMPLETE] = (
-                attr_definition
+        current_metadata = attr_data.metadata
+        if current_metadata is not None:
+            extensions = dict(current_metadata.extensions)
+            extensions[c.Ldif.SCHEMA_ORIGINAL_FORMAT] = attr_definition.strip()
+            extensions[c.Ldif.SCHEMA_ORIGINAL_STRING_COMPLETE] = attr_definition
+            extensions[c.Ldif.SCHEMA_SOURCE_SERVER] = "oid"
+            updated_metadata = m.Ldif.ServerMetadata.model_validate(
+                {
+                    **current_metadata.model_dump(),
+                    "extensions": extensions,
+                },
             )
-            attr_data.metadata.extensions[c.Ldif.SCHEMA_SOURCE_SERVER] = "oid"
-            u.Ldif.preserve_schema_formatting(attr_data.metadata, attr_definition)
+            u.Ldif.preserve_schema_formatting(updated_metadata, attr_definition)
+            attr_data = attr_data.model_copy(
+                update={"metadata": updated_metadata},
+            )
             self._add_target_metadata(attr_data, target_values)
         return r[p.Ldif.SchemaAttribute].ok(attr_data)
 
@@ -266,13 +275,21 @@ class FlextLdifServersOidSchema(
         oc_data = result.value
         key = c.Ldif.SCHEMA_ORIGINAL_FORMAT
         if not oc_data.metadata:
-            oc_data.metadata = self.create_metadata(oc_definition.strip())
-        elif not oc_data.metadata.extensions.get(key):
-            oc_data.metadata.extensions[key] = oc_definition.strip()
-        if oc_data.metadata:
-            oc_data.metadata.extensions[c.Ldif.META_TRANSFORMATION_TIMESTAMP] = (
+            oc_data = oc_data.model_copy(
+                update={"metadata": self.create_metadata(oc_definition.strip())},
+            )
+        current_metadata = oc_data.metadata
+        if current_metadata is not None:
+            extensions = dict(current_metadata.extensions)
+            if not extensions.get(key):
+                extensions[key] = oc_definition.strip()
+            extensions[c.Ldif.META_TRANSFORMATION_TIMESTAMP] = (
                 u.generate_iso_timestamp()
             )
+            updated_metadata = current_metadata.model_copy(
+                update={"extensions": extensions},
+            )
+            oc_data = oc_data.model_copy(update={"metadata": updated_metadata})
         return r[p.Ldif.SchemaObjectClass].ok(oc_data)
 
     @override

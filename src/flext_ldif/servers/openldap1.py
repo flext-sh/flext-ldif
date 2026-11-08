@@ -135,7 +135,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         @classmethod
         def _accepts_openldap1_definition(
             cls,
-            definition: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+            definition: str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
             definition_re: t.Ldif.RegexPattern,
         ) -> bool:
             """Match one definition against OpenLDAP 1.x shape, rejecting olc.
@@ -182,7 +182,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         @override
         def can_handle_attribute(
             self,
-            attr_definition: str | m.Ldif.SchemaAttribute,
+            attr_definition: str | p.Ldif.SchemaAttribute,
         ) -> bool:
             """Check whether this is an OpenLDAP 1.x attribute definition.
 
@@ -201,7 +201,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         @override
         def can_handle_objectclass(
             self,
-            oc_definition: str | m.Ldif.SchemaObjectClass,
+            oc_definition: str | p.Ldif.SchemaObjectClass,
         ) -> bool:
             """Check whether this is an OpenLDAP 1.x objectClass definition.
 
@@ -362,7 +362,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
         """OpenLDAP 1.x ACL server (nested)."""
 
         @override
-        def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+        def can_handle_acl(self, acl_line: str | p.Ldif.Acl) -> bool:
             """Check whether this is an OpenLDAP 1.x ACL line.
 
             Args:
@@ -450,9 +450,11 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
                     subject_value=first_who,
                 ),
                 permissions=self._openldap1_permissions(first_access),
-                metadata=u.Ldif.server_metadata_for(
-                    server_type=self._get_server_type(),
-                    extensions={"original_format": acl_line},
+                metadata=m.Ldif.ServerMetadata.model_validate(
+                    u.Ldif.server_metadata_for(
+                        server_type=self._get_server_type(),
+                        extensions={"original_format": acl_line},
+                    ),
                 ),
                 raw_acl=acl_line,
             )
@@ -507,7 +509,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             return (target_dn, target_attrs)
 
         @staticmethod
-        def _openldap1_permissions(first_access: str) -> p.Ldif.AclPermissions:
+        def _openldap1_permissions(first_access: str) -> m.Ldif.AclPermissions:
             """Build permissions from the first OpenLDAP 1.x access token.
 
             Args:

@@ -55,7 +55,11 @@ class FlextLdifServersOidEntry(
             original_dn = str(entry.dn)
             cleaned_dn, _ = u.Ldif.clean_dn_with_statistics(original_dn)
             if cleaned_dn != original_dn:
-                entry.dn = m.Ldif.DN.model_validate({"value": cleaned_dn})
+                entry = entry.model_copy(
+                    update={
+                        "dn": m.Ldif.DN.model_validate({"value": cleaned_dn}),
+                    },
+                )
         finalize_result = self._hook_finalize_entry_parse(
             entry,
             str(entry.dn) if entry.dn else "",

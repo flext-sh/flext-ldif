@@ -32,23 +32,31 @@ class FlextLdifServersRelaxedSchema(FlextLdifServersRfcSchema):
 
         """
         if not schema_item.metadata:
-            schema_item.metadata = m.Ldif.ServerMetadata.model_validate({
-                "server_type": self._get_server_type(),
-                "extensions": {
-                    "original_format": original_definition.strip(),
-                    "schema_source_server": "relaxed",
+            return schema_item.model_copy(
+                update={
+                    "metadata": m.Ldif.ServerMetadata.model_validate({
+                        "server_type": self._get_server_type(),
+                        "extensions": {
+                            "original_format": original_definition.strip(),
+                            "schema_source_server": "relaxed",
+                        },
+                    }),
                 },
-            })
-            return schema_item
-        if not schema_item.metadata.extensions:
-            schema_item.metadata.extensions = {}
-        schema_item.metadata.server_type = self._get_server_type()
-        if not schema_item.metadata.extensions.get("original_format"):
-            schema_item.metadata.extensions["original_format"] = (
-                original_definition.strip()
             )
-        schema_item.metadata.extensions["schema_source_server"] = "relaxed"
-        return schema_item
+        current_metadata = schema_item.metadata
+        extensions = dict(current_metadata.extensions)
+        if not extensions.get("original_format"):
+            extensions["original_format"] = original_definition.strip()
+        extensions["schema_source_server"] = "relaxed"
+        updated_metadata = current_metadata.model_copy(
+            update={
+                "extensions": extensions,
+                "server_type": self._get_server_type(),
+            },
+        )
+        return schema_item.model_copy(
+            update={"metadata": updated_metadata},
+        )
 
     def _enhance_objectclass_metadata(
         self,
