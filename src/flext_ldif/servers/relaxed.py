@@ -33,7 +33,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
         """Relaxed ACL server for lenient LDIF processing."""
 
         @override
-        def can_handle(self, acl_line: str | m.Ldif.Acl | t.JsonValue) -> bool:
+        def can_handle(self, acl_line: str | p.Ldif.Acl | t.JsonValue) -> bool:
             """Accept any ACL line in relaxed mode.
 
             Returns:
@@ -43,7 +43,7 @@ class FlextLdifServersRelaxed(FlextLdifServersRfc):
             return self.can_handle_acl(acl_line)
 
         @override
-        def can_handle_acl(self, acl_line: str | m.Ldif.Acl | t.JsonValue) -> bool:
+        def can_handle_acl(self, acl_line: str | p.Ldif.Acl | t.JsonValue) -> bool:
             """Accept any ACL line in relaxed mode.
 
             Returns:

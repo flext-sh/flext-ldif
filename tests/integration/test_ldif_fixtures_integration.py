@@ -33,6 +33,7 @@ class TestsFlextLdifLdifFixturesIntegration:
     )
 
     @u.Tests.fixture
+    @staticmethod
     def ldif_client() -> p.Ldif.LdifClient:
         """Provide the public FlextLdif facade under test.
 

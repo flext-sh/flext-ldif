@@ -19,10 +19,10 @@ class FlextLdifServersBaseSchemaValues:
     def _coerce_schema_data(
         value: str
         | t.JsonValue
-        | m.Ldif.SchemaAttribute
-        | m.Ldif.SchemaObjectClass
+        | p.Ldif.SchemaAttribute
+        | p.Ldif.SchemaObjectClass
         | None,
-    ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None:
+    ) -> str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | None:
         """Coerce raw execute payload to the concrete schema payload union.
 
         Returns:
@@ -124,9 +124,9 @@ class FlextLdifServersBaseSchemaValues:
 
     def _resolve_data(
         self,
-        data: str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None,
+        data: str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | None,
         kwargs: t.JsonMapping,
-    ) -> str | m.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass | None:
+    ) -> str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass | None:
         """Resolve schema payload from parameter or kwargs.
 
         Returns:

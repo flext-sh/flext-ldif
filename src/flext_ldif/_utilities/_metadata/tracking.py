@@ -10,7 +10,7 @@ from typing import ClassVar
 
 from flext_cli import u
 
-from flext_ldif import FlextLdifModels, p
+from flext_ldif import p
 
 
 class FlextLdifUtilitiesMetadataTracking:
@@ -20,7 +20,7 @@ class FlextLdifUtilitiesMetadataTracking:
 
     @staticmethod
     def track_boolean_conversion(
-        metadata: FlextLdifModels.Ldif.ServerMetadata,
+        metadata: p.Ldif.ServerMetadata,
         attr_name: str,
         original_value: str,
         converted_value: str,

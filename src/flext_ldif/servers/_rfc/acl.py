@@ -40,20 +40,20 @@ class FlextLdifServersRfcAcl(
     @overload
     def __call__(
         self,
-        data: str | m.Ldif.Acl | None = None,
+        data: str | p.Ldif.Acl | None = None,
         *,
         operation: str | None = None,
     ) -> p.Ldif.Acl | str: ...
 
     def __call__(
         self,
-        data: t.JsonValue | m.Ldif.Acl | None = None,
+        data: t.JsonValue | p.Ldif.Acl | None = None,
         operation: t.JsonValue | None = None,
         server: p.Ldif.ServerRegistry | None = None,
         settings: p.Ldif.Settings | None = None,
         registry: p.Registry | None = None,
         **fields: t.JsonValue,
-    ) -> Self | m.Ldif.Acl | str:
+    ) -> Self | p.Ldif.Acl | str:
         """Polymorphic callable interface for parse and write operations.
 
         When neither server nor settings is supplied, parses ACL text or
@@ -75,7 +75,7 @@ class FlextLdifServersRfcAcl(
             return self.configure_runtime(
                 server=server, settings=settings, registry=registry, **fields
             )
-        processor_fields: MutableMapping[str, t.JsonValue | m.Ldif.Acl | None] = dict(
+        processor_fields: MutableMapping[str, t.JsonValue | p.Ldif.Acl | None] = dict(
             fields
         )
         processor_fields["data"] = data
@@ -119,7 +119,7 @@ class FlextLdifServersRfcAcl(
         return list(c.Ldif.RFC_ACL_ATTRIBUTES)
 
     @override
-    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | p.Ldif.Acl) -> bool:
         """Accept any ACL definition in RFC form.
 
         Args:

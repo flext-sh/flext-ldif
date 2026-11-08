@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import FlextLdifModels, c
+from flext_ldif import FlextLdifModels, c, p
 from flext_ldif._models import FlextLdifModelsDomainEntryStatistics
 
 
@@ -15,12 +15,12 @@ class FlextLdifUtilitiesMetadataEntryStats:
 
     @staticmethod
     def update_entry_statistics(
-        entry: FlextLdifModels.Ldif.Entry,
+        entry: p.Ldif.Entry,
         *,
         category: str | None = None,
         mark_rejected: tuple[str, str] | None = None,
         mark_filtered: tuple[str, bool] | None = None,
-    ) -> FlextLdifModels.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Apply immutable statistics updates without revalidating owned models.
 
         Returns:

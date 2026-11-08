@@ -160,7 +160,7 @@ class FlextLdifServersBase(
         settings: p.Ldif.Settings | None = None,
         registry: p.Registry | None = None,
         **fields: t.JsonValue | MutableSequence[p.Ldif.Entry],
-    ) -> Self | m.Ldif.Entry | str: ...
+    ) -> Self | p.Ldif.Entry | str: ...
 
     def __call__(
         self,
@@ -169,7 +169,7 @@ class FlextLdifServersBase(
         settings: p.Ldif.Settings | None = None,
         registry: p.Registry | None = None,
         **fields: t.JsonValue | MutableSequence[p.Ldif.Entry],
-    ) -> Self | m.Ldif.Entry | str:
+    ) -> Self | p.Ldif.Entry | str:
         """Callable interface - use as processor.
 
         Returns:

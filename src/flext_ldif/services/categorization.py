@@ -128,7 +128,7 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering):
 
     def validate_dns(
         self,
-        entries: MutableSequence[p.Ldif.Entry] | m.Ldif.ParseResponse,
+        entries: MutableSequence[p.Ldif.Entry] | p.Ldif.ParseResponse,
     ) -> p.Result[MutableSequence[p.Ldif.Entry]]:
         """Validate and normalize all DNs to RFC 4514.
 

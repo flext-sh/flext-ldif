@@ -120,7 +120,7 @@ class FlextLdifServersOidAclFormat(FlextLdifServersRfcAcl):
     @staticmethod
     def _normalize_to_dict(
         value: p.Ldif.AclSubject
-        | m.Ldif.ServerMetadata
+        | p.Ldif.ServerMetadata
         | t.MutableConfigurationMapping
         | MutableMapping[
             str,

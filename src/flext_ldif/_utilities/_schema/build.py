@@ -26,7 +26,7 @@ class FlextLdifUtilitiesSchemaBuild:
 
     @staticmethod
     def _build_attribute_parts_from_model(
-        attr_data: FlextLdifModels.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
     ) -> MutableSequence[str]:
         """Build RFC 4512 attribute definition parts (simple version).
 
@@ -53,7 +53,7 @@ class FlextLdifUtilitiesSchemaBuild:
 
     @staticmethod
     def _append_objectclass_core_parts(
-        oc_data: FlextLdifModels.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
         parts: MutableSequence[str],
     ) -> None:
         """Append SUP, kind, MUST and MAY parts of an objectClass definition."""
@@ -75,7 +75,7 @@ class FlextLdifUtilitiesSchemaBuild:
 
     @staticmethod
     def _build_objectclass_parts_from_model(
-        oc_data: FlextLdifModels.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
     ) -> MutableSequence[str]:
         """Build RFC 4512 objectClass definition parts (extracted to reduce complexity).
 
@@ -99,12 +99,7 @@ class FlextLdifUtilitiesSchemaBuild:
     @staticmethod
     def _write_schema_element(
         data: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
-        expected_type: (
-            type[
-                FlextLdifModels.Ldif.SchemaAttribute
-                | FlextLdifModels.Ldif.SchemaObjectClass
-            ]
-        ),
+        expected_type: (type[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass]),
         type_name: str,
         parts_builder: Callable[..., MutableSequence[str]],
     ) -> str:
@@ -130,7 +125,7 @@ class FlextLdifUtilitiesSchemaBuild:
 
     @staticmethod
     def build_attribute_parts_with_metadata(
-        attr_data: FlextLdifModels.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
         *,
         restore_original: bool = True,
     ) -> MutableSequence[str]:
@@ -176,7 +171,7 @@ class FlextLdifUtilitiesSchemaBuild:
 
     @staticmethod
     def build_objectclass_parts_with_metadata(
-        oc_data: FlextLdifModels.Ldif.SchemaObjectClass,
+        oc_data: p.Ldif.SchemaObjectClass,
         *,
         restore_original: bool = True,
     ) -> MutableSequence[str]:
@@ -218,7 +213,7 @@ class FlextLdifUtilitiesSchemaBuild:
 
     @staticmethod
     def should_restore_schema_original_format(
-        metadata: FlextLdifModels.Ldif.ServerMetadata | None,
+        metadata: p.Ldif.ServerMetadata | None,
         target_server_type: str | None,
     ) -> bool:
         """Restore original schema text only for same-server round-trips.

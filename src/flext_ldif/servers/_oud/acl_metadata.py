@@ -21,7 +21,7 @@ class FlextLdifServersOudAclMetadata:
     @staticmethod
     def extract_acl_metadata(
         entry_data: p.Ldif.Entry,
-    ) -> tuple[str | None, m.Ldif.DnRegistry | None]:
+    ) -> tuple[str | None, p.Ldif.DnRegistry | None]:
         """Extract base_dn and dn_registry from entry metadata for ACL processing.
 
         Returns:

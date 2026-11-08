@@ -130,7 +130,7 @@ class FlextLdifServersOidAclParse(FlextLdifServersOidAclSubject):
         return permissions
 
     @override
-    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | p.Ldif.Acl) -> bool:
         """Detect whether the definition is an Oracle OID ACL.
 
         Args:

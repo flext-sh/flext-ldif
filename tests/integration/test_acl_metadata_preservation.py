@@ -19,6 +19,7 @@ class TestsFlextLdifAclMetadataPreservation:
     """Behavioral tests for OID/OUD ACL metadata preservation and round-trips."""
 
     @u.Tests.fixture
+    @staticmethod
     def api() -> p.Ldif.LdifClient:
         """Provide a real LDIF client (public facade, no mocked internals).
 
