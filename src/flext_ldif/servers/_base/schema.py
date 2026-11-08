@@ -381,7 +381,9 @@ class FlextLdifServersBaseSchema(
         """
         if self._NORMALIZE_OBJECTCLASS:
             oc_model = m.Ldif.SchemaObjectClass.model_validate(
-                oc.model_dump(exclude={"has_metadata", "has_server_extensions", "server_type"}),
+                oc.model_dump(
+                    exclude={"has_metadata", "has_server_extensions", "server_type"}
+                ),
             )
             u.Ldif.fix_missing_sup(oc_model)
             u.Ldif.fix_kind_mismatch(oc_model)
