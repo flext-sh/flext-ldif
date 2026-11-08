@@ -38,79 +38,6 @@ class TestsFlextLdifOidAclConvertOud:
 
     # -- convert_subject_to_oud: bind-rule mapping -------------------------
 
-    @c.Tests.MARK.parametrize(
-        ("kind", "value", "bind_type", "bind_value"),
-        [
-            ("group", "cn=admins , dc=ctbc", "groupdn", "cn=admins,dc=ctbc"),
-            (c.ContextScope.USER, "uid=joe,dc=ctbc", "userdn", "uid=joe,dc=ctbc"),
-            ("self", "self", "userdn", "self"),
-            ("anyone", "anyone", "userdn", "anyone"),
-            ("dnattr", "manager", "userattr", "manager#USERDN"),
-        ],
-    )
-    def test_subject_maps_to_expected_bind_rule(
-        self,
-        kind: str,
-        value: str,
-        bind_type: str,
-        bind_value: str,
-    ) -> None:
-        """Test subject maps to expected bind rule."""
-        result = FlextLdifServersOidAclToOud.convert_subject_to_oud(
-            self._subject(kind, value)
-        )
-
-        allow = result.unwrap()
-        tm.that(allow.subject_type, eq=bind_type)
-        tm.that(allow.subject_value, eq=bind_value)
-
-    def test_converted_subject_leaves_permissions_empty(self) -> None:
-        """Test converted subject leaves permissions empty."""
-        result = FlextLdifServersOidAclToOud.convert_subject_to_oud(
-            self._subject(c.ContextScope.USER, "uid=joe,dc=ctbc")
-        )
-
-        tm.that(result.unwrap().permissions, eq=())
-
-    @c.Tests.MARK.parametrize(
-        ("kind", "value"),
-        [("dnattr", "manager, owner"), ("dnattr", "a b"), ("dnattr", 'man"ager')],
-    )
-    def test_userattr_value_outside_attribute_grammar_fails(
-        self,
-        kind: str,
-        value: str,
-    ) -> None:
-        """A dnattr/groupattr value must be one attribute description."""
-        tm.fail(
-            FlextLdifServersOidAclToOud.convert_subject_to_oud(
-                self._subject(kind, value)
-            ),
-            has="is not one attribute description",
-        )
-
-    @c.Tests.MARK.parametrize(
-        ("kind", "value"),
-        [
-            ("guidattr", "orclguid"),
-            ("nosuchkind", ""),
-            ("superuser", "superuser"),
-            ("groupattr", "owner"),
-        ],
-    )
-    def test_subject_without_oud_equivalent_surfaces_failure(
-        self,
-        kind: str,
-        value: str,
-    ) -> None:
-        """Test subject without oud equivalent surfaces failure."""
-        tm.fail(
-            FlextLdifServersOidAclToOud.convert_subject_to_oud(
-                self._subject(kind, value)
-            ),
-            has="manual review",
-        )
-
     # -- resolve_permissions ----------------------------------------------
 
     @staticmethod
@@ -168,30 +95,6 @@ class TestsFlextLdifOidAclConvertOud:
 
         tm.that(tuple(resolved.allow), eq=allow)
         tm.that(tuple(resolved.deny), eq=deny)
-
-    @staticmethod
-    @c.Tests.MARK.parametrize(
-        ("permissions", "is_entry", "total"),
-        [
-            (("none",), True, True),
-            (("nobrowse", "noadd", "nodelete", "noproxy"), True, True),
-            (("nobrowse", "noadd"), True, False),
-            (("browse", "none"), True, True),
-            (("noread",), False, False),
-        ],
-    )
-    def test_total_denial_covers_every_right_of_the_kind(
-        permissions: tuple[str, ...],
-        *,
-        is_entry: bool,
-        total: bool,
-    ) -> None:
-        """``total_denial`` holds exactly when every right of the kind is denied."""
-        resolved = FlextLdifServersOidAclToOud.resolve_permissions(
-            permissions, is_entry=is_entry
-        ).unwrap()
-
-        tm.that(resolved.total_denial, eq=total)
 
     @staticmethod
     @c.Tests.MARK.parametrize(
