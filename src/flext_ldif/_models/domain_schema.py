@@ -15,7 +15,7 @@ from typing import Annotated
 
 from flext_cli import m
 
-from flext_ldif import c, p, t
+from flext_ldif import c
 from flext_ldif._models import FlextLdifModelsBases, FlextLdifModelsDomainMetadata
 
 
@@ -139,14 +139,9 @@ class FlextLdifModelsDomainSchema:
             ),
         ] = None
         metadata: Annotated[
-            p.Ldif.ServerMetadata | None,
-            t.schema_for_model(
-                lambda: FlextLdifModelsDomainMetadata.ServerMetadata,
-            ),
-        ] = m.Field(
-            default=None,
-            description="Server-specific metadata for schema attribute",
-        )
+            FlextLdifModelsDomainMetadata.ServerMetadata | None,
+            m.Field(description="Server-specific metadata for schema attribute"),
+        ] = None
 
     class Syntax(FlextLdifModelsBases.SchemaElement):
         """LDAP attribute syntax definition model (RFC 4517 compliant).
@@ -216,14 +211,9 @@ class FlextLdifModelsDomainSchema:
             m.Field(description="Optional regex pattern for value validation"),
         ] = None
         metadata: Annotated[
-            p.Ldif.ServerMetadata | None,
-            t.schema_for_model(
-                lambda: FlextLdifModelsDomainMetadata.ServerMetadata,
-            ),
-        ] = m.Field(
-            default=None,
-            description="Server-specific server metadata",
-        )
+            FlextLdifModelsDomainMetadata.ServerMetadata | None,
+            m.Field(description="Server-specific server metadata"),
+        ] = None
 
         @m.field_validator("oid")
         @classmethod
@@ -281,14 +271,9 @@ class FlextLdifModelsDomainSchema:
             m.Field(description="Optional attributes (RFC 4512 MAY)"),
         ] = None
         metadata: Annotated[
-            p.Ldif.ServerMetadata | None,
-            t.schema_for_model(
-                lambda: FlextLdifModelsDomainMetadata.ServerMetadata,
-            ),
-        ] = m.Field(
-            default=None,
-            description="Server-specific metadata for schema object class",
-        )
+            FlextLdifModelsDomainMetadata.ServerMetadata | None,
+            m.Field(description="Server-specific metadata for schema object class"),
+        ] = None
 
 
 __all__: list[str] = ["FlextLdifModelsDomainSchema"]

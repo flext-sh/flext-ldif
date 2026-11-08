@@ -110,7 +110,9 @@ class FlextLdifConversionAcl(
             The resulting ``m.Ldif.Entry``.
 
         """
-        entry_metadata = u.Ldif.server_metadata_for(source_server_type)
+        entry_metadata = m.Ldif.ServerMetadata.model_validate(
+            u.Ldif.server_metadata_for(source_server_type),
+        )
         entry_metadata.acls = [acl.raw_acl] if acl.raw_acl else list[str]()
         entry_result = m.Ldif.Entry.create(
             dn=m.Ldif.DN(value="cn=acl-conversion,dc=example,dc=com", metadata={}),

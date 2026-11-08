@@ -330,9 +330,11 @@ class FlextLdifServersOpenldap(FlextLdifServersRfc):
                     search="read" in access,
                     compare="read" in access,
                 ),
-                metadata=u.Ldif.server_metadata_for(
-                    self._get_server_type(),
-                    extensions={"original_format": acl_line},
+                metadata=m.Ldif.ServerMetadata.model_validate(
+                    u.Ldif.server_metadata_for(
+                        self._get_server_type(),
+                        extensions={"original_format": acl_line},
+                    ),
                 ),
                 raw_acl=acl_line,
             )

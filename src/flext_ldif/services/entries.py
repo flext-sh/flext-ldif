@@ -212,7 +212,11 @@ class FlextLdifEntries(s[p.Ldif.Response]):
         return m.Ldif.Entry.create(
             dn=dn_value,
             attributes=new_attrs,
-            metadata=entry.metadata,
+            metadata=(
+                m.Ldif.ServerMetadata.model_validate(entry.metadata)
+                if entry.metadata is not None
+                else None
+            ),
         )
 
     def run_configured_operation(self) -> p.Result[MutableSequence[p.Ldif.Entry]]:

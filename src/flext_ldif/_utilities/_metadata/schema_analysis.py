@@ -209,7 +209,9 @@ class FlextLdifUtilitiesMetadataSchemaAnalysis:
             )
         )
         target: m.Ldif.ServerMetadata = metadata
-        target.schema_format_details = formatting_details
+        target.schema_format_details = m.Ldif.SchemaFormatDetails.model_validate(
+            formatting_details,
+        )
 
 
 __all__: list[str] = ["FlextLdifUtilitiesMetadataSchemaAnalysis"]
