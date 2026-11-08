@@ -52,12 +52,12 @@ def _assert_definition_roundtrip(
     target_schema = _resolve_schema_server(registry, target)
     parse: Callable[
         [str],
-        p.Result[p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass],
+        p.Result[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass],
     ] = getattr(source_schema, parse_method)
     parse_result = parse(definition)
     tm.ok(parse_result)
     write: Callable[
-        [p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass],
+        [p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass],
         p.Result[str],
     ] = getattr(
         target_schema,
@@ -76,6 +76,7 @@ class TestsFlextLdifCrossDirectionConversion:
     """Cross-direction schema conversion observable behavior."""
 
     @u.Tests.fixture
+    @staticmethod
     def server_registry() -> FlextLdifServer:
         """Real server registry (unit under test, no mocks).
 
@@ -86,6 +87,7 @@ class TestsFlextLdifCrossDirectionConversion:
         return FlextLdifServer(registry=FlextLdif().registry)
 
     @u.Tests.fixture
+    @staticmethod
     def conversion() -> FlextLdifConversion:
         """Real entry-level conversion service (unit under test).
 

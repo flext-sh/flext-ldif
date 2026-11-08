@@ -39,12 +39,12 @@ class FlextLdifUtilitiesTransformersDn:
 
     @staticmethod
     def normalize_entry_dn(
-        item: FlextLdifModels.Ldif.Entry,
+        item: p.Ldif.Entry,
         *,
         case: c.Ldif.CaseFoldOption = c.Ldif.CaseFoldOption.LOWER,
         spaces: c.Ldif.SpaceHandlingOption = c.Ldif.SpaceHandlingOption.TRIM,
         validate: bool = True,
-    ) -> p.Result[FlextLdifModels.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Normalize the DN of one entry (validation, case folding, spaces).
 
         Returns:
@@ -66,14 +66,14 @@ class FlextLdifUtilitiesTransformersDn:
                 .map(lambda __: dn_value)
             )
 
-        def update_entry(normalized_dn: str) -> FlextLdifModels.Ldif.Entry:
+        def update_entry(normalized_dn: str) -> p.Ldif.Entry:
             if case == c.Ldif.CaseFoldOption.LOWER:
                 normalized_dn = normalized_dn.lower()
             elif case == c.Ldif.CaseFoldOption.UPPER:
                 normalized_dn = normalized_dn.upper()
             if spaces == c.Ldif.SpaceHandlingOption.TRIM:
                 normalized_dn = normalized_dn.strip()
-            copied: FlextLdifModels.Ldif.Entry = item.model_copy(
+            copied: p.Ldif.Entry = item.model_copy(
                 update={
                     "dn": entry_dn.model_copy(update={"value": normalized_dn}),
                 },

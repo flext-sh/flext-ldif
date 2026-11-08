@@ -24,6 +24,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
     """Public-contract tests for minimal-differences metadata capture."""
 
     @u.Tests.fixture
+    @staticmethod
     def parser() -> FlextLdifParser:
         """Provide a parser instance.
 
@@ -34,6 +35,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         return FlextLdifParser(registry=FlextLdif().registry)
 
     @u.Tests.fixture
+    @staticmethod
     def writer() -> p.Ldif.LdifClient:
         """Provide a writer client via the public ``ldif()`` entry point.
 
@@ -44,6 +46,7 @@ class TestsFlextLdifMinimalDifferencesMetadata:
         return ldif()
 
     @u.Tests.fixture
+    @staticmethod
     def fixtures_dir() -> Path:
         """Locate the shared LDIF fixtures directory.
 

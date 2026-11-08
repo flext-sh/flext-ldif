@@ -8,10 +8,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_ldif import c
+from flext_ldif import c, p
 
 if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModels, t
+    from flext_ldif import t
 
 
 class FlextLdifUtilitiesServerDetect:
@@ -41,10 +41,8 @@ class FlextLdifUtilitiesServerDetect:
 
     @staticmethod
     def _extract_pattern_name_candidates(
-        value: str
-        | FlextLdifModels.Ldif.SchemaAttribute
-        | FlextLdifModels.Ldif.SchemaObjectClass,
-        settings: FlextLdifModels.Ldif.ServerPatternsConfig,
+        value: str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
+        settings: p.Ldif.ServerPatternsConfig,
     ) -> list[str]:
         """Extract comparable schema names from a raw definition or parsed model.
 
@@ -72,7 +70,7 @@ class FlextLdifUtilitiesServerDetect:
     def _matches_definition_text(
         definition_text: str | None,
         detection_names: frozenset[str],
-        settings: FlextLdifModels.Ldif.ServerPatternsConfig,
+        settings: p.Ldif.ServerPatternsConfig,
     ) -> bool:
         """Check raw definition text when settings require substring-based detection.
 
@@ -91,7 +89,7 @@ class FlextLdifUtilitiesServerDetect:
     def entry_carries_markers(
         entry_dn: str,
         attributes: t.MutableStrSequenceMapping,
-        markers: FlextLdifModels.Ldif.EntryDetectionMarkers,
+        markers: p.Ldif.EntryDetectionMarkers,
     ) -> bool:
         """Detect a dialect entry from its declared DN, attribute and class markers.
 
@@ -123,10 +121,8 @@ class FlextLdifUtilitiesServerDetect:
 
     @staticmethod
     def matches_server_patterns(
-        value: str
-        | FlextLdifModels.Ldif.SchemaAttribute
-        | FlextLdifModels.Ldif.SchemaObjectClass,
-        settings: FlextLdifModels.Ldif.ServerPatternsConfig,
+        value: str | p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
+        settings: p.Ldif.ServerPatternsConfig,
     ) -> bool:
         r"""Check if value matches server-specific detection patterns.
 

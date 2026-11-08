@@ -57,18 +57,20 @@ class FlextLdifServersBaseSchemaAcl(
         raise NotImplementedError(msg)
 
     @staticmethod
-    def access_group_dns(entries: Sequence[p.Ldif.Entry]) -> frozenset[str]:
-        """Return the DN keys of the groups whose membership access honours.
-
-        A dialect without a modelled group-membership rule verifies no group,
-        so ACL conversion fails on every group subject it carries.
+    def convert_directory_acls(
+        entries: Sequence[p.Ldif.Entry],
+        *,
+        target_server_type: str,
+        suffix: str,
+    ) -> p.Result[p.Ldif.AclDirectoryConversion]:
+        """Return no directory conversion: this dialect pair converts none.
 
         Returns:
-            The verified group DN keys; none for this base dialect.
+            The empty directory conversion.
 
         """
-        del entries
-        return frozenset()
+        del entries, target_server_type, suffix
+        return r[p.Ldif.AclDirectoryConversion].ok(m.Ldif.AclDirectoryConversion())
 
     def matches_acl_attribute(self, attribute_name: str) -> bool:
         """Check whether an attribute name is this server's ACL attribute.
@@ -83,7 +85,7 @@ class FlextLdifServersBaseSchemaAcl(
         all_attrs_lower = {a.lower() for a in self.resolve_acl_attributes()}
         return attribute_name.lower() in all_attrs_lower
 
-    def can_handle(self, acl_line: str | m.Ldif.Acl) -> bool:
+    def can_handle(self, acl_line: str | p.Ldif.Acl) -> bool:
         """Check whether this server can handle the ACL after normalization.
 
         Args:
@@ -99,7 +101,7 @@ class FlextLdifServersBaseSchemaAcl(
         return self.can_handle_acl(normalized)
 
     @abstractmethod
-    def can_handle_acl(self, acl_line: str | m.Ldif.Acl) -> bool:
+    def can_handle_acl(self, acl_line: str | p.Ldif.Acl) -> bool:
         """Check whether this server can handle the ACL definition.
 
         Args:
@@ -114,7 +116,7 @@ class FlextLdifServersBaseSchemaAcl(
         raise NotImplementedError(msg)
 
     @staticmethod
-    def _normalize_acl_line(acl_line: str | m.Ldif.Acl) -> str | None:
+    def _normalize_acl_line(acl_line: str | p.Ldif.Acl) -> str | None:
         """Extract and strip the raw ACL string from either input type.
 
         Args:
@@ -192,7 +194,7 @@ class FlextLdifServersBaseSchemaAcl(
     def execute(
         self,
         *,
-        data: str | m.Ldif.Acl | None = None,
+        data: str | p.Ldif.Acl | None = None,
         operation: str | None = None,
         **kwargs: t.Ldif.Scalar,
     ) -> p.Result[t.Ldif.AclPayload]:
@@ -302,8 +304,8 @@ class FlextLdifServersBaseSchemaAcl(
 
     @staticmethod
     def _coerce_acl_data(
-        value: str | t.JsonValue | m.Ldif.Acl | None,
-    ) -> str | m.Ldif.Acl | None:
+        value: str | t.JsonValue | p.Ldif.Acl | None,
+    ) -> str | p.Ldif.Acl | None:
         """Coerce a generic value to the ACL payload union.
 
         Args:
@@ -348,7 +350,7 @@ class FlextLdifServersBaseSchemaAcl(
         return None
 
     @staticmethod
-    def _detect_operation(operation: str | None, data: str | m.Ldif.Acl) -> str:
+    def _detect_operation(operation: str | None, data: str | p.Ldif.Acl) -> str:
         """Detect the operation from the explicit token or the data type.
 
         Args:
@@ -401,7 +403,7 @@ class FlextLdifServersBaseSchemaAcl(
         self,
         *,
         detected_op: str,
-        data: str | m.Ldif.Acl,
+        data: str | p.Ldif.Acl,
     ) -> p.Result[t.Ldif.AclPayload]:
         """Execute parse or write with strongly typed dispatch.
 
@@ -429,7 +431,7 @@ class FlextLdifServersBaseSchemaAcl(
     def _extract_acl_parameters(
         self,
         kwargs: t.MutableJsonMapping,
-    ) -> tuple[str | m.Ldif.Acl | None, str | None]:
+    ) -> tuple[str | p.Ldif.Acl | None, str | None]:
         """Extract and validate ACL operation parameters from kwargs.
 
         Args:
@@ -440,7 +442,7 @@ class FlextLdifServersBaseSchemaAcl(
 
         """
         data_raw = kwargs.get("data")
-        data: str | m.Ldif.Acl | None = self._coerce_acl_data(data_raw)
+        data: str | p.Ldif.Acl | None = self._coerce_acl_data(data_raw)
         operation_raw = kwargs.get(c.ContextScope.OPERATION)
         operation = (
             self._coerce_operation(operation_raw)
@@ -550,9 +552,9 @@ class FlextLdifServersBaseSchemaAcl(
 
     def _resolve_data(
         self,
-        data: str | m.Ldif.Acl | None,
+        data: str | p.Ldif.Acl | None,
         kwargs: t.JsonMapping,
-    ) -> str | m.Ldif.Acl | None:
+    ) -> str | p.Ldif.Acl | None:
         """Resolve the data payload from the parameter or kwargs.
 
         Args:

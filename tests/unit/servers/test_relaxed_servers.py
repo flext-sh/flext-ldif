@@ -86,6 +86,7 @@ class TestsFlextLdifRelaxed:
     """
 
     @u.Tests.fixture
+    @staticmethod
     def schema_server() -> FlextLdifServersRelaxedSchema:
         """Create relaxed schema server instance.
 
@@ -96,6 +97,7 @@ class TestsFlextLdifRelaxed:
         return FlextLdifServersRelaxedSchema()
 
     @u.Tests.fixture
+    @staticmethod
     def acl_server() -> FlextLdifServersRelaxed.Acl:
         """Create relaxed ACL server instance.
 
@@ -278,7 +280,7 @@ class TestsFlextLdifRelaxed:
         bad_input: str,
     ) -> None:
         """Test relaxed mode recovers from binary content if OID present."""
-        parsed: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass
+        parsed: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass
         if parse_type == "attribute":
             attribute_result: p.Result[p.Ldif.SchemaAttribute] = (
                 schema_server.parse_attribute(bad_input)

@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping, MutableSequence
 from typing import overload
 
-from flext_ldif import FlextLdifModels, c
+from flext_ldif import FlextLdifModels, c, p
 from flext_ldif._utilities._dn import FlextLdifUtilitiesDNParse
 
 
@@ -121,7 +121,7 @@ class FlextLdifUtilitiesDNClean:
         result: str,
         transformations: MutableSequence[str],
         flags: MutableMapping[str, bool | str | MutableSequence[str]],
-    ) -> FlextLdifModels.Ldif.DNStatistics:
+    ) -> p.Ldif.DNStatistics:
         """Build the DNStatistics model from transformation flags.
 
         Returns:
@@ -167,10 +167,10 @@ class FlextLdifUtilitiesDNClean:
 
     @overload
     @staticmethod
-    def clean_dn(dn: FlextLdifModels.Ldif.DN) -> str: ...
+    def clean_dn(dn: p.Ldif.DN) -> str: ...
 
     @staticmethod
-    def clean_dn(dn: str | FlextLdifModels.Ldif.DN) -> str:
+    def clean_dn(dn: str | p.Ldif.DN) -> str:
         """Clean DN string to fix spacing and escaping issues.
 
         Returns:
@@ -201,7 +201,7 @@ class FlextLdifUtilitiesDNClean:
     @staticmethod
     def clean_dn_with_statistics(
         dn: str,
-    ) -> tuple[str, FlextLdifModels.Ldif.DNStatistics]:
+    ) -> tuple[str, p.Ldif.DNStatistics]:
         r"""Clean DN and track all transformations with statistics.
 
         Returns both cleaned DN and complete transformation history

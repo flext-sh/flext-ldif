@@ -12,7 +12,7 @@ from typing import overload
 
 from flext_cli import u
 
-from flext_ldif import FlextLdifModels, c
+from flext_ldif import c, p
 from flext_ldif._utilities._dn import (
     FlextLdifUtilitiesDNNormalize,
     FlextLdifUtilitiesDNParse,
@@ -29,14 +29,14 @@ class FlextLdifUtilitiesDNTransform:
     @overload
     @staticmethod
     def transform_dn_attribute(
-        value: FlextLdifModels.Ldif.DN,
+        value: p.Ldif.DN,
         source_dn: str,
         target_dn: str,
     ) -> str: ...
 
     @staticmethod
     def transform_dn_attribute(
-        value: str | FlextLdifModels.Ldif.DN,
+        value: str | p.Ldif.DN,
         source_dn: str,
         target_dn: str,
     ) -> str:

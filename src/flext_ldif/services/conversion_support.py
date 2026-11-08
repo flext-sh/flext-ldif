@@ -17,7 +17,7 @@ class FlextLdifConversionSupport(FlextLdifServer):
     """Support-check helpers shared by the conversion facade.
 
     Owns the conversion state (``dn_registry`` / ``base_dn`` /
-    ``access_groups``) so every mixin the
+    ``acl_conversion``) so every mixin the
     conversion facade composes carries one identical field set; declaring the
     state on a single child mixin made the sibling bases expose incompatible
     pydantic ``model_construct`` signatures.
@@ -37,16 +37,16 @@ class FlextLdifConversionSupport(FlextLdifServer):
             ),
         ),
     ] = None
-    access_groups: Annotated[
-        frozenset[str],
+    acl_conversion: Annotated[
+        p.Ldif.AclDirectoryConversion,
+        t.schema_for_model(lambda: m.Ldif.AclDirectoryConversion),
         m.Field(
-            default_factory=frozenset,
             description=(
-                "DN keys of the source groups whose membership access control "
-                "honours; ACL conversion fails on any other group subject"
+                "Directory-wide ACL conversion each converted entry applies; "
+                "computed once over the whole source batch"
             ),
         ),
-    ]
+    ] = m.Field(default_factory=m.Ldif.AclDirectoryConversion)
 
     @staticmethod
     def _get_schema_from_attribute(server: p.Ldif.ServerServer) -> p.Ldif.SchemaServer:

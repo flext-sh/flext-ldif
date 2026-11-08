@@ -20,6 +20,7 @@ class TestsFlextLdifNovellServers:
     """Public-behaviour tests for the Novell eDirectory server."""
 
     @u.Tests.fixture
+    @staticmethod
     def novell_server() -> FlextLdifServersNovell:
         """Create a Novell eDirectory server instance.
 

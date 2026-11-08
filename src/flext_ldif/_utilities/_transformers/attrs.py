@@ -68,7 +68,7 @@ class FlextLdifUtilitiesTransformersAttrs:
             case_fold_names or trim_values or remove_empty or (new_attrs != attrs)
         )
         if needs_update:
-            update_dict: MutableMapping[str, m.Ldif.Attributes] = {
+            update_dict: MutableMapping[str, p.Ldif.Attributes] = {
                 "attributes": m.Ldif.Attributes.model_validate({
                     "attributes": new_attrs,
                 }),

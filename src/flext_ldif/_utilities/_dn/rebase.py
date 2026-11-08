@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import MutableMapping, MutableSequence
 
-from flext_ldif import FlextLdifModels, c
+from flext_ldif import FlextLdifModels, c, p
 from flext_ldif._utilities._dn import (
     FlextLdifUtilitiesDNEscape,
     FlextLdifUtilitiesDNParse,
@@ -117,12 +117,12 @@ class FlextLdifUtilitiesDNRebase:
 
     @staticmethod
     def _rebase_entry_dn(
-        entry: FlextLdifModels.Ldif.Entry,
+        entry: p.Ldif.Entry,
         source_dn: str,
         target_dn: str,
         updates: MutableMapping[
             str,
-            FlextLdifModels.Ldif.DN | FlextLdifModels.Ldif.Attributes,
+            p.Ldif.DN | p.Ldif.Attributes,
         ],
     ) -> MutableMapping[str, tuple[MutableSequence[str], MutableSequence[str]]] | None:
         """Rewrite the entry DN onto the target base and record the update.
@@ -175,7 +175,7 @@ class FlextLdifUtilitiesDNRebase:
 
     @staticmethod
     def _collect_changed_dn_attrs(
-        entry_attrs: FlextLdifModels.Ldif.Attributes,
+        entry_attrs: p.Ldif.Attributes,
         attrs_to_transform: frozenset[str] | MutableSequence[str],
         source_dn: str,
         target_dn: str,
@@ -225,7 +225,7 @@ class FlextLdifUtilitiesDNRebase:
 
     @staticmethod
     def _apply_rdn_delta(
-        entry_attrs: FlextLdifModels.Ldif.Attributes,
+        entry_attrs: p.Ldif.Attributes,
         rdn_delta: MutableMapping[
             str,
             tuple[MutableSequence[str], MutableSequence[str]],
@@ -255,11 +255,11 @@ class FlextLdifUtilitiesDNRebase:
 
     @staticmethod
     def _apply_changed_attributes(
-        entry_attrs: FlextLdifModels.Ldif.Attributes,
+        entry_attrs: p.Ldif.Attributes,
         changed_attrs: MutableMapping[str, MutableSequence[str]],
         updates: MutableMapping[
             str,
-            FlextLdifModels.Ldif.DN | FlextLdifModels.Ldif.Attributes,
+            p.Ldif.DN | p.Ldif.Attributes,
         ],
     ) -> None:
         """Record the copied attributes model when any attribute changed."""
@@ -273,11 +273,11 @@ class FlextLdifUtilitiesDNRebase:
 
     @staticmethod
     def transform_entry_base_dn(
-        entry: FlextLdifModels.Ldif.Entry,
+        entry: p.Ldif.Entry,
         source_dn: str,
         target_dn: str,
         dn_valued_attributes: frozenset[str] | None = None,
-    ) -> FlextLdifModels.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Transform an entry's DN and DN-valued attributes from source to target base.
 
         DN.
@@ -302,7 +302,7 @@ class FlextLdifUtilitiesDNRebase:
         attrs_to_transform = dn_valued_attributes or c.Ldif.ALL_DN_VALUED
         updates: MutableMapping[
             str,
-            FlextLdifModels.Ldif.DN | FlextLdifModels.Ldif.Attributes,
+            p.Ldif.DN | p.Ldif.Attributes,
         ] = {}
         rdn_delta = FlextLdifUtilitiesDNRebase._rebase_entry_dn(
             entry,
@@ -330,7 +330,7 @@ class FlextLdifUtilitiesDNRebase:
                 updates,
             )
         if updates:
-            copied: FlextLdifModels.Ldif.Entry = entry.model_copy(update=updates)
+            copied: p.Ldif.Entry = entry.model_copy(update=updates)
             return copied
         return entry
 

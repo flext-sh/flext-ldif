@@ -30,6 +30,7 @@ class TestsFlextLdifRealLdapConfig:
     """Public-contract tests for LDIF settings and railway composition."""
 
     @u.Tests.fixture
+    @staticmethod
     def flext_api() -> p.Ldif.LdifClient:
         """Ldif API instance under test.
 
@@ -40,6 +41,7 @@ class TestsFlextLdifRealLdapConfig:
         return ldif()
 
     @u.Tests.fixture
+    @staticmethod
     def sample_entry() -> p.Ldif.Entry:
         """Build a valid inetOrgPerson entry through the public model API.
 

@@ -30,31 +30,32 @@ from flext_ldif import c, m, p, r
 from flext_ldif.servers._oid import (
     FlextLdifConstantsServersOid,
     FlextLdifServersOidAclAssemble,
+    FlextLdifServersOidAclScope,
     FlextLdifServersOidAclToOud,
 )
 
 
-class FlextLdifServersOidAclRegion:
+class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
     """The indexed OID policy and the placement of its OUD denials."""
 
     def __init__(
         self,
-        rules: Sequence[m.Ldif.AclLevelRule],
+        rules: Sequence[p.Ldif.AclLevelRule],
         *,
         suffix: str,
-        directory: m.Ldif.AclDirectory,
+        directory: p.Ldif.AclDirectory,
     ) -> None:
         """Index the policy by level and resolve every ACI once (R6a)."""
         constants = FlextLdifConstantsServersOid
         self._suffix = suffix
         self._directory = directory
-        self._levels: dict[tuple[str, str], tuple[m.Ldif.AclLevelRule, ...]] = {}
+        self._levels: dict[tuple[str, str], tuple[p.Ldif.AclLevelRule, ...]] = {}
         self._dns: dict[str, str] = {}
         self._resolutions: dict[
             tuple[str, str, int],
-            tuple[m.Ldif.AclResolution, ...],
+            tuple[p.Ldif.AclResolution, ...],
         ] = {}
-        self.events: list[m.Ldif.AclConversionEvent] = []
+        self.events: list[p.Ldif.AclConversionEvent] = []
         for rule in rules:
             index = (rule.key, rule.level)
             self._levels[index] = (*self._levels.get(index, ()), rule)
@@ -77,47 +78,18 @@ class FlextLdifServersOidAclRegion:
             key=lambda key: (key.count(","), key),
         )
 
-    @staticmethod
-    def every_attribute() -> m.Ldif.AclAttrSet:
-        """Return ``targetattr="*"`` as the negated empty set."""
-        return m.Ldif.AclAttrSet(names=frozenset(), negated=True)
-
-    @staticmethod
-    def intersect(
-        left: m.Ldif.AclAttrSet, right: m.Ldif.AclAttrSet
-    ) -> m.Ldif.AclAttrSet:
-        """Return the intersection of two attribute sets."""
-        if left.negated and right.negated:
-            return m.Ldif.AclAttrSet(names=left.names | right.names, negated=True)
-        if left.negated:
-            return m.Ldif.AclAttrSet(names=right.names - left.names)
-        if right.negated:
-            return m.Ldif.AclAttrSet(names=left.names - right.names)
-        return m.Ldif.AclAttrSet(names=left.names & right.names)
-
-    @classmethod
-    def overlaps(cls, left: m.Ldif.AclAttrSet, right: m.Ldif.AclAttrSet) -> bool:
-        """Return whether two attribute sets share an attribute."""
-        both = cls.intersect(left, right)
-        return both.negated or bool(both.names)
-
-    @classmethod
-    def contains(cls, outer: m.Ldif.AclAttrSet, inner: m.Ldif.AclAttrSet) -> bool:
-        """Return whether ``outer`` holds every attribute of ``inner``."""
-        return cls.intersect(outer, inner) == inner
-
-    def rules_at(self, key: str, level: str) -> tuple[m.Ldif.AclLevelRule, ...]:
+    def rules_at(self, key: str, level: str) -> tuple[p.Ldif.AclLevelRule, ...]:
         """Return the rules of one evaluation level in source order."""
         return self._levels.get((key, level), ())
 
     def resolutions(
         self,
-        rule: m.Ldif.AclLevelRule,
-    ) -> tuple[m.Ldif.AclResolution, ...]:
+        rule: p.Ldif.AclLevelRule,
+    ) -> tuple[p.Ldif.AclResolution, ...]:
         """Return the R6a decisions of one rule."""
         return self._resolutions[rule.key, rule.level, rule.index]
 
-    def grants(self, rule: m.Ldif.AclLevelRule, right: str) -> list[m.Ldif.AclBindLeaf]:
+    def grants(self, rule: p.Ldif.AclLevelRule, right: str) -> list[p.Ldif.AclBindLeaf]:
         """Return the subjects one rule grants one OID right to."""
         allow = FlextLdifConstantsServersOid.AclEffect.ALLOW
         return [
@@ -126,7 +98,7 @@ class FlextLdifServersOidAclRegion:
             if item.right == right and item.effect == allow
         ]
 
-    def effective_attrs(self, rule: m.Ldif.AclLevelRule) -> p.Result[m.Ldif.AclAttrSet]:
+    def effective_attrs(self, rule: p.Ldif.AclLevelRule) -> p.Result[p.Ldif.AclAttrSet]:
         """R6b: ``attr=(*)`` loses the attributes another ACI of the level names.
 
         Inside one ACP ``attr=(*)`` means every attribute except those another
@@ -155,7 +127,7 @@ class FlextLdifServersOidAclRegion:
         named = frozenset().union(*(attrs.names for attrs in others))
         return r[m.Ldif.AclAttrSet].ok(m.Ldif.AclAttrSet(names=named, negated=True))
 
-    def farther_acp_keys(self, rule: m.Ldif.AclLevelRule) -> list[str]:
+    def farther_acp_keys(self, rule: p.Ldif.AclLevelRule) -> list[str]:
         """Return the ACP keys evaluated after the rule's level, nearest first."""
         acp = c.Ldif.AclConvertType.ORCLACI.value
         own = [rule.key] if rule.level != acp else []
@@ -168,7 +140,7 @@ class FlextLdifServersOidAclRegion:
         ]
         return [*own, *ancestors]
 
-    def farther_rules(self, rule: m.Ldif.AclLevelRule) -> list[m.Ldif.AclLevelRule]:
+    def farther_rules(self, rule: p.Ldif.AclLevelRule) -> list[p.Ldif.AclLevelRule]:
         """Return the farther ACP rules of the same object kind, nearest first."""
         acp = c.Ldif.AclConvertType.ORCLACI.value
         return [
@@ -178,103 +150,15 @@ class FlextLdifServersOidAclRegion:
             if (higher.attrs is None) == (rule.attrs is None)
         ]
 
-    @staticmethod
-    def scope_depths(scope: str | None) -> tuple[int, int | None]:
-        """Return the depth interval below the anchor a region scope covers."""
-        scopes = FlextLdifConstantsServersOid.AclScope
-        depths: dict[str | None, tuple[int, int | None]] = {
-            scopes.DEPTH_TWO: (2, None),
-            scopes.BASE: (0, 0),
-            scopes.ONELEVEL: (1, 1),
-            scopes.SUBORDINATE: (1, None),
-        }
-        return depths.get(scope, (0, None))
-
-    @staticmethod
-    def add_scope(level: str) -> str:
-        """R4a: the OUD scope of add decided on the new entry, by level.
-
-        Returns:
-            The resulting ``str``.
-
-        """
-        constants = FlextLdifConstantsServersOid
-        if level == c.Ldif.AclConvertType.ORCLACI:
-            return constants.ACL_ACP_ADD_SCOPE
-        return constants.ACL_ENTRYLEVEL_ADD_SCOPE
-
-    @classmethod
-    def level_region(cls, level: str, right: str) -> str | None:
-        """Return the OUD region one level decides for one OID right."""
-        constants = FlextLdifConstantsServersOid
-        if right == constants.ACL_RIGHT_ADD:
-            return cls.add_scope(level)
-        if level == c.Ldif.AclConvertType.ORCLENTRYLEVELACI:
-            return constants.AclScope.BASE
-        return None
-
-    @classmethod
-    def intersects(
-        cls,
-        region: tuple[int, int | None],
-        level_scope: str | None,
-        depth: int,
-    ) -> bool:
-        """Return whether a level's region at ``depth`` meets the anchor's region."""
-        low, high = region
-        level_low, level_high = cls.scope_depths(level_scope)
-        start = depth + level_low
-        end = None if level_high is None else depth + level_high
-        return (high is None or start <= high) and (end is None or end >= low)
-
-    @staticmethod
-    def simplify(bind: m.Ldif.AclBindRule) -> m.Ldif.AclBindRule | None:
-        """Drop exclusions that cannot match; None when one covers the subject.
-
-        Returns:
-            The resulting ``m.Ldif.AclBindRule | None``.
-
-        """
-        to_oud = FlextLdifServersOidAclToOud
-        if any(to_oud.covers(leaf, bind.include) for leaf in bind.exclude):
-            return None
-        kept: list[m.Ldif.AclBindLeaf] = []
-        for leaf in bind.exclude:
-            if to_oud.disjoint(leaf, bind.include) or any(
-                to_oud.covers(other, leaf) for other in kept
-            ):
-                continue
-            kept = [other for other in kept if not to_oud.covers(leaf, other)]
-            kept.append(leaf)
-        return m.Ldif.AclBindRule(include=bind.include, exclude=tuple(kept))
-
-    def widen(
-        self,
-        decision: m.Ldif.AclDecision,
-        extra: Sequence[m.Ldif.AclBindLeaf],
-    ) -> m.Ldif.AclDecision | None:
-        """Add exclusions to a decision; None when nothing is left.
-
-        Returns:
-            The resulting ``m.Ldif.AclDecision | None``.
-
-        """
-        bind = self.simplify(
-            decision.bind.model_copy(
-                update={"exclude": (*decision.bind.exclude, *extra)},
-            ),
-        )
-        return None if bind is None else decision.model_copy(update={"bind": bind})
-
     def dn_of(self, key: str) -> str:
         """Return the DN as read for a key (directory first, then carriers)."""
         return self._directory.entries.get(key) or self._dns.get(key, key)
 
     def statement(
         self,
-        decision: m.Ldif.AclDecision,
-        region: m.Ldif.AclRegion,
-    ) -> m.Ldif.AciStatement:
+        decision: p.Ldif.AclDecision,
+        region: p.Ldif.AclRegion,
+    ) -> p.Ldif.AciStatement:
         """Assemble one OUD ACI statement for a decision at a placement.
 
         Returns:
@@ -310,9 +194,9 @@ class FlextLdifServersOidAclRegion:
 
     def nearer_grants(
         self,
-        decision: m.Ldif.AclDecision,
-        region: m.Ldif.AclRegion,
-    ) -> p.Result[list[m.Ldif.AclNearerGrant]]:
+        decision: p.Ldif.AclDecision,
+        region: p.Ldif.AclRegion,
+    ) -> p.Result[list[p.Ldif.AclNearerGrant]]:
         """Return the nearer levels' grants of the right inside the region.
 
         An entry-level denial decides first, so nothing is nearer to it.
@@ -322,7 +206,7 @@ class FlextLdifServersOidAclRegion:
 
         """
         result = r[list[m.Ldif.AclNearerGrant]]
-        found: list[m.Ldif.AclNearerGrant] = []
+        found: list[p.Ldif.AclNearerGrant] = []
         if decision.rule.level == c.Ldif.AclConvertType.ORCLENTRYLEVELACI:
             return result.ok(found)
         for key, level in self.nearer_levels(decision, region):
@@ -338,8 +222,8 @@ class FlextLdifServersOidAclRegion:
 
     def nearer_levels(
         self,
-        decision: m.Ldif.AclDecision,
-        region: m.Ldif.AclRegion,
+        decision: p.Ldif.AclDecision,
+        region: p.Ldif.AclRegion,
     ) -> list[tuple[str, str]]:
         """Return the levels nearer than the denial whose region meets the region."""
         to_oud = FlextLdifServersOidAclToOud
@@ -363,9 +247,9 @@ class FlextLdifServersOidAclRegion:
 
     def conflicting(
         self,
-        decision: m.Ldif.AclDecision,
-        nearer: m.Ldif.AclLevelRule,
-    ) -> p.Result[list[m.Ldif.AclBindLeaf]]:
+        decision: p.Ldif.AclDecision,
+        nearer: p.Ldif.AclLevelRule,
+    ) -> p.Result[list[p.Ldif.AclBindLeaf]]:
         """Return the grant leaves of one nearer rule the denial would override.
 
         Returns:
@@ -405,8 +289,8 @@ class FlextLdifServersOidAclRegion:
 
     def safe_globally(
         self,
-        decision: m.Ldif.AclDecision,
-        leaf: m.Ldif.AclBindLeaf,
+        decision: p.Ldif.AclDecision,
+        leaf: p.Ldif.AclBindLeaf,
     ) -> bool:
         """Return whether excluding the leaf from the whole denial region is exact.
 
@@ -434,9 +318,9 @@ class FlextLdifServersOidAclRegion:
 
     def place(
         self,
-        decision: m.Ldif.AclDecision,
-        region: m.Ldif.AclRegion,
-    ) -> p.Result[list[m.Ldif.AciStatement]]:
+        decision: p.Ldif.AclDecision,
+        region: p.Ldif.AclRegion,
+    ) -> p.Result[list[p.Ldif.AciStatement]]:
         """R5 region: place a denial so that nearer grants still decide.
 
         Returns:
@@ -468,10 +352,10 @@ class FlextLdifServersOidAclRegion:
 
     def split_region(
         self,
-        decision: m.Ldif.AclDecision,
-        region: m.Ldif.AclRegion,
-        conflicts: list[m.Ldif.AclNearerGrant],
-    ) -> p.Result[list[m.Ldif.AciStatement]]:
+        decision: p.Ldif.AclDecision,
+        region: p.Ldif.AclRegion,
+        conflicts: list[p.Ldif.AclNearerGrant],
+    ) -> p.Result[list[p.Ldif.AciStatement]]:
         """R5 region split with the measured OUD forms.
 
         Returns:
@@ -516,7 +400,7 @@ class FlextLdifServersOidAclRegion:
                 "exclusion has no single measured OUD form (E11)",
             )
         outside = self.without_entries(decision, points)
-        statements: list[m.Ldif.AciStatement] = []
+        statements: list[p.Ldif.AciStatement] = []
         for key in points:
             near = self.widen(
                 decision,
@@ -542,10 +426,10 @@ class FlextLdifServersOidAclRegion:
 
     def split_by_child(
         self,
-        decision: m.Ldif.AclDecision,
-        region: m.Ldif.AclRegion,
+        decision: p.Ldif.AclDecision,
+        region: p.Ldif.AclRegion,
         keys: Sequence[str],
-    ) -> p.Result[list[m.Ldif.AciStatement]]:
+    ) -> p.Result[list[p.Ldif.AciStatement]]:
         """E11 (operator decision "Split by child"): one denial per current child.
 
         Two or more sibling ACP subtrees have no single OUD exclusion form.
@@ -570,7 +454,7 @@ class FlextLdifServersOidAclRegion:
             and to_oud.is_ancestor_or_self(anchor, key)
             and to_oud.depth_below(anchor, key) == 1
         )
-        statements: list[m.Ldif.AciStatement] = []
+        statements: list[p.Ldif.AciStatement] = []
         if region.scope is None:
             statements.append(
                 self.statement(
@@ -612,11 +496,11 @@ class FlextLdifServersOidAclRegion:
 
     def acp_grants_at(
         self,
-        decision: m.Ldif.AclDecision,
+        decision: p.Ldif.AclDecision,
         key: str,
-    ) -> p.Result[list[m.Ldif.AclBindLeaf]]:
+    ) -> p.Result[list[p.Ldif.AclBindLeaf]]:
         """Return the subjects the ACP at ``key`` grants the decision's right to."""
-        leaves: list[m.Ldif.AclBindLeaf] = []
+        leaves: list[p.Ldif.AclBindLeaf] = []
         for nearer in self.rules_at(key, c.Ldif.AclConvertType.ORCLACI.value):
             granted = self.conflicting(decision, nearer)
             if granted.failure:
@@ -626,9 +510,9 @@ class FlextLdifServersOidAclRegion:
 
     def without_entries(
         self,
-        decision: m.Ldif.AclDecision,
+        decision: p.Ldif.AclDecision,
         keys: Sequence[str],
-    ) -> m.Ldif.AclDecision:
+    ) -> p.Ldif.AclDecision:
         """Leave single entries out of a denial with an ``entryDN`` filter.
 
         Measured on OUD 14.1.2.1 (phase D): ``(!(entryDN=<dn>))`` in
@@ -653,10 +537,10 @@ class FlextLdifServersOidAclRegion:
 
     def split_at_anchor(
         self,
-        decision: m.Ldif.AclDecision,
-        region: m.Ldif.AclRegion,
-        at_node: list[m.Ldif.AclNearerGrant],
-    ) -> p.Result[list[m.Ldif.AciStatement]]:
+        decision: p.Ldif.AclDecision,
+        region: p.Ldif.AclRegion,
+        at_node: list[p.Ldif.AclNearerGrant],
+    ) -> p.Result[list[p.Ldif.AciStatement]]:
         """The anchor's own entry-level ACI decides first (base or onelevel).
 
         Returns:
@@ -695,10 +579,10 @@ class FlextLdifServersOidAclRegion:
 
     def split_below(
         self,
-        decision: m.Ldif.AclDecision,
-        region: m.Ldif.AclRegion,
-        at_node: list[m.Ldif.AclNearerGrant],
-    ) -> p.Result[list[m.Ldif.AciStatement]]:
+        decision: p.Ldif.AclDecision,
+        region: p.Ldif.AclRegion,
+        at_node: list[p.Ldif.AclNearerGrant],
+    ) -> p.Result[list[p.Ldif.AciStatement]]:
         """A nearer ACP below the anchor: exclude its region, then push down.
 
         The anchor statement excludes the node with ``target!=`` (its

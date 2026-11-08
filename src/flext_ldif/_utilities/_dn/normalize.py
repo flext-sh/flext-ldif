@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import overload
 
-from flext_ldif import FlextLdifModels, c, p, r
+from flext_ldif import c, p, r
 from flext_ldif._utilities._dn import FlextLdifUtilitiesDNParse
 
 
@@ -22,10 +22,10 @@ class FlextLdifUtilitiesDNNormalize:
 
     @overload
     @staticmethod
-    def norm(dn: FlextLdifModels.Ldif.DN) -> p.Result[str]: ...
+    def norm(dn: p.Ldif.DN) -> p.Result[str]: ...
 
     @staticmethod
-    def norm(dn: str | FlextLdifModels.Ldif.DN | None) -> p.Result[str]:
+    def norm(dn: str | p.Ldif.DN | None) -> p.Result[str]:
         """Normalize DN per RFC 4514 (lowercase attrs, preserve values).
 
         Returns:

@@ -7,12 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableSequence
-from typing import TYPE_CHECKING
 
-from flext_ldif import c
-
-if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModels
+from flext_ldif import c, p
 
 
 class FlextLdifUtilitiesWriterSchema:
@@ -20,7 +16,7 @@ class FlextLdifUtilitiesWriterSchema:
 
     @staticmethod
     def add_attribute_flags(
-        attr_data: FlextLdifModels.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
         parts: MutableSequence[str],
     ) -> None:
         """Add flags to attribute parts list."""
@@ -38,7 +34,7 @@ class FlextLdifUtilitiesWriterSchema:
 
     @staticmethod
     def add_attribute_matching_rules(
-        attr_data: FlextLdifModels.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
         parts: MutableSequence[str],
     ) -> None:
         """Add matching rules to attribute parts list."""
@@ -51,7 +47,7 @@ class FlextLdifUtilitiesWriterSchema:
 
     @staticmethod
     def add_attribute_syntax(
-        attr_data: FlextLdifModels.Ldif.SchemaAttribute,
+        attr_data: p.Ldif.SchemaAttribute,
         parts: MutableSequence[str],
     ) -> None:
         """Add syntax and length to attribute parts list."""

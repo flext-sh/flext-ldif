@@ -1,8 +1,11 @@
-"""End-to-end OID→OUD ACL conversion via the public convert_model API.
+"""End-to-end OID→OUD ACL conversion through the public migration pipeline.
 
-Asserts that an OID entry's orclaci/orclentrylevelaci attributes convert to
-the expected ``aci`` values. Group subjects convert only for the security
-groups the conversion service is given.
+The source directory converts as a whole (``migration_pipeline(...)
+.migrate_entries``): OID ``orclaci``/``orclentrylevelaci`` values become OUD
+``aci`` values placed on the entry each region decides, and the source ACL
+attributes are consumed. A negation-only clause yields denials, never a grant
+of the remaining rights (flext-ws7iv). Converting one entry outside the
+directory conversion fails loud.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,150 +16,205 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 
 from flext_ldif import FlextLdif
-from flext_ldif.servers import FlextLdifServersOidAclPipeline
 from flext_ldif.services import FlextLdifConversion
-from tests import c, m, t, tm, u
+from tests import c, m, p, tm, u
 
 
 class TestsFlextLdifOidAclEndToEnd:
-    """Full pipeline: convert_model('oid','oud', entry) → aci attribute values."""
+    """Directory-wide OID→OUD ACL conversion over the public pipeline."""
 
-    @staticmethod
-    def _access_groups() -> frozenset[str]:
-        """Return the access groups proven by real ACP group entries."""
-        return FlextLdifServersOidAclPipeline.security_group_dns([
-            u.Tests.oid_security_group_entry("cn=admins,dc=ctbc"),
-            u.Tests.oid_security_group_entry("cn=g,dc=ctbc"),
-            u.Tests.oid_security_group_entry("cn=a,dc=ctbc"),
-        ])
+    SUFFIX = "dc=ctbc"
+    ADMINS = "cn=admins,dc=ctbc"
 
     @classmethod
-    def _convert(
+    def _migrate(
         cls,
-        dn: str,
-        attrs: Mapping[str, Sequence[str]],
-    ) -> t.MutableStrSequenceMapping:
-        entry = u.Tests.create_real_entry(dn=dn, attributes=attrs)
-        service = FlextLdifConversion(
-            registry=FlextLdif().registry,
-            access_groups=cls._access_groups(),
+        entries: Sequence[p.Ldif.Entry],
+    ) -> p.Result[Sequence[p.Ldif.Entry]]:
+        return (
+            FlextLdif()
+            .migration_pipeline(
+                settings=m.Ldif.TransformConfig.servers(
+                    source_server=c.Ldif.ServerTypes.OID,
+                    target_server=c.Ldif.ServerTypes.OUD,
+                    base_dn=cls.SUFFIX,
+                ),
+            )
+            .migrate_entries(entries)
         )
-        result = service.convert_model(
-            c.Ldif.ServerTypes.OID,
-            c.Ldif.ServerTypes.OUD,
-            entry,
+
+    @classmethod
+    def _directory(
+        cls,
+        acls: Mapping[str, Mapping[str, Sequence[str]]],
+    ) -> list[p.Ldif.Entry]:
+        """Build the suffix, the admins security group and the ACL carriers.
+
+        Returns:
+            The directory entries in source order.
+
+        """
+        return [
+            u.Tests.create_real_entry(
+                dn=cls.SUFFIX,
+                attributes={"objectClass": ["top", "domain"], "dc": ["ctbc"]},
+            ),
+            u.Tests.oid_security_group_entry(cls.ADMINS),
+            *(
+                u.Tests.create_real_entry(
+                    dn=dn,
+                    attributes={"objectClass": ["top", "container"], **attrs},
+                )
+                for dn, attrs in acls.items()
+            ),
+        ]
+
+    @staticmethod
+    def _acis(entries: Sequence[p.Ldif.Entry]) -> dict[str, list[str]]:
+        return {
+            entry.dn_str: list(entry.attributes_dict.get(c.Ldif.ACI_ATTR_NAME, ()))
+            for entry in entries
+        }
+
+    def test_source_acl_attributes_are_consumed(self) -> None:
+        """Converted entries carry ``aci`` and no OID ACL attribute."""
+        converted = tm.ok(
+            self._migrate(
+                self._directory({
+                    "cn=users,dc=ctbc": {
+                        "orclaci": ["access to attr=(cn,sn,mail) by * (read,search)"],
+                    },
+                }),
+            ),
         )
-        converted = u.Tests.assert_success(result)
-        if not isinstance(converted, m.Ldif.Entry) or converted.attributes is None:
-            msg = "convert_model did not return an Entry with attributes"
-            tm.reject(msg)
-        return converted.attributes.attributes
+        for entry in converted:
+            names = {name.lower() for name in entry.attributes_dict}
+            tm.that(names & {"orclaci", "orclentrylevelaci"}, eq=set())
+        tm.that(self._acis(converted)["cn=users,dc=ctbc"], ne=[])
+
+    def test_negation_only_clause_never_grants_the_complement(self) -> None:
+        """``by * (no...)`` yields denials, no grant to anyone (flext-ws7iv)."""
+        converted = tm.ok(
+            self._migrate(
+                self._directory({
+                    "cn=users,dc=ctbc": {
+                        "orclaci": [
+                            (
+                                f'access to entry by group="{self.ADMINS}" '
+                                "(browse,add,delete) by * (nobrowse,noadd,nodelete)"
+                            ),
+                        ],
+                    },
+                }),
+            ),
+        )
+        anyone = ('userdn="ldap:///anyone"', 'userdn="ldap:///all"')
+        values = [value for acis in self._acis(converted).values() for value in acis]
+        tm.that(values, ne=[])
+        for value in values:
+            tm.that(
+                value,
+                where=lambda aci: (
+                    not any(subject in aci for subject in anyone) or "deny (" in aci
+                ),
+            )
+
+    def test_acl_lands_on_the_entry_its_region_decides(self) -> None:
+        """A parent ACL denial reaches a child carrying its own entry-level ACL."""
+        converted = tm.ok(
+            self._migrate(
+                self._directory({
+                    "ou=people,dc=ctbc": {
+                        "orclentrylevelaci": [
+                            "access to entry by self (browse) by * (none)"
+                        ],
+                    },
+                    "cn=parent-acl,dc=ctbc": {
+                        "orclaci": [
+                            (
+                                f'access to entry by group="{self.ADMINS}" (browse) '
+                                "by * (nobrowse)"
+                            ),
+                        ],
+                    },
+                }),
+            ),
+        )
+        acis = self._acis(converted)
+        tm.that(acis["ou=people,dc=ctbc"], ne=[])
 
     @c.Tests.MARK.parametrize(
-        ("source_attr", "source_value", "expected_acis"),
+        ("acl", "expected"),
         [
             u.Tests.param(
-                "orclaci",
-                (
-                    'access to entry by group="cn=admins,dc=ctbc" '
-                    "(browse,add,delete) by * (none)"
-                ),
-                (
-                    (
-                        '(targetattr="*")    (version 3.0; acl "users Entry by admins";'
-                        "     deny (read, search, add, delete, proxy)    "
-                        'userdn="ldap:///anyone";)'
-                    ),
-                    (
-                        '(targetattr="createTimestamp||creatorsName||modifiersName'
-                        "||modifyTimestamp||entryDN||entryUUID||subschemaSubentry"
-                        '||orclguid||nsuniqueid")'
-                        '    (version 3.0; acl "users Entry by admins";'
-                        '     deny (read, search, compare)    userdn="ldap:///anyone";)'
-                    ),
-                ),
-                id="catch-all-none-cancels-group-grant",
+                "access to attr=(member) by groupattr=(uniquemember) (read,search)",
+                'userattr="uniquemember#GROUPDN"',
+                id="groupattr-becomes-groupdn-userattr",
             ),
             u.Tests.param(
-                "orclaci",
-                "access to attr=(cn,sn,mail) by * (read,search)",
-                (
-                    (
-                        '(targetattr="cn||sn||mail")    (targetscope="base")'
-                        '    (version 3.0; acl "users Attrs by anyone";'
-                        '     allow (read, search)    userdn="ldap:///anyone";)'
-                    ),
-                ),
-                id="attr-list-anyone-pins-targetscope-base",
-            ),
-            u.Tests.param(
-                "orclaci",
-                "access to entry by dnattr=(manager) (browse)",
-                (
-                    (
-                        '(targetattr="objectClass")'
-                        '    (version 3.0; acl "users Entry by manager";'
-                        '     allow (read, search)    userattr="manager#USERDN";)'
-                    ),
-                ),
-                id="dnattr-becomes-userattr",
-            ),
-            u.Tests.param(
-                "orclentrylevelaci",
-                'access to entry by group="cn=g,dc=ctbc" (browse)',
-                (
-                    (
-                        '(targetattr="objectClass")    (targetscope="base")'
-                        '    (version 3.0; acl "users Entry by g";'
-                        '     allow (read, search)    groupdn="ldap:///cn=g,dc=ctbc";)'
-                    ),
-                ),
-                id="orclentrylevelaci-pins-targetscope-base",
+                'access to entry by group="cn=admins,dc=ctbc" (proxy)',
+                "allow (proxy)",
+                id="proxy-grant-kept-r4c",
             ),
         ],
     )
-    def test_oid_acl_converts_to_expected_aci_and_drops_source_attr(
-        self,
-        source_attr: str,
-        source_value: str,
-        expected_acis: tuple[str, ...],
-    ) -> None:
-        """Test oid acl converts to expected aci and drops source attr."""
-        attrs = self._convert(
-            "cn=users,dc=ctbc",
-            {"objectClass": ["top"], source_attr: [source_value]},
+    def test_subject_and_right_conversions(self, acl: str, expected: str) -> None:
+        """Spec v4.2 R8 groupattr and R4c proxy grants convert, not refuse."""
+        converted = tm.ok(
+            self._migrate(self._directory({"cn=users,dc=ctbc": {"orclaci": [acl]}})),
+        )
+        values = self._acis(converted)["cn=users,dc=ctbc"]
+        tm.that(values, where=lambda acis: any(expected in aci for aci in acis))
+
+    @c.Tests.MARK.parametrize(
+        "acl",
+        [
+            u.Tests.param(
+                "access to entry by * bindmode=(Simple) (browse)",
+                id="bindmode",
+            ),
+            u.Tests.param(
+                "access to entry by * bindipfilter=(orclipaddress=10.*) (browse)",
+                id="bindipfilter",
+            ),
+            u.Tests.param(
+                'access to entry by group="cn=*,dc=ctbc" (browse)',
+                id="wildcard-group",
+            ),
+        ],
+    )
+    def test_subjects_without_an_oud_mapping_fail(self, acl: str) -> None:
+        """R8 forms with no measured OUD mapping fail, never pass raw."""
+        tm.fail(
+            self._migrate(self._directory({"cn=users,dc=ctbc": {"orclaci": [acl]}})),
         )
 
-        # Public contract: the OID source ACL attribute is consumed, not passed
-        # through, and the equivalent OUD ``aci`` values are emitted.
-        tm.ok(source_attr not in attrs)
-        tm.that(attrs["aci"], eq=list(expected_acis))
-
-    def test_base_dn_field_excludes_out_of_scope_bind_dn(self) -> None:
-        # FlextLdifConversion(base_dn=...) activates the out-of-scope filter:
-        # a bind DN outside base_dn is dropped from the emitted aci.
-        """Test base dn field excludes out of scope bind dn."""
-        entry = u.Tests.orclaci_base_dn_entry(dn="cn=users,dc=ctbc")
-        svc = FlextLdifConversion(
-            registry=FlextLdif().registry,
-            base_dn="dc=ctbc",
-            access_groups=self._access_groups(),
+    def test_oracle_internal_entry_denial_fails(self) -> None:
+        """Dropping an Oracle-internal denial would grant in OUD; it fails."""
+        tm.fail(
+            self._migrate(
+                self._directory({
+                    "cn=OracleContext,dc=ctbc": {
+                        "orclaci": ["access to entry by * (nobrowse)"],
+                    },
+                }),
+            ),
         )
 
-        converted = u.Tests.assert_success(
-            svc.convert_model(c.Ldif.ServerTypes.OID, c.Ldif.ServerTypes.OUD, entry),
+    @staticmethod
+    def test_single_entry_conversion_of_oid_acls_fails_loud() -> None:
+        """OID ACLs converted outside a directory conversion fail, never pass raw."""
+        entry = u.Tests.create_real_entry(
+            dn="cn=users,dc=ctbc",
+            attributes={
+                "objectClass": ["top"],
+                "orclaci": ["access to attr=(cn) by * (read)"],
+            },
         )
-        if not isinstance(converted, m.Ldif.Entry) or converted.attributes is None:
-            msg = "convert_model did not return an Entry with attributes"
-            tm.reject(msg)
-
-        tm.that(
-            converted.attributes.attributes["aci"],
-            eq=[
-                (
-                    '(targetattr="objectClass")'
-                    '    (version 3.0; acl "users Entry by x";'
-                    '     allow (read, search)    groupdn="ldap:///cn=a,dc=ctbc";)'
-                ),
-            ],
+        tm.fail(
+            FlextLdifConversion(registry=FlextLdif().registry).convert_model(
+                c.Ldif.ServerTypes.OID,
+                c.Ldif.ServerTypes.OUD,
+                entry,
+            ),
         )

@@ -39,7 +39,7 @@ class FlextLdifConversionSchema(s[p.Ldif.Response], ABC):
         self,
         source_server: p.Ldif.ServerServer,
         target_server: p.Ldif.ServerServer,
-        item: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        item: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
         source_schema: p.Ldif.SchemaServer,
         target_schema: p.Ldif.SchemaServer,
     ) -> p.Result[t.Ldif.ConvertedModel]:
@@ -100,7 +100,7 @@ class FlextLdifConversionSchema(s[p.Ldif.Response], ABC):
 
     def _write_schema_source_value(
         self,
-        item: p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass,
+        item: p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass,
         source_schema: p.Ldif.SchemaServer,
     ) -> p.Result[tuple[str, str, str]]:
         """Write the schema item in source format.

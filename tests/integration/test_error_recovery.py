@@ -19,6 +19,7 @@ class TestsFlextLdifErrorRecovery:
     """Observable-behavior tests for malformed and edge-case LDIF input."""
 
     @u.Tests.fixture
+    @staticmethod
     def api() -> p.Ldif.LdifClient:
         """Return a configured LDIF facade instance (public DSL alias)."""
         return ldif()

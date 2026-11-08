@@ -61,7 +61,7 @@ class FlextLdifServersOidAclToOud:
         permissions: Sequence[str],
         *,
         is_entry: bool,
-    ) -> p.Result[m.Ldif.AclPermissionResolution]:
+    ) -> p.Result[p.Ldif.AclPermissionResolution]:
         """Resolve one OID access list into granted and denied OID rights.
 
         Only the tokens of the OID access grammar for the object kind are
@@ -171,7 +171,7 @@ class FlextLdifServersOidAclToOud:
         return r[str].ok(text)
 
     @staticmethod
-    def attr_set(rule: p.Ldif.OidAclRule) -> m.Ldif.AclAttrSet | None:
+    def attr_set(rule: p.Ldif.OidAclRule) -> p.Ldif.AclAttrSet | None:
         """R1: return the attribute target as a case-folded attribute set.
 
         ``attr=(a,b)`` lists names, ``attr!=(a,b)`` excludes them and
@@ -232,7 +232,7 @@ class FlextLdifServersOidAclToOud:
         return r[bool].ok(value=True)
 
     @classmethod
-    def acl_directory(cls, entries: Sequence[p.Ldif.Entry]) -> m.Ldif.AclDirectory:
+    def acl_directory(cls, entries: Sequence[p.Ldif.Entry]) -> p.Ldif.AclDirectory:
         """Read the injected source directory: every DN and every group entry.
 
         An entry is a group when it carries a group class, a static member or
@@ -287,7 +287,7 @@ class FlextLdifServersOidAclToOud:
     @classmethod
     def _group_defect(
         cls,
-        directory: m.Ldif.AclDirectory,
+        directory: p.Ldif.AclDirectory,
         key: str,
         seen: frozenset[str],
     ) -> str:
@@ -318,8 +318,8 @@ class FlextLdifServersOidAclToOud:
     def _group_leaf(
         cls,
         value: str,
-        directory: m.Ldif.AclDirectory,
-    ) -> p.Result[tuple[m.Ldif.AclBindLeaf | None, str]]:
+        directory: p.Ldif.AclDirectory,
+    ) -> p.Result[tuple[p.Ldif.AclBindLeaf | None, str]]:
         """R8: a group grants only when it is an exact source security group.
 
         Returns:
@@ -347,7 +347,7 @@ class FlextLdifServersOidAclToOud:
         ))
 
     @classmethod
-    def _user_leaf(cls, value: str) -> p.Result[tuple[m.Ldif.AclBindLeaf | None, str]]:
+    def _user_leaf(cls, value: str) -> p.Result[tuple[p.Ldif.AclBindLeaf | None, str]]:
         """R8: a subject DN is literal; ``*,<dn>`` is the strict subtree of dn.
 
         The OID BNF admits a DN or ``*,<dn_of_any_subtree_root>`` and nothing
@@ -393,16 +393,16 @@ class FlextLdifServersOidAclToOud:
     def subject_leaf(
         cls,
         subject: p.Ldif.OidAclSubject,
-        directory: m.Ldif.AclDirectory,
-    ) -> p.Result[tuple[m.Ldif.AclBindLeaf | None, str]]:
+        directory: p.Ldif.AclDirectory,
+    ) -> p.Result[tuple[p.Ldif.AclBindLeaf | None, str]]:
         """R8: convert one OID subject into its OUD bind-rule leaf.
 
         ``*`` is ``anyone`` (the emitter grants it to ``all``), ``self`` is
         ``self``, ``dnattr=(a)`` is ``userattr="a#USERDN"``, a DN is literal
         and a group is checked against the directory. ``SuperUser`` (E8) and
-        ``guidattr`` (E4) match no OUD session. ``groupattr`` (OUD follows
-        groups OID ignores), ``bindmode`` and ``bindipfilter`` (no measured
-        OUD mapping) fail.
+        ``guidattr`` (E4) match no OUD session; ``groupattr=(a)`` is
+        ``userattr="a#GROUPDN"`` (spec v4.2 §4.8 R8). ``bindmode`` and
+        ``bindipfilter`` (no measured OUD mapping) fail.
 
         Returns:
             The leaf (None for no session) and its rule, or the failure.
@@ -420,25 +420,27 @@ class FlextLdifServersOidAclToOud:
             )
         match subject.subject_type:
             case kinds.SUPERUSER:
-                return result.ok((None, constants.AclRule.E8))
+                outcome = result.ok((None, constants.AclRule.E8))
             case kinds.GUIDATTR:
-                return result.ok((None, constants.AclRule.E4))
+                outcome = result.ok((None, constants.AclRule.E4))
             case kinds.ANYONE:
                 leaf = m.Ldif.AclBindLeaf(
                     kind=leaves.ANYONE,
                     value=constants.OUD_BIND_ANYONE,
                     key=constants.OUD_BIND_ANYONE,
                 )
+                outcome = result.ok((leaf, constants.AclRule.R8))
             case kinds.SELF:
                 leaf = m.Ldif.AclBindLeaf(
                     kind=leaves.SELF,
                     value=constants.OUD_BIND_SELF,
                     key=constants.OUD_BIND_SELF,
                 )
+                outcome = result.ok((leaf, constants.AclRule.R8))
             case kinds.GROUP:
-                return cls._group_leaf(subject.value, directory)
+                outcome = cls._group_leaf(subject.value, directory)
             case kinds.USER:
-                return cls._user_leaf(subject.value)
+                outcome = cls._user_leaf(subject.value)
             case kinds.DNATTR if constants.OID_ATTR_DESCRIPTOR_RE.match(subject.value):
                 value = subject.value.strip()
                 leaf = m.Ldif.AclBindLeaf(
@@ -446,21 +448,26 @@ class FlextLdifServersOidAclToOud:
                     value=value,
                     key=value.lower(),
                 )
-            case kinds.GROUPATTR:
-                return result.fail(
-                    f"R8: OID groupattr=({subject.value}) honours only the "
-                    "security groups the attribute names (OID-30 §30.1.3.4.6), "
-                    "while OUD userattr GROUPDN honours every group",
+                outcome = result.ok((leaf, constants.AclRule.R8))
+            case kinds.GROUPATTR if constants.OID_ATTR_DESCRIPTOR_RE.match(
+                subject.value,
+            ):
+                value = subject.value.strip()
+                leaf = m.Ldif.AclBindLeaf(
+                    kind=leaves.GROUPATTR,
+                    value=value,
+                    key=value.lower(),
                 )
+                outcome = result.ok((leaf, constants.AclRule.R8))
             case _:
-                return result.fail(
+                outcome = result.fail(
                     f"R8: OID subject {subject.subject_type!r} "
                     f"{subject.value!r} has no conversion rule",
                 )
-        return result.ok((leaf, constants.AclRule.R8))
+        return outcome
 
     @staticmethod
-    def covers(outer: m.Ldif.AclBindLeaf, inner: m.Ldif.AclBindLeaf) -> bool:
+    def covers(outer: p.Ldif.AclBindLeaf, inner: p.Ldif.AclBindLeaf) -> bool:
         """Return whether every session matching ``inner`` also matches ``outer``.
 
         True for ``anyone``, the same subject, or a user inside a subtree.
@@ -479,7 +486,7 @@ class FlextLdifServersOidAclToOud:
         return False
 
     @classmethod
-    def disjoint(cls, left: m.Ldif.AclBindLeaf, right: m.Ldif.AclBindLeaf) -> bool:
+    def disjoint(cls, left: p.Ldif.AclBindLeaf, right: p.Ldif.AclBindLeaf) -> bool:
         """Return whether no session can match both leaves (provable from DNs).
 
         Group membership, ``self`` and ``userattr`` are not decidable at

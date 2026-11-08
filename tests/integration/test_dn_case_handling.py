@@ -31,6 +31,7 @@ class TestsFlextLdifDnCaseHandling:
     """Public-contract behavior of the DN case registry."""
 
     @u.Tests.fixture
+    @staticmethod
     def registry() -> p.Ldif.DnRegistry:
         """Provide a fresh, empty DN registry.
 
