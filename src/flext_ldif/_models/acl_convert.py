@@ -149,7 +149,9 @@ class FlextLdifModelsAclConvert:
                 ],
             ],
             m.Field(
-                default_factory=lambda: MappingProxyType[str, p.Ldif.AclSecurityGroup]({}),
+                default_factory=lambda: MappingProxyType[
+                    str, p.Ldif.AclSecurityGroup
+                ]({}),
                 description="Group entries keyed by DN key",
             ),
         ]

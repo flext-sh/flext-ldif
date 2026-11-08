@@ -40,11 +40,13 @@ class TestsFlextLdifServersStandardization:
     """Verify the public server-standardization contract behaviourally."""
 
     @u.Tests.fixture
+    @staticmethod
     def valid_ldif() -> str:
         """Return a single well-formed RFC 2849 entry every server must accept."""
         return f"dn: {_EXPECTED_DN}\nobjectClass: person\ncn: test\nsn: user\n"
 
     @u.Tests.fixture
+    @staticmethod
     def multi_ldif() -> str:
         """Two independent entries in one LDIF stream.
 

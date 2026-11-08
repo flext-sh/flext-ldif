@@ -33,6 +33,7 @@ class TestsFlextLdifRfcDockerReal:
     """Behavioral contract tests for LDIF parse/write over real fixtures."""
 
     @u.Tests.fixture
+    @staticmethod
     def server_registry() -> FlextLdifServer:
         """Real server registry (genuine collaborator, not mocked).
 
@@ -43,6 +44,7 @@ class TestsFlextLdifRfcDockerReal:
         return FlextLdifServer(registry=FlextLdif().registry)
 
     @u.Tests.fixture
+    @staticmethod
     def fixtures_dir() -> Path:
         """Root fixtures directory.
 
