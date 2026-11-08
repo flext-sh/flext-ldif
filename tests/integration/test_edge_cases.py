@@ -25,6 +25,7 @@ class TestsFlextLdifIntegrationEdgeCases:
     """Behavioral edge-case coverage for the public LDIF client contract."""
 
     @u.Tests.fixture
+    @staticmethod
     def api() -> p.Ldif.LdifClient:
         """Public LDIF client instance.
 

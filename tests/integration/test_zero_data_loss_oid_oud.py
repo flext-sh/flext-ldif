@@ -36,6 +36,7 @@ class TestsFlextLdifZeroDataLossOidOud:
     })
 
     @u.Tests.fixture
+    @staticmethod
     def api() -> p.Ldif.LdifClient:
         """Create ldif API instance.
 
@@ -46,6 +47,7 @@ class TestsFlextLdifZeroDataLossOidOud:
         return ldif()
 
     @u.Tests.fixture
+    @staticmethod
     def oid_fixture() -> str:
         """Load OID entries fixture.
 
@@ -57,6 +59,7 @@ class TestsFlextLdifZeroDataLossOidOud:
         return fixture
 
     @u.Tests.fixture
+    @staticmethod
     def oud_fixture() -> str:
         """Load OUD entries fixture.
 

@@ -86,6 +86,7 @@ class TestsFlextLdifRelaxed:
     """
 
     @u.Tests.fixture
+    @staticmethod
     def schema_server() -> FlextLdifServersRelaxedSchema:
         """Create relaxed schema server instance.
 
@@ -96,6 +97,7 @@ class TestsFlextLdifRelaxed:
         return FlextLdifServersRelaxedSchema()
 
     @u.Tests.fixture
+    @staticmethod
     def acl_server() -> FlextLdifServersRelaxed.Acl:
         """Create relaxed ACL server instance.
 

@@ -34,6 +34,7 @@ class TestsFlextLdifOudToOidMigration:
     """Behavioral contract of the OUD -> OID migration workflow."""
 
     @u.Tests.fixture
+    @staticmethod
     def oud() -> FlextLdifServersOud:
         """Create an OUD server instance.
 
@@ -44,6 +45,7 @@ class TestsFlextLdifOudToOidMigration:
         return FlextLdifServersOud(registry=FlextLdif().registry)
 
     @u.Tests.fixture
+    @staticmethod
     def oid() -> FlextLdifServersOid:
         """Create an OID server instance.
 
@@ -54,6 +56,7 @@ class TestsFlextLdifOudToOidMigration:
         return FlextLdifServersOid()
 
     @u.Tests.fixture
+    @staticmethod
     def client() -> p.Ldif.LdifClient:
         """Create the public ldif client used to re-parse migrated output.
 
@@ -64,6 +67,7 @@ class TestsFlextLdifOudToOidMigration:
         return ldif()
 
     @u.Tests.fixture
+    @staticmethod
     def oud_entries() -> str:
         """Load the OUD entries LDIF fixture.
 
@@ -75,6 +79,7 @@ class TestsFlextLdifOudToOidMigration:
         return fixture
 
     @u.Tests.fixture
+    @staticmethod
     def oud_integration() -> str:
         """Load the OUD integration LDIF fixture (real entries with DNs).
 
@@ -86,6 +91,7 @@ class TestsFlextLdifOudToOidMigration:
         return fixture
 
     @u.Tests.fixture
+    @staticmethod
     def oud_schema() -> str:
         """Load the OUD schema LDIF fixture.
 

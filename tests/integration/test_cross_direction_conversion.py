@@ -76,6 +76,7 @@ class TestsFlextLdifCrossDirectionConversion:
     """Cross-direction schema conversion observable behavior."""
 
     @u.Tests.fixture
+    @staticmethod
     def server_registry() -> FlextLdifServer:
         """Real server registry (unit under test, no mocks).
 
@@ -86,6 +87,7 @@ class TestsFlextLdifCrossDirectionConversion:
         return FlextLdifServer(registry=FlextLdif().registry)
 
     @u.Tests.fixture
+    @staticmethod
     def conversion() -> FlextLdifConversion:
         """Real entry-level conversion service (unit under test).
 
