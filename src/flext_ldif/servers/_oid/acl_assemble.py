@@ -34,7 +34,7 @@ class FlextLdifServersOidAclAssemble:
     """Build the typed OID policy levels the OUD ACI emitter consumes."""
 
     @staticmethod
-    def _event(rule: str, dn: str, detail: str) -> m.Ldif.AclConversionEvent:
+    def _event(rule: str, dn: str, detail: str) -> p.Ldif.AclConversionEvent:
         """Return one operator-review event."""
         return m.Ldif.AclConversionEvent(rule=rule, dn=dn, detail=detail)
 
@@ -44,10 +44,10 @@ class FlextLdifServersOidAclAssemble:
         dn: str,
         position: int,
         subject: p.Ldif.OidAclSubject,
-        directory: m.Ldif.AclDirectory,
+        directory: p.Ldif.AclDirectory,
         *,
         is_entry: bool,
-    ) -> p.Result[tuple[m.Ldif.AclClause, tuple[m.Ldif.AclConversionEvent, ...]]]:
+    ) -> p.Result[tuple[p.Ldif.AclClause, tuple[p.Ldif.AclConversionEvent, ...]]]:
         """Convert one by-clause: its OUD subject and its OID rights.
 
         A subject that matches no OUD session (E4 ``guidattr``) cannot keep a
@@ -89,7 +89,7 @@ class FlextLdifServersOidAclAssemble:
             checked = FlextLdifServersOidAclToOud.validate_ldap_filter(constraint)
             if checked.failure:
                 return result.fail(f"{where}: {checked.error}")
-        events: tuple[m.Ldif.AclConversionEvent, ...] = ()
+        events: tuple[p.Ldif.AclConversionEvent, ...] = ()
         if bind_leaf is None:
             events = (
                 cls._event(
@@ -118,8 +118,8 @@ class FlextLdifServersOidAclAssemble:
         dn: str,
         value: str,
         index: int,
-        directory: m.Ldif.AclDirectory,
-    ) -> p.Result[tuple[m.Ldif.AclLevelRule, tuple[m.Ldif.AclConversionEvent, ...]]]:
+        directory: p.Ldif.AclDirectory,
+    ) -> p.Result[tuple[p.Ldif.AclLevelRule, tuple[p.Ldif.AclConversionEvent, ...]]]:
         """Parse one OID ACL value and resolve its subjects and rights.
 
         Returns:
@@ -146,7 +146,7 @@ class FlextLdifServersOidAclAssemble:
             if validated.failure:
                 return result.fail(f"{where}: {validated.error}")
             target_filter = validated.value
-        events: list[m.Ldif.AclConversionEvent] = []
+        events: list[p.Ldif.AclConversionEvent] = []
         if rule.deny_group_override:
             events.append(
                 cls._event(
@@ -157,7 +157,7 @@ class FlextLdifServersOidAclAssemble:
                 ),
             )
         is_entry = rule.target_type == c.Ldif.AclTargetType.ENTRY
-        clauses: list[m.Ldif.AclClause] = []
+        clauses: list[p.Ldif.AclClause] = []
         for position, subject in enumerate(rule.subjects, 1):
             clause = cls._clause(dn, position, subject, directory, is_entry=is_entry)
             if clause.failure:
@@ -180,8 +180,8 @@ class FlextLdifServersOidAclAssemble:
 
     @staticmethod
     def append_to_all(
-        rules: Sequence[m.Ldif.AclLevelRule],
-    ) -> tuple[m.Ldif.AclLevelRule, ...]:
+        rules: Sequence[p.Ldif.AclLevelRule],
+    ) -> tuple[p.Ldif.AclLevelRule, ...]:
         """R7: append each ``AppendToAll`` clause to every other ACI of the level.
 
         Rights that do not exist for the host object kind are dropped from
@@ -200,7 +200,7 @@ class FlextLdifServersOidAclAssemble:
         ]
         if not appended:
             return tuple(rules)
-        extended: list[m.Ldif.AclLevelRule] = []
+        extended: list[p.Ldif.AclLevelRule] = []
         for rule in rules:
             universe = (
                 c.Ldif.ALL_ENTRY_PERMS if rule.attrs is None else c.Ldif.ALL_ATTR_PERMS
@@ -228,8 +228,8 @@ class FlextLdifServersOidAclAssemble:
 
     @staticmethod
     def merge_identical_objects(
-        rules: Sequence[m.Ldif.AclLevelRule],
-    ) -> tuple[m.Ldif.AclLevelRule, ...]:
+        rules: Sequence[p.Ldif.AclLevelRule],
+    ) -> tuple[p.Ldif.AclLevelRule, ...]:
         """R6b: ACIs of one level with an identical object string are one ACI.
 
         The object is the target, the filter and the object keywords (OID-30
@@ -240,7 +240,7 @@ class FlextLdifServersOidAclAssemble:
             The merged rules in source order.
 
         """
-        groups: dict[tuple[str, str | None], list[m.Ldif.AclLevelRule]] = {}
+        groups: dict[tuple[str, str | None], list[p.Ldif.AclLevelRule]] = {}
         for rule in rules:
             attrs = (
                 c.Ldif.AclTargetType.ENTRY.value
@@ -251,7 +251,7 @@ class FlextLdifServersOidAclAssemble:
                 f"{attrs} {rule.rule.deny_group_override} {rule.rule.append_to_all}"
             )
             groups.setdefault((identity, rule.target_filter), []).append(rule)
-        merged: list[m.Ldif.AclLevelRule] = []
+        merged: list[p.Ldif.AclLevelRule] = []
         for members in groups.values():
             if len(members) == 1:
                 merged.append(members[0])
@@ -272,8 +272,8 @@ class FlextLdifServersOidAclAssemble:
 
     @staticmethod
     def resolve(
-        rule: m.Ldif.AclLevelRule,
-    ) -> tuple[tuple[m.Ldif.AclResolution, ...], tuple[tuple[int, str], ...]]:
+        rule: p.Ldif.AclLevelRule,
+    ) -> tuple[tuple[p.Ldif.AclResolution, ...], tuple[tuple[int, str], ...]]:
         """R6a: a grant from any matching clause wins over a matching denial.
 
         Within one ACI the effective access is the union of the granted
@@ -289,12 +289,12 @@ class FlextLdifServersOidAclAssemble:
         """
         constants = FlextLdifConstantsServersOid
         to_oud = FlextLdifServersOidAclToOud
-        grantors: dict[str, list[m.Ldif.AclBindLeaf]] = {}
+        grantors: dict[str, list[p.Ldif.AclBindLeaf]] = {}
         for clause in rule.clauses:
             if clause.leaf is not None:
                 for right in clause.allow:
                     grantors.setdefault(right, []).append(clause.leaf)
-        resolutions: list[m.Ldif.AclResolution] = []
+        resolutions: list[p.Ldif.AclResolution] = []
         dead: list[tuple[int, str]] = []
         for clause in rule.clauses:
             leaf = clause.leaf

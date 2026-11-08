@@ -104,18 +104,25 @@ class FlextLdifProcessingPipeline(
         if process is not None and process.source_server and process.target_server:
             source_server = u.Ldif.normalize_server_type(process.source_server)
             entries = batch
-            access_groups = (
+            target_server = u.Ldif.normalize_server_type(process.target_server)
+            acl_conversion = (
                 FlextLdifServer(registry=self.registry)
                 .acl(source_server)
-                .map(lambda acl: acl.access_group_dns(entries))
+                .flat_map(
+                    lambda acl: acl.convert_directory_acls(
+                        entries,
+                        target_server_type=target_server,
+                        suffix=process.base_dn or "",
+                    ),
+                )
             )
-            if access_groups.failure:
-                return r[Sequence[p.Ldif.Entry]].from_failure(access_groups)
+            if acl_conversion.failure:
+                return r[Sequence[p.Ldif.Entry]].from_failure(acl_conversion)
             transformer = FlextLdifTransformer(
                 source_server=source_server,
-                target_server=u.Ldif.normalize_server_type(process.target_server),
+                target_server=target_server,
                 base_dn=process.base_dn,
-                access_groups=access_groups.value,
+                acl_conversion=acl_conversion.value,
                 registry=self.registry,
                 runtime_settings=self.settings,
             )

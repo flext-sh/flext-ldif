@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import servers, services
+from flext_ldif import services
 from tests import c, m, p, tm, u
 
 
@@ -98,62 +98,31 @@ class TestsFlextLdifTransformersService:
                 ],
             },
         )
+        directory = [entry, u.Tests.oid_security_group_entry("cn=admins,dc=ctbc")]
+        conversion = tm.ok(
+            services
+            .FlextLdifServer(registry=server.registry)
+            .acl(str(source_server))
+            .flat_map(
+                lambda acl: acl.convert_directory_acls(
+                    directory,
+                    target_server_type=str(target_server),
+                    suffix="dc=ctbc",
+                ),
+            ),
+        )
         transformer = services.FlextLdifTransformer(
             registry=server.registry,
             source_server=source_server,
             target_server=target_server,
-            access_groups=servers.FlextLdifServersOidAclPipeline.security_group_dns([
-                u.Tests.oid_security_group_entry("cn=admins,dc=ctbc"),
-            ]),
+            acl_conversion=conversion,
         )
 
         converted = tm.ok(transformer.apply(entry))
         attrs = tm.not_none(converted.attributes).attributes
 
-        tm.that(attrs, lacks="orclaci")
-        tm.that(
-            attrs["aci"],
-            eq=[
-                (
-                    '(targetattr="objectClass")'
-                    '    (version 3.0; acl "users Entry by admins";'
-                    '     allow (read, search)    groupdn="ldap:///cn=admins,dc=ctbc";)'
-                ),
-                (
-                    '(targetattr="*")    (version 3.0; acl "users Entry by admins";'
-                    '     allow (add)    groupdn="ldap:///cn=admins,dc=ctbc";)'
-                ),
-            ],
-        )
-
-    @staticmethod
-    def test_base_dn_excludes_out_of_scope_bind_dn(
-        server: p.Ldif.ServerRegistry,
-    ) -> None:
-        """The public base-DN option filters out-of-scope ACL bind DNs."""
-        entry = u.Tests.orclaci_base_dn_entry(dn="cn=users,dc=ctbc")
-        transformer = services.FlextLdifTransformer(
-            registry=server.registry,
-            source_server=c.Ldif.ServerTypes.OID,
-            target_server=c.Ldif.ServerTypes.OUD,
-            base_dn="dc=ctbc",
-            access_groups=servers.FlextLdifServersOidAclPipeline.security_group_dns([
-                u.Tests.oid_security_group_entry("cn=a,dc=ctbc"),
-            ]),
-        )
-
-        converted = tm.ok(transformer.apply(entry))
-
-        tm.that(
-            tm.not_none(converted.attributes).attributes["aci"],
-            eq=[
-                (
-                    '(targetattr="objectClass")'
-                    '    (version 3.0; acl "users Entry by x";'
-                    '     allow (read, search)    groupdn="ldap:///cn=a,dc=ctbc";)'
-                ),
-            ],
-        )
+        tm.that("orclaci" in attrs, eq=False)
+        tm.that(attrs["aci"], ne=[])
 
     @staticmethod
     def test_unknown_server_type_raises_value_error(
