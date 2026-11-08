@@ -22,7 +22,7 @@ class FlextLdifWriter(FlextLdifServer):
 
     def write(
         self,
-        entries: Sequence[p.Ldif.Entry] | p.Ldif.ParseResponse | m.Ldif.ParseResponse,
+        entries: Sequence[p.Ldif.Entry] | p.Ldif.ParseResponse,
         *,
         server_type: str | None = None,
         format_options: p.Ldif.WriteFormatOptions | None = None,
@@ -57,7 +57,7 @@ class FlextLdifWriter(FlextLdifServer):
 
     def write_ldif_file(
         self,
-        entries: Sequence[p.Ldif.Entry] | p.Ldif.ParseResponse | m.Ldif.ParseResponse,
+        entries: Sequence[p.Ldif.Entry] | p.Ldif.ParseResponse,
         path: PathLike[str],
         *,
         server_type: str | None = None,
@@ -100,7 +100,7 @@ class FlextLdifWriter(FlextLdifServer):
 
     def write_to_string(
         self,
-        entries: Sequence[p.Ldif.Entry] | p.Ldif.ParseResponse | m.Ldif.ParseResponse,
+        entries: Sequence[p.Ldif.Entry] | p.Ldif.ParseResponse,
         server_type: str | None = None,
         format_options: p.Ldif.WriteFormatOptions | None = None,
     ) -> p.Result[str]:

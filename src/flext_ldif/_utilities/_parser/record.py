@@ -62,12 +62,8 @@ class FlextLdifUtilitiesParserRecord:
             self.controls: MutableSequence[
                 FlextLdifModelsDomainEntryControl.Control
             ] = []
-            self.change_operations: MutableSequence[
-                FlextLdifModels.Ldif.ChangeOperation
-            ] = []
-            self.current_change_operation: (
-                FlextLdifModels.Ldif.ChangeOperation | None
-            ) = None
+            self.change_operations: MutableSequence[p.Ldif.ChangeOperation] = []
+            self.current_change_operation: p.Ldif.ChangeOperation | None = None
             self.changetype: c.Ldif.ChangeType | None = None
             self.record_kind = c.Ldif.RecordKind.CONTENT
             self.newrdn: str | None = None
@@ -101,8 +97,8 @@ class FlextLdifUtilitiesParserRecord:
 
     @staticmethod
     def finalize_change_operation(
-        current_op: FlextLdifModels.Ldif.ChangeOperation | None,
-        change_operations: MutableSequence[FlextLdifModels.Ldif.ChangeOperation],
+        current_op: p.Ldif.ChangeOperation | None,
+        change_operations: MutableSequence[p.Ldif.ChangeOperation],
     ) -> None:
         """Append a pending modify block when present."""
         if current_op is not None:
@@ -272,7 +268,7 @@ class FlextLdifUtilitiesParserRecord:
     @staticmethod
     def _build_entry(
         state: FlextLdifUtilitiesParserRecord._RecordState,
-    ) -> FlextLdifModels.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         """Build the Entry model from accumulated record state.
 
         Returns:
@@ -304,7 +300,7 @@ class FlextLdifUtilitiesParserRecord:
     @staticmethod
     def parse_ldif_record(
         lines: MutableSequence[str],
-    ) -> p.Result[FlextLdifModels.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Parse a single unfolded LDIF record into Entry.
 
         Returns:

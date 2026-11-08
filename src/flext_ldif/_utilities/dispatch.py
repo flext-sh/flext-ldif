@@ -45,9 +45,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def as_entries(
-        values: t.ModelInput[Sequence[t.Ldif.EntryLike]]
-        | FlextLdifModels.Ldif.ParseResponse
-        | p.Ldif.ParseResponse,
+        values: t.ModelInput[Sequence[t.Ldif.EntryLike]] | p.Ldif.ParseResponse,
     ) -> MutableSequence[p.Ldif.Entry]:
         """Coerce an entry sequence into canonical LDIF entry models.
 
@@ -97,7 +95,7 @@ class FlextLdifUtilitiesDispatch:
     @staticmethod
     @overload
     def parse_definition(
-        definition: str | FlextLdifModels.Ldif.DN | None,
+        definition: str | p.Ldif.DN | None,
         server_type: str | None = None,
         parse_parts_hook: None = None,
     ) -> p.Result[t.MutableStrPairSequence]: ...
@@ -105,7 +103,7 @@ class FlextLdifUtilitiesDispatch:
     @staticmethod
     @overload
     def parse_definition(
-        definition: str | FlextLdifModels.Ldif.DN | None,
+        definition: str | p.Ldif.DN | None,
         server_type: str | None,
         parse_parts_hook: Callable[[str], t.Ldif.MutableMetadataMapping]
         | Callable[[str], p.Result[t.Ldif.MutableMetadataMapping]],
@@ -113,7 +111,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def parse_definition(
-        definition: str | FlextLdifModels.Ldif.DN | None,
+        definition: str | p.Ldif.DN | None,
         server_type: str | None = None,
         parse_parts_hook: Callable[[str], t.Ldif.MutableMetadataMapping]
         | Callable[[str], p.Result[t.Ldif.MutableMetadataMapping]]
@@ -144,10 +142,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def validate(
-        value_or_entries: MutableSequence[FlextLdifModels.Ldif.Entry]
-        | t.JsonValue
-        | str
-        | FlextLdifModels.Ldif.DN,
+        value_or_entries: MutableSequence[p.Ldif.Entry] | t.JsonValue | str | p.Ldif.DN,
         *validators: p.ValidatorSpec,
         pipeline: FlextLdifUtilitiesPipeline.ValidationPipeline | None = None,
     ) -> (
@@ -206,7 +201,7 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def _validate_entries(
-        entries: MutableSequence[FlextLdifModels.Ldif.Entry],
+        entries: MutableSequence[p.Ldif.Entry],
         *,
         pipeline: FlextLdifUtilitiesPipeline.ValidationPipeline | None = None,
     ) -> p.Result[MutableSequence[FlextLdifUtilitiesPipeline.ValidationResult]]:
@@ -224,11 +219,8 @@ class FlextLdifUtilitiesDispatch:
 
     @staticmethod
     def _is_entry_sequence(
-        obj: MutableSequence[FlextLdifModels.Ldif.Entry]
-        | t.JsonValue
-        | str
-        | FlextLdifModels.Ldif.DN,
-    ) -> TypeGuard[MutableSequence[FlextLdifModels.Ldif.Entry]]:
+        obj: MutableSequence[p.Ldif.Entry] | t.JsonValue | str | p.Ldif.DN,
+    ) -> TypeGuard[MutableSequence[p.Ldif.Entry]]:
         """Check if value is a Sequence of Entry objects (dispatch helper).
 
         Returns:

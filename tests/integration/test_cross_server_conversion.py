@@ -36,7 +36,7 @@ def _assert_cross_server_identity(
     """Render via source, re-parse via target, and assert the identity tokens."""
     parse: Callable[
         [str],
-        p.Result[p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass],
+        p.Result[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass],
     ] = getattr(source_schema, parse_method)
     parsed = parse(definition)
     tm.ok(parsed)
@@ -45,7 +45,7 @@ def _assert_cross_server_identity(
 
     target_parse: Callable[
         [str],
-        p.Result[p.Ldif.SchemaAttribute | m.Ldif.SchemaObjectClass],
+        p.Result[p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass],
     ] = getattr(target_schema, parse_method)
     target_parsed = target_parse(rfc_text.value)
     tm.ok(target_parsed)
