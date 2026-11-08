@@ -199,6 +199,7 @@ class FlextLdifConstantsServersOid(
         USER_SUBTREE = "user_subtree"
         GROUP = "group"
         USERATTR = "userattr"
+        GROUPATTR = "groupattr"
 
     @unique
     class AclRule(StrEnum):
