@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar
 
-from flext_ldif import FlextLdifModels, c, m, p, r, t
+from flext_ldif import FlextLdifModels, c, p, r, t
 from flext_ldif._models import (
     FlextLdifModelsDomainEntryChangeOperationValue,
     FlextLdifModelsDomainEntryControl,
@@ -39,8 +39,8 @@ class FlextLdifUtilitiesParserRecord:
         comments: MutableSequence[str]
         raw_record_lines: MutableSequence[str]
         controls: MutableSequence[FlextLdifModelsDomainEntryControl.Control]
-        change_operations: MutableSequence[FlextLdifModels.Ldif.ChangeOperation]
-        current_change_operation: FlextLdifModels.Ldif.ChangeOperation | None
+        change_operations: MutableSequence[p.Ldif.ChangeOperation]
+        current_change_operation: p.Ldif.ChangeOperation | None
         changetype: c.Ldif.ChangeType | None
         record_kind: c.Ldif.RecordKind
         newrdn: str | None
@@ -63,7 +63,7 @@ class FlextLdifUtilitiesParserRecord:
                 FlextLdifModelsDomainEntryControl.Control
             ] = []
             self.change_operations: MutableSequence[p.Ldif.ChangeOperation] = []
-            self.current_change_operation: m.Ldif.ChangeOperation | None = None
+            self.current_change_operation: p.Ldif.ChangeOperation | None = None
             self.changetype: c.Ldif.ChangeType | None = None
             self.record_kind = c.Ldif.RecordKind.CONTENT
             self.newrdn: str | None = None
@@ -97,7 +97,7 @@ class FlextLdifUtilitiesParserRecord:
 
     @staticmethod
     def finalize_change_operation(
-        current_op: m.Ldif.ChangeOperation | None,
+        current_op: p.Ldif.ChangeOperation | None,
         change_operations: MutableSequence[p.Ldif.ChangeOperation],
     ) -> None:
         """Append a pending modify block when present."""
@@ -172,7 +172,7 @@ class FlextLdifUtilitiesParserRecord:
                 state.current_change_operation,
                 state.change_operations,
             )
-            state.current_change_operation = FlextLdifModels.Ldif.ChangeOperation(
+            state.current_change_operation = p.Ldif.ChangeOperation(
                 operation=FlextLdifUtilitiesParserRecord._MODIFY_OPS[key_lower],
                 attribute=decoded.value,
             )
