@@ -390,7 +390,7 @@ class FlextLdifServersOidAclToOud:
         ))
 
     @classmethod
-    def subject_leaf(  # ruff: ignore[too-many-return-statements]
+    def subject_leaf(
         cls,
         subject: p.Ldif.OidAclSubject,
         directory: p.Ldif.AclDirectory,
@@ -400,9 +400,9 @@ class FlextLdifServersOidAclToOud:
         ``*`` is ``anyone`` (the emitter grants it to ``all``), ``self`` is
         ``self``, ``dnattr=(a)`` is ``userattr="a#USERDN"``, a DN is literal
         and a group is checked against the directory. ``SuperUser`` (E8) and
-        ``guidattr`` (E4) match no OUD session. ``groupattr`` (OUD follows
-        groups OID ignores), ``bindmode`` and ``bindipfilter`` (no measured
-        OUD mapping) fail.
+        ``guidattr`` (E4) match no OUD session; ``groupattr=(a)`` is
+        ``userattr="a#GROUPDN"`` (spec v4.2 §4.8 R8). ``bindmode`` and
+        ``bindipfilter`` (no measured OUD mapping) fail.
 
         Returns:
             The leaf (None for no session) and its rule, or the failure.
@@ -420,25 +420,27 @@ class FlextLdifServersOidAclToOud:
             )
         match subject.subject_type:
             case kinds.SUPERUSER:
-                return result.ok((None, constants.AclRule.E8))
+                outcome = result.ok((None, constants.AclRule.E8))
             case kinds.GUIDATTR:
-                return result.ok((None, constants.AclRule.E4))
+                outcome = result.ok((None, constants.AclRule.E4))
             case kinds.ANYONE:
                 leaf = m.Ldif.AclBindLeaf(
                     kind=leaves.ANYONE,
                     value=constants.OUD_BIND_ANYONE,
                     key=constants.OUD_BIND_ANYONE,
                 )
+                outcome = result.ok((leaf, constants.AclRule.R8))
             case kinds.SELF:
                 leaf = m.Ldif.AclBindLeaf(
                     kind=leaves.SELF,
                     value=constants.OUD_BIND_SELF,
                     key=constants.OUD_BIND_SELF,
                 )
+                outcome = result.ok((leaf, constants.AclRule.R8))
             case kinds.GROUP:
-                return cls._group_leaf(subject.value, directory)
+                outcome = cls._group_leaf(subject.value, directory)
             case kinds.USER:
-                return cls._user_leaf(subject.value)
+                outcome = cls._user_leaf(subject.value)
             case kinds.DNATTR if constants.OID_ATTR_DESCRIPTOR_RE.match(subject.value):
                 value = subject.value.strip()
                 leaf = m.Ldif.AclBindLeaf(
@@ -446,18 +448,23 @@ class FlextLdifServersOidAclToOud:
                     value=value,
                     key=value.lower(),
                 )
-            case kinds.GROUPATTR:
-                return result.fail(
-                    f"R8: OID groupattr=({subject.value}) honours only the "
-                    "security groups the attribute names (OID-30 §30.1.3.4.6), "
-                    "while OUD userattr GROUPDN honours every group",
+                outcome = result.ok((leaf, constants.AclRule.R8))
+            case kinds.GROUPATTR if constants.OID_ATTR_DESCRIPTOR_RE.match(
+                subject.value,
+            ):
+                value = subject.value.strip()
+                leaf = m.Ldif.AclBindLeaf(
+                    kind=leaves.GROUPATTR,
+                    value=value,
+                    key=value.lower(),
                 )
+                outcome = result.ok((leaf, constants.AclRule.R8))
             case _:
-                return result.fail(
+                outcome = result.fail(
                     f"R8: OID subject {subject.subject_type!r} "
                     f"{subject.value!r} has no conversion rule",
                 )
-        return result.ok((leaf, constants.AclRule.R8))
+        return outcome
 
     @staticmethod
     def covers(outer: p.Ldif.AclBindLeaf, inner: p.Ldif.AclBindLeaf) -> bool:

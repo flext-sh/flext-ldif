@@ -156,10 +156,13 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         if resolution.right == constants.ACL_RIGHT_ADD:
             return self.add_form(rule, resolution)
         if resolution.right == constants.ACL_RIGHT_PROXY and not deny:
-            return result.fail(
-                f"{rule.dn or '<root DSE>'}: R4c/Q7: the entry OID evaluates a "
-                "proxy grant on is not documented and OUD also needs the "
-                "proxied-auth privilege (E2); no measured rule converts it",
+            self._event(
+                constants.AclRule.R4C,
+                rule.dn,
+                f"{rule.level} {rule.index}.{resolution.clause}: proxy kept with "
+                "the source scope, evaluated on the impersonated identity's entry "
+                "(spec v4.2 §4.4, Q7 adopted reading, [RT] pending phase B); the "
+                "bind user still needs the proxied-auth privilege (E2)",
             )
         return result.ok([self.entry_form(rule, resolution, scope)])
 
@@ -225,7 +228,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         resolution: p.Ldif.AclResolution,
         scope: str | None,
     ) -> p.Ldif.AclForm:
-        """R4b/R4e and the R5 browse and proxy denials for one entry right.
+        """R4b/R4c/R4e and the R5 browse and proxy denials for one entry right.
 
         Returns:
             The resulting ``m.Ldif.AclForm``.
@@ -236,7 +239,11 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         deny = resolution.effect == constants.AclEffect.DENY
         rights: tuple[str, ...] = (right,)
         attrs = self.every_attribute()
-        identity = constants.AclRule.R4B
+        identity = (
+            constants.AclRule.R4C
+            if right == constants.ACL_RIGHT_PROXY
+            else constants.AclRule.R4B
+        )
         if right == constants.ACL_RIGHT_BROWSE:
             rights = (
                 constants.ACL_BROWSE_DENIAL_RIGHTS
@@ -546,6 +553,9 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
             case kinds.USERATTR:
                 keyword = c.Ldif.OudSubjectType.USERATTR.value
                 return f'{keyword}="{leaf.value}{c.Ldif.UserAttrSuffix.USERDN.value}"'
+            case kinds.GROUPATTR:
+                keyword = c.Ldif.OudSubjectType.USERATTR.value
+                return f'{keyword}="{leaf.value}{c.Ldif.UserAttrSuffix.GROUPDN.value}"'
             case kinds.USER_SUBTREE:
                 url = f"{prefix}{leaf.value}{constants.OUD_USERDN_SUBTREE_URL_SUFFIX}"
                 return f'({userdn}="{url}" and {userdn}!="{prefix}{leaf.value}")'

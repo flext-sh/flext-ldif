@@ -99,6 +99,17 @@ class FlextLdifServersOidAclAssemble:
                     f"{subject.value!r} matches no OUD session",
                 ),
             )
+        elif bind_leaf.kind == constants.AclLeafKind.GROUPATTR:
+            events = (
+                cls._event(
+                    outcome,
+                    dn,
+                    f"clause {position} groupattr=({subject.value}): OID honours "
+                    "only the security groups the attribute names, OUD GROUPDN "
+                    "honours every group; the spec records no exception for this "
+                    "gap (operator review)",
+                ),
+            )
         return result.ok((
             m.Ldif.AclClause(
                 index=position,
