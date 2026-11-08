@@ -13,7 +13,6 @@ from flext_cli import u
 from flext_ldif import c, p
 
 
-
 class FlextLdifUtilitiesSchemaFormat:
     """Format restoration and low-level schema part builders."""
 
