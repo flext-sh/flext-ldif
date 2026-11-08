@@ -43,7 +43,9 @@ class TestsFlextLdifProtocolsSchema:
         tm.that(roundtrip.sup, eq=parsed.sup)
         tm.that(roundtrip.must, eq=parsed.must)
         tm.that(roundtrip.may, eq=parsed.may)
-        routed = server.parse_input(server.write(parsed).unwrap()).unwrap()
+        routed = server.parse_input(
+            server.write(m.Ldif.SchemaObjectClass.model_validate(parsed)).unwrap()
+        ).unwrap()
         tm.ok(isinstance(routed, p.Ldif.SchemaObjectClass))
         tm.that(routed.oid, eq=parsed.oid)
         tm.that(routed.name, eq=parsed.name)

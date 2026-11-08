@@ -16,13 +16,13 @@ from flext_ldif import c, p, t
 from flext_ldif._models import (
     FlextLdifModelsDomainAttributes,
     FlextLdifModelsDomainDN,
-    FlextLdifModelsDomainEntryChangeOperation,
+    FlextLdifModelsDomainEntryChangeOperation as ChangeOp,
     FlextLdifModelsDomainEntryControl,
     FlextLdifModelsDomainMetadata,
 )
 
 
-class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
+class FlextLdifModelsDomainEntry(ChangeOp):
     """Namespace for LDIF entry domain models."""
 
     class Entry(m.Entity, m.DynamicModel):
@@ -46,26 +46,32 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
         _VALIDATION_RULES_KEY: ClassVar[str] = "validation_rules"
         _VALIDATION_SERVER_TYPE_KEY: ClassVar[str] = "validation_server_type"
         dn: Annotated[
-            FlextLdifModelsDomainDN.DN | None,
-            m.Field(
-                description=(
-                    "Distinguished Name of the entry (REQUIRED per RFC 2849 § 2). "
-                    "Allows None for RFC violation capture. Coerced from str via "
-                    "m.field_validator - PROTOCOL COMPATIBLE with p.Ldif.Entry.Entry"
-                ),
+            p.Ldif.DN | None,
+            t.schema_for_model(
+                lambda: FlextLdifModelsDomainDN.DN,
             ),
-        ]
+        ] = m.Field(
+            default=None,
+            description=(
+                "Distinguished Name of the entry (REQUIRED per RFC 2849 § 2). "
+                "Allows None for RFC violation capture. Coerced from str via "
+                "m.field_validator - PROTOCOL COMPATIBLE with p.Ldif.Entry.Entry"
+            ),
+        )
         attributes: Annotated[
-            FlextLdifModelsDomainAttributes.Attributes | None,
-            m.Field(
-                description=(
-                    "Entry attributes container (REQUIRED per RFC 2849 § 2). Allows "
-                    "None for RFC violation capture. Coerced from "
-                    "dict[str, list[str]] via m.field_validator - PROTOCOL "
-                    "COMPATIBLE with p.Ldif.Entry.Entry"
-                ),
+            p.Ldif.Attributes | None,
+            t.schema_for_model(
+                lambda: FlextLdifModelsDomainAttributes.Attributes,
             ),
-        ]
+        ] = m.Field(
+            default=None,
+            description=(
+                "Entry attributes container (REQUIRED per RFC 2849 § 2). Allows "
+                "None for RFC violation capture. Coerced from "
+                "dict[str, list[str]] via m.field_validator - PROTOCOL "
+                "COMPATIBLE with p.Ldif.Entry.Entry"
+            ),
+        )
         record_kind: Annotated[
             c.Ldif.RecordKind,
             m.Field(
@@ -76,18 +82,28 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             ),
         ] = c.Ldif.RecordKind.CONTENT
         controls: Annotated[
-            Sequence[FlextLdifModelsDomainEntryControl.Control],
+            Sequence[
+                Annotated[
+                    p.Ldif.Control,
+                    t.schema_for_model(
+                        lambda: FlextLdifModelsDomainEntryControl.Control,
+                    ),
+                ]
+            ],
             m.Field(description="RFC 2849 control lines associated with the record"),
         ] = m.Field(default_factory=tuple)
         change_operations: Annotated[
-            MutableSequence[FlextLdifModelsDomainEntryChangeOperation.ChangeOperation],
+            MutableSequence[
+                Annotated[
+                    p.Ldif.ChangeOperation,
+                    t.schema_for_model(lambda: ChangeOp.ChangeOperation),
+                ]
+            ],
             m.Field(
                 description="Structured modify operation blocks for changetype=modify",
             ),
         ] = m.Field(
-            default_factory=list[
-                FlextLdifModelsDomainEntryChangeOperation.ChangeOperation
-            ],
+            default_factory=list,
         )
 
         @m.field_validator("attributes", mode="before")
@@ -189,14 +205,17 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             ),
         ] = m.Field(default_factory=list[str])
         metadata: Annotated[
-            FlextLdifModelsDomainMetadata.ServerMetadata | None,
-            m.Field(
-                description=(
-                    "Server-specific metadata for processing data, ACLs, "
-                    "statistics, validation (non-RFC data)"
-                ),
+            p.Ldif.ServerMetadata | None,
+            t.schema_for_model(
+                lambda: FlextLdifModelsDomainMetadata.ServerMetadata,
             ),
-        ] = None
+        ] = m.Field(
+            default=None,
+            description=(
+                "Server-specific metadata for processing data, ACLs, "
+                "statistics, validation (non-RFC data)"
+            ),
+        )
         validation_metadata: Annotated[
             m.ConfigMap | None,
             m.Field(
@@ -470,7 +489,7 @@ class FlextLdifModelsDomainEntry(FlextLdifModelsDomainEntryChangeOperation):
             dn: str | FlextLdifModelsDomainDN.DN,
             attributes: t.MutableAttributeMapping
             | FlextLdifModelsDomainAttributes.Attributes,
-            metadata: FlextLdifModelsDomainMetadata.ServerMetadata | None = None,
+            metadata: p.Ldif.ServerMetadata | None = None,
         ) -> p.Result[Self]:
             """Create a validated entry from canonical domain inputs.
 

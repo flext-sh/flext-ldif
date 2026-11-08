@@ -12,9 +12,8 @@ SPDX-License-Identifier: MIT.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import cast
 
-from tests import c, m, p, t, tm, u
+from tests import c, m, p, tm, u
 
 SOURCE = "dc=example,dc=invalid"
 TARGET = "dc=r123,dc=algar,dc=local"
@@ -33,7 +32,7 @@ def _entry(
     return m.Ldif.Entry(
         dn=m.Ldif.DN(value=dn),
         attributes=m.Ldif.Attributes(
-            attributes=cast("t.MutableStrSequenceMapping", attributes or {}),
+            attributes=dict(attributes or {}),
             attribute_metadata={},
         ),
     )

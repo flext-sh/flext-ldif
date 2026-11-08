@@ -129,13 +129,16 @@ class FlextLdifServersOidEntryParse(
         if not entry.attributes:
             return r[p.Ldif.Entry].ok(entry)
         normalized_attrs = entry.attributes.attributes
-        metadata_values = dict(entry.metadata) if entry.metadata is not None else {}
-        entry.metadata = m.Ldif.ServerMetadata.model_validate({
+        base_metadata = entry.metadata
+        metadata_values = (
+            base_metadata.model_dump() if base_metadata is not None else {}
+        )
+        new_metadata = m.Ldif.ServerMetadata.model_validate({
             **metadata_values,
             "server_type": c.Ldif.ServerTypes.OID,
         })
         current_extensions: t.Ldif.MutableMetadataMapping = (
-            dict(entry.metadata.extensions) if entry.metadata.extensions else {}
+            dict(new_metadata.extensions) if new_metadata.extensions else {}
         )
         mk = c.Ldif
         current_extensions[mk.ORIGINAL_DN_COMPLETE] = original_dn
@@ -168,7 +171,10 @@ class FlextLdifServersOidEntryParse(
             )
         # mro-wgwh.5 (agent: kimi-coder) — DynamicMetadata removed: assign the plain
         # mapping built above (already JSON-normalized).
-        entry.metadata.extensions = current_extensions
+        new_metadata = new_metadata.model_copy(
+            update={"extensions": current_extensions},
+        )
+        entry = entry.model_copy(update={"metadata": new_metadata})
         return r[p.Ldif.Entry].ok(entry)
 
     @override

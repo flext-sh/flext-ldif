@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from flext_ldif import c, p
 
 if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModels, t
+    from flext_ldif import t
 
 
 class FlextLdifUtilitiesServerDetect:

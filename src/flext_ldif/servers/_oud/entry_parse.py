@@ -76,10 +76,16 @@ class FlextLdifServersOudEntryParse(FlextLdifServersRfcEntry):
         )
         if not aci_values:
             return r[p.Ldif.Entry].ok(entry)
-        if entry.metadata is None:
-            entry.metadata = u.Ldif.server_metadata_for("oud")
+        current_metadata = entry.metadata
+        if current_metadata is None:
+            current_metadata = u.Ldif.server_metadata_for("oud")
+            entry = entry.model_copy(update={"metadata": current_metadata})
+        existing_metadata = entry.metadata
+        existing_extensions = (
+            existing_metadata.extensions if existing_metadata is not None else None
+        )
         existing: t.Ldif.MutableMetadataInputMapping = (
-            dict(entry.metadata.extensions) if entry.metadata.extensions else {}
+            dict(existing_extensions) if existing_extensions else {}
         )
         finalize_result = FlextLdifServersOudHelpers.process_aci_list_for_finalize(
             aci_values,
@@ -88,8 +94,11 @@ class FlextLdifServersOudEntryParse(FlextLdifServersRfcEntry):
         )
         if finalize_result.failure:
             return r[p.Ldif.Entry].from_failure(finalize_result)
-        if existing:
-            entry.metadata = entry.metadata.model_copy(update={"extensions": existing})
+        if existing and existing_metadata is not None:
+            updated_metadata = existing_metadata.model_copy(
+                update={"extensions": existing},
+            )
+            entry = entry.model_copy(update={"metadata": updated_metadata})
         return r[p.Ldif.Entry].ok(entry)
 
 

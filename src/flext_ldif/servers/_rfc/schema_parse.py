@@ -37,7 +37,7 @@ class FlextLdifServersRfcSchemaParse(
             The resulting ``bool``.
 
         """
-        if isinstance(oc_definition, m.Ldif.SchemaObjectClass):
+        if isinstance(oc_definition, p.Ldif.SchemaObjectClass):
             matches_server_patterns: bool = u.Ldif.matches_server_patterns(
                 value=oc_definition,
                 settings=settings,

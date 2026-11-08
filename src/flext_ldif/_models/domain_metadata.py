@@ -16,7 +16,7 @@ from typing import Annotated, ClassVar
 
 from flext_core import m
 
-from flext_ldif import FlextLdifShared, c, t
+from flext_ldif import FlextLdifShared, c, p, t
 from flext_ldif._models import (
     FlextLdifModelsAclConvert,
     FlextLdifModelsDomainAttributes,
@@ -320,11 +320,14 @@ class FlextLdifModelsDomainMetadata:
             ),
         ] = None
         schema_format_details: Annotated[
-            (FlextLdifModelsDomainMetadata.SchemaFormatDetails | None),
-            m.Field(
-                description="Schema formatting details for round-trip preservation",
+            (p.Ldif.SchemaFormatDetails | None),
+            t.schema_for_model(
+                lambda: FlextLdifModelsDomainMetadata.SchemaFormatDetails,
             ),
-        ] = None
+        ] = m.Field(
+            default=None,
+            description="Schema formatting details for round-trip preservation",
+        )
         acl_conversion: Annotated[
             FlextLdifModelsAclConvert.AclEntryConversion | None,
             m.Field(

@@ -10,7 +10,7 @@ from collections.abc import Callable, MutableSequence
 
 from flext_cli import u
 
-from flext_ldif import FlextLdifModels, c, p
+from flext_ldif import c, p
 from flext_ldif._utilities._dn import FlextLdifUtilitiesDNParse
 
 

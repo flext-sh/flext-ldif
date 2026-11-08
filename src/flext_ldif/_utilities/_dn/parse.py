@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import overload
 
-from flext_ldif import FlextLdifModels, c, p, r, t
+from flext_ldif import c, p, r, t
 from flext_ldif._utilities import FlextLdifUtilitiesEntry
 from flext_ldif._utilities._dn import FlextLdifUtilitiesDNRdn
 

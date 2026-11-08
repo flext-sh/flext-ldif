@@ -21,7 +21,6 @@ from collections.abc import MutableMapping, MutableSequence
 from typing import ClassVar
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif._models import FlextLdifModelsDomainEntryChangeOperationValue
 
 
 class FlextLdifServersOudSchemaWrite:
@@ -214,9 +213,7 @@ class FlextLdifServersOudSchemaWrite:
             if change_operation.attribute.lower() not in cls._SCHEMA_DEFINITION_ATTRS:
                 normalized_operations.append(change_operation)
                 continue
-            new_values: MutableSequence[
-                FlextLdifModelsDomainEntryChangeOperationValue.ChangeOperationValue
-            ] = []
+            new_values: MutableSequence[p.Ldif.ChangeOperationValue] = []
             for value_data in change_operation.values:
                 normalized_result = cls._normalize_definition_value(
                     value_data.value,

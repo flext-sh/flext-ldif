@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableMapping, MutableSequence, Sequence
 from typing import ClassVar, override
 
 from flext_ldif import c, p, r, t, u
@@ -81,7 +81,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
 
     @staticmethod
     def _declared_names(
-        values: MutableSequence[p.Ldif.ChangeOperationValue],
+        values: Sequence[p.Ldif.ChangeOperationValue],
     ) -> set[str]:
         """Collect the attribute names declared by schema change values.
 
@@ -101,7 +101,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
 
     @staticmethod
     def _strip_names_for_registry(
-        values: MutableSequence[p.Ldif.ChangeOperationValue],
+        values: Sequence[p.Ldif.ChangeOperationValue],
     ) -> MutableSequence[p.Ldif.ChangeOperationValue]:
         """Strip NAME declarations from schema values for registry processing.
 
@@ -123,7 +123,7 @@ class FlextLdifServersOudSchema(FlextLdifServersRfcSchema):
 
     @staticmethod
     def _sanitize_schema_values(
-        values: MutableSequence[p.Ldif.ChangeOperationValue],
+        values: Sequence[p.Ldif.ChangeOperationValue],
     ) -> MutableSequence[p.Ldif.ChangeOperationValue]:
         """Rewrite schema values into the OUD-acceptable dialect.
 

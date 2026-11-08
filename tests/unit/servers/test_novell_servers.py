@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif.servers import FlextLdifServersNovell
-from tests import c, m, p, tm, u
+from tests import c, m, tm, u
 
 
 class TestsFlextLdifNovellServers:
@@ -78,7 +78,7 @@ class TestsFlextLdifNovellServers:
         "test_case", u.Tests.server_attribute_test_cases(c.Tests.NOVELL)
     )
     def test_can_handle_attribute_matches_expected_verdict(
-        test_case: p.Tests.AttributeTestCase,
+        test_case: m.Tests.AttributeTestCase,
         schema_server: FlextLdifServersNovell.Schema,
     ) -> None:
         """Novell attribute definitions are recognised, RFC ones are not."""
@@ -147,7 +147,7 @@ class TestsFlextLdifNovellServers:
         u.Tests.objectclass_test_cases(c.Tests.NOVELL_OBJECTCLASS_CASE_ROWS),
     )
     def test_can_handle_objectclass_matches_expected_verdict(
-        test_case: p.Tests.ObjectClassTestCase,
+        test_case: m.Tests.ObjectClassTestCase,
         schema_server: FlextLdifServersNovell.Schema,
     ) -> None:
         """Novell objectClass definitions are recognised, RFC ones are not."""
@@ -277,7 +277,7 @@ class TestsFlextLdifNovellServers:
         ids=lambda tc: tc.scenario,
     )
     def test_can_handle_entry_matches_expected_verdict(
-        test_case: p.Tests.EntryTestCase,
+        test_case: m.Tests.EntryTestCase,
         entry_server: FlextLdifServersNovell.Entry,
     ) -> None:
         """Novell entries (by DN marker, attribute, or objectClass) are detected."""

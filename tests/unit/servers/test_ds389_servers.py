@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif.servers import FlextLdifServersDs389
-from tests import c, m, p, t, tm, u
+from tests import c, m, t, tm, u
 
 
 class TestsFlextLdifDs389Servers:
@@ -34,7 +34,7 @@ class TestsFlextLdifDs389Servers:
     )
     def test_can_handle_attribute_matches_expected(
         self,
-        test_case: p.Tests.AttributeTestCase,
+        test_case: m.Tests.AttributeTestCase,
     ) -> None:
         """can_handle_attribute reflects DS389 ownership per case table."""
         tm.that(
@@ -108,7 +108,7 @@ class TestsFlextLdifDs389Servers:
     )
     def test_can_handle_objectclass_matches_expected(
         self,
-        test_case: p.Tests.ObjectClassTestCase,
+        test_case: m.Tests.ObjectClassTestCase,
     ) -> None:
         """can_handle_objectclass reflects DS389 ownership per case table."""
         tm.that(
@@ -201,7 +201,7 @@ class TestsFlextLdifDs389Servers:
         ids=lambda tc: tc.scenario,
     )
     def test_entry_can_handle_matches_expected(
-        test_case: p.Tests.EntryTestCase,
+        test_case: m.Tests.EntryTestCase,
     ) -> None:
         """Entry.can_handle reflects DS389 ownership per case table."""
         entry_server = tm.instance(

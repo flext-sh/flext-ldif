@@ -219,7 +219,7 @@ class FlextLdifServersRfcSchemaWrite(
             Result carrying the definition string, or a failure.
 
         """
-        if isinstance(data, m.Ldif.SchemaAttribute):
+        if isinstance(data, p.Ldif.SchemaAttribute):
             attr_transformed = self._transform_attribute_for_write(data)
             if not attr_transformed.oid:
                 return r[str].fail("RFC attribute writing failed: missing OID")

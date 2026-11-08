@@ -242,7 +242,7 @@ class TestsFlextLdifOudToOidMigration:
         )
         source_dns = self._dn_set(source_entries)
 
-        write_result = oid.write(source_entries)
+        write_result = oid.write(list(source_entries))
         tm.ok(write_result)
         written_ldif = tm.instance(write_result.value, str)
         tm.ok(bool(written_ldif.strip()), msg="OID write produced empty content")
@@ -262,8 +262,8 @@ class TestsFlextLdifOudToOidMigration:
         tm.ok(parsed)
         entries = parsed.value.entries
 
-        first = oid.write(entries)
-        second = oid.write(entries)
+        first = oid.write(list(entries))
+        second = oid.write(list(entries))
         tm.ok(first.success, msg="First OID write must succeed")
         tm.ok(second.success, msg="Second OID write must succeed")
 

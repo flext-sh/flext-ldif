@@ -57,7 +57,13 @@ class FlextLdifConversionAclPreserve(s[p.Ldif.Response]):
         """
         original_permissions = original_acl.permissions
         orig_perms_dict: t.MutableBoolMapping = (
-            original_permissions.model_dump(exclude_defaults=True, exclude_unset=True)
+            {
+                key: bool(value)
+                for key, value in original_permissions.model_dump(
+                    exclude_defaults=True,
+                    exclude_unset=True,
+                ).items()
+            }
             if original_permissions
             else {}
         )
@@ -162,7 +168,13 @@ class FlextLdifConversionAclPreserve(s[p.Ldif.Response]):
         """
         original_permissions = original_acl.permissions
         orig_perms_dict: t.MutableBoolMapping = (
-            original_permissions.model_dump(exclude_defaults=True, exclude_unset=True)
+            {
+                key: bool(value)
+                for key, value in original_permissions.model_dump(
+                    exclude_defaults=True,
+                    exclude_unset=True,
+                ).items()
+            }
             if original_permissions
             else {}
         )

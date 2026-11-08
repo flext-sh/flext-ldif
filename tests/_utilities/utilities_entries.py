@@ -132,7 +132,7 @@ class TestsFlextLdifEntryBuilders(FlextTestsUtilitiesFixturesDSL):
         return "\n".join(blocks)
 
     @staticmethod
-    def parametrize_real_data() -> Sequence[p.Tests.LdifTestData]:
+    def parametrize_real_data() -> Sequence[m.Tests.LdifTestData]:
         """Generate parametrized test data for comprehensive coverage.
 
         Returns:
@@ -157,7 +157,7 @@ class TestsFlextLdifEntryBuilders(FlextTestsUtilitiesFixturesDSL):
         cls,
         server_type: t.Tests.FixtureServer,
         fixture_type: t.Tests.FixtureKind,
-    ) -> p.Tests.FixtureMetadata:
+    ) -> m.Tests.FixtureMetadata:
         """Return metadata for one fixture file (cached per file path)."""
         file_path = cls.path(server_type, fixture_type)
         cached = cls._fixture_metadata_cache.get(file_path)

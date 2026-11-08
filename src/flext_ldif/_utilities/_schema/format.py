@@ -14,7 +14,7 @@ from flext_cli import u
 from flext_ldif import c, p
 
 if TYPE_CHECKING:
-    from flext_ldif import FlextLdifModels
+    pass
 
 
 class FlextLdifUtilitiesSchemaFormat:

@@ -10,7 +10,7 @@ from typing import ClassVar
 
 from flext_cli import u
 
-from flext_ldif import FlextLdifModels, p
+from flext_ldif import p
 
 
 class FlextLdifUtilitiesMetadataTracking:
