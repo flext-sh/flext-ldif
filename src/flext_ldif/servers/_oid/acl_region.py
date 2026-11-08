@@ -24,9 +24,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import override
-
 from collections.abc import Sequence
+from typing import override
 
 from flext_ldif import c, m, p, r
 from flext_ldif.servers._oid import (

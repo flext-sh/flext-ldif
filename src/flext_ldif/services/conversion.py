@@ -69,8 +69,14 @@ class FlextLdifConversion(FlextLdifConversionEntry, FlextLdifConversionAcl):
 
     def convert_model(
         self,
-        source: str | p.Ldif.ServerReference | p.Ldif.ServerServer | FlextLdifServersBase,
-        target: str | p.Ldif.ServerReference | p.Ldif.ServerServer | FlextLdifServersBase,
+        source: str
+        | p.Ldif.ServerReference
+        | p.Ldif.ServerServer
+        | FlextLdifServersBase,
+        target: str
+        | p.Ldif.ServerReference
+        | p.Ldif.ServerServer
+        | FlextLdifServersBase,
         model_instance: p.Ldif.Entry
         | p.Ldif.SchemaAttribute
         | p.Ldif.SchemaObjectClass

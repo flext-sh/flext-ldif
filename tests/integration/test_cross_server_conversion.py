@@ -16,8 +16,8 @@ from __future__ import annotations
 from collections.abc import MutableSequence, Sequence
 from typing import TYPE_CHECKING
 
-from tests import c, m, p, tm
 from flext_ldif.servers._base.schema import FlextLdifServersBaseSchema
+from tests import c, m, p, tm
 
 if TYPE_CHECKING:
     from flext_ldif.servers import FlextLdifServersBase
