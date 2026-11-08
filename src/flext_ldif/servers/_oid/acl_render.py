@@ -27,7 +27,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c, m, p, r
+from flext_ldif import c, m, p, r, t
 from flext_ldif.servers._oid import (
     FlextLdifConstantsServersOid,
     FlextLdifServersOidAclRegion,
@@ -99,29 +99,150 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         self,
         rule: p.Ldif.AclLevelRule,
         leaf: p.Ldif.AclBindLeaf,
-    ) -> bool:
-        """R1: return whether some level decides browse for every session of leaf.
+    ) -> tuple[bool, list[t.Ldif.AclBrowsePlacement]]:
+        """R1: whether the subject has browse decided, and where a session browses.
 
         OID returns attribute values only with browse on the entry (OID-30
-        Table 30-2, Table 30-3). For an ACP the chain starts at the ACP
-        itself, so it holds for every descendant.
+        Table 30-2, Table 30-3), and it decides browse and the attribute right
+        per session, from all of its groups. A level whose entry ACI names
+        browse for a subject covering this one decides browse for all of its
+        sessions; denials are R5's. A grant of browse holds only for its own
+        subject and on the entries its ACI filter matches. Every browse grant
+        meeting the grant's region counts: on the rule's own level and the
+        farther ACPs (placed at the rule's anchor; the anchor's entry level on
+        the anchor alone) and, for an ACP rule, on the nearer levels below it
+        (placed at that entry, or its subtree for an ACP). A grant to a subject
+        covering this one needs nothing more, to a narrower one that subject,
+        and to any other subject a session holding both, unless no session can
+        (measured on OUD, algar 27cd4b2d, spec v4.3).
 
         Returns:
-            The resulting ``bool``.
+            Whether some level decides browse for the subject, and the
+            placements: subject, required subject, filter, anchor, scope.
 
         """
+        constants = FlextLdifConstantsServersOid
+        to_oud = FlextLdifServersOidAclToOud
         acp = c.Ldif.AclConvertType.ORCLACI.value
+        entry = c.Ldif.AclConvertType.ORCLENTRYLEVELACI.value
+        base = constants.AclScope.BASE.value
+        own_scope = base if rule.level == entry else None
         chain = [(key, acp) for key in self.farther_acp_keys(rule)]
-        browse = FlextLdifConstantsServersOid.ACL_RIGHT_BROWSE
-        return any(
-            clause.leaf is not None
-            and browse in clause.allow | clause.deny
-            and FlextLdifServersOidAclToOud.covers(clause.leaf, leaf)
-            for key, level in ((rule.key, rule.level), *chain)
-            for item in self.rules_at(key, level)
-            if item.attrs is None
-            for clause in item.clauses
-        )
+        sources: list[tuple[tuple[str, str], bool, str, str | None]] = [
+            (place, True, rule.key, own_scope)
+            for place in ((rule.key, rule.level), *chain)
+        ]
+        if rule.level == acp:
+            sources.append(((rule.key, entry), False, rule.key, base))
+            sources.extend(
+                ((key, level), False, key, base if level == entry else None)
+                for key in self._keys
+                if key != rule.key and to_oud.is_ancestor_or_self(rule.key, key)
+                for level in (entry, acp)
+            )
+        browse = constants.ACL_RIGHT_BROWSE
+        decided = False
+        placements: list[t.Ldif.AclBrowsePlacement] = []
+        for (key, level), deciding, anchor, scope in sources:
+            for item in self.rules_at(key, level):
+                if item.attrs is not None:
+                    continue
+                for clause in item.clauses:
+                    if clause.leaf is None or browse not in clause.allow | clause.deny:
+                        continue
+                    wider = to_oud.covers(clause.leaf, leaf)
+                    decided = decided or (wider and deciding)
+                    if browse not in clause.allow or to_oud.disjoint(
+                        clause.leaf,
+                        leaf,
+                    ):
+                        continue
+                    subject, also = (
+                        (leaf, None)
+                        if wider
+                        else (clause.leaf, None)
+                        if to_oud.covers(leaf, clause.leaf)
+                        else (leaf, clause.leaf)
+                    )
+                    placements.append((
+                        subject,
+                        also,
+                        item.target_filter,
+                        anchor,
+                        scope,
+                    ))
+        return decided, placements
+
+    @staticmethod
+    def browse_coupled(
+        leaf: p.Ldif.AclBindLeaf,
+        targetfilter: str | None,
+        home: tuple[str, str | None],
+        grants: list[t.Ldif.AclBrowsePlacement],
+    ) -> list[t.Ldif.AclBrowsePlacement]:
+        """R1: the placements of a read or compare grant under its browse.
+
+        Each placement is a subject (the grant's own, or a narrower one that
+        browses), the subject a session must also hold (a browse holder
+        unrelated to the grant's subject), the grant's filter narrowed to the
+        entries browsed, and where it lands. A placement the grant's own
+        unfiltered placement already covers is dropped.
+
+        Returns:
+            The placements; the grant unchanged at ``home`` when its subject
+            browses all of it or browse is granted nowhere (R5 decides that).
+
+        """
+
+        def narrowed(filters: set[str | None]) -> str | None:
+            if None in filters:
+                return targetfilter
+            named = sorted(item for item in filters if item is not None)
+            browse = named[0] if len(named) == 1 else f"(|{''.join(named)})"
+            return browse if targetfilter is None else f"(&{targetfilter}{browse})"
+
+        anchor, scope = home
+        by_place: dict[
+            tuple[str, str, str, str],
+            tuple[t.Ldif.AclBrowsePlacement, set[str | None]],
+        ] = {}
+        for subject, also, item_filter, place, place_scope in grants:
+            found = by_place.setdefault(
+                (
+                    subject.key,
+                    "" if also is None else also.key,
+                    place,
+                    place_scope or "",
+                ),
+                ((subject, also, None, place, place_scope), set()),
+            )
+            found[1].add(item_filter)
+        own_key = (leaf.key, "", anchor, scope or "")
+        own_whole = by_place.get(own_key, ((leaf, None, None, anchor, scope), set()))[1]
+        if not grants or None in own_whole:
+            return [(leaf, None, targetfilter, anchor, scope)]
+        placements: list[t.Ldif.AclBrowsePlacement] = []
+        for key, ((subject, also, _, place, place_scope), filters) in sorted(
+            by_place.items(),
+            key=lambda pair: (
+                pair[0][2] != anchor,
+                pair[0][2],
+                pair[0][3] != scope or "",
+                pair[0][0] != leaf.key,
+                pair[0][0],
+                pair[0][1],
+            ),
+        ):
+            reached = filters if key == own_key else filters - own_whole
+            if reached:
+                placements.append((
+                    subject,
+                    also,
+                    narrowed(reached),
+                    place,
+                    place_scope,
+                ))
+        return placements
 
     def form(
         self,
@@ -295,8 +416,12 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         forms = self.form(rule, resolution)
         if forms.failure:
             return r[list[m.Ldif.AciStatement]].from_failure(forms)
-        bind = m.Ldif.AclBindRule(include=self.granted_leaf(resolution.leaf))
-        browse = rule.attrs is None or self.browse_resolved(rule, resolution.leaf)
+        no_grants: list[t.Ldif.AclBrowsePlacement] = []
+        browse, grants = (
+            (True, no_grants)
+            if rule.attrs is None
+            else self.browse_resolved(rule, resolution.leaf)
+        )
         statements: list[p.Ldif.AciStatement] = []
         for form in forms.value:
             rights = tuple(
@@ -314,23 +439,40 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
                 )
             if not rights:
                 continue
-            kept = form.model_copy(
-                update={
-                    "rights": rights,
-                    "rule": form.rule if rule.key else constants.AclRule.R9,
-                },
+            home = (rule.key, form.targetscope)
+            placements: list[t.Ldif.AclBrowsePlacement] = (
+                self.browse_coupled(
+                    resolution.leaf,
+                    form.targetfilter,
+                    home,
+                    grants,
+                )
+                if set(rights) & set(constants.ACL_BROWSE_DENIAL_RIGHTS)
+                else [(resolution.leaf, None, form.targetfilter, *home)]
             )
-            statements.append(
-                self.statement(
-                    m.Ldif.AclDecision(
-                        rule=rule,
-                        resolution=resolution,
-                        form=kept,
-                        bind=bind,
+            for subject, also, targetfilter, anchor, scope in placements:
+                kept = form.model_copy(
+                    update={
+                        "rights": rights,
+                        "targetfilter": targetfilter,
+                        "targetscope": scope,
+                        "rule": form.rule if rule.key else constants.AclRule.R9,
+                    },
+                )
+                statements.append(
+                    self.statement(
+                        m.Ldif.AclDecision(
+                            rule=rule,
+                            resolution=resolution,
+                            form=kept,
+                            bind=m.Ldif.AclBindRule(
+                                include=self.granted_leaf(subject),
+                                require=() if also is None else (also,),
+                            ),
+                        ),
+                        m.Ldif.AclRegion(anchor=anchor, scope=scope),
                     ),
-                    m.Ldif.AclRegion(anchor=rule.key, scope=form.targetscope),
-                ),
-            )
+                )
         return r[list[m.Ldif.AciStatement]].ok(statements)
 
     def deny_statements(
@@ -564,19 +706,24 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
 
     @classmethod
     def render_bind(cls, bind: p.Ldif.AclBindRule) -> str:
-        """Render a subject with its R5 exclusions: ``(S and not (E1 or E2))``.
+        """Render a subject with its R1 requirements and R5 exclusions.
+
+        ``(S and R1 and not (E1 or E2))``: the session matches the subject,
+        every required subject, and none of the exclusions.
 
         Returns:
-            The resulting ``str``.
+            The OUD bind rule.
 
         """
-        include = cls.render_leaf(bind.include)
+        matched = " and ".join(
+            cls.render_leaf(leaf) for leaf in (bind.include, *bind.require)
+        )
         if not bind.exclude:
-            return include
+            return f"({matched})" if bind.require else matched
         excluded = " or ".join(cls.render_leaf(leaf) for leaf in bind.exclude)
         if len(bind.exclude) > 1:
             excluded = f"({excluded})"
-        return f"({include} and not {excluded})"
+        return f"({matched} and not {excluded})"
 
     @staticmethod
     def target_parts(statement: p.Ldif.AciStatement) -> list[str]:
