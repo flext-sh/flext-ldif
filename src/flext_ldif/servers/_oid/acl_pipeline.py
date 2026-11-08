@@ -75,32 +75,63 @@ class FlextLdifServersOidAclPipeline:
                     return result.from_failure(internal)
                 continue
             for name in names.value:
+                level: list[p.Ldif.AclLevelRule] = []
                 for index, value in enumerate(attributes[name], 1):
                     built = FlextLdifServersOidAclAssemble.build_rule(
                         name.lower(), dn, value, index, directory
                     )
                     if built.failure:
                         return result.from_failure(built)
-                    rules.append(built.value[0])
+                    level.append(built.value[0])
                     events.extend(built.value[1])
+                rules.extend(
+                    FlextLdifServersOidAclAssemble.merge_identical_objects(
+                        FlextLdifServersOidAclAssemble.append_to_all(level),
+                    ),
+                )
         render = FlextLdifServersOidAclRender(rules, suffix=suffix, directory=directory)
         emitted = render.emit()
         if emitted.failure:
             return result.from_failure(emitted)
+        statements = cls._merge_rights(emitted.value)
         values: dict[str, list[str]] = {}
-        for statement in emitted.value:
+        for statement in statements:
             rendered = FlextLdifServersOidAclRender.render_statement(statement)
             placed = values.setdefault(to_oud.dn_key(statement.dn), [])
             if rendered not in placed:
                 placed.append(rendered)
         return result.ok(
             m.Ldif.AclDirectoryConversion(
-                statements=tuple(emitted.value),
+                statements=tuple(statements),
                 values={key: tuple(found) for key, found in values.items()},
                 events=(*events, *render.events),
                 consumed=frozenset(consumed),
             ),
         )
+
+    @staticmethod
+    def _merge_rights(
+        statements: Sequence[p.Ldif.AciStatement],
+    ) -> list[p.Ldif.AciStatement]:
+        """Merge statements that differ only in their rights, in emission order.
+
+        Returns:
+            One statement per distinct remainder, rights in OUD order.
+
+        """
+        order = FlextLdifConstantsServersOid.OUD_RIGHTS_ORDER
+        merged: dict[str, p.Ldif.AciStatement] = {}
+        for statement in statements:
+            key = statement.model_copy(update={"rights": ()}).model_dump_json()
+            held = merged.get(key)
+            if held is None:
+                merged[key] = statement
+                continue
+            rights = {*held.rights, *statement.rights}
+            merged[key] = held.model_copy(
+                update={"rights": tuple(right for right in order if right in rights)},
+            )
+        return list(merged.values())
 
     @classmethod
     def apply_to_entry(
