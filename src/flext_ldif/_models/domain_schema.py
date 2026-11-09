@@ -15,8 +15,8 @@ from typing import Annotated
 
 from flext_cli import m
 
-from flext_ldif import c, p
-from flext_ldif._models import FlextLdifModelsBases
+from flext_ldif import c
+from flext_ldif._models import FlextLdifModelsBases, FlextLdifModelsDomainMetadata
 
 
 class FlextLdifModelsDomainSchema:
@@ -139,7 +139,7 @@ class FlextLdifModelsDomainSchema:
             ),
         ] = None
         metadata: Annotated[
-            p.Ldif.ServerMetadata | None,
+            FlextLdifModelsDomainMetadata.ServerMetadata | None,
             m.Field(description="Server-specific metadata for schema attribute"),
         ] = None
 
@@ -211,7 +211,7 @@ class FlextLdifModelsDomainSchema:
             m.Field(description="Optional regex pattern for value validation"),
         ] = None
         metadata: Annotated[
-            p.Ldif.ServerMetadata | None,
+            FlextLdifModelsDomainMetadata.ServerMetadata | None,
             m.Field(description="Server-specific server metadata"),
         ] = None
 
@@ -271,7 +271,7 @@ class FlextLdifModelsDomainSchema:
             m.Field(description="Optional attributes (RFC 4512 MAY)"),
         ] = None
         metadata: Annotated[
-            p.Ldif.ServerMetadata | None,
+            FlextLdifModelsDomainMetadata.ServerMetadata | None,
             m.Field(description="Server-specific metadata for schema object class"),
         ] = None
 

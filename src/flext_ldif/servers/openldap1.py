@@ -522,7 +522,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             read_perm = FlextLdifConstantsServersRfc.PERMISSION_READ
             write_perm = FlextLdifConstantsServersRfc.PERMISSION_WRITE
             auth_perm = FlextLdifServersOpenldap1.Constants.ACL_PERMISSION_AUTH
-            return p.Ldif.AclPermissions(
+            return m.Ldif.AclPermissions(
                 read=read_perm in first_access or write_perm in first_access,
                 write=write_perm in first_access,
                 add=write_perm in first_access,

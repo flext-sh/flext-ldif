@@ -14,6 +14,23 @@ from tests import c, m, p, t, tm, u
 class TestsFlextLdifAclService:
     """Cover ACL behavior through the public ldif facade."""
 
+    @staticmethod
+    def test_parse_openldap1_constructs_permission_values(
+        api: p.Ldif.LdifClient,
+    ) -> None:
+        """An OpenLDAP read grant produces concrete, readable permission fields."""
+        acl = tm.ok(
+            api.parse_acl_string(
+                "access to * by * read",
+                server_type=c.Tests.OPENLDAP1,
+            ),
+        )
+        permissions = tm.not_none(acl.permissions)
+        tm.that(permissions, is_=m.Ldif.AclPermissions)
+        tm.ok(permissions.read)
+        tm.ok(permissions.search)
+        tm.fail(permissions.write)
+
     @u.Tests.fixture
     @staticmethod
     def svc(api: p.Ldif.LdifClient) -> p.Ldif.LdifClient:
@@ -79,7 +96,7 @@ class TestsFlextLdifAclService:
         required: t.BoolMapping,
     ) -> None:
         """Native permission models and mutable mappings retain their semantics."""
-        permissions = m.Ldif.AclPermissions.model_validate(required)
+        permissions = m.Ldif.AclPermissions.model_validate(dict(required))
         acl = m.Ldif.Acl(name="permission-contract", permissions=permissions)
         for supplied in (permissions, UserDict(required)):
             evaluation = tm.ok(svc.evaluate_acl_context([acl], supplied))

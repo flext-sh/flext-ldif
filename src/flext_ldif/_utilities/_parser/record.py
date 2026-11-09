@@ -172,7 +172,7 @@ class FlextLdifUtilitiesParserRecord:
                 state.current_change_operation,
                 state.change_operations,
             )
-            state.current_change_operation = p.Ldif.ChangeOperation(
+            state.current_change_operation = FlextLdifModels.Ldif.ChangeOperation(
                 operation=FlextLdifUtilitiesParserRecord._MODIFY_OPS[key_lower],
                 attribute=decoded.value,
             )
