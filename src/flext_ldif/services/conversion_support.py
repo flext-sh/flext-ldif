@@ -39,8 +39,7 @@ class FlextLdifConversionSupport(FlextLdifServer):
         ),
     ] = None
     acl_conversion: Annotated[
-        p.Ldif.AclDirectoryConversion,
-        t.schema_for_model(lambda: m.Ldif.AclDirectoryConversion),
+        m.Ldif.AclDirectoryConversion,
         m.Field(
             description=(
                 "Directory-wide ACL conversion each converted entry applies; "
