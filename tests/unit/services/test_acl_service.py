@@ -15,7 +15,8 @@ class TestsFlextLdifAclService:
     """Cover ACL behavior through the public ldif facade."""
 
     @u.Tests.fixture
-    def svc(self, api: p.Ldif.LdifClient) -> p.Ldif.LdifClient:
+    @staticmethod
+    def svc(api: p.Ldif.LdifClient) -> p.Ldif.LdifClient:
         """Provide ``svc``.
 
         Returns:

@@ -39,8 +39,8 @@ class FlextLdifUtilitiesParserRecord:
         comments: MutableSequence[str]
         raw_record_lines: MutableSequence[str]
         controls: MutableSequence[FlextLdifModelsDomainEntryControl.Control]
-        change_operations: MutableSequence[FlextLdifModels.Ldif.ChangeOperation]
-        current_change_operation: FlextLdifModels.Ldif.ChangeOperation | None
+        change_operations: MutableSequence[p.Ldif.ChangeOperation]
+        current_change_operation: p.Ldif.ChangeOperation | None
         changetype: c.Ldif.ChangeType | None
         record_kind: c.Ldif.RecordKind
         newrdn: str | None
@@ -172,7 +172,7 @@ class FlextLdifUtilitiesParserRecord:
                 state.current_change_operation,
                 state.change_operations,
             )
-            state.current_change_operation = FlextLdifModels.Ldif.ChangeOperation(
+            state.current_change_operation = p.Ldif.ChangeOperation(
                 operation=FlextLdifUtilitiesParserRecord._MODIFY_OPS[key_lower],
                 attribute=decoded.value,
             )

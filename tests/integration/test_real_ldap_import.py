@@ -98,13 +98,13 @@ class TestsFlextLdifRealLdapImport:
 
     @staticmethod
     def _read_back(
-        ldap_connection: p.Ldap3Connection,
+        ldap_connection: p.Ldif.Ldap3Connection,
         dn: str,
-    ) -> p.Ldap3Entry:
+    ) -> p.Ldif.Ldap3Entry:
         """Search the freshly imported entry and return the single result.
 
         Returns:
-            The resulting ``p.Ldap3Entry``.
+            The resulting ``p.Ldif.Ldap3Entry``.
 
         """
         found = ldap_connection.search(
@@ -116,7 +116,7 @@ class TestsFlextLdifRealLdapImport:
         if not found:
             msg = f"expected imported entry to be searchable at {dn}"
             tm.reject(msg)
-        ldap_entry: p.Ldap3Entry = ldap_connection.entries[0]
+        ldap_entry: p.Ldif.Ldap3Entry = ldap_connection.entries[0]
         return ldap_entry
 
     @c.Tests.MARK.parametrize(
@@ -159,7 +159,7 @@ class TestsFlextLdifRealLdapImport:
 
     def test_import_single_entry_roundtrips_to_ldap(
         self,
-        ldap_connection: p.Ldap3Connection,
+        ldap_connection: p.Ldif.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
@@ -189,7 +189,7 @@ class TestsFlextLdifRealLdapImport:
 
     def test_import_preserves_binary_attribute(
         self,
-        ldap_connection: p.Ldap3Connection,
+        ldap_connection: p.Ldif.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
         make_test_username: Callable[[str], str],
@@ -228,7 +228,7 @@ class TestsFlextLdifRealLdapImport:
 
     def test_import_from_file_matches_string_parse(
         self,
-        ldap_connection: p.Ldap3Connection,
+        ldap_connection: p.Ldif.Ldap3Connection,
         clean_test_ou: str,
         flext_api: p.Ldif.LdifClient,
         tmp_path: Path,

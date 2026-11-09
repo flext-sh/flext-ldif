@@ -80,7 +80,7 @@ class FlextLdifServersOidAclToOud:
         other = c.Ldif.ALL_ATTR_PERMS if is_entry else c.Ldif.ALL_ENTRY_PERMS
         kind = c.Ldif.AclTargetType.ENTRY if is_entry else c.Ldif.AclTargetType.ATTR
         tokens = [raw.strip().lower() for raw in permissions]
-        result = r[m.Ldif.AclPermissionResolution]
+        result = r[p.Ldif.AclPermissionResolution]
         if not tokens:
             return result.fail("Empty OID access list (manual review required)")
         if not all(tokens):
@@ -328,7 +328,7 @@ class FlextLdifServersOidAclToOud:
 
         """
         constants = FlextLdifConstantsServersOid
-        result = r[tuple[m.Ldif.AclBindLeaf | None, str]]
+        result = r[tuple[p.Ldif.AclBindLeaf | None, str]]
         dn = cls.normalize_dn(value)
         key = dn.lower()
         if c.Ldif.ACL_WILDCARD in dn:
@@ -359,7 +359,7 @@ class FlextLdifServersOidAclToOud:
 
         """
         constants = FlextLdifConstantsServersOid
-        result = r[tuple[m.Ldif.AclBindLeaf | None, str]]
+        result = r[tuple[p.Ldif.AclBindLeaf | None, str]]
         dn = cls.normalize_dn(value)
         if match := constants.OID_PREFIX_WILDCARD_RE.match(dn):
             base = cls.normalize_dn(match.group("base"))
@@ -411,7 +411,7 @@ class FlextLdifServersOidAclToOud:
         constants = FlextLdifConstantsServersOid
         kinds = c.Ldif.OidSubjectKind
         leaves = constants.AclLeafKind
-        result = r[tuple[m.Ldif.AclBindLeaf | None, str]]
+        result = r[tuple[p.Ldif.AclBindLeaf | None, str]]
         if subject.bindmode or subject.bindipfilter:
             return result.fail(
                 f"R8: bindmode={subject.bindmode!r} bindipfilter="

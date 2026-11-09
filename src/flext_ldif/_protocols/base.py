@@ -339,10 +339,7 @@ class FlextLdifProtocolsBase:
     class RegistryPortOptions(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def registry(self) -> p.Registry:
-            """Explicit instance-scoped dialect registry."""
-            ...
+        registry: p.Registry
 
 
 __all__: list[str] = ["FlextLdifProtocolsBase"]

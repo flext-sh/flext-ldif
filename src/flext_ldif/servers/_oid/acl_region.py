@@ -25,6 +25,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import override
 
 from flext_ldif import c, m, p, r
 from flext_ldif.servers._oid import (
@@ -35,7 +36,7 @@ from flext_ldif.servers._oid import (
 )
 
 
-class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
+class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):  # ruff: ignore[too-many-public-methods]
     """The indexed OID policy and the placement of its OUD denials."""
 
     def __init__(
@@ -79,11 +80,13 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
         )
 
     @staticmethod
+    @override
     def every_attribute() -> p.Ldif.AclAttrSet:
         """Return ``targetattr="*"`` as the negated empty set."""
         return m.Ldif.AclAttrSet(names=frozenset(), negated=True)
 
     @staticmethod
+    @override
     def intersect(
         left: p.Ldif.AclAttrSet, right: p.Ldif.AclAttrSet
     ) -> p.Ldif.AclAttrSet:
@@ -97,12 +100,14 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
         return m.Ldif.AclAttrSet(names=left.names & right.names)
 
     @classmethod
+    @override
     def overlaps(cls, left: p.Ldif.AclAttrSet, right: p.Ldif.AclAttrSet) -> bool:
         """Return whether two attribute sets share an attribute."""
         both = cls.intersect(left, right)
         return both.negated or bool(both.names)
 
     @classmethod
+    @override
     def contains(cls, outer: p.Ldif.AclAttrSet, inner: p.Ldif.AclAttrSet) -> bool:
         """Return whether ``outer`` holds every attribute of ``inner``."""
         return cls.intersect(outer, inner) == inner
@@ -140,21 +145,21 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
         """
         every = self.every_attribute()
         if rule.attrs is None:
-            return r[m.Ldif.AclAttrSet].ok(every)
+            return r[p.Ldif.AclAttrSet].ok(every)
         if rule.attrs != every:
-            return r[m.Ldif.AclAttrSet].ok(rule.attrs)
+            return r[p.Ldif.AclAttrSet].ok(rule.attrs)
         others = [
             other.attrs
             for other in self.rules_at(rule.key, rule.level)
             if other.attrs is not None and other.attrs != every
         ]
         if any(attrs.negated for attrs in others):
-            return r[m.Ldif.AclAttrSet].fail(
+            return r[p.Ldif.AclAttrSet].fail(
                 f"R6b: {rule.dn} has attr!= and attr=(*) at one level; their "
                 "precedence has no OUD form (OID-30 §30.1.6.3)",
             )
         named = frozenset().union(*(attrs.names for attrs in others))
-        return r[m.Ldif.AclAttrSet].ok(m.Ldif.AclAttrSet(names=named, negated=True))
+        return r[p.Ldif.AclAttrSet].ok(m.Ldif.AclAttrSet(names=named, negated=True))
 
     def farther_acp_keys(self, rule: p.Ldif.AclLevelRule) -> list[str]:
         """Return the ACP keys evaluated after the rule's level, nearest first."""
@@ -180,6 +185,7 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
         ]
 
     @staticmethod
+    @override
     def scope_depths(scope: str | None) -> tuple[int, int | None]:
         """Return the depth interval below the anchor a region scope covers."""
         scopes = FlextLdifConstantsServersOid.AclScope
@@ -191,6 +197,7 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
         }
         return depths.get(scope, (0, None))
 
+    @override
     @staticmethod
     def add_scope(level: str) -> str:
         """R4a: the OUD scope of add decided on the new entry, by level.
@@ -205,6 +212,7 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
         return constants.ACL_ENTRYLEVEL_ADD_SCOPE
 
     @classmethod
+    @override
     def level_region(cls, level: str, right: str) -> str | None:
         """Return the OUD region one level decides for one OID right."""
         constants = FlextLdifConstantsServersOid
@@ -215,6 +223,7 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
         return None
 
     @classmethod
+    @override
     def intersects(
         cls,
         region: tuple[int, int | None],
@@ -229,6 +238,7 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
         return (high is None or start <= high) and (end is None or end >= low)
 
     @staticmethod
+    @override
     def simplify(bind: p.Ldif.AclBindRule) -> p.Ldif.AclBindRule | None:
         """Drop exclusions that cannot match; None when one covers the subject.
 
@@ -249,6 +259,7 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
             kept.append(leaf)
         return m.Ldif.AclBindRule(include=bind.include, exclude=tuple(kept))
 
+    @override
     def widen(
         self,
         decision: p.Ldif.AclDecision,
@@ -322,7 +333,7 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
             The conflicting grants, or the failure of a filtered or partial one.
 
         """
-        result = r[list[m.Ldif.AclNearerGrant]]
+        result = r[list[p.Ldif.AclNearerGrant]]
         found: list[p.Ldif.AclNearerGrant] = []
         if decision.rule.level == c.Ldif.AclConvertType.ORCLENTRYLEVELACI:
             return result.ok(found)
@@ -375,7 +386,7 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
         """
         to_oud = FlextLdifServersOidAclToOud
         rule, bind = decision.rule, decision.bind
-        result = r[list[m.Ldif.AclBindLeaf]]
+        result = r[list[p.Ldif.AclBindLeaf]]
         nearer_attrs = self.effective_attrs(nearer)
         if nearer_attrs.failure:
             return result.from_failure(nearer_attrs)
@@ -444,7 +455,7 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
             The placed statements, or the region failure naming the levels.
 
         """
-        result = r[list[m.Ldif.AciStatement]]
+        result = r[list[p.Ldif.AciStatement]]
         conflicts = self.nearer_grants(decision, region)
         if conflicts.failure:
             return result.from_failure(conflicts)
@@ -510,7 +521,7 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
         if len(maximal) > 1 and not targeted and not is_add:
             return self.split_by_child(decision, region, keys)
         if len(maximal) > 1 or (maximal and targeted) or (points and is_add):
-            return r[list[m.Ldif.AciStatement]].fail(
+            return r[list[p.Ldif.AciStatement]].fail(
                 f"R5: denial of {decision.resolution.right} at {decision.rule.dn} "
                 f"(clause {decision.resolution.clause}) overlaps grants of nearer "
                 f"levels at {[self.dn_of(key) for key in keys]}; the region "
@@ -531,7 +542,7 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
                     ),
                 )
         if not maximal:
-            return r[list[m.Ldif.AciStatement]].ok([
+            return r[list[p.Ldif.AciStatement]].ok([
                 self.statement(outside, region),
                 *statements,
             ])
@@ -539,7 +550,7 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
         below = self.split_below(outside, region, at_node)
         if below.failure:
             return below
-        return r[list[m.Ldif.AciStatement]].ok([*below.value, *statements])
+        return r[list[p.Ldif.AciStatement]].ok([*below.value, *statements])
 
     def split_by_child(
         self,
@@ -564,7 +575,7 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
         """
         constants = FlextLdifConstantsServersOid
         to_oud = FlextLdifServersOidAclToOud
-        result = r[list[m.Ldif.AciStatement]]
+        result = r[list[p.Ldif.AciStatement]]
         anchor = region.anchor
         split = decision.model_copy(
             update={
@@ -630,9 +641,9 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
         for nearer in self.rules_at(key, c.Ldif.AclConvertType.ORCLACI.value):
             granted = self.conflicting(decision, nearer)
             if granted.failure:
-                return r[list[m.Ldif.AclBindLeaf]].from_failure(granted)
+                return r[list[p.Ldif.AclBindLeaf]].from_failure(granted)
             leaves.extend(granted.value)
-        return r[list[m.Ldif.AclBindLeaf]].ok(leaves)
+        return r[list[p.Ldif.AclBindLeaf]].ok(leaves)
 
     def without_entries(
         self,
@@ -674,7 +685,7 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
 
         """
         constants = FlextLdifConstantsServersOid
-        result = r[list[m.Ldif.AciStatement]]
+        result = r[list[p.Ldif.AciStatement]]
         is_add = decision.resolution.right == constants.ACL_RIGHT_ADD
         expected = constants.AclScope.SUBORDINATE if is_add else None
         if region.scope != expected:
@@ -738,7 +749,7 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
             [grant.leaf for grant in at_node if grant.level == acp],
         )
         if pushed is None:
-            return r[list[m.Ldif.AciStatement]].ok([anchor_statement])
+            return r[list[p.Ldif.AciStatement]].ok([anchor_statement])
         inner = self.place(
             pushed,
             m.Ldif.AclRegion(
@@ -748,7 +759,7 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):
         )
         if inner.failure:
             return inner
-        return r[list[m.Ldif.AciStatement]].ok([anchor_statement, *inner.value])
+        return r[list[p.Ldif.AciStatement]].ok([anchor_statement, *inner.value])
 
 
 __all__: list[str] = ["FlextLdifServersOidAclRegion"]

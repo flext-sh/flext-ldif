@@ -9,6 +9,7 @@ from __future__ import annotations
 import time
 
 from flext_ldif import c, m, p, r, t, u
+from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services import FlextLdifConversionAcl, FlextLdifConversionEntry
 
 
@@ -68,8 +69,14 @@ class FlextLdifConversion(FlextLdifConversionEntry, FlextLdifConversionAcl):
 
     def convert_model(
         self,
-        source: str | p.Ldif.ServerReference | p.Ldif.ServerServer,
-        target: str | p.Ldif.ServerReference | p.Ldif.ServerServer,
+        source: str
+        | p.Ldif.ServerReference
+        | p.Ldif.ServerServer
+        | FlextLdifServersBase,
+        target: str
+        | p.Ldif.ServerReference
+        | p.Ldif.ServerServer
+        | FlextLdifServersBase,
         model_instance: p.Ldif.Entry
         | p.Ldif.SchemaAttribute
         | p.Ldif.SchemaObjectClass

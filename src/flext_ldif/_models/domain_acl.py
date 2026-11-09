@@ -11,7 +11,7 @@ from typing import Annotated, Self
 
 from flext_cli import m
 
-from flext_ldif import c, t
+from flext_ldif import c, p, t
 from flext_ldif._models import FlextLdifModelsBases, FlextLdifModelsDomainMetadata
 
 
@@ -155,7 +155,7 @@ class FlextLdifModelsDomainAcl:
             m.Field(description="ACL subject specification"),
         ] = None
         permissions: Annotated[
-            FlextLdifModelsDomainAcl.AclPermissions | None,
+            p.Ldif.AclPermissions | None,
             m.Field(description="ACL permission flags"),
         ] = None
         raw_line: Annotated[

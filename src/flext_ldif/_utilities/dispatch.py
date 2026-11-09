@@ -110,7 +110,7 @@ class FlextLdifUtilitiesDispatch:
     ) -> p.Result[t.Ldif.MutableMetadataMapping]: ...
 
     @staticmethod
-    def parse_definition(
+    def parse_definition(  # ruff: ignore[too-many-branches]
         definition: str | p.Ldif.DN | None,
         server_type: str | None = None,
         parse_parts_hook: Callable[[str], t.Ldif.MutableMetadataMapping]
@@ -126,13 +126,25 @@ class FlextLdifUtilitiesDispatch:
         elif isinstance(definition, FlextLdifModels.Ldif.DN):
             result = FlextLdifUtilitiesDN.parse_dn(definition)
         elif parse_parts_hook is None:
-            result = (
-                FlextLdifUtilitiesDN.parse_dn(definition)
-                if server_type is None
-                else FlextLdifUtilitiesSchema.parse_attribute(definition)
-            )
+            if server_type is None:
+                result = FlextLdifUtilitiesDN.parse_dn(definition)
+            else:
+                if isinstance(definition, FlextLdifModels.Ldif.DN):
+                    attr_definition = definition.value
+                elif isinstance(definition, str):
+                    attr_definition = definition
+                else:
+                    attr_definition = ""
+                result = FlextLdifUtilitiesSchema.parse_attribute(attr_definition)
+
         else:
-            parsed_value = parse_parts_hook(definition)
+            if isinstance(definition, FlextLdifModels.Ldif.DN):
+                hook_definition = definition.value
+            elif isinstance(definition, str):
+                hook_definition = definition
+            else:
+                hook_definition = ""
+            parsed_value = parse_parts_hook(hook_definition)
             if isinstance(parsed_value, p.Result):
                 result = parsed_value
             else:
@@ -189,14 +201,18 @@ class FlextLdifUtilitiesDispatch:
                     value_or_entries.value,
                     *validators,
                 )
-            case _:
-                validated_value: t.JsonValue = u.normalize_to_json_value(
-                    value_or_entries,
-                )
+            case _ if isinstance(value_or_entries, p.Ldif.DN):
                 result = FlextLdifUtilitiesValidation.validate_ldif_value(
-                    validated_value,
+                    value_or_entries.value,
                     *validators,
                 )
+            case _ if isinstance(value_or_entries, str):
+                result = FlextLdifUtilitiesValidation.validate_ldif_value(
+                    value_or_entries,
+                    *validators,
+                )
+            case _:
+                result = r[t.JsonValue].fail("unsupported validation value")
         return result
 
     @staticmethod

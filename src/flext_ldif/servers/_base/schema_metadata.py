@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping, MutableSequence
 
-from flext_ldif import c, m, r, t, u
+from flext_ldif import c, m, p, r, t, u
 
 
 class FlextLdifServersBaseSchemaMetadata:
@@ -99,7 +99,7 @@ class FlextLdifServersBaseSchemaMetadata:
         syntax_validation_error: str | None,
         parsed_definition: t.Ldif.MutableMetadataMapping,
         server_type: str | None = None,
-    ) -> m.Ldif.ServerMetadata | None:
+    ) -> p.Ldif.ServerMetadata | None:
         """Build metadata for attribute including extensions and OID validation.
 
         Returns:

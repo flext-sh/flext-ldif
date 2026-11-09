@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import MutableSequence
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_cli import FlextCliProtocols
@@ -38,7 +38,9 @@ class FlextLdifProtocolsDomainEntryChange:
         @property
         def values(
             self,
-        ) -> Sequence[FlextLdifProtocolsDomainEntryChangeValue.ChangeOperationValue]:
+        ) -> MutableSequence[
+            FlextLdifProtocolsDomainEntryChangeValue.ChangeOperationValue
+        ]:
             """Decoded values in the block."""
             ...
 

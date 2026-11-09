@@ -183,6 +183,11 @@ class FlextLdifProtocolsAclConvert:
             """Subjects excluded from the match."""
             ...
 
+        @property
+        def require(self) -> tuple[FlextLdifProtocolsAclConvert.AclBindLeaf, ...]:
+            """Subjects a session must also hold (R1)."""
+            ...
+
     @runtime_checkable
     class AclAttrSet(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""

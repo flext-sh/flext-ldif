@@ -12,7 +12,7 @@ from collections.abc import (
     ItemsView,
     Iterator,
     KeysView,
-    Mapping,
+    MutableMapping,
     MutableSequence,
     Sequence,
     ValuesView,
@@ -91,12 +91,9 @@ class FlextLdifProtocolsCollections:
     class FlexibleCategories(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def categories(
-            self,
-        ) -> Mapping[str, Sequence[FlextLdifProtocolsDomainEntry.Entry]]:
-            """Category name to grouped LDIF entries mapping."""
-            ...
+        categories: MutableMapping[
+            str, MutableSequence[FlextLdifProtocolsDomainEntry.Entry]
+        ]
 
         def __getitem__(
             self, category: str

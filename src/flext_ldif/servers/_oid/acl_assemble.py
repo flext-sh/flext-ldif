@@ -60,7 +60,7 @@ class FlextLdifServersOidAclAssemble:
 
         """
         constants = FlextLdifConstantsServersOid
-        result = r[tuple[m.Ldif.AclClause, tuple[m.Ldif.AclConversionEvent, ...]]]
+        result = r[tuple[p.Ldif.AclClause, tuple[p.Ldif.AclConversionEvent, ...]]]
         where = dn or "<root DSE>"
         leaf = FlextLdifServersOidAclToOud.subject_leaf(subject, directory)
         if leaf.failure:
@@ -137,7 +137,7 @@ class FlextLdifServersOidAclAssemble:
             The level rule with its events, or the first failure with its DN.
 
         """
-        result = r[tuple[m.Ldif.AclLevelRule, tuple[m.Ldif.AclConversionEvent, ...]]]
+        result = r[tuple[p.Ldif.AclLevelRule, tuple[p.Ldif.AclConversionEvent, ...]]]
         where = dn or "<root DSE>"
         parsed = FlextLdifServersOidAclConvert.parse_oid_acl_line(
             dn,

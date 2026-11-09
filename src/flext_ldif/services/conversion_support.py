@@ -10,6 +10,7 @@ from collections.abc import Callable
 from typing import Annotated
 
 from flext_ldif import c, m, p, r, t
+from flext_ldif.servers.base import FlextLdifServersBase
 from flext_ldif.services import FlextLdifServer
 
 
@@ -75,7 +76,10 @@ class FlextLdifConversionSupport(FlextLdifServer):
 
     def _resolve_server(
         self,
-        server_or_type: str | p.Ldif.ServerReference | p.Ldif.ServerServer,
+        server_or_type: str
+        | p.Ldif.ServerReference
+        | p.Ldif.ServerServer
+        | FlextLdifServersBase,
     ) -> p.Ldif.ServerServer:
         """Resolve server server instance from string type or return instance.
 
@@ -110,7 +114,10 @@ class FlextLdifConversionSupport(FlextLdifServer):
 
     def _resolve_schema_server(
         self,
-        server_or_type: str | p.Ldif.ServerReference | p.Ldif.ServerServer,
+        server_or_type: str
+        | p.Ldif.ServerReference
+        | p.Ldif.ServerServer
+        | FlextLdifServersBase,
         *,
         role: str,
     ) -> p.Result[p.Ldif.SchemaServer]:
@@ -123,7 +130,10 @@ class FlextLdifConversionSupport(FlextLdifServer):
 
     def resolve_supported_conversions(
         self,
-        server: p.Ldif.ServerReference | p.Ldif.ServerServer | str,
+        server: p.Ldif.ServerReference
+        | p.Ldif.ServerServer
+        | FlextLdifServersBase
+        | str,
     ) -> t.MutableBoolMapping:
         """Check which data types a server supports for conversion.
 

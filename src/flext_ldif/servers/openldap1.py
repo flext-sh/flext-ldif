@@ -509,7 +509,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             return (target_dn, target_attrs)
 
         @staticmethod
-        def _openldap1_permissions(first_access: str) -> m.Ldif.AclPermissions:
+        def _openldap1_permissions(first_access: str) -> p.Ldif.AclPermissions:
             """Build permissions from the first OpenLDAP 1.x access token.
 
             Args:
@@ -522,7 +522,7 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             read_perm = FlextLdifConstantsServersRfc.PERMISSION_READ
             write_perm = FlextLdifConstantsServersRfc.PERMISSION_WRITE
             auth_perm = FlextLdifServersOpenldap1.Constants.ACL_PERMISSION_AUTH
-            return m.Ldif.AclPermissions(
+            return p.Ldif.AclPermissions(
                 read=read_perm in first_access or write_perm in first_access,
                 write=write_perm in first_access,
                 add=write_perm in first_access,
