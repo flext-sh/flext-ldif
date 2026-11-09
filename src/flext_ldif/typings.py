@@ -7,12 +7,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_cli import t as flext_cli_t
+from flext_cli import FlextCliTypes
 
 from flext_ldif._typings import FlextLdifTypesBase, FlextLdifTypesDomain
 
 
-class FlextLdifTypes(flext_cli_t):
+class FlextLdifTypes(FlextCliTypes):
     """LDIF domain types extending flext-core FlextTypes."""
 
     class Ldif(FlextLdifTypesBase, FlextLdifTypesDomain):

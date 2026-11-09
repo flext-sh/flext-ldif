@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_cli import p as flext_cli_p
+from flext_cli import FlextCliProtocols
 
 from flext_ldif._protocols import (
     FlextLdifLdifProtocolsGeneratedModelsAclEntryConversion,
@@ -44,7 +44,7 @@ from flext_ldif._protocols import (
 )
 
 
-class FlextLdifProtocols(flext_cli_p):
+class FlextLdifProtocols(FlextCliProtocols):
     """Unified LDIF protocol facade."""
 
     class Ldif(

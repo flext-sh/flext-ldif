@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_cli import u as flext_cli_u
+from flext_cli import FlextCliUtilities
 
 from flext_ldif._utilities import (
     FlextLdifUtilitiesACL,
@@ -34,7 +34,7 @@ from flext_ldif._utilities._lazy import FlextLdifUtilitiesLazyMeta
 
 
 class FlextLdifUtilities(
-    flext_cli_u,
+    FlextCliUtilities,
     FlextLdifUtilitiesACL,
     FlextLdifUtilitiesAttribute,
     FlextLdifUtilitiesCollectionLdif,

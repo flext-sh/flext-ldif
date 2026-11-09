@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_cli import m as flext_cli_m
+from flext_cli import FlextCliModels
 
 from flext_ldif._models import (
     FlextLdifModelsBases,
@@ -29,7 +29,7 @@ from flext_ldif._models import (
 )
 
 
-class FlextLdifModels(flext_cli_m):
+class FlextLdifModels(FlextCliModels):
     """LDIF domain models — flat façade with MRO class inheritance.
 
     Architecture: Domain layer helper
