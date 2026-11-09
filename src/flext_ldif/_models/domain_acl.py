@@ -18,7 +18,7 @@ from flext_ldif._models import FlextLdifModelsBases, FlextLdifModelsDomainMetada
 class FlextLdifModelsDomainAcl:
     """Namespace for LDIF ACL domain models."""
 
-    class AclPermissions(m.ArbitraryTypesModel):
+    class AclPermissions(m.StrictModel):
         """ACL permissions for LDAP operations.
 
         Supports:
@@ -155,7 +155,7 @@ class FlextLdifModelsDomainAcl:
             m.Field(description="ACL subject specification"),
         ] = None
         permissions: Annotated[
-            p.Ldif.AclPermissions | None,
+            FlextLdifModelsDomainAcl.AclPermissions | None,
             m.Field(description="ACL permission flags"),
         ] = None
         raw_line: Annotated[
