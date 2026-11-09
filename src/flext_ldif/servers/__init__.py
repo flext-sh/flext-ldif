@@ -14,7 +14,7 @@ from flext_core.lazy import install_lazy_exports
 if TYPE_CHECKING:
     from flext_ldif.servers.ad import FlextLdifServersAd
     from flext_ldif.servers.apache import FlextLdifServersApache
-    from flext_ldif.servers.base import FlextLdifServersBase
+    from flext_ldif.servers.base import FlextLdifServersBase, FlextLdifServersBaseSchema
     from flext_ldif.servers.ds389 import FlextLdifServersDs389
     from flext_ldif.servers.novell import FlextLdifServersNovell
     from flext_ldif.servers.oid import (
@@ -46,6 +46,7 @@ __all__: tuple[str, ...] = (
     "FlextLdifServersAd",
     "FlextLdifServersApache",
     "FlextLdifServersBase",
+    "FlextLdifServersBaseSchema",
     "FlextLdifServersDs389",
     "FlextLdifServersNovell",
     "FlextLdifServersOid",
@@ -77,6 +78,7 @@ install_lazy_exports(
         "FlextLdifServersAd": ".ad",
         "FlextLdifServersApache": ".apache",
         "FlextLdifServersBase": ".base",
+        "FlextLdifServersBaseSchema": ".base",
         "FlextLdifServersDs389": ".ds389",
         "FlextLdifServersNovell": ".novell",
         "FlextLdifServersOid": ".oid",
