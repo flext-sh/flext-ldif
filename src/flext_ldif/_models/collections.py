@@ -67,12 +67,7 @@ class FlextLdifModelsCollections:
         categories: Annotated[
             MutableMapping[
                 str,
-                MutableSequence[
-                    Annotated[
-                        p.Ldif.Entry,
-                        t.schema_for_model(FlextLdifModelsDomainsEntries.Entry),
-                    ]
-                ],
+                MutableSequence[FlextLdifModelsDomainsEntries.Entry],
             ],
             m.Field(description="Category name to grouped LDIF entries mapping."),
         ] = m.Field(default_factory=dict[str, MutableSequence[p.Ldif.Entry]])

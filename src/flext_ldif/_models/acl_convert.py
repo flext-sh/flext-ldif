@@ -73,10 +73,7 @@ class FlextLdifModelsAclConvert:
         ] = None
         subjects: Annotated[
             tuple[
-                Annotated[
-                    p.Ldif.OidAclSubject,
-                    t.schema_for_model(FlextLdifModelsAclConvert.OidAclSubject),
-                ],
+                FlextLdifModelsAclConvert.OidAclSubject,
                 ...,
             ],
             m.Field(description="Parsed by-clause subjects"),
@@ -143,10 +140,7 @@ class FlextLdifModelsAclConvert:
         groups: Annotated[
             Mapping[
                 str,
-                Annotated[
-                    p.Ldif.AclSecurityGroup,
-                    t.schema_for_model(FlextLdifModelsAclConvert.AclSecurityGroup),
-                ],
+                FlextLdifModelsAclConvert.AclSecurityGroup,
             ],
             m.Field(
                 default_factory=lambda: MappingProxyType[
@@ -167,28 +161,19 @@ class FlextLdifModelsAclConvert:
         """A subject with the subjects it excludes: ``S and not (E1 or E2)``."""
 
         include: Annotated[
-            Annotated[
-                p.Ldif.AclBindLeaf,
-                t.schema_for_model(FlextLdifModelsAclConvert.AclBindLeaf),
-            ],
+            FlextLdifModelsAclConvert.AclBindLeaf,
             m.Field(description="Subject the rule matches"),
         ]
         exclude: Annotated[
             tuple[
-                Annotated[
-                    p.Ldif.AclBindLeaf,
-                    t.schema_for_model(FlextLdifModelsAclConvert.AclBindLeaf),
-                ],
+                FlextLdifModelsAclConvert.AclBindLeaf,
                 ...,
             ],
             m.Field(description="Subjects excluded from the match"),
         ] = ()
         require: Annotated[
             tuple[
-                Annotated[
-                    p.Ldif.AclBindLeaf,
-                    t.schema_for_model(FlextLdifModelsAclConvert.AclBindLeaf),
-                ],
+                FlextLdifModelsAclConvert.AclBindLeaf,
                 ...,
             ],
             m.Field(description="Subjects a session must also hold (R1)"),
@@ -211,18 +196,11 @@ class FlextLdifModelsAclConvert:
 
         index: Annotated[int, m.Field(description="1-based clause position")]
         subject: Annotated[
-            Annotated[
-                p.Ldif.OidAclSubject,
-                t.schema_for_model(FlextLdifModelsAclConvert.OidAclSubject),
-            ],
+            FlextLdifModelsAclConvert.OidAclSubject,
             m.Field(description="The OID subject as parsed"),
         ]
         leaf: Annotated[
-            Annotated[
-                p.Ldif.AclBindLeaf,
-                t.schema_for_model(FlextLdifModelsAclConvert.AclBindLeaf),
-            ]
-            | None,
+            FlextLdifModelsAclConvert.AclBindLeaf | None,
             m.Field(description="OUD subject, or None when no session matches"),
         ] = None
         outcome: Annotated[
@@ -249,18 +227,11 @@ class FlextLdifModelsAclConvert:
         key: Annotated[str, m.Field(description="Carrier DN key")]
         index: Annotated[int, m.Field(description="1-based position at the level")]
         rule: Annotated[
-            Annotated[
-                p.Ldif.OidAclRule,
-                t.schema_for_model(FlextLdifModelsAclConvert.OidAclRule),
-            ],
+            FlextLdifModelsAclConvert.OidAclRule,
             m.Field(description="The parsed OID ACI"),
         ]
         attrs: Annotated[
-            Annotated[
-                p.Ldif.AclAttrSet,
-                t.schema_for_model(FlextLdifModelsAclConvert.AclAttrSet),
-            ]
-            | None,
+            FlextLdifModelsAclConvert.AclAttrSet | None,
             m.Field(description="Attribute target; None for an entry target"),
         ] = None
         target_filter: Annotated[
@@ -269,10 +240,7 @@ class FlextLdifModelsAclConvert:
         ] = None
         clauses: Annotated[
             tuple[
-                Annotated[
-                    p.Ldif.AclClause,
-                    t.schema_for_model(FlextLdifModelsAclConvert.AclClause),
-                ],
+                FlextLdifModelsAclConvert.AclClause,
                 ...,
             ],
             m.Field(description="By-clauses in source order"),
@@ -285,18 +253,12 @@ class FlextLdifModelsAclConvert:
         right: Annotated[str, m.Field(description="OID right")]
         effect: Annotated[str, m.Field(description="allow or deny")]
         leaf: Annotated[
-            Annotated[
-                p.Ldif.AclBindLeaf,
-                t.schema_for_model(FlextLdifModelsAclConvert.AclBindLeaf),
-            ],
+            FlextLdifModelsAclConvert.AclBindLeaf,
             m.Field(description="Subject of the clause"),
         ]
         grantors: Annotated[
             tuple[
-                Annotated[
-                    p.Ldif.AclBindLeaf,
-                    t.schema_for_model(FlextLdifModelsAclConvert.AclBindLeaf),
-                ],
+                FlextLdifModelsAclConvert.AclBindLeaf,
                 ...,
             ],
             m.Field(description="Subjects the same ACI grants the right to"),
@@ -311,10 +273,7 @@ class FlextLdifModelsAclConvert:
 
         rights: Annotated[tuple[str, ...], m.Field(description="OUD rights")]
         attrs: Annotated[
-            Annotated[
-                p.Ldif.AclAttrSet,
-                t.schema_for_model(FlextLdifModelsAclConvert.AclAttrSet),
-            ],
+            FlextLdifModelsAclConvert.AclAttrSet,
             m.Field(description="OUD targetattr set"),
         ]
         targetfilter: Annotated[
@@ -331,30 +290,19 @@ class FlextLdifModelsAclConvert:
         """One resolution with its OUD form and bind rule."""
 
         rule: Annotated[
-            Annotated[
-                p.Ldif.AclLevelRule,
-                t.schema_for_model(FlextLdifModelsAclConvert.AclLevelRule),
-            ],
+            FlextLdifModelsAclConvert.AclLevelRule,
             m.Field(description="Source ACI"),
         ]
         resolution: Annotated[
-            Annotated[
-                p.Ldif.AclResolution,
-                t.schema_for_model(FlextLdifModelsAclConvert.AclResolution),
-            ],
+            FlextLdifModelsAclConvert.AclResolution,
             m.Field(description="Decided right"),
         ]
         form: Annotated[
-            Annotated[
-                p.Ldif.AclForm, t.schema_for_model(FlextLdifModelsAclConvert.AclForm)
-            ],
+            FlextLdifModelsAclConvert.AclForm,
             m.Field(description="OUD form"),
         ]
         bind: Annotated[
-            Annotated[
-                p.Ldif.AclBindRule,
-                t.schema_for_model(FlextLdifModelsAclConvert.AclBindRule),
-            ],
+            FlextLdifModelsAclConvert.AclBindRule,
             m.Field(description="OUD bind rule"),
         ]
 
@@ -381,10 +329,7 @@ class FlextLdifModelsAclConvert:
         key: Annotated[str, m.Field(description="Level DN key")]
         level: Annotated[str, m.Field(description="Level attribute")]
         leaf: Annotated[
-            Annotated[
-                p.Ldif.AclBindLeaf,
-                t.schema_for_model(FlextLdifModelsAclConvert.AclBindLeaf),
-            ],
+            FlextLdifModelsAclConvert.AclBindLeaf,
             m.Field(description="Granted subject"),
         ]
 
@@ -395,10 +340,7 @@ class FlextLdifModelsAclConvert:
         effect: Annotated[str, m.Field(description="allow or deny")]
         rights: Annotated[tuple[str, ...], m.Field(description="OUD rights")]
         attrs: Annotated[
-            Annotated[
-                p.Ldif.AclAttrSet,
-                t.schema_for_model(FlextLdifModelsAclConvert.AclAttrSet),
-            ],
+            FlextLdifModelsAclConvert.AclAttrSet,
             m.Field(description="OUD targetattr set"),
         ]
         targetfilter: Annotated[
@@ -418,10 +360,7 @@ class FlextLdifModelsAclConvert:
             m.Field(description="Whether the target is ``target!=``"),
         ] = False
         bind: Annotated[
-            Annotated[
-                p.Ldif.AclBindRule,
-                t.schema_for_model(FlextLdifModelsAclConvert.AclBindRule),
-            ],
+            FlextLdifModelsAclConvert.AclBindRule,
             m.Field(description="OUD bind rule"),
         ]
         rule: Annotated[str, m.Field(description="Conversion rule applied")]
@@ -453,10 +392,7 @@ class FlextLdifModelsAclConvert:
 
         statements: Annotated[
             tuple[
-                Annotated[
-                    p.Ldif.AciStatement,
-                    t.schema_for_model(FlextLdifModelsAclConvert.AciStatement),
-                ],
+                FlextLdifModelsAclConvert.AciStatement,
                 ...,
             ],
             m.Field(description="Emitted ACI statements in emission order"),
@@ -470,10 +406,7 @@ class FlextLdifModelsAclConvert:
         ]
         events: Annotated[
             tuple[
-                Annotated[
-                    p.Ldif.AclConversionEvent,
-                    t.schema_for_model(FlextLdifModelsAclConvert.AclConversionEvent),
-                ],
+                FlextLdifModelsAclConvert.AclConversionEvent,
                 ...,
             ],
             m.Field(description="Operator-review events in order"),
@@ -488,20 +421,14 @@ class FlextLdifModelsAclConvert:
 
         statements: Annotated[
             tuple[
-                Annotated[
-                    p.Ldif.AciStatement,
-                    t.schema_for_model(FlextLdifModelsAclConvert.AciStatement),
-                ],
+                FlextLdifModelsAclConvert.AciStatement,
                 ...,
             ],
             m.Field(description="ACI statements placed on this entry"),
         ] = ()
         events: Annotated[
             tuple[
-                Annotated[
-                    p.Ldif.AclConversionEvent,
-                    t.schema_for_model(FlextLdifModelsAclConvert.AclConversionEvent),
-                ],
+                FlextLdifModelsAclConvert.AclConversionEvent,
                 ...,
             ],
             m.Field(description="Events of the ACLs this entry carried"),
@@ -541,10 +468,7 @@ class FlextLdifModelsAclConvert:
 
         matchers: Annotated[
             tuple[
-                Annotated[
-                    p.Ldif.AclSubjectMatcher,
-                    t.schema_for_model(FlextLdifModelsAclConvert.AclSubjectMatcher),
-                ],
+                FlextLdifModelsAclConvert.AclSubjectMatcher,
                 ...,
             ],
             m.Field(description="OID by-clause subject matchers in priority order"),

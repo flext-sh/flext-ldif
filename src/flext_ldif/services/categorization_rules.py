@@ -100,7 +100,7 @@ class FlextLdifCategorizationRules(FlextLdifServer):
     rejection_tracker: Annotated[
         MutableMapping[
             str,
-            MutableSequence[Annotated[p.Ldif.Entry, t.schema_for_model(m.Ldif.Entry)]],
+            MutableSequence[m.Ldif.Entry],
         ],
         m.Field(
             default_factory=_build_rejection_tracker,
