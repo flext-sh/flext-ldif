@@ -11,7 +11,7 @@
 **Context**: FLEXT-LDIF supports 9+ LDAP server implementations (OID, OUD, OpenLDAP,
 Active Directory, etc.), each with different syntax requirements and servers. The
 challenge was providing seamless conversion between any server pair without implementing
-N×N conversion functions.
+NxN conversion functions.
 
 Traditional approaches would require:
 
@@ -34,7 +34,7 @@ Source Format → Source.to_rfc() → RFC Format → Target.from_rfc() → Targe
 
 **Key Components**:
 
-1. **ServersConversionMatrix**: Facade providing N×N conversion interface
+1. **ServersConversionMatrix**: Facade providing NxN conversion interface
 1. **DnCaseRegistry**: Tracks canonical DN case for OUD compatibility
 1. **ServerBase Interface**: Defines `to_rfc()` and `from_rfc()` methods
 1. **RFC Intermediate Format**: Standards-compliant representation

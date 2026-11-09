@@ -379,151 +379,146 @@ if TYPE_CHECKING:
         return value
 
     def model_protocol_74(
-        value: (FlextLdifModels.Ldif.RdnProcessingConfig),
-    ) -> FlextLdifProtocols.Ldif.RdnProcessingConfig:
-        return value
-
-    def model_protocol_75(
         value: (FlextLdifModels.Ldif.RegistryPortOptions),
     ) -> FlextLdifProtocols.Ldif.RegistryPortOptions:
         return value
 
-    def model_protocol_76(
+    def model_protocol_75(
         value: (FlextLdifModels.Ldif.Response),
     ) -> FlextLdifProtocols.Ldif.Response:
         return value
 
-    def model_protocol_77(
+    def model_protocol_76(
         value: (FlextLdifModels.Ldif.SchemaAttribute),
     ) -> FlextLdifProtocols.Ldif.SchemaAttribute:
         return value
 
-    def model_protocol_78(
+    def model_protocol_77(
         value: (FlextLdifModels.Ldif.SchemaContent),
     ) -> FlextLdifProtocols.Ldif.SchemaContent:
         return value
 
-    def model_protocol_79(
+    def model_protocol_78(
         value: (FlextLdifModels.Ldif.SchemaElement),
     ) -> FlextLdifProtocols.Ldif.SchemaElement:
         return value
 
-    def model_protocol_80(
+    def model_protocol_79(
         value: (FlextLdifModels.Ldif.SchemaFormatDetails),
     ) -> FlextLdifProtocols.Ldif.SchemaFormatDetails:
         return value
 
-    def model_protocol_81(
+    def model_protocol_80(
         value: (FlextLdifModels.Ldif.SchemaObjectClass),
     ) -> FlextLdifProtocols.Ldif.SchemaObjectClass:
         return value
 
-    def model_protocol_82(
+    def model_protocol_81(
         value: (FlextLdifModels.Ldif.ServerDetectionResult),
     ) -> FlextLdifProtocols.Ldif.ServerDetectionResult:
         return value
 
-    def model_protocol_83(
+    def model_protocol_82(
         value: (FlextLdifModels.Ldif.ServerMetadata),
     ) -> FlextLdifProtocols.Ldif.ServerMetadata:
         return value
 
-    def model_protocol_84(
+    def model_protocol_83(
         value: (FlextLdifModels.Ldif.ServerPatternsConfig),
     ) -> FlextLdifProtocols.Ldif.ServerPatternsConfig:
         return value
 
-    def model_protocol_85(
+    def model_protocol_84(
         value: (FlextLdifModels.Ldif.ServerValidationRules),
     ) -> FlextLdifProtocols.Ldif.ServerValidationRules:
         return value
 
-    def model_protocol_86(
+    def model_protocol_85(
         value: (FlextLdifModels.Ldif.Statistics),
     ) -> FlextLdifProtocols.Ldif.Statistics:
         return value
 
-    def model_protocol_87(
+    def model_protocol_86(
         value: (FlextLdifModels.Ldif.StatisticsEntryCounts),
     ) -> FlextLdifProtocols.Ldif.StatisticsEntryCounts:
         return value
 
-    def model_protocol_88(
+    def model_protocol_87(
         value: (FlextLdifModels.Ldif.StatisticsRun),
     ) -> FlextLdifProtocols.Ldif.StatisticsRun:
         return value
 
-    def model_protocol_89(
+    def model_protocol_88(
         value: (FlextLdifModels.Ldif.StatisticsSchemaAcl),
     ) -> FlextLdifProtocols.Ldif.StatisticsSchemaAcl:
         return value
 
-    def model_protocol_90(
+    def model_protocol_89(
         value: (FlextLdifModels.Ldif.StatisticsSummary),
     ) -> FlextLdifProtocols.Ldif.StatisticsSummary:
         return value
 
-    def model_protocol_91(
+    def model_protocol_90(
         value: (FlextLdifModels.Ldif.Stats),
     ) -> FlextLdifProtocols.Ldif.Stats:
         return value
 
-    def model_protocol_92(
+    def model_protocol_91(
         value: (FlextLdifModels.Ldif.Syntax),
     ) -> FlextLdifProtocols.Ldif.Syntax:
         return value
 
-    def model_protocol_93(
+    def model_protocol_92(
         value: (FlextLdifModels.Ldif.TransformConfig),
     ) -> FlextLdifProtocols.Ldif.TransformConfig:
         return value
 
-    def model_protocol_94(
+    def model_protocol_93(
         value: (FlextLdifModels.Ldif.ValidationMetadata),
     ) -> FlextLdifProtocols.Ldif.ValidationMetadata:
         return value
 
-    def model_protocol_95(
+    def model_protocol_94(
         value: (FlextLdifModels.Ldif.ValidationResult),
     ) -> FlextLdifProtocols.Ldif.ValidationResult:
         return value
 
-    def model_protocol_96(
+    def model_protocol_95(
         value: (FlextLdifModels.Ldif.WhitelistRules),
     ) -> FlextLdifProtocols.Ldif.WhitelistRules:
         return value
 
-    def model_protocol_97(
+    def model_protocol_96(
         value: (FlextLdifModels.Ldif.WriteFormatAclOrdering),
     ) -> FlextLdifProtocols.Ldif.WriteFormatAclOrdering:
         return value
 
-    def model_protocol_98(
+    def model_protocol_97(
         value: (FlextLdifModels.Ldif.WriteFormatAnnotations),
     ) -> FlextLdifProtocols.Ldif.WriteFormatAnnotations:
         return value
 
-    def model_protocol_99(
+    def model_protocol_98(
         value: (FlextLdifModels.Ldif.WriteFormatLayout),
     ) -> FlextLdifProtocols.Ldif.WriteFormatLayout:
         return value
 
-    def model_protocol_100(
+    def model_protocol_99(
         value: (FlextLdifModels.Ldif.WriteFormatOptions),
     ) -> FlextLdifProtocols.Ldif.WriteFormatOptions:
         return value
 
-    def model_protocol_101(
+    def model_protocol_100(
         value: (FlextLdifModels.Ldif.WriteOptions),
     ) -> FlextLdifProtocols.Ldif.WriteOptions:
         return value
 
-    def model_protocol_102(
+    def model_protocol_101(
         value: (FlextLdifModels.Ldif.WriteRequest),
     ) -> FlextLdifProtocols.Ldif.WriteRequest:
         return value
 
-    def model_protocol_103(
+    def model_protocol_102(
         value: (FlextLdifModels.Ldif.WriteResponse),
     ) -> FlextLdifProtocols.Ldif.WriteResponse:
         return value

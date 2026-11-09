@@ -82,7 +82,7 @@ FLEXT-LDIF enforces a **strict RFC-first design** with **mandatory servers syste
 - ✅ **Complete Implementations** (4): OpenLDAP 1.x/2.x, OID, OUD
 - ⚠️ **Stub Implementations** (5): AD, Apache DS, 389DS, Novell, Tivoli (ready for
   enhancement)
-- ✅ **Universal Conversion Matrix**: N×N server conversions via RFC intermediate format
+- ✅ **Universal Conversion Matrix**: NxN server conversions via RFC intermediate format
 - ✅ **DN Case Registry**: Canonical DN case tracking for OUD compatibility
 
 ## Core API Classes
@@ -341,7 +341,7 @@ def analyze_entries(self, entries: Sequence[FlextLdifModels.Entry]) -> p.Result[
 
 ### ServersConversionMatrix
 
-Universal facade for N×N server conversions using RFC as intermediate format.
+Universal facade for NxN server conversions using RFC as intermediate format.
 
 ```text
 class ServersConversionMatrix:

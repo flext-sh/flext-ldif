@@ -247,6 +247,15 @@ class FlextLdifProtocolsClient(Protocol):
             """Expose the typed LDIF settings carried by the public facade."""
             ...
 
+        @staticmethod
+        def filter_entry_attributes(
+            entry: FlextLdifProtocolsDomainEntry.Entry,
+            forbidden_attrs: Sequence[str],
+            forbidden_ocs: Sequence[str],
+        ) -> FlextLdifProtocolsDomainEntry.Entry:
+            """Strip declared attribute types and objectClasses through the facade."""
+            ...
+
         def migrate(
             self,
             input_dir: Path | None = None,

@@ -8,7 +8,7 @@ Container_Boundary(flext_ecosystem, "FLEXT Ecosystem") {
 
     Container_Boundary(flext_ldif, "FLEXT-LDIF Library") {
         Container(api_facade, "ldif Facade", "Python Class", "Unified API entry point for all operations")
-        Container(conversion, "ServersConversionMatrix", "Python Class", "Universal N×N server conversion facade")
+        Container(conversion, "ServersConversionMatrix", "Python Class", "Universal NxN server conversion facade")
         Container(dn_registry, "DnCaseRegistry", "Python Class", "Canonical DN case tracking")
 
         Container_Boundary(rfc_parsing, "RFC Parsing Layer") {
@@ -60,8 +60,8 @@ Rel(flext_ldif, ldap_servers, "Processes data for/from", "Various LDAP server fo
 
 note right of conversion
     **Universal Conversion Matrix**
-    N×N server conversions via RFC intermediate format
-    Only 2×N implementations needed
+    NxN server conversions via RFC intermediate format
+    Only 2xN implementations needed
 end note
 
 note right of dn_registry

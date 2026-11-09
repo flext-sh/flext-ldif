@@ -12,7 +12,7 @@ Container_Boundary(flext_ldif_lib, "FLEXT-LDIF Library") {
     }
 
     Component_Boundary(conversion_layer, "Conversion Layer") {
-        Component(conversion, "ServersConversionMatrix", "Python Class", "Universal conversion facade", "N×N server conversions")
+        Component(conversion, "ServersConversionMatrix", "Python Class", "Universal conversion facade", "NxN server conversions")
         Component(dn_registry, "DnCaseRegistry", "Python Class", "DN case tracking", "OUD compatibility assurance")
         Component(batch_processor, "BatchProcessor", "Python Class", "Batch operations", "Efficient bulk conversions")
     }
@@ -82,9 +82,9 @@ Rel(infrastructure, flext_ldif_lib, "Provides foundation", "for all components")
 
 note right of conversion
     **Universal Conversion Matrix**
-    - N×N server conversions
+    - NxN server conversions
     - RFC intermediate format
-    - Only 2×N implementations needed
+    - Only 2xN implementations needed
     - DN case consistency tracking
 end note
 
