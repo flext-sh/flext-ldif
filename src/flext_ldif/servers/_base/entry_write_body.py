@@ -121,11 +121,17 @@ class FlextLdifServersEntryWriteBodyEmitter:
         """
         entry = self._entry
         if hasattr(entry, "attributes") and entry.attributes:
-            for attr_name, values in entry.attributes.items():
+            attributes = entry.attributes.attributes
+            names = (
+                sorted(attributes, key=str.casefold)
+                if self._options.sort_attributes
+                else attributes
+            )
+            for attr_name in names:
                 self._emit_entry_attribute_values(
                     output_lines,
                     attr_name,
-                    values,
+                    attributes[attr_name],
                 )
         output_lines.append("")
         return r[str].ok("\n".join(output_lines))
