@@ -80,7 +80,7 @@ class FlextLdifModelsDomainEntry(ChangeOp):
             m.Field(description="RFC 2849 control lines associated with the record"),
         ] = m.Field(default_factory=tuple)
         change_operations: Annotated[
-            MutableSequence[Annotated[ChangeOp.ChangeOperation,]],
+            MutableSequence[ChangeOp.ChangeOperation],
             m.Field(
                 description="Structured modify operation blocks for changetype=modify",
             ),

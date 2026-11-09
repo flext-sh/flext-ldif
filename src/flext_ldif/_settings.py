@@ -41,7 +41,7 @@ class FlextLdifSettings(FlextCliSettings, FlextSettings):
         extra="ignore",
     )
 
-    Ldif: Annotated[FlextLdifSettings.LdifSettings,] = m.Field(
+    Ldif: FlextLdifSettings.LdifSettings = m.Field(
         default_factory=LdifSettings,
         description="Namespaced LDIF settings branch.",
     )

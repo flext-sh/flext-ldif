@@ -30,7 +30,7 @@ class FlextLdifModelsDomainEntryChangeOperation:
             str,
             m.Field(description="Target attribute for the modify block"),
         ]
-        values: MutableSequence[p.Ldif.ChangeOperationValue] = m.Field(
+        values: MutableSequence[t.Port[p.Ldif.ChangeOperationValue]] = m.Field(
             default_factory=list,
             description="Decoded values in the block",
         )
