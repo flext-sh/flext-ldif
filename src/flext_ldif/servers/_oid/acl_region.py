@@ -36,7 +36,7 @@ from flext_ldif.servers._oid import (
 )
 
 
-class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):  # ruff: ignore[too-many-public-methods]
+class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):  # ruff: ignore[too-many-public-methods] - ACL region aggregates many public policy methods
     """The indexed OID policy and the placement of its OUD denials."""
 
     def __init__(

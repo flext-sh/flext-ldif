@@ -27,7 +27,12 @@ class FlextLdifUtilitiesSchemaNormalize:
     def schema_definition_semantics(
         attribute: str, definition: str
     ) -> t.Ldif.MutableMetadataMapping:
-        """Compare parsed RFC content, excluding storage/provenance annotations."""
+        """Compare parsed RFC content, excluding storage/provenance annotations.
+
+        Returns:
+            The normalized metadata mapping for the schema definition.
+
+        """
         fields = dict(
             FlextLdifUtilitiesSchemaParse.parse_objectclass(definition)
             if attribute.casefold() == c.Ldif.OBJECT_CLASSES.casefold()

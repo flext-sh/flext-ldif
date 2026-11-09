@@ -1,4 +1,8 @@
-"""Native RFC schema equivalence used by authoritative LDAP convergence."""
+"""Native RFC schema equivalence used by authoritative LDAP convergence.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 import pytest
 
@@ -61,7 +65,14 @@ from flext_ldif import u
 def test_schema_definition_semantics(
     attribute: str, before: str, after: str, *, equal: bool
 ) -> None:
-    assert (
-        u.Ldif.schema_definition_semantics(attribute, before)
-        == u.Ldif.schema_definition_semantics(attribute, after)
-    ) is equal
+    """Assert schema definition semantics equality matches ``equal``.
+
+    Raises:
+        AssertionError: If the equality result differs from ``equal``.
+
+    """
+    matches = u.Ldif.schema_definition_semantics(
+        attribute, before
+    ) == u.Ldif.schema_definition_semantics(attribute, after)
+    if matches is not equal:
+        raise AssertionError
