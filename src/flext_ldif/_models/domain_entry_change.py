@@ -11,7 +11,10 @@ from typing import Annotated, ClassVar
 
 from flext_cli import m
 
-from flext_ldif import c, p, t
+from flext_ldif import c, t
+from flext_ldif._models.domain_entry_change_value import (
+    FlextLdifModelsDomainEntryChangeOperationValue,
+)
 
 
 class FlextLdifModelsDomainEntryChangeOperation:
@@ -30,7 +33,9 @@ class FlextLdifModelsDomainEntryChangeOperation:
             str,
             m.Field(description="Target attribute for the modify block"),
         ]
-        values: MutableSequence[t.Port[p.Ldif.ChangeOperationValue]] = m.Field(
+        values: MutableSequence[
+            FlextLdifModelsDomainEntryChangeOperationValue.ChangeOperationValue
+        ] = m.Field(
             default_factory=list,
             description="Decoded values in the block",
         )
