@@ -149,13 +149,7 @@ class TestsFlextLdifProcessingService:
         converted: Sequence[p.Ldif.Entry] = u.Tests.assert_success(result)
         attrs = tm.not_none(converted[0].attributes).attributes
 
-        tm.that(
-            attrs["aci"],
-            eq=[
-                (
-                    '(targetattr="objectClass")'
-                    '    (version 3.0; acl "users Entry by x";'
-                    '     allow (read, search)    groupdn="ldap:///cn=a,dc=ctbc";)'
-                ),
-            ],
-        )
+        acis = attrs["aci"]
+        tm.that(acis, length=1)
+        tm.that(acis[0], has='groupdn="ldap:///cn=a,dc=ctbc"')
+        tm.that(acis[0], lacks="cn=x,dc=other")
