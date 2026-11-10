@@ -178,14 +178,20 @@ class FlextLdifUtilitiesParserRecord:
             )
             return None
         if state.current_change_operation is not None:
-            state.current_change_operation.values.append(
-                FlextLdifModelsDomainEntryChangeOperationValue.ChangeOperationValue(
-                    value=decoded.value,
-                    value_origin=decoded.value_origin,
-                    raw_value=decoded.raw_value,
-                ),
+            operation = state.current_change_operation
+            state.current_change_operation = operation.model_copy(
+                update={
+                    "values": [
+                        *operation.values,
+                        FlextLdifModelsDomainEntryChangeOperationValue.ChangeOperationValue(
+                            value=decoded.value,
+                            value_origin=decoded.value_origin,
+                            raw_value=decoded.raw_value,
+                        ),
+                    ],
+                },
             )
-            return state.current_change_operation.attribute
+            return operation.attribute
         return key
 
     @staticmethod
