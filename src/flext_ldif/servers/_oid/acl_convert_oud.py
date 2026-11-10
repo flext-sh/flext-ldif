@@ -88,9 +88,7 @@ class FlextLdifServersOidAclToOud:
                 f"Empty token in OID access list {tuple(permissions)!r} "
                 "(OID-A7 §A.7.1; manual review required)",
             )
-        permission_map = (
-            c.Ldif.ENTRY_PERM_MAP if is_entry else c.Ldif.ATTR_PERM_MAP
-        )
+        permission_map = c.Ldif.ENTRY_PERM_MAP if is_entry else c.Ldif.ATTR_PERM_MAP
         all_oud_rights = frozenset(
             right.strip()
             for mapped in permission_map.values()
@@ -353,8 +351,7 @@ class FlextLdifServersOidAclToOud:
         if group is None or not group.classes:
             if c.Ldif.ACL_WILDCARD in dn and not first_rdn.endswith(wildcard_rdn):
                 return result.fail(
-                    f"R8: OID group DN with a wildcard has no OUD groupdn: "
-                    f"{value!r}",
+                    f"R8: OID group DN with a wildcard has no OUD groupdn: {value!r}",
                 )
             return result.ok((None, constants.AclRule.R8))
         if c.Ldif.ACL_WILDCARD in dn:
