@@ -38,9 +38,7 @@ class FlextLdifProtocolsDomainEntryChange:
         @property
         def values(
             self,
-        ) -> Sequence[
-            FlextLdifProtocolsDomainEntryChangeValue.ChangeOperationValue
-        ]:
+        ) -> Sequence[FlextLdifProtocolsDomainEntryChangeValue.ChangeOperationValue]:
             """Decoded values in the block."""
             ...
 

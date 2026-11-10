@@ -18,9 +18,9 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
-    "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev",
-    "flext-core @ git+https://github.com/flext-sh/flext-core.git@0.12.0-dev",
-    "ldap3",
+  "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev",
+  "flext-core @ git+https://github.com/flext-sh/flext-core.git@0.12.0-dev",
+  "ldap3",
 ]
 description = "FLEXT LDIF - Enterprise LDIF Processing Library"
 keywords = ["adapter", "enterprise", "flext", "integration", "typed"]
@@ -625,8 +625,14 @@ known-first-party = ["flext_ldif"]
 split-on-trailing-comma = false
 
 [tool.ruff.lint.per-file-ignores]
-"**/_protocols/**" = ["invalid-function-name"]
+"**/_protocols/**" = ["invalid-function-name", "too-many-public-methods"]
 "**/_protocols/pydantic.py" = ["too-many-arguments"]
+"scripts/**/*.py" = [
+  "commented-out-code",
+  "invalid-module-name",
+  "line-too-long",
+]
+"tests/**/*.py" = ["assert"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
