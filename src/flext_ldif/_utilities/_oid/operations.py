@@ -48,13 +48,16 @@ class FlextLdifUtilitiesOIDOperations:
         Returns:
             The resulting ``bool``.
 
+        Raises:
+            ValueError: If the definition carries no OID.
+
         """
         if not definition:
             return False
-        oid_res = FlextLdifUtilitiesOIDOperations.extract_from_definition(definition)
-        if oid_res.failure:
-            return False
-        return oid_pattern.search(oid_res.value) is not None
+        oid = FlextLdifUtilitiesOIDOperations.extract_from_definition(definition)
+        if oid.failure:
+            raise ValueError(str(oid.error))
+        return oid_pattern.search(oid.value) is not None
 
     @staticmethod
     def validate_format(oid: str) -> p.Result[bool]:

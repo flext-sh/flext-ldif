@@ -168,7 +168,11 @@ class FlextLdifServersOidAclPipeline:
         for name in names.value:
             del current[name]
         if placed:
-            current[c.Ldif.ACI_ATTR_NAME] = list(placed)
+            existing = list(current.get(c.Ldif.ACI_ATTR_NAME, ()))
+            current[c.Ldif.ACI_ATTR_NAME] = [
+                *existing,
+                *(value for value in placed if value not in existing),
+            ]
         attributes = (
             attrs_model.model_copy(
                 update={
@@ -227,12 +231,6 @@ class FlextLdifServersOidAclPipeline:
             for name, base in bases.items()
             if base in c.Ldif.AclConvertType and name.lower() != base
         ]
-        if c.Ldif.ACI_ATTR_NAME.lower() in bases.values():
-            return r[Sequence[str]].fail(
-                f"OID entry {dn!r} carries an aci attribute, which OID does not "
-                "enforce and OUD would enforce as access control (manual review "
-                "required)",
-            )
         if optioned:
             return r[Sequence[str]].fail(
                 f"OID ACL attributes with options {optioned!r} on {dn!r} have no "

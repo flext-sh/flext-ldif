@@ -140,7 +140,6 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
                 if key != rule.key and to_oud.is_ancestor_or_self(rule.key, key)
                 for level in (entry, acp)
             )
-        browse = constants.ACL_RIGHT_BROWSE
         decided = False
         placements: list[t.Ldif.AclBrowsePlacement] = []
         for (key, level), deciding, anchor, scope in sources:
@@ -148,11 +147,17 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
                 if item.attrs is not None:
                     continue
                 for clause in item.clauses:
-                    if clause.leaf is None or browse not in clause.allow | clause.deny:
+                    permissions = {
+                        token.casefold() for token in clause.subject.permissions
+                    }
+                    if clause.leaf is None or not (
+                        {"browse", "nobrowse"} & permissions
+                    ):
                         continue
+                    granted = bool({"read", "search"} & clause.allow)
                     wider = to_oud.covers(clause.leaf, leaf)
                     decided = decided or (wider and deciding)
-                    if browse not in clause.allow or to_oud.disjoint(
+                    if not granted or to_oud.disjoint(
                         clause.leaf,
                         leaf,
                     ):
@@ -365,7 +370,12 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
             if right == constants.ACL_RIGHT_PROXY
             else constants.AclRule.R4B
         )
-        if right == constants.ACL_RIGHT_BROWSE:
+        browse_rights = {
+            constants.ACL_RIGHT_BROWSE,
+            constants.ACL_RIGHT_READ,
+            constants.ACL_RIGHT_SEARCH,
+        }
+        if right in browse_rights:
             rights = (
                 constants.ACL_BROWSE_DENIAL_RIGHTS
                 if deny
