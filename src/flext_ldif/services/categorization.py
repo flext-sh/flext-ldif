@@ -47,11 +47,11 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering):
                 if is_rejected
                 else None,
             )
-            category_lists[category].append(updated_entry)
+            category_lists[category].append(m.Ldif.Entry.model_validate(updated_entry))
             if is_rejected:
                 self.rejection_tracker[
                     c.Ldif.RejectionTrackerKey.CATEGORIZATION_REJECTED
-                ].append(updated_entry)
+                ].append(m.Ldif.Entry.model_validate(updated_entry))
 
         self._apply_post_categorization_filters(category_lists)
 
@@ -160,7 +160,7 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering):
                 )
                 self.rejection_tracker[
                     c.Ldif.RejectionTrackerKey.INVALID_DN_RFC4514
-                ].append(rejected_entry)
+                ].append(m.Ldif.Entry.model_validate(rejected_entry))
                 self.logger.debug(
                     "Entry DN failed RFC 4514 validation",
                     entry_dn=dn_str,
@@ -181,7 +181,7 @@ class FlextLdifCategorization(FlextLdifCategorizationFiltering):
                 )
                 self.rejection_tracker[
                     c.Ldif.RejectionTrackerKey.INVALID_DN_RFC4514
-                ].append(rejected_entry)
+                ].append(m.Ldif.Entry.model_validate(rejected_entry))
                 return r[p.Ldif.Entry].fail_op(
                     "DN normalization",
                     norm_result.error or c.Ldif.ERR_UNKNOWN,

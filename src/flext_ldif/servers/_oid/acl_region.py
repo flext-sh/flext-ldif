@@ -257,7 +257,10 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):  # ruff: ignore
                 continue
             kept = [other for other in kept if not to_oud.covers(leaf, other)]
             kept.append(leaf)
-        return m.Ldif.AclBindRule(include=bind.include, exclude=tuple(kept))
+        return m.Ldif.AclBindRule.model_validate({
+            "include": bind.include,
+            "exclude": tuple(kept),
+        })
 
     @override
     def widen(
@@ -301,24 +304,24 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):  # ruff: ignore
             target = (
                 f"{constants.OUD_TARGET_DEPTH_TWO_PREFIX}{self.dn_of(region.anchor)}"
             )
-        return m.Ldif.AciStatement(
-            dn=self.dn_of(region.anchor) if region.anchor else self._suffix,
-            effect=decision.resolution.effect,
-            rights=form.rights,
-            attrs=form.attrs,
-            targetfilter=form.targetfilter,
-            targetscope=scope,
-            target=target,
-            target_negated=region.target_negated and target == region.target,
-            bind=decision.bind,
-            rule=form.rule,
-            name=(
+        return m.Ldif.AciStatement.model_validate({
+            "dn": self.dn_of(region.anchor) if region.anchor else self._suffix,
+            "effect": decision.resolution.effect,
+            "rights": form.rights,
+            "attrs": form.attrs,
+            "targetfilter": form.targetfilter,
+            "targetscope": scope,
+            "target": target,
+            "target_negated": region.target_negated and target == region.target,
+            "bind": decision.bind,
+            "rule": form.rule,
+            "name": (
                 f"{rule.level} {rule.index}.{decision.resolution.clause} {form.rule}"
             ),
-            origin_dn=rule.dn,
-            origin_index=rule.index,
-            origin_level=rule.level,
-        )
+            "origin_dn": rule.dn,
+            "origin_index": rule.index,
+            "origin_level": rule.level,
+        })
 
     def nearer_grants(
         self,
@@ -343,7 +346,11 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):  # ruff: ignore
                 if grant.failure:
                     return result.from_failure(grant)
                 found.extend(
-                    m.Ldif.AclNearerGrant(key=key, level=level, leaf=leaf)
+                    m.Ldif.AclNearerGrant.model_validate({
+                        "key": key,
+                        "level": level,
+                        "leaf": leaf,
+                    })
                     for leaf in grant.value
                 )
         return result.ok(found)

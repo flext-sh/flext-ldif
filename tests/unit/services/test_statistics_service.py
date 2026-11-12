@@ -149,11 +149,11 @@ class TestsFlextLdifStatisticsService:
             self._entry("cn=stats-parse,dc=example,dc=com", c.Tests.RFC),
             self._entry("cn=stats-parse2,dc=example,dc=com", c.Tests.OID),
         ]
-        parse_response = m.Ldif.ParseResponse(
-            entries=entries,
-            statistics=m.Ldif.Statistics(),
-            detected_server_type=c.Ldif.ServerTypes.RFC,
-        )
+        parse_response = m.Ldif.ParseResponse.model_validate({
+            "entries": entries,
+            "statistics": m.Ldif.Statistics(),
+            "detected_server_type": c.Ldif.ServerTypes.RFC,
+        })
 
         from_list: p.Ldif.EntriesStatistics = u.Tests.assert_success(
             api.calculate_for_entries(entries),

@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableMapping, MutableSequence, Sequence
 
 from flext_ldif import c, m, p, r, t, u
 from flext_ldif.services import FlextLdifCategorizationRules, FlextLdifFilters
@@ -69,7 +69,7 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
         if not rejected_entries:
             return
         rejected_category = c.Ldif.Category.REJECTED
-        existing_rejected_raw: MutableSequence[p.Ldif.Entry] = filtered.get(
+        existing_rejected_raw: Sequence[p.Ldif.Entry] = filtered.get(
             rejected_category,
             [],
         )
@@ -183,7 +183,9 @@ class FlextLdifCategorizationFiltering(FlextLdifCategorizationRules):
                 all_excluded_entries.extend(excluded_updated)
                 self.rejection_tracker[
                     c.Ldif.RejectionTrackerKey.BASE_DN_FILTER
-                ].extend(excluded_updated)
+                ].extend(
+                    m.Ldif.Entry.model_validate(entry) for entry in excluded_updated
+                )
                 if excluded_updated:
                     self.logger.info(
                         "Applied base DN filter",

@@ -33,16 +33,21 @@ class FlextLdifUtilitiesSchemaNormalize:
             The normalized metadata mapping for the schema definition.
 
         """
-        fields = dict(
+        fields: t.Ldif.MutableMetadataMapping = dict(
             FlextLdifUtilitiesSchemaParse.parse_objectclass(definition)
             if attribute.casefold() == c.Ldif.OBJECT_CLASSES.casefold()
             else FlextLdifUtilitiesSchemaParse.parse_attribute(definition).unwrap()
         )
         for name in ("metadata_extensions", "syntax_validation", "name"):
             fields.pop(name, None)
-        fields["identifiers"] = sorted(
-            FlextLdifUtilitiesSchemaExtract.schema_definition_identifiers(definition)
-        )
+        identifiers: t.JsonValueList = [
+            *sorted(
+                FlextLdifUtilitiesSchemaExtract.schema_definition_identifiers(
+                    definition
+                )
+            )
+        ]
+        fields["identifiers"] = identifiers
         fields["obsolete"] = FlextLdifUtilitiesParserSchemaFields.extract_boolean_flag(
             definition, c.Ldif.SCHEMA_OBSOLETE_RE
         )
@@ -51,18 +56,22 @@ class FlextLdifUtilitiesSchemaNormalize:
                 definition, c.Ldif.SCHEMA_COLLECTIVE_RE
             )
         )
-        fields["extensions"] = {
-            name.upper(): values
+        extensions: dict[str, t.JsonValue] = {
+            name.upper(): [*values]
             for name, values in FlextLdifUtilitiesParserSchemaFields.extract_extensions(
                 definition
             ).items()
             if name.upper().startswith("X-")
             and name.upper() not in {"X-SCHEMA-FILE", "X-ORIGIN"}
         }
+        fields["extensions"] = extensions
         for name in ("must", "may"):
             value = fields.get(name)
             if isinstance(value, list):
-                fields[name] = sorted(str(item).casefold() for item in value)
+                normalized: t.JsonValueList = [
+                    *sorted(str(item).casefold() for item in value)
+                ]
+                fields[name] = normalized
         for name in ("sup", "equality", "ordering", "substr", "usage"):
             value = fields.get(name)
             if isinstance(value, str):
