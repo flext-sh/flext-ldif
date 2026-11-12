@@ -118,7 +118,10 @@ class FlextLdifServersOidAclScope:
                 continue
             kept = [other for other in kept if not to_oud.covers(leaf, other)]
             kept.append(leaf)
-        return m.Ldif.AclBindRule(include=bind.include, exclude=tuple(kept))
+        return m.Ldif.AclBindRule.model_validate({
+            "include": bind.include,
+            "exclude": tuple(kept),
+        })
 
     @classmethod
     def widen(

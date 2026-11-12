@@ -9,12 +9,74 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableSequence
 from typing import TYPE_CHECKING
 
+from flext_ldif import c
+from flext_ldif._utilities._parser.schema_fields import (
+    FlextLdifUtilitiesParserSchemaFields,
+)
+from flext_ldif._utilities._schema.extract import FlextLdifUtilitiesSchemaExtract
+from flext_ldif._utilities._schema.parse import FlextLdifUtilitiesSchemaParse
+
 if TYPE_CHECKING:
     from flext_ldif import p, t
 
 
 class FlextLdifUtilitiesSchemaNormalize:
     """Normalize and compare schema attribute/objectClass values."""
+
+    @staticmethod
+    def schema_definition_semantics(
+        attribute: str, definition: str
+    ) -> t.Ldif.MutableMetadataMapping:
+        """Compare parsed RFC content, excluding storage/provenance annotations.
+
+        Returns:
+            The normalized metadata mapping for the schema definition.
+
+        """
+        fields: t.Ldif.MutableMetadataMapping = dict(
+            FlextLdifUtilitiesSchemaParse.parse_objectclass(definition)
+            if attribute.casefold() == c.Ldif.OBJECT_CLASSES.casefold()
+            else FlextLdifUtilitiesSchemaParse.parse_attribute(definition).unwrap()
+        )
+        for name in ("metadata_extensions", "syntax_validation", "name"):
+            fields.pop(name, None)
+        identifiers: t.JsonValueList = [
+            *sorted(
+                FlextLdifUtilitiesSchemaExtract.schema_definition_identifiers(
+                    definition
+                )
+            )
+        ]
+        fields["identifiers"] = identifiers
+        fields["obsolete"] = FlextLdifUtilitiesParserSchemaFields.extract_boolean_flag(
+            definition, c.Ldif.SCHEMA_OBSOLETE_RE
+        )
+        fields["collective"] = (
+            FlextLdifUtilitiesParserSchemaFields.extract_boolean_flag(
+                definition, c.Ldif.SCHEMA_COLLECTIVE_RE
+            )
+        )
+        extensions: dict[str, t.JsonValue] = {
+            name.upper(): [*values]
+            for name, values in FlextLdifUtilitiesParserSchemaFields.extract_extensions(
+                definition
+            ).items()
+            if name.upper().startswith("X-")
+            and name.upper() not in {"X-SCHEMA-FILE", "X-ORIGIN"}
+        }
+        fields["extensions"] = extensions
+        for name in ("must", "may"):
+            value = fields.get(name)
+            if isinstance(value, list):
+                normalized: t.JsonValueList = [
+                    *sorted(str(item).casefold() for item in value)
+                ]
+                fields[name] = normalized
+        for name in ("sup", "equality", "ordering", "substr", "usage"):
+            value = fields.get(name)
+            if isinstance(value, str):
+                fields[name] = value.casefold()
+        return fields
 
     @staticmethod
     def build_available_attributes_set(

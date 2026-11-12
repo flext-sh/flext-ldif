@@ -185,13 +185,46 @@ class TestsFlextLdifOidAclEndToEnd:
     )
     def test_subjects_without_an_oud_mapping_fail(self, acl: str) -> None:
         """R8 forms with no measured OUD mapping fail, never pass raw."""
+        entries = self._directory({"cn=users,dc=ctbc": {"orclaci": [acl]}})
+        entries.append(u.Tests.oid_security_group_entry("cn=*,dc=ctbc"))
         tm.fail(
-            self._migrate(self._directory({"cn=users,dc=ctbc": {"orclaci": [acl]}})),
+            self._migrate(entries),
         )
 
-    def test_oracle_internal_entry_denial_fails(self) -> None:
-        """Dropping an Oracle-internal denial would grant in OUD; it fails."""
-        tm.fail(
+    def test_absent_literal_star_group_matches_no_session(self) -> None:
+        """A group DN is not expanded as a wildcard over unrelated groups."""
+        converted = tm.ok(
+            self._migrate(
+                self._directory({
+                    "cn=users,dc=ctbc": {
+                        "orclaci": ['access to entry by group="cn=*,dc=ctbc" (browse)'],
+                    },
+                })
+            ),
+        )
+        tm.that(self._acis(converted)["cn=users,dc=ctbc"], eq=[])
+
+    @c.Tests.MARK.parametrize("right", ["browse", "nobrowse"])
+    def test_proxy_threshold_keeps_only_authenticated_sessions(
+        self, right: str
+    ) -> None:
+        """Proxy is an authentication threshold, not an unconditioned anyone."""
+        converted = tm.ok(
+            self._migrate(
+                self._directory({
+                    "cn=users,dc=ctbc": {
+                        "orclaci": [f"access to entry by * bindmode=(Proxy) ({right})"],
+                    },
+                })
+            )
+        )
+        acis = "\n".join(self._acis(converted)["cn=users,dc=ctbc"])
+        tm.that(acis, has='userdn="ldap:///all"')
+        tm.that(acis, lacks='userdn="ldap:///anyone"')
+
+    def test_retained_oracle_internal_entry_keeps_its_denial(self) -> None:
+        """An Oracle-specific name does not remove a retained entry's policy."""
+        converted = tm.ok(
             self._migrate(
                 self._directory({
                     "cn=OracleContext,dc=ctbc": {
@@ -200,6 +233,9 @@ class TestsFlextLdifOidAclEndToEnd:
                 }),
             ),
         )
+        acis = self._acis(converted)["cn=OracleContext,dc=ctbc"]
+        tm.that(bool(acis), truth=True)
+        tm.that("\n".join(acis), has="deny")
 
     @staticmethod
     def test_single_entry_conversion_of_oid_acls_fails_loud() -> None:

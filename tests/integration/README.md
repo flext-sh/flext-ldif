@@ -54,7 +54,7 @@ tests/integration/
 │
 ├── test_roundtrip_deep_validation.py             # Deep content validation roundtrips
 ├── test_rfc_compliance_validation.py             # RFC 2849/4512 format validation
-├── test_systematic_fixture_coverage.py           # Server×fixture type matrix coverage
+├── test_systematic_fixture_coverage.py           # Serverxfixture type matrix coverage
 ├── test_error_recovery.py                        # Malformed LDIF and error handling
 ├── test_edge_cases.py                            # Boundary conditions and edge cases
 │
@@ -94,7 +94,7 @@ runtime_bootstrap_options
 
 runtime_bootstrap_options
 
-- Tests: All server types × all fixture types (coverage matrix)
+- Tests: All server types x all fixture types (coverage matrix)
 - Coverage:
   - Schema fixtures (2 tests)
   - ACL fixtures (2 tests)
@@ -496,7 +496,7 @@ def test_valid_entry(self, api: ldif) -> None:
 
 - **Roundtrip Validation**: 9 tests covering parse→write→parse cycles
 - **RFC Compliance**: 15 tests validating RFC 2849/4512 adherence
-- **Systematic Coverage**: 10 tests ensuring server×fixture matrix
+- **Systematic Coverage**: 10 tests ensuring serverxfixture matrix
 - **Error Recovery**: 22 tests for malformed input handling
 - **Edge Cases**: 20 tests for boundary conditions
 - **Server-Specific**: 12+ tests for OID, OUD, conversions

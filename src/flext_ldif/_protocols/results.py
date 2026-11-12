@@ -32,7 +32,10 @@ class FlextLdifProtocolsResults:
     class WriteRequest(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        entries: MutableSequence[FlextLdifProtocolsDomainEntry.Entry]
+        @property
+        def entries(self) -> Sequence[FlextLdifProtocolsDomainEntry.Entry]:
+            """Owned LDIF entries supplied for serialization."""
+            ...
 
         @property
         def format_options(
@@ -240,7 +243,7 @@ class FlextLdifProtocolsResults:
         """Structural data contract projected from the owning model."""
 
         @property
-        def entries(self) -> MutableSequence[FlextLdifProtocolsDomainEntry.Entry]:
+        def entries(self) -> Sequence[FlextLdifProtocolsDomainEntry.Entry]:
             """Parsed LDIF entries."""
             ...
 

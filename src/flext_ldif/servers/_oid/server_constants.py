@@ -247,6 +247,8 @@ class FlextLdifConstantsServersOid(
     ACL_RIGHT_ADD: ClassVar[str] = "add"
     ACL_RIGHT_BROWSE: ClassVar[str] = "browse"
     ACL_RIGHT_PROXY: ClassVar[str] = "proxy"
+    ACL_RIGHT_READ: ClassVar[str] = "read"
+    ACL_RIGHT_SEARCH: ClassVar[str] = "search"
     # OUD aci rights in rendering order; statements that differ only in their
     # rights render as one aci listing them in this order.
     OUD_RIGHTS_ORDER: ClassVar[tuple[str, ...]] = (

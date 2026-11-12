@@ -16,6 +16,34 @@ class TestsFlextLdifParserService:
     """Cover parser service error and path-resolution branches."""
 
     @staticmethod
+    def test_parse_modify_preserves_values_and_empty_deletion(
+        api: p.Ldif.LdifClient,
+    ) -> None:
+        """The public parser returns usable models for each modify block."""
+        content = (
+            "dn: cn=policy,dc=example,dc=invalid\n"
+            "changetype: modify\n"
+            "replace: description\n"
+            "description: historical policy\n-\n"
+            "delete: aci\n-\n"
+        )
+        parsed = tm.ok(api.parse_ldif(content, server_type=c.Tests.OUD))
+        tm.that(parsed.entries, length=1)
+        operations = parsed.entries[0].change_operations
+        tm.that(operations, length=2)
+        tm.that(operations[0], is_=m.Ldif.ChangeOperation)
+        tm.that(operations[0].operation, eq=c.Ldif.ChangeOperation.REPLACE)
+        tm.that(operations[0].attribute, eq="description")
+        tm.that(
+            [value.value for value in operations[0].values],
+            eq=["historical policy"],
+        )
+        tm.that(operations[1], is_=m.Ldif.ChangeOperation)
+        tm.that(operations[1].operation, eq=c.Ldif.ChangeOperation.DELETE)
+        tm.that(operations[1].attribute, eq="aci")
+        tm.that(operations[1].values, length=0)
+
+    @staticmethod
     def test_parse_ldif_from_path_uses_file_flow(
         api: p.Ldif.LdifClient,
         tmp_path: Path,

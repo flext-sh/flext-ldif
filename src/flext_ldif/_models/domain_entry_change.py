@@ -6,14 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence
+from collections.abc import Sequence
 from typing import Annotated, ClassVar
 
 from flext_cli import m
 
-from flext_ldif import c, p, t
-from flext_ldif._models import (
-    FlextLdifModelsDomainEntryChangeOperationValue as ChangeVal,
+from flext_ldif import c, t
+from flext_ldif._models.domain_entry_change_value import (
+    FlextLdifModelsDomainEntryChangeOperationValue,
 )
 
 
@@ -33,13 +33,8 @@ class FlextLdifModelsDomainEntryChangeOperation:
             str,
             m.Field(description="Target attribute for the modify block"),
         ]
-        values: MutableSequence[
-            Annotated[
-                p.Ldif.ChangeOperationValue,
-                t.schema_for_model(
-                    lambda: ChangeVal.ChangeOperationValue,
-                ),
-            ]
+        values: Sequence[
+            FlextLdifModelsDomainEntryChangeOperationValue.ChangeOperationValue
         ] = m.Field(
             default_factory=list,
             description="Decoded values in the block",

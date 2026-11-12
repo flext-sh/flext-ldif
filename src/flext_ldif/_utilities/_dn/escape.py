@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import string
-from collections.abc import MutableSequence
 
 from flext_cli import u
 
@@ -77,7 +76,7 @@ class FlextLdifUtilitiesDNEscape:
         """
         if not value or "\\" not in value:
             return value
-        result: MutableSequence[str] = []
+        result = bytearray()
         i = 0
         while i < len(value):
             if value[i] == "\\" and i + 1 < len(value):
@@ -85,15 +84,15 @@ class FlextLdifUtilitiesDNEscape:
                     ch in string.hexdigits for ch in value[i + 1 : i + 3]
                 ):
                     hex_code = value[i + 1 : i + 3]
-                    result.append(chr(int(hex_code, 16)))
+                    result.append(int(hex_code, 16))
                     i += 3
                 else:
-                    result.append(value[i + 1])
+                    result.extend(value[i + 1].encode("utf-8"))
                     i += 2
             else:
-                result.append(value[i])
+                result.extend(value[i].encode("utf-8"))
                 i += 1
-        return "".join(result)
+        return result.decode("utf-8")
 
 
 __all__: list[str] = ["FlextLdifUtilitiesDNEscape"]

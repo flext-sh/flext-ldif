@@ -172,20 +172,26 @@ class FlextLdifUtilitiesParserRecord:
                 state.current_change_operation,
                 state.change_operations,
             )
-            state.current_change_operation = p.Ldif.ChangeOperation(
+            state.current_change_operation = FlextLdifModels.Ldif.ChangeOperation(
                 operation=FlextLdifUtilitiesParserRecord._MODIFY_OPS[key_lower],
                 attribute=decoded.value,
             )
             return None
         if state.current_change_operation is not None:
-            state.current_change_operation.values.append(
-                FlextLdifModelsDomainEntryChangeOperationValue.ChangeOperationValue(
-                    value=decoded.value,
-                    value_origin=decoded.value_origin,
-                    raw_value=decoded.raw_value,
-                ),
+            operation = state.current_change_operation
+            state.current_change_operation = operation.model_copy(
+                update={
+                    "values": [
+                        *operation.values,
+                        FlextLdifModelsDomainEntryChangeOperationValue.ChangeOperationValue(
+                            value=decoded.value,
+                            value_origin=decoded.value_origin,
+                            raw_value=decoded.raw_value,
+                        ),
+                    ],
+                },
             )
-            return state.current_change_operation.attribute
+            return operation.attribute
         return key
 
     @staticmethod

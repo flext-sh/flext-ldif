@@ -128,7 +128,7 @@ Each server servers class has:
 - Server-specific parsing logic
 - Returns `r.ok(Acl(...))` or `r.fail(...)`
 
-**Affected Lines**: ~40-50 lines per file × 13 files = ~520-650 lines
+**Affected Lines**: ~40-50 lines per file x 13 files = ~520-650 lines
 
 ---
 

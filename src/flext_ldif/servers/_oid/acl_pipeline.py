@@ -19,7 +19,6 @@ from flext_ldif import c, m, p, r
 from flext_ldif.servers._oid import (
     FlextLdifConstantsServersOid,
     FlextLdifServersOidAclAssemble,
-    FlextLdifServersOidAclConvert,
     FlextLdifServersOidAclRender,
     FlextLdifServersOidAclToOud,
 )
@@ -29,7 +28,7 @@ class FlextLdifServersOidAclPipeline:
     """Directory-level OID→OUD ACL conversion and its per-entry application."""
 
     @classmethod
-    def convert_directory(  # ruff: ignore[complex-structure, too-many-locals]
+    def convert_directory(  # ruff: ignore[too-many-locals] - ACL directory conversion is inherently complex
         cls,
         entries: Sequence[p.Ldif.Entry],
         *,
@@ -38,8 +37,8 @@ class FlextLdifServersOidAclPipeline:
         """Convert the OID ACLs of every entry into placed OUD ACI values.
 
         Every OID ACL value becomes one level rule (positions start at 1);
-        an Oracle-internal entry contributes none and fails when one of its
-        ACLs denies a right. The render places every statement on its
+        Oracle-internal names do not exclude retained entries' access policy.
+        The render places every statement on its
         receiving entry; its values are deduplicated per entry in emission
         order.
 
@@ -62,18 +61,6 @@ class FlextLdifServersOidAclPipeline:
             if not names.value:
                 continue
             consumed.add(to_oud.dn_key(dn))
-            if any(rule.match(dn) for rule in c.Ldif.ORACLE_INTERNAL_DN_RES):
-                internal = cls._internal_denials(
-                    dn,
-                    [
-                        f"{name}: {value}"
-                        for name in names.value
-                        for value in attributes[name]
-                    ],
-                )
-                if internal.failure:
-                    return result.from_failure(internal)
-                continue
             for name in names.value:
                 level: list[p.Ldif.AclLevelRule] = []
                 for index, value in enumerate(attributes[name], 1):
@@ -101,12 +88,12 @@ class FlextLdifServersOidAclPipeline:
             if rendered not in placed:
                 placed.append(rendered)
         return result.ok(
-            m.Ldif.AclDirectoryConversion(
-                statements=tuple(statements),
-                values={key: tuple(found) for key, found in values.items()},
-                events=(*events, *render.events),
-                consumed=frozenset(consumed),
-            ),
+            m.Ldif.AclDirectoryConversion.model_validate({
+                "statements": tuple(statements),
+                "values": {key: tuple(found) for key, found in values.items()},
+                "events": (*events, *render.events),
+                "consumed": frozenset(consumed),
+            }),
         )
 
     @staticmethod
@@ -181,7 +168,11 @@ class FlextLdifServersOidAclPipeline:
         for name in names.value:
             del current[name]
         if placed:
-            current[c.Ldif.ACI_ATTR_NAME] = list(placed)
+            existing = list(current.get(c.Ldif.ACI_ATTR_NAME, ()))
+            current[c.Ldif.ACI_ATTR_NAME] = [
+                *existing,
+                *(value for value in placed if value not in existing),
+            ]
         attributes = (
             attrs_model.model_copy(
                 update={
@@ -196,19 +187,16 @@ class FlextLdifServersOidAclPipeline:
             if attrs_model
             else m.Ldif.Attributes(attributes=current)
         )
-        recorded = m.Ldif.AclEntryConversion(
-            statements=tuple(
+        recorded = m.Ldif.AclEntryConversion.model_validate({
+            "statements": tuple(
                 statement
                 for statement in conversion.statements
                 if to_oud.dn_key(statement.dn) == key
             ),
-            events=tuple(
+            "events": tuple(
                 event for event in conversion.events if to_oud.dn_key(event.dn) == key
             ),
-            oracle_internal_skip=any(
-                rule.match(dn) for rule in c.Ldif.ORACLE_INTERNAL_DN_RES
-            ),
-        )
+        })
         metadata = (
             entry.metadata.model_copy(update={"acl_conversion": recorded})
             if entry.metadata is not None
@@ -220,41 +208,6 @@ class FlextLdifServersOidAclPipeline:
         return r[p.Ldif.Entry].ok(
             entry.model_copy(update={"attributes": attributes, "metadata": metadata}),
         )
-
-    @classmethod
-    def _internal_denials(
-        cls,
-        dn: str,
-        oid_acl_lines: Sequence[str],
-    ) -> p.Result[bool]:
-        """Fail when an Oracle-internal entry's OID ACLs deny any right.
-
-        Dropping a denial would grant in OUD what OID denies; dropping a
-        grant only narrows access.
-
-        Returns:
-            Success when every line only grants, or the typed failure.
-
-        """
-        for line in oid_acl_lines:
-            rule = FlextLdifServersOidAclConvert.parse_oid_acl_line(dn, line)
-            if rule.failure:
-                return r[bool].from_failure(rule)
-            is_entry = rule.value.target_type == c.Ldif.AclTargetType.ENTRY
-            for subject in rule.value.subjects:
-                resolved = FlextLdifServersOidAclToOud.resolve_permissions(
-                    subject.permissions,
-                    is_entry=is_entry,
-                )
-                if resolved.failure:
-                    return r[bool].from_failure(resolved)
-                if resolved.value.deny:
-                    return r[bool].fail(
-                        f"Oracle-internal entry {dn!r} carries an OID ACL that "
-                        f"denies {tuple(resolved.value.deny)}; dropping it would "
-                        "grant in OUD what OID denies (manual review required)",
-                    )
-        return r[bool].ok(value=True)
 
     @staticmethod
     def _acl_attribute_names(
@@ -278,12 +231,6 @@ class FlextLdifServersOidAclPipeline:
             for name, base in bases.items()
             if base in c.Ldif.AclConvertType and name.lower() != base
         ]
-        if c.Ldif.ACI_ATTR_NAME.lower() in bases.values():
-            return r[Sequence[str]].fail(
-                f"OID entry {dn!r} carries an aci attribute, which OID does not "
-                "enforce and OUD would enforce as access control (manual review "
-                "required)",
-            )
         if optioned:
             return r[Sequence[str]].fail(
                 f"OID ACL attributes with options {optioned!r} on {dn!r} have no "

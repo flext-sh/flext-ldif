@@ -76,23 +76,11 @@ class FlextLdifModelsDomainEntry(ChangeOp):
             ),
         ] = c.Ldif.RecordKind.CONTENT
         controls: Annotated[
-            Sequence[
-                Annotated[
-                    p.Ldif.Control,
-                    t.schema_for_model(
-                        lambda: FlextLdifModelsDomainEntryControl.Control,
-                    ),
-                ]
-            ],
+            Sequence[FlextLdifModelsDomainEntryControl.Control],
             m.Field(description="RFC 2849 control lines associated with the record"),
         ] = m.Field(default_factory=tuple)
         change_operations: Annotated[
-            MutableSequence[
-                Annotated[
-                    p.Ldif.ChangeOperation,
-                    t.schema_for_model(lambda: ChangeOp.ChangeOperation),
-                ]
-            ],
+            MutableSequence[ChangeOp.ChangeOperation],
             m.Field(
                 description="Structured modify operation blocks for changetype=modify",
             ),

@@ -88,14 +88,28 @@ class FlextLdifServersOidAclToOud:
                 f"Empty token in OID access list {tuple(permissions)!r} "
                 "(OID-A7 §A.7.1; manual review required)",
             )
+        permission_map = c.Ldif.ENTRY_PERM_MAP if is_entry else c.Ldif.ATTR_PERM_MAP
+        all_oud_rights = frozenset(
+            right.strip()
+            for mapped in permission_map.values()
+            if mapped is not None
+            for right in mapped.split(",")
+        )
         granted: set[str] = set()
         denied: set[str] = set()
         for token in tokens:
             base = c.Ldif.NEGATION_TO_BASE.get(token, token)
             if token == c.Ldif.PERM_NONE:
-                denied.update(scope)
+                denied.update(all_oud_rights)
             elif base in scope:
-                (denied if base != token else granted).add(base)
+                mapped = permission_map[base]
+                if mapped is None:
+                    return result.fail(
+                        f"Unknown OID permission token {token!r} (not in the OID "
+                        "access grammar, OID-A7 §A.7.1; manual review required)",
+                    )
+                rights = {right.strip() for right in mapped.split(",")}
+                (denied if base != token else granted).update(rights)
             elif base in other:
                 return result.fail(
                     f"OID permission {token!r} is not a right of an "
@@ -331,13 +345,19 @@ class FlextLdifServersOidAclToOud:
         result = r[tuple[p.Ldif.AclBindLeaf | None, str]]
         dn = cls.normalize_dn(value)
         key = dn.lower()
+        first_rdn, _, _rest = dn.partition(",")
+        wildcard_rdn = f"={c.Ldif.ACL_WILDCARD}"
+        group = directory.groups.get(key)
+        if group is None or not group.classes:
+            if c.Ldif.ACL_WILDCARD in dn and not first_rdn.endswith(wildcard_rdn):
+                return result.fail(
+                    f"R8: OID group DN with a wildcard has no OUD groupdn: {value!r}",
+                )
+            return result.ok((None, constants.AclRule.R8))
         if c.Ldif.ACL_WILDCARD in dn:
             return result.fail(
                 f"R8: OID group DN with a wildcard has no OUD groupdn: {value!r}",
             )
-        group = directory.groups.get(key)
-        if group is None or not group.classes:
-            return result.ok((None, constants.AclRule.R8))
         defect = cls._group_defect(directory, key, frozenset())
         if defect:
             return result.fail(f"R8: {defect}; no exact OUD groupdn")
@@ -402,7 +422,9 @@ class FlextLdifServersOidAclToOud:
         and a group is checked against the directory. ``SuperUser`` (E8) and
         ``guidattr`` (E4) match no OUD session; ``groupattr=(a)`` is
         ``userattr="a#GROUPDN"`` (spec v4.2 §4.8 R8). ``bindmode`` and
-        ``bindipfilter`` (no measured OUD mapping) fail.
+        ``bindipfilter`` fail unless the exact supported form is ``*`` with
+        ``bindmode=Proxy``: OID's authentication threshold excludes anonymous,
+        represented by the existing OUD ``all`` leaf for grants and denials.
 
         Returns:
             The leaf (None for no session) and its rule, or the failure.
@@ -412,7 +434,12 @@ class FlextLdifServersOidAclToOud:
         kinds = c.Ldif.OidSubjectKind
         leaves = constants.AclLeafKind
         result = r[tuple[p.Ldif.AclBindLeaf | None, str]]
-        if subject.bindmode or subject.bindipfilter:
+        authenticated_only = (
+            subject.subject_type,
+            subject.bindmode.casefold(),
+            subject.bindipfilter,
+        ) == (kinds.ANYONE, "proxy", "")
+        if (subject.bindmode or subject.bindipfilter) and not authenticated_only:
             return result.fail(
                 f"R8: bindmode={subject.bindmode!r} bindipfilter="
                 f"{subject.bindipfilter!r} has no measured OUD mapping and is "
@@ -424,10 +451,15 @@ class FlextLdifServersOidAclToOud:
             case kinds.GUIDATTR:
                 outcome = result.ok((None, constants.AclRule.E4))
             case kinds.ANYONE:
+                binding = (
+                    constants.OUD_BIND_ALL
+                    if authenticated_only
+                    else constants.OUD_BIND_ANYONE
+                )
                 leaf = m.Ldif.AclBindLeaf(
-                    kind=leaves.ANYONE,
-                    value=constants.OUD_BIND_ANYONE,
-                    key=constants.OUD_BIND_ANYONE,
+                    kind=leaves.ALL if authenticated_only else leaves.ANYONE,
+                    value=binding,
+                    key=binding,
                 )
                 outcome = result.ok((leaf, constants.AclRule.R8))
             case kinds.SELF:

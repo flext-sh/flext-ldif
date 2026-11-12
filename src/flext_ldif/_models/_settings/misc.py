@@ -11,8 +11,6 @@ from typing import Annotated
 
 from flext_core import m
 
-from flext_ldif import t
-
 
 class FlextLdifModelsSettingsMisc:
     """LDIF settings mix-in: misc."""
@@ -33,20 +31,6 @@ class FlextLdifModelsSettingsMisc:
             m.Field(description="Correlation identifier"),
         ] = None
         trace_id: Annotated[str | None, m.Field(description="Trace identifier")] = None
-
-    class RdnProcessingConfig(m.ArbitraryTypesModel):
-        """Mutable state for RDN character-by-character parsing."""
-
-        current_attr: Annotated[str, m.Field(description="Current attribute name")] = ""
-        current_val: Annotated[str, m.Field(description="Current value")] = ""
-        in_value: Annotated[
-            bool,
-            m.Field(description="Whether parser is inside the value portion"),
-        ] = False
-        pairs: Annotated[
-            t.MutableStrPairSequence,
-            m.Field(description="Accumulated (attr, value) pairs"),
-        ] = m.Field(default_factory=list[tuple[str, str]])
 
 
 __all__: list[str] = ["FlextLdifModelsSettingsMisc"]

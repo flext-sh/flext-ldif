@@ -70,10 +70,19 @@ class FlextLdifProtocolsDomainEntry:
             ...
 
         record_kind: c.Ldif.RecordKind
-        controls: Sequence[FlextLdifProtocolsDomainEntryControl.Control]
-        change_operations: MutableSequence[
-            FlextLdifProtocolsDomainEntryChange.ChangeOperation
-        ]
+
+        @property
+        def controls(self) -> Sequence[FlextLdifProtocolsDomainEntryControl.Control]:
+            """RFC 2849 control lines associated with the record."""
+            ...
+
+        @property
+        def change_operations(
+            self,
+        ) -> Sequence[FlextLdifProtocolsDomainEntryChange.ChangeOperation]:
+            """Structured modify operation blocks for changetype=modify."""
+            ...
+
         changetype: c.Ldif.ChangeType | None
         newrdn: str | None
         deleteoldrdn: bool | None

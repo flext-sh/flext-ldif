@@ -111,14 +111,14 @@ class FlextLdifServersOidAclAssemble:
                 ),
             )
         return result.ok((
-            m.Ldif.AclClause(
-                index=position,
-                subject=subject,
-                leaf=bind_leaf,
-                outcome="" if bind_leaf is not None else outcome,
-                allow=allow,
-                deny=deny,
-            ),
+            m.Ldif.AclClause.model_validate({
+                "index": position,
+                "subject": subject,
+                "leaf": bind_leaf,
+                "outcome": "" if bind_leaf is not None else outcome,
+                "allow": allow,
+                "deny": deny,
+            }),
             events,
         ))
 
@@ -176,16 +176,16 @@ class FlextLdifServersOidAclAssemble:
             clauses.append(clause.value[0])
             events.extend(clause.value[1])
         return result.ok((
-            m.Ldif.AclLevelRule(
-                level=level,
-                dn=dn,
-                key=FlextLdifServersOidAclToOud.dn_key(dn),
-                index=index,
-                rule=rule,
-                attrs=FlextLdifServersOidAclToOud.attr_set(rule),
-                target_filter=target_filter,
-                clauses=tuple(clauses),
-            ),
+            m.Ldif.AclLevelRule.model_validate({
+                "level": level,
+                "dn": dn,
+                "key": FlextLdifServersOidAclToOud.dn_key(dn),
+                "index": index,
+                "rule": rule,
+                "attrs": FlextLdifServersOidAclToOud.attr_set(rule),
+                "target_filter": target_filter,
+                "clauses": tuple(clauses),
+            }),
             tuple(events),
         ))
 
@@ -318,18 +318,18 @@ class FlextLdifServersOidAclAssemble:
                     dead.append((clause.index, right))
                     continue
                 resolutions.append(
-                    m.Ldif.AclResolution(
-                        clause=clause.index,
-                        right=right,
-                        effect=(
-                            constants.AclEffect.DENY
-                            if denied
-                            else constants.AclEffect.ALLOW
+                    m.Ldif.AclResolution.model_validate({
+                        "clause": clause.index,
+                        "right": right,
+                        "effect": constants.AclEffect.DENY
+                        if denied
+                        else constants.AclEffect.ALLOW,
+                        "leaf": leaf,
+                        "grantors": tuple(others) if denied else (),
+                        "added_object_constraint": (
+                            clause.subject.added_object_constraint
                         ),
-                        leaf=leaf,
-                        grantors=tuple(others) if denied else (),
-                        added_object_constraint=clause.subject.added_object_constraint,
-                    ),
+                    }),
                 )
         return tuple(resolutions), tuple(dead)
 

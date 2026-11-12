@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_cli import c as flext_cli_c
+from flext_cli import FlextCliConstants
 
 from flext_ldif._constants import (
     FlextLdifConstantsAclConvert,
@@ -24,7 +24,7 @@ from flext_ldif._constants import (
 )
 
 
-class FlextLdifConstants(flext_cli_c):
+class FlextLdifConstants(FlextCliConstants):
     """LDIF domain constants extending flext-core FlextConstants."""
 
     class Ldif(

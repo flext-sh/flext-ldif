@@ -24,6 +24,7 @@ class FlextLdifServersEntryWriteOptions:
         line_width = c.Ldif.LINE_FOLD_WIDTH
         self.include_dn_comments = False
         self.normalize_attribute_names = False
+        self.sort_attributes = False
         self.restore_original_format = False
         self.write_empty_values = True
         self.write_hidden_attributes_as_comments = False
@@ -38,6 +39,10 @@ class FlextLdifServersEntryWriteOptions:
             extensions_data,
         )
         if format_options is not None:
+            self.sort_attributes = (
+                format_options.sort_attributes
+                and not format_options.respect_attribute_order
+            )
             fold_long_lines = format_options.fold_long_lines
             line_width = format_options.line_width
             self.include_dn_comments = format_options.include_dn_comments

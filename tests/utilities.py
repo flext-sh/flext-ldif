@@ -14,9 +14,9 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import ClassVar
 
-from flext_tests import u as flext_tests_u
+from flext_tests import FlextTestsUtilities
 
-from flext_ldif import u as flext_ldif_u
+from flext_ldif import FlextLdifUtilities
 from tests import c, m, p, t
 from tests._utilities import (
     TestsFlextLdifEntryBuilders,
@@ -25,18 +25,18 @@ from tests._utilities import (
 )
 
 
-class TestsFlextLdifUtilities(flext_tests_u, flext_ldif_u):
+class TestsFlextLdifUtilities(FlextTestsUtilities, FlextLdifUtilities):
     """Project test utility namespace extension."""
 
     class Tests(
-        flext_tests_u.Tests,
+        FlextTestsUtilities.Tests,
         TestsFlextLdifEntryBuilders,
         TestsFlextLdifLdapClient,
         TestsSchemaAclAssertionsMixin,
     ):
         """Flat test utility namespace for flext-ldif."""
 
-        logger: ClassVar[p.Logger] = flext_ldif_u.fetch_logger(__name__)
+        logger: ClassVar[p.Logger] = FlextLdifUtilities.fetch_logger(__name__)
 
         @classmethod
         def server_attribute_test_cases(

@@ -21,6 +21,24 @@ if TYPE_CHECKING:
 class FlextLdifUtilitiesSchemaExtract:
     """Extract RFC 4512 schema fields from raw definition strings."""
 
+    @staticmethod
+    def schema_definition_identifiers(definition: str) -> frozenset[str]:
+        """Return the RFC OID and case-insensitive NAME aliases."""
+        oid = FlextLdifUtilitiesParser.extract_oid(definition).unwrap()
+        names = c.Ldif.SCHEMA_NAME_MULTIPLE_RE.search(definition)
+        if names is not None:
+            return frozenset((
+                oid,
+                *(
+                    name.group(2).casefold()
+                    for name in c.Ldif.QUOTED_NAME_TRIPLE_RE.finditer(names.group(0))
+                ),
+            ))
+        name = FlextLdifUtilitiesParser.extract_optional_field(
+            definition, c.Ldif.SCHEMA_NAME
+        )
+        return frozenset((oid,) if name is None else (oid, name.casefold()))
+
     logger: ClassVar[p.Logger] = u.fetch_logger(__name__)
 
     @staticmethod

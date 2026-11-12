@@ -100,14 +100,14 @@ class FlextLdifCategorizationRules(FlextLdifServer):
     rejection_tracker: Annotated[
         MutableMapping[
             str,
-            MutableSequence[Annotated[p.Ldif.Entry, t.schema_for_model(m.Ldif.Entry)]],
+            MutableSequence[m.Ldif.Entry],
         ],
         m.Field(
             default_factory=_build_rejection_tracker,
             exclude=True,
             description="Tracks rejected entries by rejection reason.",
         ),
-    ] = m.Field(default_factory=_build_rejection_tracker)
+    ]
 
     def _normalize_initial_category_rules(self) -> p.Ldif.CategoryRules:
         """Normalize initial categorization rules into the canonical model.

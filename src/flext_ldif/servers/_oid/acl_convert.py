@@ -415,17 +415,17 @@ class FlextLdifServersOidAclConvert:
         append_to_all = bool(keywords and keywords.group("ata"))
         remaining = content[keywords.end() :] if keywords else content
         return cls._parse_by_clauses(remaining).map(
-            lambda subjects: m.Ldif.OidAclRule(
-                dn=dn,
-                acl_type=acl_type,
-                target_type=target_type,
-                target_attrs=target_attrs,
-                target_filter=target_filter,
-                subjects=subjects,
-                raw_line=line,
-                deny_group_override=deny_group_override,
-                append_to_all=append_to_all,
-            ),
+            lambda subjects: m.Ldif.OidAclRule.model_validate({
+                "dn": dn,
+                "acl_type": acl_type,
+                "target_type": target_type,
+                "target_attrs": target_attrs,
+                "target_filter": target_filter,
+                "subjects": subjects,
+                "raw_line": line,
+                "deny_group_override": deny_group_override,
+                "append_to_all": append_to_all,
+            }),
         )
 
 

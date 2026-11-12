@@ -20,8 +20,6 @@ from typing import Annotated, ClassVar
 from flext_cli import FlextCliSettings
 from flext_core import FlextSettings, m, t
 
-from flext_ldif import p
-
 
 class FlextLdifSettings(FlextCliSettings, FlextSettings):
     """LDIF processing settings inheriting base FLEXT configuration."""
@@ -43,10 +41,7 @@ class FlextLdifSettings(FlextCliSettings, FlextSettings):
         extra="ignore",
     )
 
-    Ldif: Annotated[
-        p.Ldif.LdifSettings,
-        t.schema_for_model(lambda: FlextLdifSettings.LdifSettings),
-    ] = m.Field(
+    Ldif: FlextLdifSettings.LdifSettings = m.Field(
         default_factory=LdifSettings,
         description="Namespaced LDIF settings branch.",
     )

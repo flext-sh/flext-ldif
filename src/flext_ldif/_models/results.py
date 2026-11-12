@@ -27,14 +27,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
     class WriteRequest(m.ArbitraryTypesModel):
         """One validated write boundary for structural entries and options."""
 
-        entries: MutableSequence[
-            Annotated[
-                p.Ldif.Entry,
-                t.schema_for_model(
-                    lambda: FlextLdifModelsDomainsEntries.Entry,
-                ),
-            ]
-        ] = m.Field(
+        entries: MutableSequence[FlextLdifModelsDomainsEntries.Entry] = m.Field(
             description="Owned LDIF entries supplied for serialization",
         )
         format_options: FlextLdifModelsSettingsMigrate.WriteFormatOptions | None = (
@@ -238,14 +231,7 @@ class FlextLdifModelsResults(FlextLdifModelsResultsStatistics):
 
     class ParseResponse(Response):
         entries: Annotated[
-            MutableSequence[
-                Annotated[
-                    p.Ldif.Entry,
-                    t.schema_for_model(
-                        lambda: FlextLdifModelsDomainsEntries.Entry,
-                    ),
-                ]
-            ],
+            MutableSequence[FlextLdifModelsDomainsEntries.Entry],
             m.Field(description="Parsed LDIF entries"),
         ]
         detected_server_type: Annotated[

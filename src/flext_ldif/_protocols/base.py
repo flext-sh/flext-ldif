@@ -58,7 +58,10 @@ class FlextLdifProtocolsBase:
         field, so the structural contract repeats its name and shape.
         """
 
-        Ldif: FlextLdifProtocolsBase.LdifSettings
+        @property
+        def Ldif(self) -> FlextLdifProtocolsBase.LdifSettings:
+            """Namespaced LDIF runtime settings branch."""
+            ...
 
     @runtime_checkable
     class ValidationService(Protocol):

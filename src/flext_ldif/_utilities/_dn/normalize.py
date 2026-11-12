@@ -10,7 +10,11 @@ from collections.abc import MutableSequence
 from typing import overload
 
 from flext_ldif import c, p, r
-from flext_ldif._utilities._dn import FlextLdifUtilitiesDNParse
+from flext_ldif._utilities._dn import (
+    FlextLdifUtilitiesDNEscape,
+    FlextLdifUtilitiesDNParse,
+    FlextLdifUtilitiesDNRdn,
+)
 
 
 class FlextLdifUtilitiesDNNormalize:
@@ -115,6 +119,33 @@ class FlextLdifUtilitiesDNNormalize:
         return dn
 
     @staticmethod
+    def dn_key(dn: str) -> p.Result[str]:
+        """Build the established case-insensitive DN identity, sorting RDN AVAs.
+
+        Returns:
+            Canonically escaped identity or the first invalid RDN.
+
+        """
+        if not dn:
+            return r[str].ok("")
+        rdns: list[str] = []
+        for component in FlextLdifUtilitiesDNParse.split(dn):
+            parsed = FlextLdifUtilitiesDNRdn.parse_rdn(component)
+            if parsed.failure:
+                return r[str].from_failure(parsed)
+            pairs = sorted(
+                parsed.value,
+                key=lambda pair: (pair[0].lower(), pair[1].lower()),
+            )
+            rdns.append(
+                "+".join(
+                    f"{attribute.lower()}={FlextLdifUtilitiesDNEscape.esc(value.lower())}"
+                    for attribute, value in pairs
+                )
+            )
+        return r[str].ok(",".join(rdns))
+
+    @staticmethod
     def _normalize_dns_for_comparison(dn1: str, dn2: str) -> p.Result[tuple[str, str]]:
         """Normalize both DNs for comparison.
 
@@ -122,13 +153,13 @@ class FlextLdifUtilitiesDNNormalize:
             The resulting ``p.Result[tuple[str, str]]``.
 
         """
-        norm1_result = FlextLdifUtilitiesDNNormalize.norm(dn1)
+        norm1_result = FlextLdifUtilitiesDNNormalize.dn_key(dn1)
         if not norm1_result.success:
             return r[tuple[str, str]].fail(
                 f"Comparison failed (RFC 4514): "
                 f"Failed to normalize first DN: {norm1_result.error}",
             )
-        norm2_result = FlextLdifUtilitiesDNNormalize.norm(dn2)
+        norm2_result = FlextLdifUtilitiesDNNormalize.dn_key(dn2)
         if not norm2_result.success:
             return r[tuple[str, str]].fail(
                 f"Comparison failed (RFC 4514): "

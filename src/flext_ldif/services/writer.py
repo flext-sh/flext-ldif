@@ -125,7 +125,9 @@ class FlextLdifWriter(FlextLdifServer):
             format_options=format_options,
         )
         return self.server(effective_server_type).flat_map(
-            lambda server: server.write(request.entries, request.format_options)
+            lambda server: server.write(
+                list[p.Ldif.Entry](request.entries), request.format_options
+            )
         )
 
 

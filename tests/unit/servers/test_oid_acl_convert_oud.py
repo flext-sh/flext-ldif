@@ -93,8 +93,8 @@ class TestsFlextLdifOidAclConvertOud:
             permissions, is_entry=is_entry
         ).unwrap()
 
-        tm.that(tuple(resolved.allow), eq=allow)
-        tm.that(tuple(resolved.deny), eq=deny)
+        tm.that(resolved.allow, eq=frozenset(allow))
+        tm.that(resolved.deny, eq=frozenset(deny))
 
     @staticmethod
     @c.Tests.MARK.parametrize(

@@ -20,6 +20,7 @@ classifiers = [
 dependencies = [
   "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev",
   "flext-core @ git+https://github.com/flext-sh/flext-core.git@0.12.0-dev",
+  "ldap3",
 ]
 description = "FLEXT LDIF - Enterprise LDIF Processing Library"
 keywords = ["adapter", "enterprise", "flext", "integration", "typed"]
@@ -419,6 +420,7 @@ extraPaths = ["src", "."]
 include = ["conftest.py", "examples", "src", "tests"]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
+reportAbstractUsage = "none"
 reportArgumentType = "none"
 reportAssignmentType = "none"
 reportAttributeAccessIssue = "none"
@@ -433,6 +435,7 @@ reportMissingImports = "error"
 reportMissingModuleSource = "error"
 reportMissingTypeStubs = "none"
 reportPrivateUsage = "error"
+reportReturnType = "none"
 reportUndefinedVariable = "none"
 reportUnknownArgumentType = "none"
 reportUnknownLambdaType = "none"
@@ -490,6 +493,7 @@ markers = [
   "slow: slow-running tests",
   "docker: tests requiring Docker",
   "oracle: tests requiring the shared Oracle database",
+  "ldap: tests requiring the shared LDAP service",
   "remote: tests requiring remote/external network services",
   "e2e: end-to-end integration tests",
   "edge_cases: edge case tests",
@@ -621,8 +625,14 @@ known-first-party = ["flext_ldif"]
 split-on-trailing-comma = false
 
 [tool.ruff.lint.per-file-ignores]
-"**/_protocols/**" = ["invalid-function-name"]
+"**/_protocols/**" = ["invalid-function-name", "too-many-public-methods"]
 "**/_protocols/pydantic.py" = ["too-many-arguments"]
+"scripts/**/*.py" = [
+  "commented-out-code",
+  "invalid-module-name",
+  "line-too-long",
+]
+"tests/**/*.py" = ["assert"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

@@ -8,12 +8,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from flext_cli import FlextCliProtocols
-
-if TYPE_CHECKING:
-    from flext_ldif import t
 
 
 class FlextLdifProtocolsSettingsMisc:
@@ -52,15 +49,6 @@ class FlextLdifProtocolsSettingsMisc:
         def trace_id(self) -> str | None:
             """Trace identifier."""
             ...
-
-    @runtime_checkable
-    class RdnProcessingConfig(FlextCliProtocols.BaseModel, Protocol):
-        """Structural data contract projected from the owning model."""
-
-        current_attr: str
-        current_val: str
-        in_value: bool
-        pairs: t.MutableStrPairSequence
 
 
 __all__: list[str] = [

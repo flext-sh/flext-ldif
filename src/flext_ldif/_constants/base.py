@@ -221,6 +221,10 @@ class FlextLdifConstantsBase:
         r"\bORDERING\b",
         re.IGNORECASE,
     )
+    SCHEMA_COLLECTIVE_RE: ClassVar[t.RegexPattern] = re.compile(
+        r"\bCOLLECTIVE\b",
+        re.IGNORECASE,
+    )
     SCHEMA_OBSOLETE_RE: ClassVar[t.RegexPattern] = re.compile(
         r"\bOBSOLETE\b",
         re.IGNORECASE,

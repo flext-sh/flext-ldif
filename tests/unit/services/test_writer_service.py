@@ -74,6 +74,42 @@ class TestsFlextLdifWriterService:
         tm.that(first, eq=second)
 
     @staticmethod
+    def test_sorted_records_preserve_values_controls_and_ignore_entity_audit(
+        writer: p.Ldif.LdifClient,
+    ) -> None:
+        """Canonical native output depends on LDAP content, not entity identity."""
+        attrs = {"zeta": ["Second", "First"], "alpha;lang-en": ["Alpha"]}
+        entries = [
+            m.Ldif.Entry(
+                dn=m.Ldif.DN(value="cn=snapshot,dc=example,dc=invalid"),
+                attributes=m.Ldif.Attributes(attributes=attributes),
+                controls=[m.Ldif.Control(control_type="1.2.3", criticality=True)],
+            )
+            for attributes in (attrs, dict(reversed(tuple(attrs.items()))))
+        ]
+        tm.that(entries[0].unique_id == entries[1].unique_id, eq=False)
+        options = m.Ldif.WriteFormatOptions(
+            sort_attributes=True,
+            respect_attribute_order=False,
+            include_timestamps=False,
+            write_metadata_as_comments=False,
+            restore_original_format=False,
+        )
+        first, second = (
+            tm.ok(
+                writer.write_to_string(
+                    [entry], server_type="rfc", format_options=options
+                )
+            )
+            for entry in entries
+        )
+        tm.that(first, eq=second)
+        parsed = tm.ok(writer.parse_string(first, server_type="rfc")).entries[0]
+        tm.that(parsed.attributes_dict, eq=attrs)
+        tm.that(parsed.controls, length=1)
+        tm.that(first.index("alpha;lang-en:") < first.index("zeta:"), eq=True)
+
+    @staticmethod
     def test_write_to_string_returns_empty_content_for_no_entries(
         writer: p.Ldif.LdifClient,
     ) -> None:
@@ -129,13 +165,13 @@ class TestsFlextLdifWriterService:
     ) -> None:
         """Test write accepts parse response input."""
         entries = self._entries()
-        parse_response = m.Ldif.ParseResponse(
-            entries=entries,
-            statistics=m.Ldif.Statistics(
+        parse_response = m.Ldif.ParseResponse.model_validate({
+            "entries": entries,
+            "statistics": m.Ldif.Statistics(
                 total_entries=len(entries),
                 processed_entries=len(entries),
             ),
-        )
+        })
 
         payload = tm.ok(
             writer.write(parse_response.entries, server_type=c.Tests.RFC),

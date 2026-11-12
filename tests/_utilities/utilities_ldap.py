@@ -67,13 +67,13 @@ class TestsFlextLdifLdapClient:
         return module
 
     @classmethod
-    def create_ldap_entry_adapter(cls) -> p.Ldif.Ldap3EntryAdapter:
+    def create_ldap_entry_adapter(cls) -> p.Ldap3EntryAdapter:
         """Return an ldap3-to-LDIF entry adapter, skipping when unavailable."""
         module: ModuleType = u.Tests.importorskip(
             cls._LDAP_ENTRY_ADAPTER_MODULE,
             reason=cls._LDAP_CLIENT_MISSING_REASON,
         )
-        adapter: p.Ldif.Ldap3EntryAdapter = module.FlextLdapEntryAdapter()
+        adapter: p.Ldap3EntryAdapter = module.FlextLdapEntryAdapter()
         return adapter
 
     @classmethod
