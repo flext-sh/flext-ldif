@@ -259,11 +259,11 @@ class FlextLdifFilters(s[p.Ldif.Response]):
             changed = True
             if values:
                 operations.append(
-                    m.Ldif.ChangeOperation(
-                        operation=operation.operation,
-                        attribute=operation.attribute,
-                        values=values,
-                    ),
+                    m.Ldif.ChangeOperation.model_validate({
+                        "operation": operation.operation,
+                        "attribute": operation.attribute,
+                        "values": values,
+                    }),
                 )
         if not changed:
             return entry

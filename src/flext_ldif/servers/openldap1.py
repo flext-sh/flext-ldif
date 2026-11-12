@@ -439,25 +439,25 @@ class FlextLdifServersOpenldap1(FlextLdifServersRfc):
             target_dn, target_attrs = self._parse_openldap1_target(what)
             # mro-wgwh.5 (agent: kimi-coder) — model_construct bypass removed: plain
             # mapping validated by the ServerMetadata boundary.
-            acl = m.Ldif.Acl(
-                name=FlextLdifServersOpenldap1.Constants.ACL_ATTRIBUTE_NAME,
-                target=m.Ldif.AclTarget.model_validate({
+            acl = m.Ldif.Acl.model_validate({
+                "name": FlextLdifServersOpenldap1.Constants.ACL_ATTRIBUTE_NAME,
+                "target": m.Ldif.AclTarget.model_validate({
                     "target_dn": target_dn,
                     "attributes": target_attrs,
                 }),
-                subject=m.Ldif.AclSubject(
+                "subject": m.Ldif.AclSubject(
                     subject_type=self._openldap1_subject_type(first_who),
                     subject_value=first_who,
                 ),
-                permissions=self._openldap1_permissions(first_access),
-                metadata=m.Ldif.ServerMetadata.model_validate(
+                "permissions": self._openldap1_permissions(first_access),
+                "metadata": m.Ldif.ServerMetadata.model_validate(
                     u.Ldif.server_metadata_for(
                         server_type=self._get_server_type(),
                         extensions={"original_format": acl_line},
                     ),
                 ),
-                raw_acl=acl_line,
-            )
+                "raw_acl": acl_line,
+            })
             return r[p.Ldif.Acl].ok(acl)
 
         @staticmethod

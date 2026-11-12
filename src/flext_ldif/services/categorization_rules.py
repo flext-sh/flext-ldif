@@ -107,7 +107,7 @@ class FlextLdifCategorizationRules(FlextLdifServer):
             exclude=True,
             description="Tracks rejected entries by rejection reason.",
         ),
-    ] = m.Field(default_factory=_build_rejection_tracker)
+    ]
 
     def _normalize_initial_category_rules(self) -> p.Ldif.CategoryRules:
         """Normalize initial categorization rules into the canonical model.

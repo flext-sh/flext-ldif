@@ -88,12 +88,12 @@ class FlextLdifServersOidAclPipeline:
             if rendered not in placed:
                 placed.append(rendered)
         return result.ok(
-            m.Ldif.AclDirectoryConversion(
-                statements=tuple(statements),
-                values={key: tuple(found) for key, found in values.items()},
-                events=(*events, *render.events),
-                consumed=frozenset(consumed),
-            ),
+            m.Ldif.AclDirectoryConversion.model_validate({
+                "statements": tuple(statements),
+                "values": {key: tuple(found) for key, found in values.items()},
+                "events": (*events, *render.events),
+                "consumed": frozenset(consumed),
+            }),
         )
 
     @staticmethod
@@ -187,16 +187,16 @@ class FlextLdifServersOidAclPipeline:
             if attrs_model
             else m.Ldif.Attributes(attributes=current)
         )
-        recorded = m.Ldif.AclEntryConversion(
-            statements=tuple(
+        recorded = m.Ldif.AclEntryConversion.model_validate({
+            "statements": tuple(
                 statement
                 for statement in conversion.statements
                 if to_oud.dn_key(statement.dn) == key
             ),
-            events=tuple(
+            "events": tuple(
                 event for event in conversion.events if to_oud.dn_key(event.dn) == key
             ),
-        )
+        })
         metadata = (
             entry.metadata.model_copy(update={"acl_conversion": recorded})
             if entry.metadata is not None

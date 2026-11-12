@@ -271,13 +271,13 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
                 return result.from_failure(attrs)
             identity = constants.AclRule.R2 if entry_level else constants.AclRule.R1
             return result.ok([
-                m.Ldif.AclForm(
-                    rights=(resolution.right,),
-                    attrs=attrs.value,
-                    targetfilter=rule.target_filter,
-                    targetscope=scope,
-                    rule=constants.AclRule.R5 if deny else identity,
-                ),
+                m.Ldif.AclForm.model_validate({
+                    "rights": (resolution.right,),
+                    "attrs": attrs.value,
+                    "targetfilter": rule.target_filter,
+                    "targetscope": scope,
+                    "rule": constants.AclRule.R5 if deny else identity,
+                }),
             ])
         if resolution.right == constants.ACL_RIGHT_ADD:
             return self.add_form(rule, resolution)
@@ -333,19 +333,17 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
             ).value
         )
         return result.ok([
-            m.Ldif.AclForm(
-                rights=(constants.ACL_RIGHT_ADD,),
-                attrs=self.every_attribute(),
-                targetfilter=constraint,
-                targetscope=self.add_scope(rule.level),
-                rule=(
-                    constants.AclRule.R5
-                    if deny
-                    else constants.AclRule.R4D
-                    if constraint
-                    else constants.AclRule.R4A
-                ),
-            ),
+            m.Ldif.AclForm.model_validate({
+                "rights": (constants.ACL_RIGHT_ADD,),
+                "attrs": self.every_attribute(),
+                "targetfilter": constraint,
+                "targetscope": self.add_scope(rule.level),
+                "rule": constants.AclRule.R5
+                if deny
+                else constants.AclRule.R4D
+                if constraint
+                else constants.AclRule.R4A,
+            }),
         ])
 
     def entry_form(
@@ -386,13 +384,13 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
                     names=frozenset({constants.ACL_BROWSE_GRANT_ATTRIBUTE}),
                 )
             identity = constants.AclRule.R4E
-        return m.Ldif.AclForm(
-            rights=rights,
-            attrs=attrs,
-            targetfilter=rule.target_filter,
-            targetscope=scope,
-            rule=constants.AclRule.R5 if deny else identity,
-        )
+        return m.Ldif.AclForm.model_validate({
+            "rights": rights,
+            "attrs": attrs,
+            "targetfilter": rule.target_filter,
+            "targetscope": scope,
+            "rule": constants.AclRule.R5 if deny else identity,
+        })
 
     @staticmethod
     def granted_leaf(leaf: p.Ldif.AclBindLeaf) -> p.Ldif.AclBindLeaf:
@@ -471,15 +469,15 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
                 )
                 statements.append(
                     self.statement(
-                        m.Ldif.AclDecision(
-                            rule=rule,
-                            resolution=resolution,
-                            form=kept,
-                            bind=m.Ldif.AclBindRule(
-                                include=self.granted_leaf(subject),
-                                require=() if also is None else (also,),
-                            ),
-                        ),
+                        m.Ldif.AclDecision.model_validate({
+                            "rule": rule,
+                            "resolution": resolution,
+                            "form": kept,
+                            "bind": m.Ldif.AclBindRule.model_validate({
+                                "include": self.granted_leaf(subject),
+                                "require": () if also is None else (also,),
+                            }),
+                        }),
                         m.Ldif.AclRegion(anchor=anchor, scope=scope),
                     ),
                 )
@@ -514,15 +512,15 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
             return result.from_failure(forms)
         statements: list[p.Ldif.AciStatement] = []
         for form in forms.value:
-            decision = m.Ldif.AclDecision(
-                rule=rule,
-                resolution=resolution,
-                form=form,
-                bind=m.Ldif.AclBindRule(
-                    include=resolution.leaf,
-                    exclude=resolution.grantors,
-                ),
-            )
+            decision = m.Ldif.AclDecision.model_validate({
+                "rule": rule,
+                "resolution": resolution,
+                "form": form,
+                "bind": m.Ldif.AclBindRule.model_validate({
+                    "include": resolution.leaf,
+                    "exclude": resolution.grantors,
+                }),
+            })
             override = self.privilege_override(decision)
             if override.failure:
                 return result.from_failure(override)
@@ -645,7 +643,10 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         return r[p.Ldif.AciStatement].ok(
             statement.model_copy(
                 update={
-                    "bind": m.Ldif.AclBindRule(include=include, exclude=tuple(exclude)),
+                    "bind": m.Ldif.AclBindRule.model_validate({
+                        "include": include,
+                        "exclude": tuple(exclude),
+                    }),
                 },
             ),
         )

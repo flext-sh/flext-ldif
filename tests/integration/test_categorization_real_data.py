@@ -81,7 +81,7 @@ class TestsFlextLdifCategorizationRealData:
         ]
 
     @staticmethod
-    def _dns(entries: MutableSequence[p.Ldif.Entry]) -> set[str]:
+    def _dns(entries: Sequence[p.Ldif.Entry]) -> set[str]:
         """Collect the DN string values from a category bucket.
 
         Returns:

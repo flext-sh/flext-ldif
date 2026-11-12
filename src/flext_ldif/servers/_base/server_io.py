@@ -61,11 +61,11 @@ class FlextLdifServersBaseIo:
                 processed_entries=len(parsed_entries),
                 detected_server_type=detected_server_type,
             )
-            return m.Ldif.ParseResponse(
-                entries=parsed_entries,
-                statistics=statistics,
-                detected_server_type=detected_server_type,
-            )
+            return m.Ldif.ParseResponse.model_validate({
+                "entries": parsed_entries,
+                "statistics": statistics,
+                "detected_server_type": detected_server_type,
+            })
 
         parse_response_result: p.Result[p.Ldif.ParseResponse] = (
             entry_server.parse_server(value).map(build_parse_response)

@@ -165,13 +165,13 @@ class TestsFlextLdifWriterService:
     ) -> None:
         """Test write accepts parse response input."""
         entries = self._entries()
-        parse_response = m.Ldif.ParseResponse(
-            entries=entries,
-            statistics=m.Ldif.Statistics(
+        parse_response = m.Ldif.ParseResponse.model_validate({
+            "entries": entries,
+            "statistics": m.Ldif.Statistics(
                 total_entries=len(entries),
                 processed_entries=len(entries),
             ),
-        )
+        })
 
         payload = tm.ok(
             writer.write(parse_response.entries, server_type=c.Tests.RFC),

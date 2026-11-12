@@ -244,21 +244,21 @@ class FlextLdifServersRfcSchema(
         attr_name = self._to_optional_str(parsed.get("name"))
         if attr_name is None:
             attr_name = self._to_required_value(parsed.get("oid"))
-        attr_model = m.Ldif.SchemaAttribute(
-            oid=self._to_required_value(parsed.get("oid")),
-            name=attr_name,
-            desc=self._to_optional_str(parsed.get("desc")),
-            equality=self._to_optional_str(parsed.get("equality")),
-            ordering=self._to_optional_str(parsed.get("ordering")),
-            substr=self._to_optional_str(parsed.get("substr")),
-            syntax=self._to_optional_str(parsed.get("syntax")),
-            length=self._to_optional_int(parsed.get("length")),
-            single_value=bool(parsed.get("single_value")),
-            no_user_modification=bool(parsed.get("no_user_modification")),
-            usage=self._to_optional_str(parsed.get("usage")),
-            sup=self._to_optional_str(parsed.get("sup")),
-            metadata=metadata,
-        )
+        attr_model = m.Ldif.SchemaAttribute.model_validate({
+            "oid": self._to_required_value(parsed.get("oid")),
+            "name": attr_name,
+            "desc": self._to_optional_str(parsed.get("desc")),
+            "equality": self._to_optional_str(parsed.get("equality")),
+            "ordering": self._to_optional_str(parsed.get("ordering")),
+            "substr": self._to_optional_str(parsed.get("substr")),
+            "syntax": self._to_optional_str(parsed.get("syntax")),
+            "length": self._to_optional_int(parsed.get("length")),
+            "single_value": bool(parsed.get("single_value")),
+            "no_user_modification": bool(parsed.get("no_user_modification")),
+            "usage": self._to_optional_str(parsed.get("usage")),
+            "sup": self._to_optional_str(parsed.get("sup")),
+            "metadata": metadata,
+        })
         return self._hook_post_parse_attribute(attr_model)
 
     @override

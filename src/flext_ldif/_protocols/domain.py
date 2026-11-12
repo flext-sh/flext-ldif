@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence, Sequence
+from collections.abc import MutableMapping, MutableSequence, Sequence
 from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 
 from flext_cli import p, t
@@ -145,6 +145,16 @@ class FlextLdifProtocolsDomain(Protocol):
             self,
             entries: MutableSequence[p.Ldif.Entry],
         ) -> p.Result[p.Ldif.FlexibleCategories]: ...
+
+        def categorize_entry(
+            self,
+            entry: p.Ldif.Entry,
+            rules: p.Ldif.CategoryRules
+            | MutableMapping[str, str | MutableSequence[str] | None]
+            | t.MutableJsonMapping
+            | None = None,
+            server_type: str | None = None,
+        ) -> tuple[str, str | None]: ...
 
         def filter_by_base_dn(
             self,
