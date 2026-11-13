@@ -114,6 +114,17 @@ class FlextLdifUtilitiesEvents:
             if settings.error_details is not None
             else None,
         )
+        items_processed = settings.items_converted + settings.items_failed
+        conversion_success_rate = (
+            100.0 * settings.items_converted / items_processed
+            if items_processed
+            else 0.0
+        )
+        throughput_items_per_sec = (
+            settings.items_converted / (settings.conversion_duration_ms / 1000.0)
+            if settings.conversion_duration_ms > 0
+            else 0.0
+        )
         event: p.Ldif.ConversionEvent = (
             FlextLdifModels.Ldif.ConversionEvent.model_validate({
                 "event_type": "ldif.conversion",
@@ -124,6 +135,8 @@ class FlextLdifUtilitiesEvents:
                 "items_converted": settings.items_converted,
                 "items_failed": settings.items_failed,
                 "conversion_duration_ms": settings.conversion_duration_ms,
+                "conversion_success_rate": conversion_success_rate,
+                "throughput_items_per_sec": throughput_items_per_sec,
                 "error_details": error_details_list,
             })
         )
