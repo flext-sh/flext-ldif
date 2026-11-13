@@ -200,7 +200,15 @@ class FlextLdifUtilitiesParserRecord:
         attribute_name: str,
         decoded: _DecodedValue,
     ) -> None:
-        """Store one attribute value with its origin and raw payload metadata."""
+        """Store one attribute value with its origin and raw payload metadata.
+
+        Attribute names are case-insensitive (RFC 4512 §2.5): a later spelling
+        appends to the attribute under the record's first spelling.
+        """
+        attribute_name = next(
+            (name for name in state.attrs if name.lower() == attribute_name.lower()),
+            attribute_name,
+        )
         state.attrs.setdefault(attribute_name, []).append(decoded.value)
         metadata = state.attribute_metadata.setdefault(attribute_name, {})
         value_origins = metadata.setdefault("value_origins", [])
