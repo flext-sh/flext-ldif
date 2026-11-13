@@ -25,7 +25,7 @@
 - Public symbol exports: `FlextLdif`, `FlextLdifConfig`, `FlextLdifConstants`,
   `FlextLdifModels`, `FlextLdifProtocols`, `FlextLdifServiceBase`, `FlextLdifSettings`,
   `FlextLdifShared`, `FlextLdifTypes`, `FlextLdifUtilities` (+5 more)
-- Exported module shortcuts: _none_
+- Exported module shortcuts: *none*
 - Generated module pages: `9`
 
 ## Next Pages
