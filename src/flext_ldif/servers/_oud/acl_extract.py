@@ -113,8 +113,10 @@ class FlextLdifServersOudAclExtract:
         new_attrs: t.MutableStrSequenceMapping = dict(attributes_dict)
         commented_vals: t.MutableStrSequenceMapping = {}
         hidden_attrs: set[str] = set()
-        for acl_attr in acl_attribute_names:
-            if acl_attr in new_attrs:
+        # Entry order, never the set's: a frozenset of names iterates in a
+        # hash-seed-dependent order, which reorders the written comments.
+        for acl_attr in attributes_dict:
+            if acl_attr in acl_attribute_names:
                 commented_vals[acl_attr] = new_attrs.pop(acl_attr)
                 hidden_attrs.add(acl_attr.lower())
         return (new_attrs, commented_vals, hidden_attrs)
@@ -177,8 +179,8 @@ class FlextLdifServersOudAclExtract:
             if isinstance(commented_attrs_raw, list)
             else []
         )
-        for acl_attr in acl_attribute_names:
-            if acl_attr in entry_attributes_dict and acl_attr not in commented_attrs:
+        for acl_attr in entry_attributes_dict:
+            if acl_attr in acl_attribute_names and acl_attr not in commented_attrs:
                 commented_attrs.append(acl_attr)
         if commented_attrs:
             current_extensions[c.Ldif.ACL_COMMENTED_ATTRIBUTES] = (
