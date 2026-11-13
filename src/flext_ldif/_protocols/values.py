@@ -6,11 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
 
-
-@runtime_checkable
-class FlextLdifProtocolsValues(Protocol):
+class FlextLdifProtocolsValues:
     """Protocol-only view of canonical LDIF Pydantic values."""
 
 
