@@ -21,20 +21,29 @@ class FlextLdifUtilitiesParserValues:
     def decode_value(remainder: str) -> tuple[str, c.Ldif.ValueOrigin, str | None]:
         """Decode an LDIF value-spec preserving origin details.
 
+        A base64 payload decodes byte-exact: bytes that are not UTF-8 stay in
+        the value through ``c.Ldif.LOSSLESS_BYTES_ERRORS`` (encode the value
+        with the same handler to get them back).
+
         Returns:
             The resulting ``tuple[str, c.Ldif.ValueOrigin, str | None]``.
+
+        Raises:
+            ValueError: When a base64 payload is not valid base64.
 
         """
         payload = remainder.lstrip()
         if payload.startswith(":"):
             encoded_value = payload[1:].lstrip()
             try:
-                decoded_value = base64.b64decode(encoded_value).decode(
-                    c.Ldif.DEFAULT_ENCODING,
-                    errors=c.MergeStrategy.REPLACE,
-                )
-            except ValueError:
-                decoded_value = encoded_value
+                decoded_bytes = base64.b64decode(encoded_value, validate=True)
+            except ValueError as exc:
+                msg = f"Invalid base64 value {encoded_value!r}: {exc}"
+                raise ValueError(msg) from exc
+            decoded_value = decoded_bytes.decode(
+                c.Ldif.DEFAULT_ENCODING,
+                errors=c.Ldif.LOSSLESS_BYTES_ERRORS,
+            )
             return (decoded_value, c.Ldif.ValueOrigin.BASE64, encoded_value)
         if payload.startswith("<"):
             url_value = payload[1:].lstrip()

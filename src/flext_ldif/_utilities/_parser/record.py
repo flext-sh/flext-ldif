@@ -350,7 +350,17 @@ class FlextLdifUtilitiesParserRecord:
                 )
                 state.current_change_operation = None
                 continue
-            malformed = FlextLdifUtilitiesParserRecord._parse_data_line(state, line)
+            try:
+                malformed = FlextLdifUtilitiesParserRecord._parse_data_line(
+                    state,
+                    line,
+                )
+            except ValueError as exc:
+                return r[FlextLdifModels.Ldif.Entry].fail(
+                    str(exc),
+                    error_data={c.Ldif.RECORD_LINE_INDEX: index},
+                    exception=exc,
+                )
             if malformed is not None:
                 return r[FlextLdifModels.Ldif.Entry].fail(
                     malformed,

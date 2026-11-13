@@ -914,6 +914,8 @@ class FlextLdifConstantsBase:
     })
 
     DEFAULT_ENCODING: ClassVar[str] = FlextLdifConstantsEnums.Encoding.UTF8.value
+    LOSSLESS_BYTES_ERRORS: ClassVar[str] = "surrogateescape"
+    """Codec error handler that keeps non-UTF-8 value bytes in a ``str``."""
 
     DEFAULT_STRICT_VALIDATION: ClassVar[bool] = True
 
