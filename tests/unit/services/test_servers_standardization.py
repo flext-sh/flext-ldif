@@ -154,7 +154,7 @@ class TestsFlextLdifServersStandardization:
         entry = FlextLdif().entry(c.Ldif.ServerTypes.RFC).unwrap()
         error = tm.fail(entry.parse_server("this is not ldif at all"))
         tm.that(error, has="line 1")
-        with u.Tests.raises(RuntimeError, match="line 1"):
+        with u.Tests.raises(ValueError, match="separator"):
             entry.parse_input("this is not ldif at all")
 
     @staticmethod

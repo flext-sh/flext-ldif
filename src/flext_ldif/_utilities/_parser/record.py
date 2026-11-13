@@ -260,24 +260,27 @@ class FlextLdifUtilitiesParserRecord:
         cls,
         state: FlextLdifUtilitiesParserRecord._RecordState,
         line: str,
-    ) -> str | None:
+    ) -> None:
         """Consume one non-separator record line into the state.
 
-        Returns:
-            Why the line is malformed, or ``None`` when it was consumed.
+        Raises:
+            ValueError: When the line is malformed: no ``:`` separator, a
+                second ``dn`` line, or an invalid value.
 
         """
         if ":" not in line:
-            return f"Malformed LDIF line without ':' separator: {line!r}"
+            msg = f"Malformed LDIF line without ':' separator: {line!r}"
+            raise ValueError(msg)
         key, _, remainder = line.partition(":")
         key = key.strip()
         if key.lower() == "dn" and state.has_dn:
-            return (
+            msg = (
                 f"Second dn line {line!r} inside one record; records must be "
                 "separated by a blank line"
             )
+            raise ValueError(msg)
         if cls._apply_special_line(state, key.lower(), remainder):
-            return None
+            return
         decoded = cls._DecodedValue(
             *FlextLdifUtilitiesParserValues.decode_value(remainder)
         )
@@ -285,10 +288,9 @@ class FlextLdifUtilitiesParserRecord:
         if state.changetype == c.Ldif.ChangeType.MODIFY:
             resolved_name = cls._apply_modify_field(state, key, decoded)
             if resolved_name is None:
-                return None
+                return
             attribute_name = resolved_name
         cls._store_attribute(state, attribute_name, decoded)
-        return None
 
     @staticmethod
     def _build_entry(
@@ -350,20 +352,12 @@ class FlextLdifUtilitiesParserRecord:
                 state.current_change_operation = None
                 continue
             try:
-                malformed = FlextLdifUtilitiesParserRecord._parse_data_line(
-                    state,
-                    line,
-                )
+                FlextLdifUtilitiesParserRecord._parse_data_line(state, line)
             except ValueError as exc:
                 return r[FlextLdifModels.Ldif.Entry].fail(
                     str(exc),
                     error_data={c.Ldif.RECORD_LINE_INDEX: index},
                     exception=exc,
-                )
-            if malformed is not None:
-                return r[FlextLdifModels.Ldif.Entry].fail(
-                    malformed,
-                    error_data={c.Ldif.RECORD_LINE_INDEX: index},
                 )
         FlextLdifUtilitiesParserRecord.finalize_change_operation(
             state.current_change_operation,

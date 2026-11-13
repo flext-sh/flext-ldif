@@ -151,10 +151,9 @@ class FlextLdifServersRfcEntry(
                 line_index = (result.error_data or {}).get(c.Ldif.RECORD_LINE_INDEX)
                 offending = line_index if isinstance(line_index, int) else 0
                 line_number = record[offending][0]
+                position = f"LDIF line {line_number}: "
                 return r[MutableSequence[p.Ldif.Entry]].from_failure(
-                    result.map_error(
-                        lambda error: f"LDIF line {line_number}: {error}",
-                    ),
+                    result.map_error(position.__add__),
                 )
             entries.append(result.value)
         return r[MutableSequence[p.Ldif.Entry]].ok(entries)
