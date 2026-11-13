@@ -191,29 +191,46 @@ class TestsFlextLdifErrorRecovery:
         tm.that(attributes.attributes["description"], eq=["café, naïve, résumé"])
 
     # ------------------------------------------------------------------
-    # Graceful degradation: malformed input never raises; it produces a
-    # structured result and drops only the offending fragment.
+    # Malformed input never raises and is never dropped silently: the
+    # parse fails with the offending record's line and cause.
     # ------------------------------------------------------------------
 
     @staticmethod
-    def test_entry_without_dn_yields_no_entries(api: p.Ldif.LdifClient) -> None:
-        """A block with no DN line produces zero entries, not a crash."""
-        content = "objectClass: person\ncn: NoDN\nsn: User\n"
+    @c.Tests.MARK.parametrize(
+        ("content", "line", "cause"),
+        [
+            u.Tests.param(
+                "objectClass: person\ncn: NoDN\nsn: User\n",
+                1,
+                "DN",
+                id="no-dn-line",
+            ),
+            u.Tests.param(
+                "dn: invalid-dn-no-equals\nobjectClass: person\ncn: Test\n",
+                1,
+                "invalid-dn-no-equals",
+                id="dn-without-rdn",
+            ),
+            u.Tests.param(
+                "dn: cn=Complete,dc=example,dc=com\nobjectClass: person\ncn: Complete\n"
+                "\ndn: cn=Incomplete,dc=example,dc\n",
+                5,
+                "cn=Incomplete",
+                id="truncated-second-dn",
+            ),
+        ],
+    )
+    def test_record_that_is_no_entry_fails_the_parse(
+        api: p.Ldif.LdifClient,
+        content: str,
+        line: int,
+        cause: str,
+    ) -> None:
+        """A record that cannot become an entry fails with its line and cause."""
+        error = tm.fail(api.parse_ldif(content))
 
-        result = api.parse_ldif(content)
-
-        tm.ok(result)
-        tm.that(result.unwrap().entries, eq=[])
-
-    @staticmethod
-    def test_invalid_dn_without_rdn_is_rejected(api: p.Ldif.LdifClient) -> None:
-        """A DN lacking any ``=`` RDN component yields no accepted entry."""
-        content = "dn: invalid-dn-no-equals\nobjectClass: person\ncn: Test\n"
-
-        result = api.parse_ldif(content)
-
-        tm.ok(result)
-        tm.that(result.unwrap().entries, eq=[])
+        tm.that(error, has=f"line {line}")
+        tm.that(error, has=cause)
 
     @staticmethod
     def test_malformed_attribute_line_is_dropped_entry_survives(
@@ -251,12 +268,6 @@ class TestsFlextLdifErrorRecovery:
     @c.Tests.MARK.parametrize(
         ("content", "expected_count"),
         [
-            u.Tests.param(
-                "dn: cn=Complete,dc=example,dc=com\nobjectClass: person\ncn: Complete\n"
-                "\ndn: cn=Incomplete,dc=example,dc\n",
-                1,
-                id="truncated-second-dn-dropped",
-            ),
             u.Tests.param(
                 "dn: cn=Test1,dc=example,dc=com\nobjectClass: person\ncn: Test1\n"
                 "\n orphaned-continuation\n"

@@ -73,16 +73,25 @@ class TestsFlextLdifZeroDataLossOidOud:
     # -- edge cases / invariants ------------------------------------------
 
     @staticmethod
-    @c.Tests.MARK.parametrize("content", ["", "not a valid ldif record"])
-    def test_parse_of_non_entry_input_succeeds_with_no_entries(
+    def test_parse_of_empty_input_succeeds_with_no_entries(
         api: p.Ldif.LdifClient,
-        content: str,
     ) -> None:
         """Input without LDIF records yields a success result with no entries."""
-        result = api.parse_ldif(content, server_type=c.Tests.OID)
+        result = api.parse_ldif("", server_type=c.Tests.OID)
 
         tm.ok(result)
         tm.that(result.value.entries, eq=[])
+
+    @staticmethod
+    def test_parse_of_non_entry_record_fails_with_its_line(
+        api: p.Ldif.LdifClient,
+    ) -> None:
+        """A record that is no entry is reported, never lost as zero entries."""
+        error = tm.fail(
+            api.parse_ldif("not a valid ldif record", server_type=c.Tests.OID),
+        )
+
+        tm.that(error, has="line 1")
 
     @staticmethod
     def test_parse_is_idempotent_in_entry_count(

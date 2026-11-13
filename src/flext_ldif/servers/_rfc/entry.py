@@ -136,20 +136,26 @@ class FlextLdifServersRfcEntry(
     ) -> p.Result[MutableSequence[p.Ldif.Entry]]:
         """Parse all LDIF records from non-empty content.
 
+        A record that cannot become an entry fails the whole parse with the
+        physical line number where the record starts and the cause.
+
         Returns:
             The resulting ``p.Result[MutableSequence[p.Ldif.Entry]]``.
 
         """
         entries: MutableSequence[p.Ldif.Entry] = []
-        for record_lines in u.Ldif.split_ldif_records(ldif_content):
-            result = self._parse_entry_from_lines(record_lines)
-            if result.success:
-                entries.append(result.value)
-                continue
-            FlextLdifServersRfcEntry._module_logger.debug(
-                "Skipping invalid entry block",
-                error=result.error or "",
-            )
+        for record in u.Ldif.split_numbered_records(ldif_content):
+            result = self._parse_entry_from_lines([line for _, line in record])
+            if result.failure:
+                start_line = record[0][0]
+                return r[MutableSequence[p.Ldif.Entry]].from_failure(
+                    result.map_error(
+                        lambda error, line=start_line: (
+                            f"LDIF record at line {line}: {error}"
+                        ),
+                    ),
+                )
+            entries.append(result.value)
         return r[MutableSequence[p.Ldif.Entry]].ok(entries)
 
 
