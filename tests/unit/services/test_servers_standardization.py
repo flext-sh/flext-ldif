@@ -149,13 +149,13 @@ class TestsFlextLdifServersStandardization:
         tm.that(entry.parse_input(content), eq=[])
 
     @staticmethod
-    def test_unparseable_content_is_empty_success_not_failure() -> None:
-        """Non-LDIF text is skipped: success with no entries, and [] via input."""
+    def test_unparseable_content_is_a_positioned_failure() -> None:
+        """Non-LDIF text fails with its line; the input view raises it."""
         entry = FlextLdif().entry(c.Ldif.ServerTypes.RFC).unwrap()
-        result = entry.parse_server("this is not ldif at all")
-        tm.ok(result, len=0)
-        tm.that(list(result.value), eq=[])
-        tm.that(entry.parse_input("this is not ldif at all"), eq=[])
+        error = tm.fail(entry.parse_server("this is not ldif at all"))
+        tm.that(error, has="line 1")
+        with u.Tests.raises(ValueError, match="separator"):
+            entry.parse_input("this is not ldif at all")
 
     @staticmethod
     def test_all_servers_agree_on_standard_ldif(valid_ldif: str) -> None:

@@ -30,8 +30,7 @@ if TYPE_CHECKING:
     from flext_ldif._protocols._settings import FlextLdifProtocolsSettingsProcessing
 
 
-@runtime_checkable
-class FlextLdifProtocolsClient(Protocol):
+class FlextLdifProtocolsClient:
     """Client-facing contracts composed above base and domain declarations."""
 
     @runtime_checkable

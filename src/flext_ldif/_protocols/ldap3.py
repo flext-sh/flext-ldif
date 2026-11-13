@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from flext_ldif import t
 
 
-class FlextLdifProtocolsLdap3(Protocol):
+class FlextLdifProtocolsLdap3:
     """Declared owner for ldap3-compatible structural protocol contracts."""
 
     @runtime_checkable

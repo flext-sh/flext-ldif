@@ -111,7 +111,7 @@ class FlextLdifUtilitiesParserRecord:
         value: str,
     ) -> None:
         """Consume a changetype line, tolerating unknown change types."""
-        normalized_change_type = value.lstrip(" ").lower()
+        normalized_change_type = value.strip(" ").lower()
         try:
             state.changetype = c.Ldif.ChangeType(normalized_change_type)
         except ValueError:
@@ -141,7 +141,7 @@ class FlextLdifUtilitiesParserRecord:
             state.newrdn = FlextLdifUtilitiesParserValues.decode_value(value)[0]
             return True
         if key_lower == "deleteoldrdn":
-            state.deleteoldrdn = value.lower() in {
+            state.deleteoldrdn = value.strip(c.Ldif.VALUE_FILL).lower() in {
                 c.ParserBooleanToken.ONE,
                 c.ParserBooleanToken.TRUE,
                 c.ParserBooleanToken.YES,
@@ -200,7 +200,15 @@ class FlextLdifUtilitiesParserRecord:
         attribute_name: str,
         decoded: _DecodedValue,
     ) -> None:
-        """Store one attribute value with its origin and raw payload metadata."""
+        """Store one attribute value with its origin and raw payload metadata.
+
+        Attribute names are case-insensitive (RFC 4512 §2.5): a later spelling
+        appends to the attribute under the record's first spelling.
+        """
+        attribute_name = next(
+            (name for name in state.attrs if name.lower() == attribute_name.lower()),
+            attribute_name,
+        )
         state.attrs.setdefault(attribute_name, []).append(decoded.value)
         metadata = state.attribute_metadata.setdefault(attribute_name, {})
         value_origins = metadata.setdefault("value_origins", [])
@@ -253,11 +261,24 @@ class FlextLdifUtilitiesParserRecord:
         state: FlextLdifUtilitiesParserRecord._RecordState,
         line: str,
     ) -> None:
-        """Consume one non-separator record line into the state."""
+        """Consume one non-separator record line into the state.
+
+        Raises:
+            ValueError: When the line is malformed: no ``:`` separator, a
+                second ``dn`` line, or an invalid value.
+
+        """
         if ":" not in line:
-            return
+            msg = f"Malformed LDIF line without ':' separator: {line!r}"
+            raise ValueError(msg)
         key, _, remainder = line.partition(":")
         key = key.strip()
+        if key.lower() == "dn" and state.has_dn:
+            msg = (
+                f"Second dn line {line!r} inside one record; records must be "
+                "separated by a blank line"
+            )
+            raise ValueError(msg)
         if cls._apply_special_line(state, key.lower(), remainder):
             return
         decoded = cls._DecodedValue(
@@ -310,12 +331,13 @@ class FlextLdifUtilitiesParserRecord:
         """Parse a single unfolded LDIF record into Entry.
 
         Returns:
-            The resulting ``p.Result[FlextLdifModels.Ldif.Entry]``.
+            The entry, or a failure; a failure caused by one line carries
+            that line's 0-based index under ``c.Ldif.RECORD_LINE_INDEX`` in
+            its ``error_data``.
 
         """
         state = FlextLdifUtilitiesParserRecord._RecordState()
-        for raw_line in lines:
-            line = raw_line.rstrip()
+        for index, line in enumerate(lines):
             if not line:
                 continue
             if line.startswith("#"):
@@ -329,7 +351,14 @@ class FlextLdifUtilitiesParserRecord:
                 )
                 state.current_change_operation = None
                 continue
-            FlextLdifUtilitiesParserRecord._parse_data_line(state, line)
+            try:
+                FlextLdifUtilitiesParserRecord._parse_data_line(state, line)
+            except ValueError as exc:
+                return r[FlextLdifModels.Ldif.Entry].fail(
+                    str(exc),
+                    error_data={c.Ldif.RECORD_LINE_INDEX: index},
+                    exception=exc,
+                )
         FlextLdifUtilitiesParserRecord.finalize_change_operation(
             state.current_change_operation,
             state.change_operations,

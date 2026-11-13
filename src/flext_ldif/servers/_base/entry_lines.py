@@ -66,9 +66,12 @@ class FlextLdifServersEntryLineEmitter:
             return f"{effective_name}:< {raw_value}"
         should_encode = effective_name.lower() in c.Ldif.BINARY_ATTRIBUTE_NAMES
         if should_encode or u.Ldif.needs_base64_encoding(effective_value):
-            encoded = base64.b64encode(effective_value.encode("utf-8")).decode(
-                "ascii",
-            )
+            encoded = base64.b64encode(
+                effective_value.encode(
+                    c.Ldif.DEFAULT_ENCODING,
+                    c.Ldif.LOSSLESS_BYTES_ERRORS,
+                ),
+            ).decode("ascii")
             return f"{effective_name}:: {encoded}"
         return f"{effective_name}: {effective_value}"
 

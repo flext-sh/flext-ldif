@@ -31,6 +31,22 @@ including error diagnosis, performance problems, and integration issues.
 
 **Symptom**: Parse operations fail with format-related error messages.
 
+The parser never drops or merges a record silently. The whole parse fails, and
+the error names the physical line (`LDIF line N: <cause>`), when:
+
+- a record cannot become an entry: no `dn:` line (including a first `dn:` behind
+  a UTF-8 BOM), or a DN the DN model refuses (the record's first line is named);
+- a record line has no `:` separator;
+- a record has a second `dn:` line, meaning two records lack the blank line
+  between them;
+- a `::` value is not valid base64.
+
+Values are kept byte-exact. Only the FILL spaces after the separator are removed.
+A base64 value whose bytes are not UTF-8 keeps those bytes in the `str`
+(`surrogateescape`); encode it with `c.Ldif.LOSSLESS_BYTES_ERRORS` to get them
+back. Attribute names that differ only in case are one attribute, with values in
+order, under the record's first spelling.
+
 ```python
 from flext_ldif import ldif, u
 

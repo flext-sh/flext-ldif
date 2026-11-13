@@ -16,15 +16,19 @@ class FlextLdifUtilitiesWriterChars:
     def needs_base64_encoding(value: str, *, check_trailing_space: bool = True) -> bool:
         """Check if value needs base64 encoding per RFC 2849 §2.
 
+        Beyond the SAFE-INIT-CHAR and SAFE-CHAR rules, whitespace in
+        ``c.Ldif.BASE64_EDGE_CHARS`` at either edge (a TAB, or a trailing
+        SPACE) is encoded so that no reader strips it.
+
         Returns:
             The resulting ``bool``.
 
         """
         if not value:
             return False
-        if value[0] in c.Ldif.BASE64_START_CHARS:
+        if value[0] in c.Ldif.BASE64_START_CHARS | c.Ldif.BASE64_EDGE_CHARS:
             return True
-        if check_trailing_space and value[-1] == " ":
+        if check_trailing_space and value[-1] in c.Ldif.BASE64_EDGE_CHARS:
             return True
         for char in value:
             byte_val = ord(char)
