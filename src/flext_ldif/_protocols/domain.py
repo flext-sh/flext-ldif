@@ -16,8 +16,7 @@ if TYPE_CHECKING:
     from flext_ldif._protocols import FlextLdifProtocolsBase
 
 
-@runtime_checkable
-class FlextLdifProtocolsDomain(Protocol):
+class FlextLdifProtocolsDomain:
     """Service-level LDIF contracts and server capabilities."""
 
     @runtime_checkable
