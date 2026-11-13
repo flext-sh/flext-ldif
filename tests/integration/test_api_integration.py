@@ -55,20 +55,25 @@ class TestsFlextLdifApiIntegration:
             tm.that(attributes.attributes, truth=True)
 
     @staticmethod
-    @c.Tests.MARK.parametrize(
-        "lenient_content",
-        ["", "this is not ldif at all", "objectClass: person\ncn: no-dn\n"],
-    )
-    def test_parse_ldif_is_lenient_and_never_raises_on_non_entries(
-        lenient_content: str,
-    ) -> None:
-        """Content without complete entries parses to a successful empty result."""
-        # Act
-        result = ldif.parse_ldif(lenient_content)
+    def test_parse_ldif_of_empty_content_is_an_empty_success() -> None:
+        """Empty content holds no record and parses to zero entries."""
+        result = ldif.parse_ldif("")
 
-        # Assert — invariant: lenient parse, success with zero entries, no crash
         tm.ok(result)
         tm.that(result.value.entries, eq=[])
+
+    @staticmethod
+    @c.Tests.MARK.parametrize(
+        "non_entry_content",
+        ["this is not ldif at all", "objectClass: person\ncn: no-dn\n"],
+    )
+    def test_parse_ldif_fails_on_a_record_that_is_no_entry(
+        non_entry_content: str,
+    ) -> None:
+        """A record that cannot become an entry fails the parse with its line."""
+        error = tm.fail(ldif.parse_ldif(non_entry_content))
+
+        tm.that(error, has="line 1")
 
     @staticmethod
     def test_parse_ldif_merges_repeated_attribute_into_multivalue() -> None:

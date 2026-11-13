@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import ClassVar, override
 
-from flext_ldif import p, r, t, u
+from flext_ldif import c, p, r, t, u
 from flext_ldif.servers._base import FlextLdifServersBaseEntry
 
 
@@ -136,20 +136,26 @@ class FlextLdifServersRfcEntry(
     ) -> p.Result[MutableSequence[p.Ldif.Entry]]:
         """Parse all LDIF records from non-empty content.
 
+        A record that cannot become an entry fails the whole parse with the
+        cause and the physical line number of the offending line, or of the
+        record's first line when no single line is at fault.
+
         Returns:
             The resulting ``p.Result[MutableSequence[p.Ldif.Entry]]``.
 
         """
         entries: MutableSequence[p.Ldif.Entry] = []
-        for record_lines in u.Ldif.split_ldif_records(ldif_content):
-            result = self._parse_entry_from_lines(record_lines)
-            if result.success:
-                entries.append(result.value)
-                continue
-            FlextLdifServersRfcEntry._module_logger.debug(
-                "Skipping invalid entry block",
-                error=result.error or "",
-            )
+        for record in u.Ldif.split_numbered_records(ldif_content):
+            result = self._parse_entry_from_lines([line for _, line in record])
+            if result.failure:
+                line_index = (result.error_data or {}).get(c.Ldif.RECORD_LINE_INDEX)
+                offending = line_index if isinstance(line_index, int) else 0
+                line_number = record[offending][0]
+                position = f"LDIF line {line_number}: "
+                return r[MutableSequence[p.Ldif.Entry]].from_failure(
+                    result.map_error(position.__add__),
+                )
+            entries.append(result.value)
         return r[MutableSequence[p.Ldif.Entry]].ok(entries)
 
 

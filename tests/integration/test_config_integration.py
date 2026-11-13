@@ -19,8 +19,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
-from tests import TestsFlextLdifSettings, c, ldif, p, s, tm, u
+from tests import c, ldif, p, s, tm, u
+
+if TYPE_CHECKING:
+    from tests import TestsFlextLdifSettings
 
 # Expected DN observable in CONFIG_BASIC_ENTRY.
 _BASIC_DN = "cn=Test,dc=example,dc=com"
