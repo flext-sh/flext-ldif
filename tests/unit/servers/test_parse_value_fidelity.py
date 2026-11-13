@@ -16,6 +16,8 @@ _SERVER_TYPES = (c.Tests.RFC, c.Tests.OID, c.Tests.OUD)
 _DN = "cn=a,dc=example"
 _BINARY = b"\xff\xd8\xff\xe0\x00\x10JFIF\x80"
 _BINARY_B64 = base64.b64encode(_BINARY).decode("ascii")
+_NBSP = "\N{NO-BREAK SPACE}"
+_REPLACEMENT = "\N{REPLACEMENT CHARACTER}"
 
 
 def _value_bytes(value: str) -> bytes:
@@ -80,7 +82,7 @@ class TestsFlextLdifParseValueFidelity:
         content = f"dn: {_DN}\nobjectClass: top\ndescription:: {_BINARY_B64}\n"
         entry = tm.ok(ldif().parse_ldif(content, server_type=server_type)).entries[0]
         value = tm.not_none(entry.attributes).attributes["description"][0]
-        tm.that(value, lacks="�")
+        tm.that(value, lacks=_REPLACEMENT)
         tm.that(_value_bytes(value), eq=_BINARY)
         tm.that(
             _written_lines(value, server_type),
@@ -110,7 +112,7 @@ class TestsFlextLdifParseValueFidelity:
         ("value_spec", "expected"),
         [
             (" abc  ", "abc  "),
-            (" abc ", "abc "),
+            (f" abc{_NBSP}", f"abc{_NBSP}"),
             (" abc\t", "abc\t"),
             (" abc\x0b", "abc\x0b"),
             ("\tabc", "\tabc"),
@@ -142,7 +144,7 @@ class TestsFlextLdifParseValueFidelity:
     @c.Tests.MARK.parametrize("server_type", _SERVER_TYPES)
     @c.Tests.MARK.parametrize(
         "value",
-        ["\tabc", "abc\t", "abc ", " abc", "abc\x0b", "abc ", "a\tb"],
+        ["\tabc", "abc\t", "abc ", " abc", "abc\x0b", f"abc{_NBSP}", "a\tb"],
         ids=[
             "leading_tab",
             "trailing_tab",
@@ -162,6 +164,35 @@ class TestsFlextLdifParseValueFidelity:
             tm.not_none(entry.attributes).attributes["description"],
             eq=[value],
         )
+
+    @staticmethod
+    @c.Tests.MARK.parametrize("server_type", _SERVER_TYPES)
+    def test_crlf_separated_folded_value_is_unfolded_exactly(server_type: str) -> None:
+        """A CRLF line separator never leaks into a folded value."""
+        content = f"dn: {_DN}\r\nobjectClass: top\r\ndescription: abc\r\n def\r\n\r\n"
+        entry = tm.ok(ldif().parse_ldif(content, server_type=server_type)).entries[0]
+        tm.that(
+            tm.not_none(entry.attributes).attributes["description"],
+            eq=["abcdef"],
+        )
+
+    @staticmethod
+    @c.Tests.MARK.parametrize("server_type", _SERVER_TYPES)
+    @c.Tests.MARK.parametrize(
+        ("flag", "expected"),
+        [("1", True), ("0", False)],
+        ids=["delete", "keep"],
+    )
+    def test_deleteoldrdn_after_fill_is_read(
+        server_type: str,
+        flag: str,
+        *,
+        expected: bool,
+    ) -> None:
+        """``deleteoldrdn: 1`` deletes the old RDN; the FILL space is no value."""
+        content = f"dn: {_DN}\nchangetype: modrdn\nnewrdn: cn=b\ndeleteoldrdn: {flag}\n"
+        entry = tm.ok(ldif().parse_ldif(content, server_type=server_type)).entries[0]
+        tm.that(entry.deleteoldrdn, eq=expected)
 
     @staticmethod
     @c.Tests.MARK.parametrize("server_type", _SERVER_TYPES)

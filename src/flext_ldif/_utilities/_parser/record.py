@@ -141,7 +141,7 @@ class FlextLdifUtilitiesParserRecord:
             state.newrdn = FlextLdifUtilitiesParserValues.decode_value(value)[0]
             return True
         if key_lower == "deleteoldrdn":
-            state.deleteoldrdn = value.lower() in {
+            state.deleteoldrdn = value.strip(c.Ldif.VALUE_FILL).lower() in {
                 c.ParserBooleanToken.ONE,
                 c.ParserBooleanToken.TRUE,
                 c.ParserBooleanToken.YES,

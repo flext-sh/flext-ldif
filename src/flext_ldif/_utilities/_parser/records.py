@@ -18,6 +18,9 @@ class FlextLdifUtilitiesParserRecords:
     def unfold_numbered_lines(ldif_content: str) -> MutableSequence[tuple[int, str]]:
         """Unfold LDIF lines per RFC 2849 §3, keeping each line's position.
 
+        A line separator is LF or CR LF (RFC 2849 SEP); the CR never becomes
+        part of a line, folded or not.
+
         Returns:
             Each logical line paired with the 1-based number of the physical
             line it starts on.
@@ -26,10 +29,11 @@ class FlextLdifUtilitiesParserRecords:
         lines: MutableSequence[tuple[int, str]] = []
         current: tuple[int, str] | None = None
         continuation_marks = (c.Ldif.LINE_CONTINUATION_SPACE, "\t")
-        for number, raw_line in enumerate(
+        for number, separated_line in enumerate(
             ldif_content.split(c.Ldif.LINE_SEPARATOR),
             start=1,
         ):
+            raw_line = separated_line.removesuffix("\r")
             if current and current[1] and raw_line.startswith(continuation_marks):
                 current = (current[0], current[1] + raw_line[1:])
                 continue
@@ -75,14 +79,13 @@ class FlextLdifUtilitiesParserRecords:
         """
         records: MutableSequence[MutableSequence[tuple[int, str]]] = []
         current_record: MutableSequence[tuple[int, str]] = []
-        for number, raw_line in FlextLdifUtilitiesParserRecords.unfold_numbered_lines(
+        for number, line in FlextLdifUtilitiesParserRecords.unfold_numbered_lines(
             ldif_content,
         ):
-            line = raw_line.rstrip("\r")
             has_data = any(not text.startswith("#") for _, text in current_record)
             if not has_data and line.lower().startswith("version:"):
                 continue
-            if not line.strip():
+            if not line:
                 if has_data:
                     records.append(current_record)
                 current_record = []
