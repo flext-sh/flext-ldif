@@ -44,6 +44,10 @@ class FlextLdifConstantsBase:
 
     # Base64 start characters
     BASE64_START_CHARS: ClassVar[frozenset[str]] = frozenset({" ", "<", ":"})
+    BASE64_EDGE_CHARS: ClassVar[frozenset[str]] = frozenset({" ", "\t"})
+    """Whitespace written base64 at either edge so no reader can strip it."""
+    VALUE_FILL: ClassVar[str] = " "
+    """RFC 2849 FILL: the spaces between a separator and its value."""
 
     # Lines and formatting
     LINE_FOLD_WIDTH: ClassVar[int] = 76

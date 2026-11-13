@@ -111,7 +111,7 @@ class FlextLdifUtilitiesParserRecord:
         value: str,
     ) -> None:
         """Consume a changetype line, tolerating unknown change types."""
-        normalized_change_type = value.lstrip(" ").lower()
+        normalized_change_type = value.strip(" ").lower()
         try:
             state.changetype = c.Ldif.ChangeType(normalized_change_type)
         except ValueError:
@@ -335,8 +335,7 @@ class FlextLdifUtilitiesParserRecord:
 
         """
         state = FlextLdifUtilitiesParserRecord._RecordState()
-        for index, raw_line in enumerate(lines):
-            line = raw_line.rstrip()
+        for index, line in enumerate(lines):
             if not line:
                 continue
             if line.startswith("#"):

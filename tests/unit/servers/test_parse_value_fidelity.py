@@ -103,3 +103,70 @@ class TestsFlextLdifParseValueFidelity:
         error = tm.fail(ldif().parse_ldif(content, server_type=server_type))
         tm.that(error, has="line 3")
         tm.that(error, has="base64")
+
+    @staticmethod
+    @c.Tests.MARK.parametrize("server_type", _SERVER_TYPES)
+    @c.Tests.MARK.parametrize(
+        ("value_spec", "expected"),
+        [
+            (" abc  ", "abc  "),
+            (" abc ", "abc "),
+            (" abc\t", "abc\t"),
+            (" abc\x0b", "abc\x0b"),
+            ("\tabc", "\tabc"),
+            ("   abc", "abc"),
+        ],
+        ids=[
+            "trailing_spaces",
+            "trailing_nbsp",
+            "trailing_tab",
+            "trailing_vertical_tab",
+            "leading_tab_is_value",
+            "fill_spaces_are_not_value",
+        ],
+    )
+    def test_plain_value_whitespace_is_kept(
+        server_type: str,
+        value_spec: str,
+        expected: str,
+    ) -> None:
+        """Only the FILL spaces after the colon are dropped from a plain value."""
+        content = f"dn: {_DN}\nobjectClass: top\ndescription:{value_spec}\n"
+        entry = tm.ok(ldif().parse_ldif(content, server_type=server_type)).entries[0]
+        tm.that(
+            tm.not_none(entry.attributes).attributes["description"],
+            eq=[expected],
+        )
+
+    @staticmethod
+    @c.Tests.MARK.parametrize("server_type", _SERVER_TYPES)
+    @c.Tests.MARK.parametrize(
+        "value",
+        ["\tabc", "abc\t", "abc ", " abc", "abc\x0b", "abc ", "a\tb"],
+        ids=[
+            "leading_tab",
+            "trailing_tab",
+            "trailing_space",
+            "leading_space",
+            "trailing_vertical_tab",
+            "trailing_nbsp",
+            "inner_tab",
+        ],
+    )
+    def test_value_round_trips_byte_exact(server_type: str, value: str) -> None:
+        """What is written is read back unchanged."""
+        lines = _written_lines(value, server_type)
+        content = f"dn: {_DN}\nobjectClass: top\n" + "\n".join(lines) + "\n"
+        entry = tm.ok(ldif().parse_ldif(content, server_type=server_type)).entries[0]
+        tm.that(
+            tm.not_none(entry.attributes).attributes["description"],
+            eq=[value],
+        )
+
+    @staticmethod
+    @c.Tests.MARK.parametrize("server_type", _SERVER_TYPES)
+    @c.Tests.MARK.parametrize("value", ["\tabc", "abc\t"], ids=["leading", "trailing"])
+    def test_edge_tab_is_written_base64(server_type: str, value: str) -> None:
+        """A TAB at a value edge is never left to a reader's whitespace rules."""
+        encoded = base64.b64encode(value.encode()).decode("ascii")
+        tm.that(_written_lines(value, server_type), eq=[f"description:: {encoded}"])

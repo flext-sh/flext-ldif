@@ -21,9 +21,11 @@ class FlextLdifUtilitiesParserValues:
     def decode_value(remainder: str) -> tuple[str, c.Ldif.ValueOrigin, str | None]:
         """Decode an LDIF value-spec preserving origin details.
 
-        A base64 payload decodes byte-exact: bytes that are not UTF-8 stay in
-        the value through ``c.Ldif.LOSSLESS_BYTES_ERRORS`` (encode the value
-        with the same handler to get them back).
+        Only the RFC 2849 FILL (spaces) after the separator is dropped; every
+        other character of the value is kept. A base64 payload decodes
+        byte-exact: bytes that are not UTF-8 stay in the value through
+        ``c.Ldif.LOSSLESS_BYTES_ERRORS`` (encode the value with the same
+        handler to get them back).
 
         Returns:
             The resulting ``tuple[str, c.Ldif.ValueOrigin, str | None]``.
@@ -32,9 +34,10 @@ class FlextLdifUtilitiesParserValues:
             ValueError: When a base64 payload is not valid base64.
 
         """
-        payload = remainder.lstrip()
+        fill = c.Ldif.VALUE_FILL
+        payload = remainder.lstrip(fill)
         if payload.startswith(":"):
-            encoded_value = payload[1:].lstrip()
+            encoded_value = payload[1:].lstrip(fill)
             try:
                 decoded_bytes = base64.b64decode(encoded_value, validate=True)
             except ValueError as exc:
@@ -46,7 +49,7 @@ class FlextLdifUtilitiesParserValues:
             )
             return (decoded_value, c.Ldif.ValueOrigin.BASE64, encoded_value)
         if payload.startswith("<"):
-            url_value = payload[1:].lstrip()
+            url_value = payload[1:].lstrip(fill)
             origin = (
                 c.Ldif.ValueOrigin.FILE
                 if url_value.startswith("file://")
