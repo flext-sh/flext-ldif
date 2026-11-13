@@ -42,7 +42,7 @@ class TestsFlextLdifOudAclExtractOrder:
                     acl_attribute_names=frozenset(values),
                 ),
             ).unwrap()
-            content = response.content
+            content = response.content or ""
             written = [
                 name
                 for line in content.splitlines()
