@@ -25,14 +25,12 @@ class FlextLdifUtilitiesParserRecords:
         """
         lines: MutableSequence[tuple[int, str]] = []
         current: tuple[int, str] | None = None
+        continuation_marks = (c.Ldif.LINE_CONTINUATION_SPACE, "\t")
         for number, raw_line in enumerate(
             ldif_content.split(c.Ldif.LINE_SEPARATOR),
             start=1,
         ):
-            if current is not None and current[1] and raw_line[:1] in {
-                c.Ldif.LINE_CONTINUATION_SPACE,
-                "\t",
-            }:
+            if current and current[1] and raw_line.startswith(continuation_marks):
                 current = (current[0], current[1] + raw_line[1:])
                 continue
             if current is not None:

@@ -50,6 +50,8 @@ class FlextLdifConstantsBase:
     KEYWORD_TOKEN_MAX_LENGTH: ClassVar[int] = 12
     LINE_CONTINUATION_SPACE: ClassVar[str] = " "
     LINE_SEPARATOR: ClassVar[str] = "\n"
+    RECORD_LINE_INDEX: ClassVar[str] = "record_line_index"
+    """Failure error_data key: 0-based index of the offending record line."""
 
     # DN character exclusions (UTF1 variants)
     DN_LUTF1_EXCLUDE: ClassVar[frozenset[int]] = frozenset({
