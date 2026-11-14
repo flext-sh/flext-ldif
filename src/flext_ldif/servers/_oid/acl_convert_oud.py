@@ -1,7 +1,7 @@
 """OID→OUD ACL primitives — rights, subjects, attribute sets and the directory.
 
-The building blocks of the conversion rules R1-R9 (Algar conversion spec
-v4.1, ``acl-conversion-guide.md``): OID access lists resolve to granted and
+The building blocks of the conversion rules R1-R9
+(``docs/specs/oid-oud-acl-conversion.md``): OID access lists resolve to granted and
 denied OID rights (OID-30 §30.1.4.3), each OID subject becomes one OUD
 bind-rule leaf or matches no session (R8), attribute targets become OUD
 ``targetattr`` sets (R1) and the injected source directory gives the group
@@ -421,7 +421,7 @@ class FlextLdifServersOidAclToOud:
         ``self``, ``dnattr=(a)`` is ``userattr="a#USERDN"``, a DN is literal
         and a group is checked against the directory. ``SuperUser`` (E8) and
         ``guidattr`` (E4) match no OUD session; ``groupattr=(a)`` is
-        ``userattr="a#GROUPDN"`` (spec v4.2 §4.8 R8). ``bindmode`` and
+        ``userattr="a#GROUPDN"`` (conversion rules R8). ``bindmode`` and
         ``bindipfilter`` fail unless the exact supported form is ``*`` with
         ``bindmode=Proxy``: OID's authentication threshold excludes anonymous,
         represented by the existing OUD ``all`` leaf for grants and denials.

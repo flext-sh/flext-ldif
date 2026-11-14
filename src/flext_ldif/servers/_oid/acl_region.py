@@ -3,7 +3,7 @@
 Indexes the typed OID policy by evaluation level (OID-30 §30.1.6: the
 entry's ``orclEntryLevelACI``, then each ACP up to the root DSE) and places
 each OUD ``deny`` so that the levels OID evaluates first still decide inside
-their region (Algar conversion spec v4.1, R5 "Região"):
+their region (``docs/specs/oid-oud-acl-conversion.md``, R5 region):
 
 - a nearer grant whose subject no farther ACP grants is excluded from the
   whole denial (global exclusion);

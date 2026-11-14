@@ -58,27 +58,26 @@ Extensive refactoring required
 ```python
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
+from abc import ABC, abstractmethod
 
-class FlextLdifServersBase.Acl(ABC, ServerRegistrationMixin):
-    """Base class for ACL servers."""
+from flext_ldif import FlextLdifModels, p
 
-    def parse(self, acl_line: str) -> p.Result[FlextLdifModels.Acl]:
-        """Parse server-specific ACL definition.
 
-        Args:
-            acl_line: ACL line from LDIF file
+class FlextLdifServersBase:
+    class Acl(ABC):
+        """Base class for ACL servers."""
 
-        Returns:
-            r[FlextLdifModels.Acl]
-        """
+        @abstractmethod
+        def parse(self, acl_line: str) -> p.Result[FlextLdifModels.Acl]:
+            """Parse server-specific ACL definition.
+
+            Args:
+                acl_line: ACL line from LDIF file
+
+            Returns:
+                r[FlextLdifModels.Acl]
+
+            """
 ```
 
 ### Protocol Definition
@@ -264,7 +263,7 @@ tm.that(acl.server_type, eq="oid")
 
 - `ldif.parse()` uses servers internally but doesn't expose parse()
 - Higher-level API returns Entry models (not Acl models)
-- algar-oud-mig uses this API (already compatible with Entry return)
+- Downstream consumers use this API (already compatible with Entry return)
 
 ---
 
@@ -351,7 +350,7 @@ Output LDIF with OUD format (aci:)
 
 - [ ] Run full test suite
 - [ ] Test with real LDIF data
-- [ ] Verify algar-oud-mig compatibility (should be automatic)
+- [ ] Verify downstream consumer compatibility (should be automatic)
 
 **Total Estimated Time**: 10-15 hours of development
 
@@ -363,12 +362,12 @@ Output LDIF with OUD format (aci:)
 
 **Dependent on parse()/format_acl()**:
 
-1. algar-oud-mig - Uses via ldif.parse() (COMPATIBLE)
-1. Any other projects importing from flext-ldif
+1. Consumers using ldif.parse() (COMPATIBLE)
+1. Any project importing parse()/format_acl() directly
 
 **Risk Assessment**:
 
-- algar-oud-mig: 🟢 **NO CHANGES NEEDED** (uses high-level API)
+- Consumers of `ldif.parse()`: 🟢 **NO CHANGES NEEDED** (high-level API)
 - flext-ldif itself: 🔴 **EXTENSIVE CHANGES REQUIRED**
 - Other ecosytem projects: 🟡 **REVIEW REQUIRED** (depends on usage)
 
@@ -377,14 +376,14 @@ Output LDIF with OUD format (aci:)
 ## CONCLUSION
 
 The parse() and format_acl() return type change requires **significant refactoring**
-within flext-ldif but does **NOT impact algar-oud-mig** because:
+within flext-ldif but does **NOT impact consumers of the high-level API** because:
 
-1. algar-oud-mig uses `ldif.parse()` (high-level API) which returns Entry models
-1. algar-oud-mig does not directly call parse() or format_acl()
+1. They use `ldif.parse()` (high-level API), which returns Entry models
+1. They do not call parse() or format_acl() directly
 1. The change is internal to flext-ldif's servers system
 
 **Recommendation**: Implement the change in flext-ldif, test thoroughly, then verify
-algar-oud-mig continues to work (should be automatic with no code changes).
+high-level consumers continue to work (should be automatic with no code changes).
 
 ---
 

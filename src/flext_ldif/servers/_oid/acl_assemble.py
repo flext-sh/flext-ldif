@@ -2,7 +2,7 @@
 
 Reads every OID ACL value with its origin attribute (``orclaci`` or
 ``orclentrylevelaci``) and carrier DN and builds what the OID evaluation
-model needs (OID-30 §30.1.6; Algar conversion spec v4.1 section 2):
+model needs (OID-30 §30.1.6; ``docs/specs/oid-oud-acl-conversion.md`` §2):
 
 - R8: each by-clause subject becomes one OUD bind-rule leaf, or matches no
   session (a group without a security class, ``SuperUser`` E8,
