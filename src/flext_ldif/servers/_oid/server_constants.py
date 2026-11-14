@@ -50,7 +50,14 @@ class FlextLdifConstantsServersOid(
     OID_PREFIX_WILDCARD_RE: ClassVar[t.RegexPattern] = re.compile(
         r"^(?:\.\*|\*)\s*,\s*(?P<base>[^*]+)$",
     )
-    "The only OID DN expression: ``*,<dn>`` (OID-A7 §A.7.1; ``.*,`` in OID-30 text)."
+    "The OID strict-subtree expression: ``*,<dn>`` (OID-A7 §A.7.1; ``.*,`` in OID-30 text)."
+    OID_REGEX_TREE_RE: ClassVar[t.RegexPattern] = re.compile(
+        r"^\.\*(?P<base>[^*,\s][^*]*)$",
+    )
+    (
+        "``.*<dn>`` without a comma: the DN itself and its subtree, as Oracle's own "
+        "seeded ACLs write it (``by dn=\".*cn=Reports,cn=Products,cn=OracleContext\"``)."
+    )
     OID_DN_EXPRESSION_RE: ClassVar[t.RegexPattern] = re.compile(
         r'[\[\]{}|^$?()*]|(?<!\\)\+|\\(?![,+"\\<>;=# ]|[0-9A-Fa-f]{2})',
     )
@@ -197,6 +204,7 @@ class FlextLdifConstantsServersOid(
         SELF = "self"
         USER = "user"
         USER_SUBTREE = "user_subtree"
+        USER_TREE = "user_tree"
         GROUP = "group"
         USERATTR = "userattr"
         GROUPATTR = "groupattr"

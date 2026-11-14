@@ -712,6 +712,9 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
             case kinds.USER_SUBTREE:
                 url = f"{prefix}{leaf.value}{constants.OUD_USERDN_SUBTREE_URL_SUFFIX}"
                 return f'({userdn}="{url}" and {userdn}!="{prefix}{leaf.value}")'
+            case kinds.USER_TREE:
+                url = f"{prefix}{leaf.value}{constants.OUD_USERDN_SUBTREE_URL_SUFFIX}"
+                return f'{userdn}="{url}"'
             case _:
                 return f'{userdn}="{prefix}{leaf.value}"'
 

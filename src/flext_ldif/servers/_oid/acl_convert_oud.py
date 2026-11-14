@@ -370,6 +370,8 @@ class FlextLdifServersOidAclToOud:
     def _user_leaf(cls, value: str) -> p.Result[tuple[p.Ldif.AclBindLeaf | None, str]]:
         """R8: a subject DN is literal; ``*,<dn>`` is the strict subtree of dn.
 
+        ``.*<dn>`` (no comma) matches the DN itself and its subtree.
+
         The OID BNF admits a DN or ``*,<dn_of_any_subtree_root>`` and nothing
         else (OID-A7 §A.7.1 note); ``.*,`` is how OID-30 text writes the
         prefix. Any other regex construct or non-RFC 4514 escape fails.
@@ -396,9 +398,25 @@ class FlextLdifServersOidAclToOud:
                 ),
                 constants.AclRule.R8,
             ))
+        if match := constants.OID_REGEX_TREE_RE.match(dn):
+            base = cls.normalize_dn(match.group("base"))
+            if constants.OID_DN_EXPRESSION_RE.search(base):
+                return result.fail(
+                    f"R8: OID DN expression {value!r} is not '.*<dn>' over a "
+                    "literal DN",
+                )
+            return result.ok((
+                m.Ldif.AclBindLeaf(
+                    kind=constants.AclLeafKind.USER_TREE,
+                    value=base,
+                    key=base.lower(),
+                ),
+                constants.AclRule.R8,
+            ))
         if constants.OID_DN_EXPRESSION_RE.search(dn):
             return result.fail(
-                f"R8: OID DN expression {value!r} is not a literal DN or the "
+                f"R8: OID DN expression {value!r} is not a literal DN, the "
+                "subtree '.*<dn>' or the "
                 "prefix wildcard '*,<dn>'; the OID grammar admits no other form "
                 "(OID-A7 §A.7.1)",
             )
@@ -510,11 +528,11 @@ class FlextLdifServersOidAclToOud:
             inner.key,
         ):
             return True
-        if outer.kind == kinds.USER_SUBTREE and inner.kind in {
-            kinds.USER,
-            kinds.USER_SUBTREE,
-        }:
+        trees = {kinds.USER, kinds.USER_SUBTREE, kinds.USER_TREE}
+        if outer.kind == kinds.USER_SUBTREE and inner.kind in trees:
             return inner.key.endswith(f",{outer.key}")
+        if outer.kind == kinds.USER_TREE and inner.kind in trees:
+            return inner.key == outer.key or inner.key.endswith(f",{outer.key}")
         return False
 
     @classmethod
@@ -525,7 +543,7 @@ class FlextLdifServersOidAclToOud:
         conversion time, so they overlap every subject.
         """
         kinds = FlextLdifConstantsServersOid.AclLeafKind
-        users = {kinds.USER, kinds.USER_SUBTREE}
+        users = {kinds.USER, kinds.USER_SUBTREE, kinds.USER_TREE}
         if left.kind not in users or right.kind not in users:
             return False
         return not (cls.covers(left, right) or cls.covers(right, left))
