@@ -2,6 +2,11 @@
 
 <!-- TOC START -->
 
+- [1. Primitives](#1-primitives)
+- [2. Policy evaluation](#2-policy-evaluation)
+- [3. Denial region (R5)](#3-denial-region-r5)
+- [4. Emission](#4-emission)
+
 <!-- TOC END -->
 
 This specification is owned by flext-ldif. It states the rules R1 to R9 that

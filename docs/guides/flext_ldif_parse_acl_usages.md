@@ -58,27 +58,26 @@ Extensive refactoring required
 ```python
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
+from abc import ABC, abstractmethod
 
-class FlextLdifServersBase.Acl(ABC, ServerRegistrationMixin):
-    """Base class for ACL servers."""
+from flext_ldif import FlextLdifModels, p
 
-    def parse(self, acl_line: str) -> p.Result[FlextLdifModels.Acl]:
-        """Parse server-specific ACL definition.
 
-        Args:
-            acl_line: ACL line from LDIF file
+class FlextLdifServersBase:
+    class Acl(ABC):
+        """Base class for ACL servers."""
 
-        Returns:
-            r[FlextLdifModels.Acl]
-        """
+        @abstractmethod
+        def parse(self, acl_line: str) -> p.Result[FlextLdifModels.Acl]:
+            """Parse server-specific ACL definition.
+
+            Args:
+                acl_line: ACL line from LDIF file
+
+            Returns:
+                r[FlextLdifModels.Acl]
+
+            """
 ```
 
 ### Protocol Definition
