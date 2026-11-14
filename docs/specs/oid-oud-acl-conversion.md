@@ -25,7 +25,9 @@ Implemented in `acl_convert_oud.py`.
 - **R8**: each OID subject becomes one OUD bind-rule leaf, or matches no session.
   `*` is `anyone` (granted as `all`), `self` is `self`, `dnattr=(a)` is
   `userattr="a#USERDN"`, `groupattr=(a)` is `userattr="a#GROUPDN"`, a DN is literal
-  and `*,<dn>` is the strict subtree of the DN. A group grants only when it is an exact
+  and `*,<dn>` is the strict subtree of the DN; `.*<dn>` without a comma (Oracle's own
+  seeded ACLs, `by dn=".*cn=Reports,cn=Products,cn=OracleContext"`) is the DN itself and
+  its subtree, `userdn="ldap:///<dn>??sub?(objectclass=*)"`. A group grants only when it is an exact
   security group of the injected source directory (OID-30 §30.1.3.4.6). `SuperUser` and
   `guidattr` match no OUD session. `bindmode` and `bindipfilter` fail unless the form is
   `*` with `bindmode=Proxy`.
