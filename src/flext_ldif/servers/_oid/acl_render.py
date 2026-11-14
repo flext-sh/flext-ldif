@@ -1,7 +1,7 @@
 """OUD ACI emission and rendering of the conversion rules R1-R9.
 
 Consumes the indexed OID policy (:class:`FlextLdifServersOidAclRegion`) and
-emits OUD ACI statements per the Algar conversion spec v4.1 section 4:
+emits OUD ACI statements per ``docs/specs/oid-oud-acl-conversion.md`` §4:
 
 - R1/R2/R3: attribute grants keep the origin scope (``orclaci`` subtree,
   ``orclentrylevelaci`` base) and the filter as ``targetfilter``; read and
@@ -114,7 +114,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         (placed at that entry, or its subtree for an ACP). A grant to a subject
         covering this one needs nothing more, to a narrower one that subject,
         and to any other subject a session holding both, unless no session can
-        (measured on OUD, algar 27cd4b2d, spec v4.3).
+        (measured on OUD 14.1.2.1).
 
         Returns:
             Whether some level decides browse for the subject, and the
@@ -287,7 +287,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
                 rule.dn,
                 f"{rule.level} {rule.index}.{resolution.clause}: proxy kept with "
                 "the source scope, evaluated on the impersonated identity's entry "
-                "(spec v4.2 §4.4, Q7 adopted reading, [RT] pending phase B); the "
+                "(conversion rules R4, pending runtime measurement); the "
                 "bind user still needs the proxied-auth privilege (E2)",
             )
         return result.ok([self.entry_form(rule, resolution, scope)])
