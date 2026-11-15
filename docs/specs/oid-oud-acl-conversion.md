@@ -69,7 +69,11 @@ the levels OID evaluates first still decide inside their region:
   denial; an ACP below leaves through `target!=` and the denial is placed again inside
   it;
 - two or more sibling ACP subtrees split the denial over the anchor's current children,
-  read from the injected directory.
+  read from the injected directory;
+- a nearer grant under a filter or on part of the denied attributes leaves the whole
+  denial when no farther ACP grants its subjects the right: elsewhere they hold no OUD
+  grant and the default denies, as the OID's farther denial does. Derived from the
+  measured level precedence (OID 12.2.1.4, V3–V5); the case itself is not yet measured.
 
 These forms were measured on OUD 14.1.2.1; any other overlap fails.
 

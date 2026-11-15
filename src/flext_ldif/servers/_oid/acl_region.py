@@ -388,6 +388,11 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):  # ruff: ignore
     ) -> p.Result[list[p.Ldif.AclBindLeaf]]:
         """Return the grant leaves of one nearer rule the denial would override.
 
+        A grant under a filter or on part of the denied attributes grants only
+        there, so its subjects leave the whole denial when no farther ACP grants
+        them the right (``safe_globally``): elsewhere they hold no OUD grant,
+        and the OID decides by the denial or the default. Otherwise it fails.
+
         Returns:
             The leaves, or the failure for a filtered or partial grant.
 
@@ -411,15 +416,15 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):  # ruff: ignore
             or not self.overlaps(nearer_attrs.value, decision.form.attrs)
         ):
             return result.ok([])
-        if not self.contains(nearer_attrs.value, decision.form.attrs):
+        partial = not self.contains(nearer_attrs.value, decision.form.attrs)
+        if (partial or nearer.target_filter is not None) and not all(
+            self.safe_globally(decision, leaf) for leaf in leaves
+        ):
             return result.fail(
-                f"R5: {nearer.dn} grants {decision.resolution.right} on part of "
-                f"the attributes {rule.dn} denies; the attribute split has no rule",
-            )
-        if nearer.target_filter is not None:
-            return result.fail(
-                f"R5: filtered grant of {decision.resolution.right} at "
-                f"{nearer.dn} inside the denial of {rule.dn}; no rule covers it",
+                f"R5: grant of {decision.resolution.right} at {nearer.dn} on part "
+                f"of the attributes or under a filter inside the denial of "
+                f"{rule.dn}, and a farther ACP grants the right to its subjects; "
+                "no rule covers it",
             )
         if self.leaves_out(nearer, decision.resolution.right):
             return result.fail(
