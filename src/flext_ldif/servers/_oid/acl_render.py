@@ -479,7 +479,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         rule: p.Ldif.AclLevelRule,
         resolution: p.Ldif.AclResolution,
     ) -> p.Result[list[p.Ldif.AciStatement]]:
-        """R1-R4 and R9 for one grant; a grant wins in its ACI (R6a).
+        """R1-R4 and R9 for one grant; a ``*`` grant leaves out (R6a) subjects.
 
         Returns:
             The grant's statements, or the failure.
@@ -543,6 +543,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
                             "form": kept,
                             "bind": m.Ldif.AclBindRule.model_validate({
                                 "include": self.granted_leaf(subject),
+                                "exclude": resolution.excluded,
                                 "require": () if also is None else (also,),
                             }),
                         }),
@@ -586,14 +587,21 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
                 "form": form,
                 "bind": m.Ldif.AclBindRule.model_validate({
                     "include": resolution.leaf,
-                    "exclude": resolution.grantors,
+                    "exclude": resolution.excluded,
                 }),
             })
             override = self.privilege_override(decision)
             if override.failure:
                 return result.from_failure(override)
             widened = self.widen(decision, override.value)
-            for split in [] if widened is None else self.filter_precedence(widened):
+            splits = (
+                r[list[p.Ldif.AclDecision]].ok([])
+                if widened is None
+                else self.filter_precedence(widened)
+            )
+            if splits.failure:
+                return result.from_failure(splits)
+            for split in splits.value:
                 placed = self.place(
                     split,
                     m.Ldif.AclRegion(
@@ -609,7 +617,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
     def filter_precedence(
         self,
         decision: p.Ldif.AclDecision,
-    ) -> list[p.Ldif.AclDecision]:
+    ) -> p.Result[list[p.Ldif.AclDecision]]:
         """R6b: a filtered ACI of the level decides before the unfiltered one.
 
         Where a filter matches, the unfiltered denial excludes the subjects
@@ -617,12 +625,14 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         §30.1.6.2.1-2). More than one overlapping filter is reported as E6.
 
         Returns:
-            The denial split by filter, or the denial itself.
+            The denial split by filter, the denial itself, or the failure for a
+            filtered ``*`` grant that leaves specific subjects out (R6a).
 
         """
+        result = r[list[p.Ldif.AclDecision]]
         rule = decision.rule
         if rule.target_filter is not None:
-            return [decision]
+            return result.ok([decision])
         grants: dict[str, list[p.Ldif.AclBindLeaf]] = {}
         for other in self.rules_at(rule.key, rule.level):
             other_attrs = self.effective_attrs(other)
@@ -633,11 +643,16 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
                 or not self.overlaps(other_attrs.value, decision.form.attrs)
             ):
                 continue
+            if self.leaves_out(other, decision.resolution.right):
+                return result.fail(
+                    f"R6b: filtered grant of {decision.resolution.right} to * at "
+                    f"{rule.dn} leaves specific subjects out; no rule covers it",
+                )
             leaves = self.grants(other, decision.resolution.right)
             if leaves:
                 grants.setdefault(other.target_filter, []).extend(leaves)
         if not grants:
-            return [decision]
+            return result.ok([decision])
         if len(grants) > 1:
             self._event(
                 FlextLdifConstantsServersOid.AclRule.E6,
@@ -665,7 +680,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
             for item, leaves in sorted(grants.items())
             if (narrowed := self.widen(decision, leaves)) is not None
         ]
-        return [outside, *inside]
+        return result.ok([outside, *inside])
 
     @staticmethod
     def _add_leaf(leaf: p.Ldif.AclBindLeaf) -> p.Result[p.Ldif.AclBindLeaf]:

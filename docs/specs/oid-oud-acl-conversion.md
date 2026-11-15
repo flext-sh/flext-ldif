@@ -45,8 +45,15 @@ Implemented in `acl_assemble.py`, following the OID evaluation model (OID-30 §3
 - **R8**: a by-clause subject without a rule fails.
 - **R7**: an `AppendToAll` clause joins every other ACI of its access control point
   (ACP).
-- **R6a**: inside one ACI, a grant from any matching clause wins over a matching denial
-  (OID-30 §30.1.6.2; examples §30.3.6 and §30.3.9).
+- **R6a**: in one level, the clauses of the specific subjects that match a session
+  decide and the level's `*` clauses are not consulted for any right; only when no
+  specific subject matches does `*` decide. Among the clauses that decide, a denial
+  beats a grant in any order and across the level's ACIs; a right they leave
+  undecided falls to the next level. Measured on OID 12.2.1.4
+  (`lab/oid/measurements/2026-11-15-acl-precedence.md` in algar-oud-mig); the grant-wins
+  reading of OID-30 §30.1.6.2 does not match the server. A plain group (no
+  `orclPrivilegeGroup`/`orclACPgroup`) matches no session (measured), and `(none)`
+  denies every right (measured against the seeded root grant of browse).
 - **R6b**: ACIs of one level with an identical object string are one ACI.
 
 ## 3. Denial region (R5)
@@ -76,8 +83,11 @@ Implemented in `acl_render.py`.
 - **R4**: entry rights are separate ACIs. Add uses `subordinate`/`onelevel`
   (`dnattr` reads the new entry's parent), delete keeps the origin scope, browse becomes
   `objectClass` read plus search, and the added-object constraint becomes the add
-  `targetfilter`. A proxy grant keeps the source scope and is reported for review until
-  its OUD target is measured.
+  `targetfilter` (measured on OID 12.2.1.4: the constraint is decided on the new
+  entry). `self` on add (the bind DN equals the parent) has no OUD form and fails,
+  granted, denied or left to the next level. A delete `filter=` is decided on the
+  deleted entry (measured). A proxy grant keeps the source scope and is reported for
+  review until its OUD target is measured.
 - **E7** (filter on add): OID decides an entry ACI's `filter=` on the entry the
   operation acts on; for add that is the parent, and in an ACP every parent of the
   subtree counts (measured on OID 12.2.1.4: a matching parent and its matching
@@ -89,8 +99,15 @@ Implemented in `acl_render.py`.
   any other assertion fails. Measured on OUD 14.1.2.1: the converted policy admits and
   refuses the same adds as the OID. Inherent difference: a matching parent created after
   the migration is not covered; each rule reports it as an event.
-- **R5**: every denial below the root DSE becomes a `deny` that excludes the subjects its
-  ACI grants (R6a) and the privilege groups a farther ACP grants, placed by region (§3).
+- **R5**: every denial below the root DSE becomes a `deny`. A specific subject's denial
+  excludes nobody; a `*` denial excludes the specific subjects of the ACI that do not
+  deny the right (R6a). Both exclude the privilege groups a farther ACP grants
+  (measured on OID 12.2.1.4: a farther privilege-group grant lifts a nearer denial,
+  even the group's own, unless the denying level carries `DenyGroupOverride`), placed
+  by region (§3).
+- **R6a** (grant side): a `*` grant excludes the specific subjects of the ACI that leave
+  the right undecided, `allow (r) (userdn="ldap:///all" and not …)`. Such a grant beside
+  a farther denial, or under a filter, has no exact placement and fails.
 - **R6b**: a named attribute leaves the ACP's `*` ACI; a filtered ACI decides before the
   unfiltered one where its filter matches.
 - **R8**: a grant to OID `*` goes to `ldap:///all` and a denial to `ldap:///anyone`.
