@@ -422,7 +422,7 @@ wheels = [
 [[package]]
 name = "flext-cli"
 version = "0.12.1"
-source = { git = "https://github.com/flext-sh/flext-cli.git?rev=0.12.0-dev#5e97db792d9e34c8c709e3d0c7db57ec267eb6f9" }
+source = { git = "https://github.com/flext-sh/flext-cli.git?rev=0.12.0-dev#d74ff3fff517d51cbf2ce485be7363ce25ba07de" }
 dependencies = [
     { name = "click" },
     { name = "defusedxml" },
@@ -444,7 +444,7 @@ dependencies = [
 [[package]]
 name = "flext-core"
 version = "0.12.1"
-source = { git = "https://github.com/flext-sh/flext-core.git?rev=0.12.0-dev#7b4e42e80fa10f0b85d080cff8a627ef157ee413" }
+source = { git = "https://github.com/flext-sh/flext-core.git?rev=0.12.0-dev#54a89ae199c86476808f4872a6fd5f51893d21af" }
 dependencies = [
     { name = "annotated-types" },
     { name = "packaging" },
@@ -459,7 +459,7 @@ dependencies = [
 [[package]]
 name = "flext-infra"
 version = "0.12.1"
-source = { git = "https://github.com/flext-sh/flext-infra.git?rev=0.12.0-dev#cb437d423fd35a88b4a51343f50871e98965de67" }
+source = { git = "https://github.com/flext-sh/flext-infra.git?rev=0.12.0-dev#b0f98f856a6daa4f9d6ab9e3c7639ccf8a104eaa" }
 dependencies = [
     { name = "defusedxml" },
     { name = "flext-cli" },
@@ -635,7 +635,7 @@ dev = [
 [[package]]
 name = "flext-tests"
 version = "0.12.0"
-source = { git = "https://github.com/flext-sh/flext-tests.git?rev=0.12.0-dev#f1cf0d688567628aa84185440062fc122e25de64" }
+source = { git = "https://github.com/flext-sh/flext-tests.git?rev=0.12.0-dev#0b37dd2b2a53cdc6762553a541ff85f1572ce0a3" }
 dependencies = [
     { name = "docker" },
     { name = "flext-cli" },
@@ -1320,11 +1320,11 @@ wheels = [
 
 [[package]]
 name = "platformdirs"
-version = "4.14.4"
+version = "4.14.5"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a1/f1/602599e5879fce55f44b8021d28bd3817d87198a6be63e5c9d7e31891f0d/platformdirs-4.14.4.tar.gz", hash = "sha256:edb4a4aea570d69eb83e6b0973b588bbf868fb0dde2894106d6667739f017751", size = 71235, upload-time = "2026-11-04T07:38:46.024Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d7/9a/8475be631fb33ca1466915e70fd594c42a4e84b512db650eaa14f90fe75d/platformdirs-4.14.5.tar.gz", hash = "sha256:32e9921db7385aa8169bee4fe9501923e5715ba9fb7ea3b9c69b0d8e0639f7a1", size = 71464, upload-time = "2026-11-04T16:54:50.358Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/01/7c/562ddff1940562f7701a7e8b0a90a900be606af334cc5f69543293e2293a/platformdirs-4.14.4-py3-none-any.whl", hash = "sha256:89c1bfa30434b2dcc08655bcfb1789e1a6f97602c11ff990615d09a4b823d6be", size = 35357, upload-time = "2026-11-04T07:38:44.794Z" },
+    { url = "https://files.pythonhosted.org/packages/7c/ae/ecbbbfd0e4343a6a521d49b3c8656fb4643dee2a4f6eaf941cf3280391a8/platformdirs-4.14.5-py3-none-any.whl", hash = "sha256:8e778c6fa421516f4d3369449f8df3b0e1b72c0e0005fe88e3ec772d0a14e750", size = 35402, upload-time = "2026-11-04T16:54:48.875Z" },
 ]
 
 [[package]]
