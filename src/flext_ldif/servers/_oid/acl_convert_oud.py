@@ -246,7 +246,7 @@ class FlextLdifServersOidAclToOud:
 
         try:
             return result.ok(evaluate(root))
-        except (ValueError, UnicodeDecodeError) as error:
+        except ValueError as error:
             return result.fail(str(error))
 
     @classmethod
