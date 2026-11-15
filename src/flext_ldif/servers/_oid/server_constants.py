@@ -50,7 +50,7 @@ class FlextLdifConstantsServersOid(
     OID_PREFIX_WILDCARD_RE: ClassVar[t.RegexPattern] = re.compile(
         r"^(?:\.\*|\*)\s*,\s*(?P<base>[^*]+)$",
     )
-    "The OID strict-subtree expression: ``*,<dn>`` (OID-A7 §A.7.1; ``.*,`` in OID-30 text)."
+    "OID strict-subtree expression ``*,<dn>`` (OID-A7 §A.7.1; ``.*,`` in OID-30)."
     OID_REGEX_TREE_RE: ClassVar[t.RegexPattern] = re.compile(
         r"^\.\*(?P<base>[^*,\s][^*]*)$",
     )
@@ -295,6 +295,8 @@ class FlextLdifConstantsServersOid(
     "R8: LDAP URL suffix of a subtree ``userdn`` (OUD-9 §9.4.2; measured, phase D)."
     OUD_USERATTR_PARENT: ClassVar[str] = "parent[1]."
     "R4a: ``userattr`` read on the parent of the added entry (OUD-9 §9.4.4.9)."
+    OUD_ADD_SELF_ATTR: ClassVar[str] = "entryDN"
+    "R4a: OID ``self`` on add is the parent's ``entryDN`` equal to the bind DN."
     OUD_TARGET_SUBTREE_EXCLUSION_PREFIX: ClassVar[str] = "*,"
     "R5: target prefix matching every descendant of a DN (measured, phase D)."
     OUD_TARGET_DEPTH_TWO_PREFIX: ClassVar[str] = "*,*,"

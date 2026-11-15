@@ -69,7 +69,11 @@ the levels OID evaluates first still decide inside their region:
   denial; an ACP below leaves through `target!=` and the denial is placed again inside
   it;
 - two or more sibling ACP subtrees split the denial over the anchor's current children,
-  read from the injected directory.
+  read from the injected directory;
+- a nearer grant under a filter or on part of the denied attributes leaves the whole
+  denial when no farther ACP grants its subjects the right: elsewhere they hold no OUD
+  grant and the default denies, as the OID's farther denial does. Derived from the
+  measured level precedence (OID 12.2.1.4, V3–V5); the case itself is not yet measured.
 
 These forms were measured on OUD 14.1.2.1; any other overlap fails.
 
@@ -84,8 +88,10 @@ Implemented in `acl_render.py`.
   (`dnattr` reads the new entry's parent), delete keeps the origin scope, browse becomes
   `objectClass` read plus search, and the added-object constraint becomes the add
   `targetfilter` (measured on OID 12.2.1.4: the constraint is decided on the new
-  entry). `self` on add (the bind DN equals the parent) has no OUD form and fails,
-  granted, denied or left to the next level. A delete `filter=` is decided on the
+  entry). `self` on add (the bind DN equals the parent) is
+  `userattr="parent[1].entryDN#USERDN"` (measured on OID 12.2.1.4 and OUD 14.1.2.1:
+  grant, denial and the exclusion of an undecided `self` admit and refuse the same
+  adds). A delete `filter=` is decided on the
   deleted entry (measured). A proxy grant keeps the source scope and is reported for
   review until its OUD target is measured.
 - **E7** (filter on add): OID decides an entry ACI's `filter=` on the entry the
@@ -104,7 +110,11 @@ Implemented in `acl_render.py`.
   deny the right (R6a). Both exclude the privilege groups a farther ACP grants
   (measured on OID 12.2.1.4: a farther privilege-group grant lifts a nearer denial,
   even the group's own, unless the denying level carries `DenyGroupOverride`), placed
-  by region (§3).
+  by region (§3). A filtered farther grant to a privilege group lifts the denial only
+  where its filter matches (measured on OID 12.2.1.4: the entry for browse and delete,
+  the parent for add): the denial splits by `targetfilter`; the add denial stays whole
+  while no existing parent matches (a later matching parent is not overridden,
+  reported as an event) and fails when one does.
 - **R6a** (grant side): a `*` grant excludes the specific subjects of the ACI that leave
   the right undecided, `allow (r) (userdn="ldap:///all" and not …)`. Such a grant beside
   a farther denial, or under a filter, has no exact placement and fails.
