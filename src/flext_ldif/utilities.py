@@ -30,7 +30,6 @@ from flext_ldif._utilities import (
     FlextLdifUtilitiesValidation,
     FlextLdifUtilitiesWriter,
 )
-from flext_ldif._utilities._lazy import FlextLdifUtilitiesLazyMeta
 
 
 class FlextLdifUtilities(
@@ -54,7 +53,6 @@ class FlextLdifUtilities(
     FlextLdifUtilitiesTransformers,
     FlextLdifUtilitiesValidation,
     FlextLdifUtilitiesWriter,
-    metaclass=FlextLdifUtilitiesLazyMeta,
 ):
     """Centralized helpers with domain collection behavior under ``Ldif``.
 
