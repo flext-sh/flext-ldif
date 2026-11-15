@@ -26,12 +26,15 @@ Implemented in `acl_convert_oud.py`.
   `*` is `anyone` (granted as `all`), `self` is `self`, `dnattr=(a)` is
   `userattr="a#USERDN"`, `groupattr=(a)` is `userattr="a#GROUPDN"`, a DN is literal
   and `*,<dn>` is the strict subtree of the DN; `.*<dn>` without a comma (Oracle's own
-  seeded ACLs, `by dn=".*cn=Reports,cn=Products,cn=OracleContext"`) is the DN itself and
-  its subtree, `userdn="ldap:///<dn>??sub?(objectclass=*)"`. A group grants only when it is an exact
-  security group of the injected source directory (OID-30 §30.1.3.4.6). `group="G"` names a literal DN (OID-A7 §A.7.1): a group absent from the
-  source, also one whose literal value carries `*` (Oracle's seeded
-  `group="cn=bindaplicacao,ou=*,…"`), has no members and matches no session, recorded
-  as a conversion event. `SuperUser` and
+  seeded ACLs, `by dn=".*cn=Reports,cn=Products,cn=OracleContext"`) is the DN itself
+  and its subtree, `userdn="ldap:///<dn>??sub?(objectclass=*)"` (both forms measured
+  on OID 12.2.1.4). A group grants only when it is an exact security group of the
+  injected source directory (OID-30 §30.1.3.4.6). `group="G"` names a literal DN
+  (OID-A7 §A.7.1): a group absent from the source, also one whose literal value
+  carries `*` (Oracle's seeded `group="cn=bindaplicacao,ou=*,…"`), has no members and
+  matches no session, recorded as a conversion event; measured on OID 12.2.1.4 (a
+  member of a group the pattern names is not granted) and on OUD 14.1.2.1 (a
+  `groupdn` with `*` is accepted but matches nobody). `SuperUser` and
   `guidattr` match no OUD session. `bindmode` and `bindipfilter` fail unless the form is
   `*` with `bindmode=Proxy`.
 
@@ -75,6 +78,17 @@ Implemented in `acl_render.py`.
   `objectClass` read plus search, and the added-object constraint becomes the add
   `targetfilter`. A proxy grant keeps the source scope and is reported for review until
   its OUD target is measured.
+- **E7** (filter on add): OID decides an entry ACI's `filter=` on the entry the
+  operation acts on; for add that is the parent, and in an ACP every parent of the
+  subtree counts (measured on OID 12.2.1.4: a matching parent and its matching
+  descendants admit the add, a non-matching parent does not). OUD's add `targetfilter`
+  matches the new entry, so the add, grant or denial, is placed with
+  `targetscope="onelevel"` on each existing parent the filter matches: the ACP entry and
+  its descendants, or the `orclentrylevelaci` entry alone. The filter is evaluated on the
+  migrated entries (equality, presence, substrings, `&`, `|`, `!`, case-insensitive);
+  any other assertion fails. Measured on OUD 14.1.2.1: the converted policy admits and
+  refuses the same adds as the OID. Inherent difference: a matching parent created after
+  the migration is not covered; each rule reports it as an event.
 - **R5**: every denial below the root DSE becomes a `deny` that excludes the subjects its
   ACI grants (R6a) and the privilege groups a farther ACP grants, placed by region (§3).
 - **R6b**: a named attribute leaves the ACP's `*` ACI; a filtered ACI decides before the

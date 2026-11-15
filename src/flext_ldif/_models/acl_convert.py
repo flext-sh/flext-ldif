@@ -126,8 +126,10 @@ class FlextLdifModelsAclConvert:
         """The migrated source directory injected into ACL conversion.
 
         ``entries`` maps every migrated DN key to the DN as read; it is the
-        child set of the per-child denial split. ``groups`` holds every group
-        entry with its security classes (R8, OID-30 §30.1.3.4.6).
+        child set of the per-child denial split. ``attributes`` holds each
+        entry's attributes, which an entry ACI's filter is evaluated against
+        (E7). ``groups`` holds every group entry with its security classes
+        (R8, OID-30 §30.1.3.4.6).
         """
 
         entries: Annotated[
@@ -135,6 +137,18 @@ class FlextLdifModelsAclConvert:
             m.Field(
                 default_factory=lambda: MappingProxyType[str, str]({}),
                 description="DN key to DN as read, for every migrated entry",
+            ),
+        ]
+        attributes: Annotated[
+            Mapping[str, Mapping[str, tuple[str, ...]]],
+            m.Field(
+                default_factory=lambda: MappingProxyType[
+                    str, Mapping[str, tuple[str, ...]]
+                ]({}),
+                description=(
+                    "DN key to the entry's attribute values by lowercase base "
+                    "attribute name, for ACI filter evaluation (E7)"
+                ),
             ),
         ]
         groups: Annotated[
@@ -283,6 +297,15 @@ class FlextLdifModelsAclConvert:
         targetscope: Annotated[
             str | None,
             m.Field(description="OUD targetscope; None is the subtree default"),
+        ] = None
+        anchor: Annotated[
+            str | None,
+            m.Field(
+                description=(
+                    "DN key of the entry the form is placed at; None is the "
+                    "source ACI's own entry"
+                ),
+            ),
         ] = None
         rule: Annotated[str, m.Field(description="Conversion rule applied")]
 
