@@ -47,7 +47,6 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):  # ruff: ignore
         directory: p.Ldif.AclDirectory,
     ) -> None:
         """Index the policy by level and resolve every ACI once (R6a)."""
-        constants = FlextLdifConstantsServersOid
         self._suffix = suffix
         self._directory = directory
         self._levels: dict[tuple[str, str], tuple[p.Ldif.AclLevelRule, ...]] = {}
@@ -61,18 +60,8 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):  # ruff: ignore
             index = (rule.key, rule.level)
             self._levels[index] = (*self._levels.get(index, ()), rule)
             self._dns.setdefault(rule.key, rule.dn)
-            resolutions, dead = FlextLdifServersOidAclAssemble.resolve(rule)
-            self._resolutions[rule.key, rule.level, rule.index] = resolutions
-            self.events.extend(
-                m.Ldif.AclConversionEvent(
-                    rule=constants.AclRule.R6A,
-                    dn=rule.dn,
-                    detail=(
-                        f"{rule.level} {rule.index}.{clause}: denial of {right} "
-                        "is covered by a grant of the same ACI"
-                    ),
-                )
-                for clause, right in dead
+            self._resolutions[rule.key, rule.level, rule.index] = (
+                FlextLdifServersOidAclAssemble.resolve(rule)
             )
         self._keys = sorted(
             {rule.key for rule in rules},
@@ -131,6 +120,18 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):  # ruff: ignore
             for item in self.resolutions(rule)
             if item.right == right and item.effect == allow
         ]
+
+    def leaves_out(self, rule: p.Ldif.AclLevelRule, right: str) -> bool:
+        """Return whether a ``*`` grant of the rule leaves specific subjects out.
+
+        Those subjects fall to the next level for the right (R6a), which no
+        single grant leaf states.
+        """
+        allow = FlextLdifConstantsServersOid.AclEffect.ALLOW
+        return any(
+            item.right == right and item.effect == allow and item.excluded
+            for item in self.resolutions(rule)
+        )
 
     def effective_attrs(self, rule: p.Ldif.AclLevelRule) -> p.Result[p.Ldif.AclAttrSet]:
         """R6b: ``attr=(*)`` loses the attributes another ACI of the level names.
@@ -419,6 +420,12 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):  # ruff: ignore
             return result.fail(
                 f"R5: filtered grant of {decision.resolution.right} at "
                 f"{nearer.dn} inside the denial of {rule.dn}; no rule covers it",
+            )
+        if self.leaves_out(nearer, decision.resolution.right):
+            return result.fail(
+                f"R5: grant of {decision.resolution.right} to * at {nearer.dn} "
+                f"leaves specific subjects to the denial of {rule.dn}; no rule "
+                "covers it",
             )
         return result.ok(leaves)
 

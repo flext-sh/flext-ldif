@@ -126,7 +126,10 @@ class TestsFlextLdifOidAclEndToEnd:
                 self._directory({
                     "ou=people,dc=ctbc": {
                         "orclentrylevelaci": [
-                            "access to entry by self (browse) by * (none)"
+                            (
+                                'access to entry by dn="cn=owner,dc=ctbc" '
+                                "(browse) by * (none)"
+                            )
                         ],
                     },
                     "cn=parent-acl,dc=ctbc": {

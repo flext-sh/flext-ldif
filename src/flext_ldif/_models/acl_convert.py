@@ -270,12 +270,12 @@ class FlextLdifModelsAclConvert:
             FlextLdifModelsAclConvert.AclBindLeaf,
             m.Field(description="Subject of the clause"),
         ]
-        grantors: Annotated[
+        excluded: Annotated[
             tuple[
                 FlextLdifModelsAclConvert.AclBindLeaf,
                 ...,
             ],
-            m.Field(description="Subjects the same ACI grants the right to"),
+            m.Field(description="Specific subjects a ``*`` decision leaves out"),
         ] = ()
         added_object_constraint: Annotated[
             str,

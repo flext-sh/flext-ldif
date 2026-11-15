@@ -222,7 +222,6 @@ class FlextLdifConstantsServersOid(
         R4D = "R4d"
         R4E = "R4e"
         R5 = "R5"
-        R6A = "R6a"
         R6B = "R6b"
         R7 = "R7"
         R8 = "R8"
