@@ -15,6 +15,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from functools import lru_cache
 
 from ldap3.core.exceptions import LDAPInvalidFilterError
 from ldap3.operation.search import (
@@ -42,10 +43,14 @@ class FlextLdifServersOidAclToOud:
         compact: str = c.Ldif.DN_NORMALIZE_COMMA_RE.sub(",", dn)
         return c.Ldif.DN_NORMALIZE_EQUALS_RE.sub("=", compact).strip()
 
-    @classmethod
-    def dn_key(cls, dn: str) -> str:
-        """Return the comparison key of a DN: separators compacted, case folded."""
-        return cls.normalize_dn(dn).lower()
+    @staticmethod
+    @lru_cache(maxsize=1 << 17)
+    def dn_key(dn: str) -> str:
+        """Return the comparison key of a DN: separators compacted, case folded.
+
+        Cached: the policy compares the same DNs for every entry it converts.
+        """
+        return FlextLdifServersOidAclToOud.normalize_dn(dn).lower()
 
     @staticmethod
     def in_scope(dn: str, base_dn: str) -> bool:
