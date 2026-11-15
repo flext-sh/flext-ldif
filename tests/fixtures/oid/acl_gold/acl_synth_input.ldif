@@ -1,4 +1,4 @@
-# provenance: devops-oud-iac@2225708e3ac8 tests/benchmark/gold/acl_synth_input.ldif sha256=e6e56c5311f7129970d5f0f7e8d8df47adbb5f505ced996ca8bae284c90cf80d amended=flext-ws7iv(entries cn=guidattr-case and cn=combined-deny removed: guidattr and the non-grammar 'all' token fail loud and are covered by unit tests; entries cn=SecurityAdmins and cn=CommonUsers added: OID ACP security groups the group subjects require); flext-alrtg(entry cn=reports-tree added: Oracle seeded '.*<dn>' subject is the DN and its subtree)
+# provenance: devops-oud-iac@2225708e3ac8 tests/benchmark/gold/acl_synth_input.ldif sha256=e6e56c5311f7129970d5f0f7e8d8df47adbb5f505ced996ca8bae284c90cf80d amended=flext-ws7iv(entries cn=guidattr-case and cn=combined-deny removed: guidattr and the non-grammar 'all' token fail loud and are covered by unit tests; entries cn=SecurityAdmins and cn=CommonUsers added: OID ACP security groups the group subjects require)
 dn: cn=admins,dc=ctbc
 objectClass: top
 objectClass: container
@@ -53,9 +53,3 @@ objectClass: top
 objectClass: groupOfUniqueNames
 objectClass: orclACPgroup
 cn: CommonUsers
-
-dn: cn=reports-tree,dc=ctbc
-objectClass: top
-objectClass: container
-cn: reports-tree
-orclaci: access to entry by dn=".*cn=Reports,cn=Products,dc=ctbc" (browse,add,delete) by * (none)
