@@ -284,9 +284,10 @@ class FlextLdifServersOidAclToOud:
             The unescaped, case-folded value.
 
         """
-        decoded = FlextLdifConstantsServersOid.LDAP_FILTER_ESCAPE_RE.sub(
-            lambda found: bytes.fromhex(found.group(1).decode()),
-            raw,
+        parts = FlextLdifConstantsServersOid.LDAP_FILTER_ESCAPE_RE.split(raw)
+        decoded = b"".join(
+            bytes.fromhex(part.decode()) if index % 2 else part
+            for index, part in enumerate(parts)
         )
         return decoded.decode("utf-8", errors="strict").casefold()
 
