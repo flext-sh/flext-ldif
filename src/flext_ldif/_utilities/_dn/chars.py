@@ -59,6 +59,18 @@ class FlextLdifUtilitiesDNChars:
         """
         return cls._is_rfc_char_class(char, c.Ldif.DN_TUTF1_EXCLUDE)
 
+    @staticmethod
+    def utfmb_char(char: str) -> bool:
+        """Check if char is UTFMB, a multibyte UTF-8 character (RFC 4514 §3).
+
+        RFC 4514 admits UTFMB as lead, string and trail character.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        return len(char) == 1 and ord(char) > c.Ldif.SAFE_CHAR_MAX
+
     @classmethod
     def valid_dn_string(
         cls,
@@ -76,20 +88,24 @@ class FlextLdifUtilitiesDNChars:
         if not value:
             return (True, errors)
         if len(value) == 1:
-            if not cls.lutf1_char(value) and strict:
+            if not (cls.lutf1_char(value) or cls.utfmb_char(value)) and strict:
                 errors.append(f"Invalid lead character: {value!r}")
             return (not errors, errors)
         is_escaped_lead = value[0] == "\\" and len(value) > 1
-        is_bad_lead = not cls.lutf1_char(value[0]) and (not is_escaped_lead)
+        is_bad_lead = not (cls.lutf1_char(value[0]) or cls.utfmb_char(value[0])) and (
+            not is_escaped_lead
+        )
         if is_bad_lead and strict:
             errors.append(f"Invalid lead character: {value[0]!r}")
         min_len_for_escape = c.Ldif.MIN_DN_LENGTH
         is_escaped_trail = len(value) >= min_len_for_escape and value[-2] == "\\"
-        is_bad_trail = not cls.tutf1_char(value[-1]) and (not is_escaped_trail)
+        is_bad_trail = not (
+            cls.tutf1_char(value[-1]) or cls.utfmb_char(value[-1])
+        ) and (not is_escaped_trail)
         if is_bad_trail and strict:
             errors.append(f"Invalid trail character: {value[-1]!r}")
         for i, char in enumerate(value[1:-1], start=1):
-            if cls.sutf1_char(char):
+            if cls.sutf1_char(char) or cls.utfmb_char(char):
                 continue
             is_escape_char = char == "\\"
             is_after_escape = i > 0 and value[i - 1] == "\\"
