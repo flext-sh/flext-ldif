@@ -3,8 +3,7 @@
 Measured on OID 12.2.1.4: when a specific subject matches the session, the
 level's ``*`` clauses are not consulted; among the clauses that apply a denial
 beats a grant in any order; a right they leave undecided falls to the next
-level. A self-matched session that ``*`` would deny add falls through on the
-parent, which OUD cannot name on add, so that conversion fails.
+level. ``self`` on add is the parent itself, ``parent[1].entryDN`` on OUD.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -118,10 +117,38 @@ class TestsFlextLdifOidOudAclPrecedence:
             ],
         )
 
-    def test_self_left_to_the_next_level_on_add_fails(self, tmp_path: Path) -> None:
-        """``self`` undecided on add falls through on the parent: no OUD form."""
-        ok, error, _ = self._migrate(
+    def test_self_on_add_binds_to_the_parent_entry_dn(self, tmp_path: Path) -> None:
+        """``self`` on add is the parent itself: ``parent[1].entryDN``."""
+        ok, _, acis = self._migrate(
+            tmp_path, "access to entry by self (browse,add) by * (browse)"
+        )
+        tm.that(ok, eq=True)
+        tm.that(
+            [item for item in acis if "allow (add)" in item],
+            eq=[
+                (
+                    '(targetattr="*")(targetscope="subordinate")(version 3.0; acl '
+                    '"orclaci 1.1 R4a"; allow (add) '
+                    'userattr="parent[1].entryDN#USERDN";)'
+                )
+            ],
+        )
+
+    def test_self_left_to_the_next_level_on_add_is_excluded(
+        self, tmp_path: Path
+    ) -> None:
+        """S3: ``*`` denies add to everyone but the parent, which falls through."""
+        ok, _, acis = self._migrate(
             tmp_path, "access to entry by self (browse) by * (none)"
         )
-        tm.that(ok, eq=False)
-        tm.that(error, has="R4a: OID 'self' on add names the parent entry")
+        tm.that(ok, eq=True)
+        tm.that(
+            [item for item in acis if "deny (add)" in item],
+            eq=[
+                (
+                    '(targetattr="*")(targetscope="subordinate")(version 3.0; acl '
+                    '"orclaci 1.2 R5"; deny (add) (userdn="ldap:///anyone" and not '
+                    'userattr="parent[1].entryDN#USERDN");)'
+                )
+            ],
+        )

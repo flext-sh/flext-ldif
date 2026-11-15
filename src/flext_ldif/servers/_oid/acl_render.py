@@ -689,18 +689,27 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         OID add on X authorizes children of X while OUD evaluates add on the
         new entry (OUD-9 §9.2.3.3). ``dnattr`` reads X's attribute, which is
         ``userattr="parent[1].<a>#USERDN"`` (OUD-9 §9.4.4.7, §9.4.4.9).
-        ``self`` (the bind DN equals X) has no OUD parent form.
+        ``self`` (the bind DN equals X) is X's ``entryDN``:
+        ``userattr="parent[1].entryDN#USERDN"`` (measured on OID 12.2.1.4 and
+        OUD 14.1.2.1: grant, denial and exclusion admit and refuse the same
+        adds).
 
         Returns:
-            The parent-bound leaf, or the failure for ``self``.
+            The parent-bound leaf.
 
         """
         constants = FlextLdifConstantsServersOid
         kinds = constants.AclLeafKind
         if leaf.kind == kinds.SELF:
-            return r[p.Ldif.AclBindLeaf].fail(
-                "R4a: OID 'self' on add names the parent entry, while OUD "
-                "ldap:///self names the entry being added; no OUD form",
+            value = f"{constants.OUD_USERATTR_PARENT}{constants.OUD_ADD_SELF_ATTR}"
+            return r[p.Ldif.AclBindLeaf].ok(
+                leaf.model_copy(
+                    update={
+                        "kind": kinds.USERATTR,
+                        "value": value,
+                        "key": value.lower(),
+                    },
+                ),
             )
         if leaf.kind != kinds.USERATTR:
             return r[p.Ldif.AclBindLeaf].ok(leaf)

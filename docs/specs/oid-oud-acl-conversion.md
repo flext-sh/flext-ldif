@@ -84,8 +84,10 @@ Implemented in `acl_render.py`.
   (`dnattr` reads the new entry's parent), delete keeps the origin scope, browse becomes
   `objectClass` read plus search, and the added-object constraint becomes the add
   `targetfilter` (measured on OID 12.2.1.4: the constraint is decided on the new
-  entry). `self` on add (the bind DN equals the parent) has no OUD form and fails,
-  granted, denied or left to the next level. A delete `filter=` is decided on the
+  entry). `self` on add (the bind DN equals the parent) is
+  `userattr="parent[1].entryDN#USERDN"` (measured on OID 12.2.1.4 and OUD 14.1.2.1:
+  grant, denial and the exclusion of an undecided `self` admit and refuse the same
+  adds). A delete `filter=` is decided on the
   deleted entry (measured). A proxy grant keeps the source scope and is reported for
   review until its OUD target is measured.
 - **E7** (filter on add): OID decides an entry ACI's `filter=` on the entry the
