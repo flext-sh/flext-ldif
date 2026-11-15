@@ -336,23 +336,22 @@ class FlextLdifServersOidAclToOud:
     ) -> p.Result[tuple[p.Ldif.AclBindLeaf | None, str]]:
         """R8: a group grants only when it is an exact source security group.
 
+        ``group="G"`` names a literal DN, never a group search (OID-A7 §A.7.1):
+        a group absent from the source has no members in this generation, also
+        when its literal value carries ``*``, so it matches no session and the
+        non-match is recorded. A present group whose DN carries ``*`` fails.
+
         Returns:
-            The group leaf; None (matches no session) for a group without a
-            security class; or the failure for an inexact group.
+            The group leaf; None (matches no session) for an absent group or a
+            group without a security class; or the failure for an inexact group.
 
         """
         constants = FlextLdifConstantsServersOid
         result = r[tuple[p.Ldif.AclBindLeaf | None, str]]
         dn = cls.normalize_dn(value)
         key = dn.lower()
-        first_rdn, _, _rest = dn.partition(",")
-        wildcard_rdn = f"={c.Ldif.ACL_WILDCARD}"
         group = directory.groups.get(key)
         if group is None or not group.classes:
-            if c.Ldif.ACL_WILDCARD in dn and not first_rdn.endswith(wildcard_rdn):
-                return result.fail(
-                    f"R8: OID group DN with a wildcard has no OUD groupdn: {value!r}",
-                )
             return result.ok((None, constants.AclRule.R8))
         if c.Ldif.ACL_WILDCARD in dn:
             return result.fail(

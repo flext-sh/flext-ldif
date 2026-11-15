@@ -28,7 +28,10 @@ Implemented in `acl_convert_oud.py`.
   and `*,<dn>` is the strict subtree of the DN; `.*<dn>` without a comma (Oracle's own
   seeded ACLs, `by dn=".*cn=Reports,cn=Products,cn=OracleContext"`) is the DN itself and
   its subtree, `userdn="ldap:///<dn>??sub?(objectclass=*)"`. A group grants only when it is an exact
-  security group of the injected source directory (OID-30 §30.1.3.4.6). `SuperUser` and
+  security group of the injected source directory (OID-30 §30.1.3.4.6). `group="G"` names a literal DN (OID-A7 §A.7.1): a group absent from the
+  source, also one whose literal value carries `*` (Oracle's seeded
+  `group="cn=bindaplicacao,ou=*,…"`), has no members and matches no session, recorded
+  as a conversion event. `SuperUser` and
   `guidattr` match no OUD session. `bindmode` and `bindipfilter` fail unless the form is
   `*` with `bindmode=Proxy`.
 
