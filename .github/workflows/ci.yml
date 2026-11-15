@@ -98,6 +98,11 @@ jobs:
       - name: Normalize checkout modes
         run: chmod -R go-w .
 
+      # The runner's own temporary directory, emptied at every job boundary,
+      # is TMPDIR for every later step, so pytest's basetemp never sits in /tmp.
+      - name: Runner temporary directory
+        run: printf 'TMPDIR=%s\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+
       # Why: every fresh runner paid a cold full-dependency Pyrefly and
       # Ruff analysis (Mypy is local-only and never runs here). The caches below are content-addressed by the
       # committed dependency locks, so a warm cache is always valid for the same
@@ -114,8 +119,8 @@ jobs:
       # duplicate generations never consume the repository cache quota.
       # Only that exact key restores. A prefix fallback restored the previous
       # lock state, whose superseded installs and wheels the next save kept:
-      # the entry grew with every lock change (algar-oud-mig: 3.06 to
-      # 3.65 GiB) until its restore filled the runner disk. A lock change
+      # the entry grew with every lock change until its restore filled the
+      # runner disk. A lock change
       # installs cold and saves exactly the new state.
       - name: Restore tool caches
         id: tool-cache
@@ -129,7 +134,7 @@ jobs:
             .pyrefly_cache
             .benchmarks
             .hypothesis
-            .bin
+            ~/.local/bin/mise
             ~/.cache/uv
             ~/.local/share/mise
             !~/.local/share/mise/shims
@@ -218,7 +223,7 @@ jobs:
             .pyrefly_cache
             .benchmarks
             .hypothesis
-            .bin
+            ~/.local/bin/mise
             ~/.cache/uv
             ~/.local/share/mise
             !~/.local/share/mise/shims

@@ -24,4 +24,7 @@ install_lazy_exports(
     globals(),
     {"FlextLdifUtilitiesAttributeValidation": ".validation"},
     public_exports=__all__,
+    deferred_members={
+        "FlextLdifUtilitiesAttributeValidation": ("validate_attribute_name",),
+    },
 )

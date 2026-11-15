@@ -22,4 +22,11 @@ install_lazy_exports(
     globals(),
     {"FlextLdifUtilitiesOIDOperations": ".operations"},
     public_exports=__all__,
+    deferred_members={
+        "FlextLdifUtilitiesOIDOperations": (
+            "extract_from_definition",
+            "matches_pattern",
+            "validate_format",
+        ),
+    },
 )

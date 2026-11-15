@@ -14,9 +14,9 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Final
 
+from flext_tests import u
 from flext_tests.docker import FlextTestsDocker
 
-from flext_ldif import u
 from tests import c, p, tk
 
 if TYPE_CHECKING:

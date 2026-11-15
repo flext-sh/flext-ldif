@@ -57,4 +57,38 @@ install_lazy_exports(
         "FlextLdifProtocolsSettingsValidation": ".validation",
     },
     public_exports=__all__,
+    deferred_members={
+        "FlextLdifProtocolsSettingsAcl": (
+            "AciLineFormatConfig",
+            "AciParserConfig",
+            "AclMetadataConfig",
+        ),
+        "FlextLdifProtocolsSettingsCriteria": (
+            "ServerPatternsConfig",
+            "EntryDetectionMarkers",
+            "EntryCriteriaConfig",
+            "EntryParseMetadataConfig",
+        ),
+        "FlextLdifProtocolsSettingsMigrate": (
+            "WriteFormatLayout",
+            "WriteFormatAnnotations",
+            "WriteFormatAclOrdering",
+            "WriteFormatOptions",
+            "MigrateOptions",
+        ),
+        "FlextLdifProtocolsSettingsMisc": ("LogContextExtras",),
+        "FlextLdifProtocolsSettingsNormalization": (
+            "DnNormalizationConfig",
+            "AttrNormalizationConfig",
+        ),
+        "FlextLdifProtocolsSettingsProcessing": (
+            "ProcessConfig",
+            "TransformConfig",
+        ),
+        "FlextLdifProtocolsSettingsRules": (
+            "CategoryRules",
+            "WhitelistRules",
+        ),
+        "FlextLdifProtocolsSettingsValidation": ("ServerValidationRules",),
+    },
 )
