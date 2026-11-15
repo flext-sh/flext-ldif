@@ -110,7 +110,11 @@ Implemented in `acl_render.py`.
   deny the right (R6a). Both exclude the privilege groups a farther ACP grants
   (measured on OID 12.2.1.4: a farther privilege-group grant lifts a nearer denial,
   even the group's own, unless the denying level carries `DenyGroupOverride`), placed
-  by region (§3).
+  by region (§3). A filtered farther grant to a privilege group lifts the denial only
+  where its filter matches (measured on OID 12.2.1.4: the entry for browse and delete,
+  the parent for add): the denial splits by `targetfilter`; the add denial stays whole
+  while no existing parent matches (a later matching parent is not overridden,
+  reported as an event) and fails when one does.
 - **R6a** (grant side): a `*` grant excludes the specific subjects of the ACI that leave
   the right undecided, `allow (r) (userdn="ldap:///all" and not …)`. Such a grant beside
   a farther denial, or under a filter, has no exact placement and fails.
