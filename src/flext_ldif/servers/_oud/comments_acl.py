@@ -12,7 +12,10 @@ from __future__ import annotations
 from collections.abc import MutableSequence, Sequence
 
 from flext_ldif import c, m, p, t
-from flext_ldif.servers._oud import FlextLdifServersOudAclMetadata
+from flext_ldif.servers._oud import (
+    FlextLdifConstantsServersOud,
+    FlextLdifServersOudAclMetadata,
+)
 
 
 class FlextLdifServersOudCommentsAcl:
@@ -65,12 +68,17 @@ class FlextLdifServersOudCommentsAcl:
             if acl_attr_name.lower() in acl_attr_names_to_skip:
                 continue
             acl_attr_names_to_skip.add(acl_attr_name.lower())
-            sort_key = original_acl_attr or acl_attr_name
-            if sort_key not in acl_comments_dict:
-                acl_comments_dict[sort_key] = []
+            converted = FlextLdifConstantsServersOud.ACL_ATTRIBUTE_NAME
+            original = (
+                original_acl_attr
+                if acl_attr_name.lower() == converted
+                else acl_attr_name
+            )
+            if original not in acl_comments_dict:
+                acl_comments_dict[original] = []
             FlextLdifServersOudCommentsAcl._add_acl_value_comments(
-                acl_comments_dict[sort_key],
-                original_acl_attr,
+                acl_comments_dict[original],
+                original,
                 acl_attr_name,
                 acl_values_raw,
             )
