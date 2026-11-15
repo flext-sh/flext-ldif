@@ -56,7 +56,7 @@ class FlextLdifConstantsServersOid(
     )
     (
         "``.*<dn>`` without a comma: the DN itself and its subtree, as Oracle's own "
-        "seeded ACLs write it (``by dn=\".*cn=Reports,cn=Products,cn=OracleContext\"``)."
+        'seeded ACLs write it (``by dn=".*cn=Reports,cn=Products,cn=OracleContext"``).'
     )
     OID_DN_EXPRESSION_RE: ClassVar[t.RegexPattern] = re.compile(
         r'[\[\]{}|^$?()*]|(?<!\\)\+|\\(?![,+"\\<>;=# ]|[0-9A-Fa-f]{2})',
@@ -279,6 +279,10 @@ class FlextLdifConstantsServersOid(
     "R4a: entry-level add creates direct children only (OUD-9 §9.2.3.3)."
     ACL_ACP_ADD_SCOPE: ClassVar[str] = "subordinate"
     "R4a: an ACP's add creates entries anywhere below it."
+    LDAP_FILTER_ESCAPE_RE: ClassVar[re.Pattern[bytes]] = re.compile(
+        rb"\\([0-9A-Fa-f]{2})",
+    )
+    "RFC 4515 ``\\XX`` escape inside a filter assertion value (E7 evaluation)."
 
     OUD_ACI_QUOTE: ClassVar[str] = '"'
     "Delimiter of every quoted OUD ACI value; a quoted value cannot carry it."

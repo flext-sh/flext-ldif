@@ -14,7 +14,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+
+from ldap3.core.exceptions import LDAPInvalidFilterError
+from ldap3.operation.search import (
+    AND,
+    MATCH_EQUAL,
+    MATCH_PRESENT,
+    MATCH_SUBSTRING,
+    NOT,
+    OR,
+    ROOT,
+    FilterNode,
+    parse_filter,
+)
 
 from flext_ldif import c, m, p, r, u
 from flext_ldif.servers._oid import FlextLdifConstantsServersOid
@@ -184,6 +197,118 @@ class FlextLdifServersOidAclToOud:
             )
         return r[str].ok(text)
 
+    @classmethod
+    def filter_matches(
+        cls,
+        value: str,
+        attributes: Mapping[str, tuple[str, ...]],
+    ) -> p.Result[bool]:
+        """Evaluate one RFC 4515 filter against one entry's attributes (E7).
+
+        OID decides an entry ACI's ``filter=`` on the entry the operation acts
+        on; for add that is the parent (measured on OID 12.2.1.4). Equality,
+        presence, substrings, ``&``, ``|`` and ``!`` are evaluated with
+        case-insensitive string matching, the OID default for the directory
+        string and object class syntaxes the policy filters name. Any other
+        assertion (ordering, approximate, extensible) fails: its matching rule
+        is not known here.
+
+        Returns:
+            Whether the entry matches, or the typed failure.
+
+        """
+        result = r[bool]
+        try:
+            root = parse_filter(
+                search_filter=value,
+                schema=None,
+                auto_escape=False,
+                auto_encode=False,
+                validator=None,
+                check_names=False,
+            )
+        except LDAPInvalidFilterError as error:
+            return result.fail(f"OID ACL filter {value!r} does not parse: {error}")
+
+        def evaluate(node: FilterNode) -> bool:
+            if node.tag in {ROOT, AND}:
+                return all(evaluate(item) for item in node.elements)
+            if node.tag == OR:
+                return any(evaluate(item) for item in node.elements)
+            if node.tag == NOT:
+                return not evaluate(node.elements[0])
+            return cls._assertion_matches(value, node, attributes)
+
+        try:
+            return result.ok(evaluate(root))
+        except (ValueError, UnicodeDecodeError) as error:
+            return result.fail(str(error))
+
+    @classmethod
+    def _assertion_matches(
+        cls,
+        value: str,
+        node: FilterNode,
+        attributes: Mapping[str, tuple[str, ...]],
+    ) -> bool:
+        """Return whether one filter assertion holds for the entry's values.
+
+        Raises:
+            ValueError: For an assertion with no known matching rule.
+
+        """
+        assertion = node.assertion
+        held = [
+            item.casefold()
+            for item in attributes.get(str(assertion["attr"]).lower(), ())
+        ]
+        if node.tag == MATCH_PRESENT:
+            return bool(held)
+        if node.tag == MATCH_EQUAL:
+            return cls._filter_text(assertion["value"]) in held
+        if node.tag == MATCH_SUBSTRING:
+            initial = cls._filter_text(assertion.get("initial") or b"")
+            final = cls._filter_text(assertion.get("final") or b"")
+            middles = [cls._filter_text(item) for item in assertion.get("any") or ()]
+            return any(
+                cls._substring_matches(item, initial, middles, final) for item in held
+            )
+        msg = f"OID ACL filter {value!r} uses an assertion with no known matching rule"
+        raise ValueError(msg)
+
+    @staticmethod
+    def _filter_text(raw: bytes) -> str:
+        """Decode an RFC 4515 assertion value and fold its case.
+
+        Returns:
+            The unescaped, case-folded value.
+
+        """
+        decoded = FlextLdifConstantsServersOid.LDAP_FILTER_ESCAPE_RE.sub(
+            lambda found: bytes.fromhex(found.group(1).decode()),
+            raw,
+        )
+        return decoded.decode("utf-8", errors="strict").casefold()
+
+    @staticmethod
+    def _substring_matches(
+        held: str,
+        initial: str,
+        middles: Sequence[str],
+        final: str,
+    ) -> bool:
+        """Return whether one value matches an RFC 4515 substring assertion."""
+        if not held.startswith(initial) or len(held) < len(initial) + len(final):
+            return False
+        position = len(initial)
+        end = len(held) - len(final)
+        for middle in middles:
+            found = held.find(middle, position, end)
+            if found < 0:
+                return False
+            position = found + len(middle)
+        return held.endswith(final)
+
     @staticmethod
     def attr_set(rule: p.Ldif.OidAclRule) -> p.Ldif.AclAttrSet | None:
         """R1: return the attribute target as a case-folded attribute set.
@@ -261,6 +386,7 @@ class FlextLdifServersOidAclToOud:
         """
         constants = FlextLdifConstantsServersOid
         names: dict[str, str] = {}
+        values_by_entry: dict[str, dict[str, tuple[str, ...]]] = {}
         found: dict[str, tuple[frozenset[str], frozenset[str], bool]] = {}
         for entry in entries:
             key = cls.dn_key(entry.dn_str)
@@ -268,6 +394,10 @@ class FlextLdifServersOidAclToOud:
             attributes = {
                 name.lower(): values for name, values in entry.attributes_dict.items()
             }
+            merged = values_by_entry.setdefault(key, {})
+            for name, values in attributes.items():
+                base = name.partition(";")[0]
+                merged[base] = (*merged.get(base, ()), *values)
             classes = frozenset(
                 value.lower()
                 for value in attributes.get(c.Ldif.DictKeys.OBJECTCLASS.lower(), ())
@@ -288,6 +418,7 @@ class FlextLdifServersOidAclToOud:
                 )
         return m.Ldif.AclDirectory(
             entries=names,
+            attributes=values_by_entry,
             groups={
                 key: m.Ldif.AclSecurityGroup(
                     classes=classes,
