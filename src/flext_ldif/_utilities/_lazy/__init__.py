@@ -12,15 +12,22 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldif._utilities._lazy.meta import FlextLdifUtilitiesLazyMeta
     from flext_ldif._utilities._lazy.tree import FlextLdifUtilitiesLazyTree
 
 
-__all__: tuple[str, ...] = ("FlextLdifUtilitiesLazyMeta", "FlextLdifUtilitiesLazyTree")
+__all__: tuple[str, ...] = ("FlextLdifUtilitiesLazyTree",)
 
 install_lazy_exports(
     __name__,
     globals(),
-    {"FlextLdifUtilitiesLazyMeta": ".meta", "FlextLdifUtilitiesLazyTree": ".tree"},
+    {"FlextLdifUtilitiesLazyTree": ".tree"},
     public_exports=__all__,
+    deferred_members={
+        "FlextLdifUtilitiesLazyTree": (
+            "_LAZY_UTILITIES",
+            "build_ldif_tree",
+            "lazy_utilities_table",
+            "Ldif",
+        ),
+    },
 )

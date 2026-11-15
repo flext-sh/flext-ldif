@@ -1,9 +1,9 @@
 """A nearer grant on part of the denied attributes, through the oid→oud pipeline.
 
 An OID entry-level grant of write on one attribute decides that attribute
-before the farther ACP's ``by * (nowrite)``. Its subject leaves the farther OUD
-denial whole when no farther ACP grants it the right: elsewhere it holds no OUD
-grant, so the default denies as the OID's farther denial does (R5).
+before the farther ACP's ``by * (nowrite)``. The OUD denial splits by
+attribute: the granted attribute excludes the grant's subject, every other
+attribute keeps the denial whole (R5, R6b).
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 
 class TestsFlextLdifOidOudAclNearerPartial:
-    """A partial nearer grant leaves its subject out of the farther denial."""
+    """A partial nearer grant splits the farther denial by attribute."""
 
     INPUT: ClassVar[str] = (
         "dn: dc=ctbc\nobjectClass: top\nobjectClass: domain\ndc: ctbc\n\n"
@@ -39,10 +39,10 @@ class TestsFlextLdifOidOudAclNearerPartial:
     )
 
     @classmethod
-    def test_partial_grant_subject_leaves_the_farther_denial(
+    def test_partial_grant_splits_the_farther_denial_by_attribute(
         cls, tmp_path: Path
     ) -> None:
-        """The member is excluded from the ACP denial and granted on one attribute."""
+        """The member is excluded only on the attribute the nearer level grants."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
         input_dir.mkdir()
@@ -72,9 +72,18 @@ class TestsFlextLdifOidOudAclNearerPartial:
         tm.that(
             acis["cn=p,dc=ctbc"],
             has=(
-                '(targetattr="*")(version 3.0; acl "orclaci 1.2 R5"; deny (write) '
-                '(userdn="ldap:///anyone" and not (groupdn="ldap:///cn=g,dc=ctbc" '
-                'or userdn="ldap:///cn=membro,dc=ctbc"));)'
+                '(targetattr="description")(version 3.0; acl "orclaci 1.2 R5"; '
+                'deny (write) (userdn="ldap:///anyone" and not '
+                '(groupdn="ldap:///cn=g,dc=ctbc" or '
+                'userdn="ldap:///cn=membro,dc=ctbc"));)'
+            ),
+        )
+        tm.that(
+            acis["cn=p,dc=ctbc"],
+            has=(
+                '(targetattr!="description")(version 3.0; acl "orclaci 1.2 R5"; '
+                'deny (write) (userdn="ldap:///anyone" and not '
+                'groupdn="ldap:///cn=g,dc=ctbc");)'
             ),
         )
         tm.that(

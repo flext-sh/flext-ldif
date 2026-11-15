@@ -7,6 +7,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, TypeAlias
+
 from flext_cli import FlextCliProtocols
 
 from flext_ldif._protocols import (
@@ -85,6 +87,9 @@ class FlextLdifProtocols(FlextCliProtocols):
         ``LdifSettings``, ``Settings``, and ``ServerResolutionService`` have a
         single owner in ``FlextLdifProtocolsBase`` and are inherited unchanged.
         """
+
+        if TYPE_CHECKING:
+            Predicate: TypeAlias = FlextLdifProtocolsBase.Predicate
 
 
 p = FlextLdifProtocols

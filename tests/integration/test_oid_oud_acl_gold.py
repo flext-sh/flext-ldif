@@ -6,15 +6,11 @@ options: hierarchical entry order and ``changetype: modify`` / ``replace:
 aci`` records. The written output file must equal the expected output byte
 for byte; the expected file keeps one provenance line, which the comparison
 drops. The inputs derive from devops-oud-iac fixtures (their provenance lines
-record the source and any amendment); the expected outputs are flext-ldif's
-own conversion under the documented OID semantics (OID-30 §30.1.6.2: union of
-grants minus union of denials per ACI) with every denial rendered as an OUD
-``deny`` (OUD §9.1.4), not the consumer's gold. Group subjects convert only
-for the OID security groups the input itself carries.
-
-The per-subject outcomes recorded on ``entry.metadata.acl_conversion`` must
-match ``*_outcomes.tsv``: for every rule of every entry, in output order, the
-count of each outcome kind — deny-only rules included.
+record the source and any amendment). The expected outputs are flext-ldif's
+own conversion under the OID-measured rules
+(``docs/specs/oid-oud-acl-conversion.md``): a regression pin of the emitted
+ACIs, not evidence of OID equivalence, which only the measurement on the real
+servers gives.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -37,24 +33,6 @@ class TestsFlextLdifOidOudAclGold:
     GOLD_DIR: ClassVar[Path] = c.Tests.FIXTURES_DIR / "oid" / "acl_gold"
     OUTPUT_NAME: ClassVar[str] = "acls.ldif"
 
-    _KINDS: ClassVar[tuple[c.Ldif.AclSubjectOutcomeKind, ...]] = (
-        c.Ldif.AclSubjectOutcomeKind.GRANTED,
-        c.Ldif.AclSubjectOutcomeKind.CANCELLED,
-        c.Ldif.AclSubjectOutcomeKind.DENIED_ALL,
-        c.Ldif.AclSubjectOutcomeKind.DENIED,
-        c.Ldif.AclSubjectOutcomeKind.OUT_OF_SCOPE,
-    )
-
-    def _expected_rows(self, outcomes_name: str) -> list[tuple[str, ...]]:
-        """Read the expected per-rule outcome counts.
-
-        Returns:
-            Rows of DN followed by one count per ``_KINDS`` kind.
-
-        """
-        lines = (self.GOLD_DIR / outcomes_name).read_text(encoding="utf-8")
-        return [tuple(line.split("\t")) for line in lines.splitlines()[1:]]
-
     @c.Tests.MARK.parametrize(
         ("input_name", "gold_name", "base_dn"),
         [
@@ -72,14 +50,14 @@ class TestsFlextLdifOidOudAclGold:
             ),
         ],
     )
-    def test_migrated_acl_file_and_outcomes_equal_gold(
+    def test_migrated_acl_file_equals_gold(
         self,
         tmp_path: Path,
         input_name: str,
         gold_name: str,
         base_dn: str,
     ) -> None:
-        """The written ACL file and the typed outcomes match the expected output."""
+        """The written ACL file matches the expected output byte for byte."""
         input_dir = tmp_path / "input"
         output_dir = tmp_path / "output"
         input_dir.mkdir()

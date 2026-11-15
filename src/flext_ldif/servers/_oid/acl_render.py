@@ -163,7 +163,9 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         Measured on OID 12.2.1.4: a farther filtered grant to a privilege
         group overrides a nearer denial only on the entries its filter
         matches; for add, on the parents it matches. Browse, delete and
-        attribute denials split by ``targetfilter``. An add denial stays whole
+        attribute denials split by ``targetfilter``: one denial per
+        combination of the filters, each excluding the groups of the filters
+        it matches. An add denial stays whole
         when no existing parent of its region matches (a matching parent
         created after the migration is not overridden; the event records it)
         and fails when one does: no OUD form is measured for it.
@@ -192,46 +194,55 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
             return result.ok([decision])
         if decision.resolution.right == constants.ACL_RIGHT_ADD:
             return self._override_on_add(decision, sorted(live))
-        groups = {
-            tuple(sorted((leaf.kind, leaf.key) for leaf in leaves))
-            for leaves in live.values()
-        }
-        if len(groups) > 1:
+        classes: dict[
+            tuple[tuple[str, str], ...], tuple[list[str], list[p.Ldif.AclBindLeaf]]
+        ] = {}
+        for item, leaves in live.items():
+            identity = tuple(sorted({(leaf.kind, leaf.key) for leaf in leaves}))
+            classes.setdefault(identity, ([], leaves))[0].append(item)
+        if len(classes) > constants.ACL_OVERRIDE_FILTER_CLASSES_MAX:
             return result.fail(
                 f"R5: filters {sorted(live)} grant {decision.resolution.right} to "
-                f"different privilege groups over the denial at {rule.dn}; the "
-                "overlap has no rule",
+                f"{len(classes)} different privilege group sets over the denial at "
+                f"{rule.dn}; the partition has no rule",
             )
         own = decision.form.targetfilter
-        matching = next(iter(live)) if len(live) == 1 else f"(|{''.join(sorted(live))})"
-
-        def within(extra: str) -> str:
-            return extra if own is None else f"(&{own}{extra})"
-
-        outside = decision.model_copy(
-            update={
-                "form": decision.form.model_copy(
-                    update={"targetfilter": within(f"(!{matching})")},
+        matchers = [
+            (
+                items[0] if len(items) == 1 else f"(|{''.join(sorted(items))})",
+                leaves,
+            )
+            for items, leaves in classes.values()
+        ]
+        splits: list[p.Ldif.AclDecision] = []
+        for mask in range(1 << len(matchers)):
+            terms = [
+                matcher if mask >> index & 1 else f"(!{matcher})"
+                for index, (matcher, _) in enumerate(matchers)
+            ]
+            lifted = self.widen(
+                decision,
+                [
+                    leaf
+                    for index, (_, leaves) in enumerate(matchers)
+                    if mask >> index & 1
+                    for leaf in leaves
+                ],
+            )
+            if lifted is None:
+                continue
+            every = [*([] if own is None else [own]), *terms]
+            targetfilter = every[0] if len(every) == 1 else f"(&{''.join(every)})"
+            splits.append(
+                lifted.model_copy(
+                    update={
+                        "form": lifted.form.model_copy(
+                            update={"targetfilter": targetfilter},
+                        ),
+                    },
                 ),
-            },
-        )
-        inside = self.widen(decision, next(iter(live.values())))
-        return result.ok([
-            outside,
-            *(
-                []
-                if inside is None
-                else [
-                    inside.model_copy(
-                        update={
-                            "form": inside.form.model_copy(
-                                update={"targetfilter": within(matching)},
-                            ),
-                        },
-                    ),
-                ]
-            ),
-        ])
+            )
+        return result.ok(splits)
 
     def browse_resolved(
         self,
@@ -752,6 +763,55 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
             The denial's decisions ready to place, or the failure.
 
         """
+        return r.traverse(self.override_parts(decision), self._overridden_part).map(
+            lambda groups: [item for group in groups for item in group]
+        )
+
+    def override_parts(
+        self,
+        decision: p.Ldif.AclDecision,
+    ) -> list[p.Ldif.AclDecision]:
+        """Split a denial's attributes where a farther privilege grant covers part.
+
+        Returns:
+            The denial itself, or one denial per attribute part, each inside
+            or outside every farther privilege-group grant of the right.
+
+        """
+        rule = decision.rule
+        if rule.attrs is None:
+            return [decision]
+        parts = [decision.form.attrs]
+        for higher in self.farther_rules(rule):
+            granted = self.effective_attrs(higher)
+            if granted.failure or not any(
+                self.is_privilege(leaf)
+                for leaf in self.grants(higher, decision.resolution.right)
+            ):
+                continue
+            rest = m.Ldif.AclAttrSet(
+                names=granted.value.names, negated=not granted.value.negated
+            )
+            parts = [
+                piece
+                for part in parts
+                for piece in (
+                    self.intersect(part, granted.value),
+                    self.intersect(part, rest),
+                )
+                if piece.negated or piece.names
+            ]
+        return [
+            decision.model_copy(
+                update={"form": decision.form.model_copy(update={"attrs": part})},
+            )
+            for part in parts
+        ]
+
+    def _overridden_part(
+        self,
+        decision: p.Ldif.AclDecision,
+    ) -> p.Result[list[p.Ldif.AclDecision]]:
         result = r[list[p.Ldif.AclDecision]]
         override = self.privilege_override(decision)
         if override.failure:

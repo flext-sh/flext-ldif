@@ -10,6 +10,7 @@ from functools import lru_cache
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_ldif import _utilities
+from flext_ldif._namespace import FlextLdifLazyNamespace
 from flext_ldif._utilities import FlextLdifUtilitiesCollectionLdif
 
 if TYPE_CHECKING:
@@ -101,7 +102,7 @@ class FlextLdifUtilitiesLazyTree:
 
     if TYPE_CHECKING:
         # Static view of the lazily assembled ``Ldif`` namespace: runtime
-        # assembly stays inside the metaclass (import-order safety), while
+        # assembly stays inside the descriptor (import-order safety), while
         # this nested class makes ``Ldif.*`` statically resolvable for
         # consumers fleet-wide. It reuses the real ``_utilities`` mixin
         # classes, so signatures have a single owner.
@@ -126,6 +127,9 @@ class FlextLdifUtilitiesLazyTree:
             FlextLdifUtilitiesWriter,
         ):
             """Static view of the LDIF-specific utility namespace."""
+
+    else:
+        Ldif: ClassVar[FlextLdifLazyNamespace] = FlextLdifLazyNamespace()
 
 
 __all__: list[str] = ["FlextLdifUtilitiesLazyTree"]

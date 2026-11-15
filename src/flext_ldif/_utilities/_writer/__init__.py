@@ -32,4 +32,25 @@ install_lazy_exports(
         "FlextLdifUtilitiesWriterSchema": ".schema",
     },
     public_exports=__all__,
+    deferred_members={
+        "FlextLdifUtilitiesWriterChars": ("needs_base64_encoding",),
+        "FlextLdifUtilitiesWriterFold": (
+            "Fold",
+            "_initial_chunk_end",
+            "_decode_chunk",
+            "_keyword_prefix_end",
+            "_initial_split_index",
+            "_adjust_split_for_keyword_token",
+            "_prefer_whitespace_split",
+            "fold_line",
+            "_aci_layout_fold_points",
+            "fold_aci_layout",
+        ),
+        "FlextLdifUtilitiesWriterSchema": (
+            "add_attribute_flags",
+            "add_attribute_matching_rules",
+            "add_attribute_syntax",
+            "finalize_ldif_text",
+        ),
+    },
 )

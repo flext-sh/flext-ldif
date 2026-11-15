@@ -295,6 +295,8 @@ class FlextLdifConstantsServersOid(
     "R8: LDAP URL suffix of a subtree ``userdn`` (OUD-9 §9.4.2; measured, phase D)."
     OUD_USERATTR_PARENT: ClassVar[str] = "parent[1]."
     "R4a: ``userattr`` read on the parent of the added entry (OUD-9 §9.4.4.9)."
+    ACL_OVERRIDE_FILTER_CLASSES_MAX: ClassVar[int] = 3
+    "R5: filtered privilege-override group sets one denial is partitioned by."
     OUD_ADD_SELF_ATTR: ClassVar[str] = "entryDN"
     "R4a: OID ``self`` on add is the parent's ``entryDN`` equal to the bind DN."
     OUD_TARGET_SUBTREE_EXCLUSION_PREFIX: ClassVar[str] = "*,"

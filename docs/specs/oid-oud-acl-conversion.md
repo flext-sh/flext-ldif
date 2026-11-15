@@ -70,10 +70,18 @@ the levels OID evaluates first still decide inside their region:
   it;
 - two or more sibling ACP subtrees split the denial over the anchor's current children,
   read from the injected directory;
-- a nearer grant under a filter or on part of the denied attributes leaves the whole
-  denial when no farther ACP grants its subjects the right: elsewhere they hold no OUD
-  grant and the default denies, as the OID's farther denial does. Derived from the
-  measured level precedence (OID 12.2.1.4, V3–V5); the case itself is not yet measured.
+- a nearer grant, or a farther privilege-group grant, on part of the denied attributes
+  splits the denial by attribute: each part lies inside or outside the grant, so the
+  granted attributes exclude its subjects and the others keep the denial whole (R6b
+  decides per attribute);
+- a nearer filtered grant leaves the whole denial when no farther ACP grants its
+  subjects the right: elsewhere they hold no OUD grant and the default denies, as the
+  OID's farther denial does (derived from the measured level precedence, V3–V5; the
+  case itself is not yet measured);
+- an add denial already narrowed to two or more levels below the anchor that meets a
+  nearer level becomes one `subordinate` add denial per current child of the anchor,
+  placed again inside the child that holds the nearer level (E11: a child created
+  later gets no denial).
 
 These forms were measured on OUD 14.1.2.1; any other overlap fails.
 
@@ -114,7 +122,8 @@ Implemented in `acl_render.py`.
   where its filter matches (measured on OID 12.2.1.4: the entry for browse and delete,
   the parent for add): the denial splits by `targetfilter`; the add denial stays whole
   while no existing parent matches (a later matching parent is not overridden,
-  reported as an event) and fails when one does.
+  reported as an event) and fails when one does. Filters that lift the denial for
+  different group sets partition it by filter combination (up to three sets).
 - **R6a** (grant side): a `*` grant excludes the specific subjects of the ACI that leave
   the right undecided, `allow (r) (userdn="ldap:///all" and not …)`. Such a grant beside
   a farther denial, or under a filter, has no exact placement and fails.

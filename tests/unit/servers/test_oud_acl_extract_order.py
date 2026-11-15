@@ -47,6 +47,6 @@ class TestsFlextLdifOudAclExtractOrder:
                 name
                 for line in content.splitlines()
                 for name in values
-                if line.startswith("#") and f"{name}:" in line
+                if line.startswith(f"# [SKIP_TO_04] {name}:")
             ]
             tm.that(written, eq=list(order))
