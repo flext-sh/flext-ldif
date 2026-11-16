@@ -51,9 +51,7 @@ class FlextLdifUtilitiesDNNormalize:
                 result = r[str].fail(error_msg)
             else:
                 try:
-                    result = FlextLdifUtilitiesDNNormalize._normalize_components(
-                        dn_str
-                    )
+                    result = FlextLdifUtilitiesDNNormalize._normalize_components(dn_str)
                 except c.Ldif.EXC_LDIF_PARSE as e:
                     result = r[str].fail(f"DN normalization error: {e}", exception=e)
         return result
