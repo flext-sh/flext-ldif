@@ -39,6 +39,11 @@ class TestsFlextLdifDnIdentity:
         tm.that(tm.ok(u.Ldif.norm("CN=Mixed,DC=Example")), eq="cn=Mixed,dc=Example")
 
     @staticmethod
+    def test_normalization_never_drops_an_invalid_rdn() -> None:
+        """An invalid RDN fails loud instead of silently changing the subject."""
+        tm.fail(u.Ldif.norm(".*,dc=x"))
+
+    @staticmethod
     def test_invalid_utf8_escapes_fail_at_the_parser_boundary() -> None:
         """Malformed encoded values remain failures, never invented identities."""
         tm.fail(u.Ldif.dn_key(r"cn=invalid\ff,dc=example"))
