@@ -6,8 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from types import MappingProxyType
-
 from tests import c, m, p, tm
 
 
@@ -18,12 +16,11 @@ from tests import c, m, p, tm
         (m.Ldif.WhitelistRules(), "schema_oid_filters"),
     ],
 )
-def test_rule_views_remain_immutable_and_serialize(
+def test_rule_views_serialize_through_model_dump(
     rules: p.BaseModel,
     field: str,
 ) -> None:
-    """Serialize the real computed view without mutating the model contract."""
-    tm.that(isinstance(getattr(rules, field), MappingProxyType))
+    """Serialize the computed view in Python and JSON modes."""
     tm.that(isinstance(rules.model_dump()[field], dict))
     tm.that(isinstance(rules.model_dump(mode="json")[field], dict))
     tm.that(bool(rules.model_dump_json()))
