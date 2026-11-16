@@ -70,11 +70,12 @@ class FlextLdifServersOudAclMetadata:
                 acl_metadata_extensions[dest_key] = u.normalize_to_json_value(value_raw)
 
     @staticmethod
-    def resolve_original_acl_attr(entry: p.Ldif.Entry) -> str:
-        """Get original ACL attribute name (orclaci) from transformations or metadata.
+    def resolve_original_acl_attr(entry: p.Ldif.Entry) -> str | None:
+        """Get the proven original ACL attribute name from transformations or metadata.
 
         Returns:
-            The resulting ``str``.
+            The original ACL attribute name when the entry records that provenance,
+            or ``None`` when the entry carries no such metadata.
 
         """
         if entry.metadata and entry.metadata.attribute_transformations:
@@ -95,7 +96,7 @@ class FlextLdifServersOudAclMetadata:
             )
             if "orclaci:" in acl_original_format:
                 return "orclaci"
-        return "orclaci"
+        return None
 
     @staticmethod
     def merge_acl_metadata_to_entry(

@@ -24,17 +24,25 @@ class FlextLdifServersOudCommentsAcl:
     @staticmethod
     def _add_acl_value_comments(
         comments: MutableSequence[str],
-        original_attr: str,
+        original_attr: str | None,
         attr_name: str,
         acl_values: Sequence[str],
     ) -> None:
-        """Add TRANSFORMED and SKIP_TO_04 comments for ACL values."""
+        """Add TRANSFORMED and SKIP_TO_04 comments for ACL values.
+
+        The TRANSFORMED line exists only when the entry records the original ACL
+        attribute; a plain parsed entry comments its own attribute names.
+        """
         for value in acl_values:
-            for text in (
-                f"[TRANSFORMED] {original_attr}: {value}",
-                f"[SKIP_TO_04] {attr_name}: {value}",
-            ):
-                comments.extend(f"# {line}" for line in text.splitlines())
+            if original_attr is not None:
+                comments.extend(
+                    f"# {line}"
+                    for line in f"[TRANSFORMED] {original_attr}: {value}".splitlines()
+                )
+            comments.extend(
+                f"# {line}"
+                for line in f"[SKIP_TO_04] {attr_name}: {value}".splitlines()
+            )
 
     @staticmethod
     def _collect_acl_from_extensions(
@@ -71,7 +79,7 @@ class FlextLdifServersOudCommentsAcl:
             converted = FlextLdifConstantsServersOud.ACL_ATTRIBUTE_NAME
             original = (
                 original_acl_attr
-                if acl_attr_name.lower() == converted
+                if acl_attr_name.lower() == converted and original_acl_attr is not None
                 else acl_attr_name
             )
             if original not in acl_comments_dict:
