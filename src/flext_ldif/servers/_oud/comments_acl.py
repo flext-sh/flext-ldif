@@ -79,7 +79,7 @@ class FlextLdifServersOudCommentsAcl:
             converted = FlextLdifConstantsServersOud.ACL_ATTRIBUTE_NAME
             original = (
                 original_acl_attr
-                if acl_attr_name.lower() == converted
+                if acl_attr_name.lower() == converted and original_acl_attr is not None
                 else acl_attr_name
             )
             if original not in acl_comments_dict:
