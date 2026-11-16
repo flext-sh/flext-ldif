@@ -16,7 +16,6 @@ from __future__ import annotations
 from collections.abc import MutableSequence, Sequence
 from typing import TYPE_CHECKING
 
-from flext_ldif.servers import FlextLdifServersBaseSchema
 from tests import c, m, p, tm
 
 if TYPE_CHECKING:
@@ -28,8 +27,8 @@ from tests import t
 
 
 def _assert_cross_server_identity(
-    source_schema: FlextLdifServersBaseSchema,
-    target_schema: FlextLdifServersBaseSchema,
+    source_schema: p.Ldif.SchemaServer,
+    target_schema: p.Ldif.SchemaServer,
     definition: str,
     parse_method: t.Tests.ParseMethod,
     tokens: tuple[str, ...],
