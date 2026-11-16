@@ -51,23 +51,33 @@ class FlextLdifUtilitiesDNNormalize:
                 result = r[str].fail(error_msg)
             else:
                 try:
-                    normalized: MutableSequence[str] = [
-                        f"{attr.strip().lower()}={value.strip()}"
-                        for component in FlextLdifUtilitiesDNParse.split(dn_str)
-                        if "=" in component
-                        for attr, _, value in [component.partition("=")]
-                    ]
-                    result = (
-                        r[str].ok(",".join(normalized))
-                        if normalized
-                        else r[str].fail(
-                            f"Failed to normalize DN: "
-                            f"no valid components in '{dn_str}'",
-                        )
+                    result = FlextLdifUtilitiesDNNormalize._normalize_components(
+                        dn_str
                     )
                 except c.Ldif.EXC_LDIF_PARSE as e:
                     result = r[str].fail(f"DN normalization error: {e}", exception=e)
         return result
+
+    @staticmethod
+    def _normalize_components(dn_str: str) -> p.Result[str]:
+        """Render every component, failing on the first invalid RDN.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+
+        """
+        normalized: MutableSequence[str] = []
+        for component in FlextLdifUtilitiesDNParse.split(dn_str):
+            parsed_rdn = FlextLdifUtilitiesDNRdn.parse_rdn(component)
+            if parsed_rdn.failure:
+                return r[str].fail(f"Failed to normalize DN: {parsed_rdn.error}")
+            attr, _, value = component.partition("=")
+            normalized.append(f"{attr.strip().lower()}={value.strip()}")
+        if not normalized:
+            return r[str].fail(
+                f"Failed to normalize DN: no valid components in '{dn_str}'",
+            )
+        return r[str].ok(",".join(normalized))
 
     @staticmethod
     def norm_or_fallback(
