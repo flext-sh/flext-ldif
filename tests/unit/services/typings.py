@@ -7,19 +7,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif.servers import (
-    FlextLdifServersOid,
-    FlextLdifServersOud,
-    FlextLdifServersRfc,
-)
+from tests import p
 
 
 class TestsFlextLdifTypingsService:
     """Service test typings namespace."""
 
-    type ServerClass = type[
-        FlextLdifServersRfc | FlextLdifServersOid | FlextLdifServersOud
-    ]
+    type ServerClass = type[p.Ldif.SchemaServer]
 
 
 __all__: list[str] = ["TestsFlextLdifTypingsService"]

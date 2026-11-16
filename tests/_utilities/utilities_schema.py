@@ -13,7 +13,6 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import Annotated, ClassVar, Final, cast
 
 from flext_ldif import FlextLdifModels
-from flext_ldif.servers import FlextLdifServersBaseSchema
 from tests import c, m, p, t, tm
 
 
@@ -142,7 +141,7 @@ class TestsSchemaAclAssertionsMixin:
 
     @staticmethod
     def _parse_schema_definition(
-        server: FlextLdifServersBaseSchema,
+        server: p.Ldif.SchemaServer,
         schema_def: str,
     ) -> p.Ldif.SchemaAttribute | p.Ldif.SchemaObjectClass:
         """Parse one schema definition through the kind-matching server method.
@@ -222,7 +221,7 @@ class TestsSchemaAclAssertionsMixin:
     @classmethod
     def assert_server_schema_parse_and_properties(
         cls,
-        server: FlextLdifServersBaseSchema,
+        server: p.Ldif.SchemaServer,
         schema_def: str,
         *,
         expectations: TestsFlextLdifSchemaExpectations,
@@ -250,7 +249,7 @@ class TestsSchemaAclAssertionsMixin:
     def server_parse_and_unwrap[
         SchemaNodeT: (m.Ldif.SchemaAttribute, m.Ldif.SchemaObjectClass, m.Ldif.Acl),
     ](
-        server: FlextLdifServersBaseSchema | p.Tests.ParseInputServer,
+        server: p.Ldif.SchemaServer | p.Tests.ParseInputServer,
         content: str,
         parse_method: t.Tests.ParseMethod = "parse_server",
         *,
@@ -274,7 +273,7 @@ class TestsSchemaAclAssertionsMixin:
 
         """
         method_name = PARSE_DISPATCH.get(parse_method)
-        if method_name is None or not isinstance(server, FlextLdifServersBaseSchema):
+        if method_name is None or not callable(getattr(server, method_name, None)):
             msg = f"{parse_method} is not supported by this server"
             tm.reject(msg)
         method: Callable[
