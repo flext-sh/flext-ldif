@@ -1,7 +1,7 @@
 """OUD ACI emission and rendering of the conversion rules R1-R9.
 
 Consumes the indexed OID policy (:class:`FlextLdifServersOidAclRegion`) and
-emits OUD ACI statements per the Algar conversion spec v4.1 section 4:
+emits OUD ACI statements per ``docs/specs/oid-oud-acl-conversion.md`` §4:
 
 - R1/R2/R3: attribute grants keep the origin scope (``orclaci`` subtree,
   ``orclentrylevelaci`` base) and the filter as ``targetfilter``; read and
@@ -10,7 +10,9 @@ emits OUD ACI statements per the Algar conversion spec v4.1 section 4:
   (``dnattr`` reads the parent of the new entry, ``parent[1]``), delete
   with the origin scope, browse as ``objectClass`` read and search
   (operator decision "Emulate minimum"), the added-object constraint as the
-  add ``targetfilter``. A proxy grant fails: its OID target is unmeasured.
+  add ``targetfilter``. An entry ACI's ``filter=`` on add is decided on the
+  parent (E7): the add goes ``onelevel`` on each existing parent the filter
+  matches. A proxy grant is kept pending runtime measurement (R4c).
 - R5: every denial below the root DSE becomes a ``deny`` that excludes the
   subjects its ACI grants (R6a) and the privilege groups a farther ACP
   grants by group subject, placed by region (``acl_region.py``).
@@ -55,25 +57,29 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
     def privilege_override(
         self,
         decision: p.Ldif.AclDecision,
-    ) -> p.Result[list[p.Ldif.AclBindLeaf]]:
+    ) -> p.Result[tuple[list[p.Ldif.AclBindLeaf], dict[str, list[p.Ldif.AclBindLeaf]]]]:
         """R5: the privilege groups a farther ACP grants the right by group subject.
 
         A denial at a lower ACP stays unresolved for a privilege group member
         when a higher ACP grants the right by a group subject (OID-30
         §30.1.6.5, §30.1.3.4.2). No override happens when the denying level's
-        ACP carries ``DenyGroupOverride`` (Q4). A higher grant covering only
-        part of the denied attributes or carrying a filter has no exact form.
+        ACP carries ``DenyGroupOverride`` (Q4). A filtered higher grant
+        overrides only where its filter matches (measured on OID 12.2.1.4).
+        A higher grant covering only part of the denied attributes has no
+        exact form.
 
         Returns:
-            Group leaves to exclude from the denial, or the failure.
+            Group leaves to exclude from the whole denial and, by filter, the
+            leaves to exclude where the filter matches; or the failure.
 
         """
         rule = decision.rule
-        result = r[list[p.Ldif.AclBindLeaf]]
+        result = r[tuple[list[p.Ldif.AclBindLeaf], dict[str, list[p.Ldif.AclBindLeaf]]]]
         own_acp = self.rules_at(rule.key, c.Ldif.AclConvertType.ORCLACI.value)
         if any(item.rule.deny_group_override for item in (*own_acp, rule)):
-            return result.ok([])
+            return result.ok(([], {}))
         excluded: list[p.Ldif.AclBindLeaf] = []
+        filtered: dict[str, list[p.Ldif.AclBindLeaf]] = {}
         for higher in self.farther_rules(rule):
             leaves = [
                 leaf
@@ -84,16 +90,159 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
             if not leaves or higher_attrs.failure:
                 continue
             attrs = decision.form.attrs
-            covered = rule.attrs is None or self.contains(higher_attrs.value, attrs)
-            if covered and higher.target_filter is None:
+            if rule.attrs is not None and not self.contains(higher_attrs.value, attrs):
+                if self.overlaps(higher_attrs.value, attrs):
+                    return result.fail(
+                        f"R5: privilege group(s) granted {decision.resolution.right} "
+                        f"at {higher.dn or '<root DSE>'} cover only part of the "
+                        f"attributes denied at {rule.dn}",
+                    )
+                continue
+            if higher.target_filter is None:
                 excluded.extend(leaves)
-            elif covered or self.overlaps(higher_attrs.value, attrs):
-                return result.fail(
-                    f"R5: privilege group(s) granted {decision.resolution.right} at "
-                    f"{higher.dn or '<root DSE>'} cover only part of the denial at "
-                    f"{rule.dn} (filter or attributes)",
+            else:
+                filtered.setdefault(higher.target_filter, []).extend(leaves)
+        return result.ok((excluded, filtered))
+
+    def _override_on_add(
+        self,
+        decision: p.Ldif.AclDecision,
+        filters: list[str],
+    ) -> p.Result[list[p.Ldif.AclDecision]]:
+        """R5: a filtered privilege-group grant of add is decided on the parent.
+
+        Returns:
+            The denial kept whole when no existing parent of its region
+            matches a filter, or the failure when one does.
+
+        """
+        constants = FlextLdifConstantsServersOid
+        to_oud = FlextLdifServersOidAclToOud
+        result = r[list[p.Ldif.AclDecision]]
+        rule = decision.rule
+        where = f"{rule.level} {rule.index}.{decision.resolution.clause}"
+        anchor = rule.key if decision.form.anchor is None else decision.form.anchor
+        parents = (
+            [anchor]
+            if decision.form.targetscope == constants.AclScope.ONELEVEL
+            else sorted(
+                key
+                for key in self._directory.attributes
+                if to_oud.is_ancestor_or_self(anchor, key)
+            )
+        )
+        for item in filters:
+            for key in parents:
+                matched = to_oud.filter_matches(
+                    item, self._directory.attributes.get(key, {})
                 )
-        return result.ok(excluded)
+                if matched.failure:
+                    return result.fail(f"{rule.dn}: R5: {matched.error}")
+                if matched.value:
+                    return result.fail(
+                        f"R5: privilege group(s) granted add under filter "
+                        f"{item} override the denial at {rule.dn} on the "
+                        f"parent {self.dn_of(key)}; no OUD form is measured",
+                    )
+        self._event(
+            constants.AclRule.R5,
+            rule.dn,
+            f"{where}: denial of add kept whole; privilege group(s) granted "
+            f"add under filter(s) {filters} match no existing parent; a "
+            "matching parent created after the migration is not overridden",
+        )
+        return result.ok([decision])
+
+    def _override_split(
+        self,
+        decision: p.Ldif.AclDecision,
+        filtered: dict[str, list[p.Ldif.AclBindLeaf]],
+    ) -> p.Result[list[p.Ldif.AclDecision]]:
+        """R5: a filtered privilege-group grant lifts the denial where it matches.
+
+        Measured on OID 12.2.1.4: a farther filtered grant to a privilege
+        group overrides a nearer denial only on the entries its filter
+        matches; for add, on the parents it matches. Browse, delete and
+        attribute denials split by ``targetfilter``: one denial per
+        combination of the filters, each excluding the groups of the filters
+        it matches. An add denial stays whole
+        when no existing parent of its region matches (a matching parent
+        created after the migration is not overridden; the event records it)
+        and fails when one does: no OUD form is measured for it.
+
+        Returns:
+            The denial split by filter, the denial itself, or the failure.
+
+        """
+        constants = FlextLdifConstantsServersOid
+        to_oud = FlextLdifServersOidAclToOud
+        result = r[list[p.Ldif.AclDecision]]
+        bind, rule = decision.bind, decision.rule
+        live = {
+            item: kept
+            for item, leaves in sorted(filtered.items())
+            if (
+                kept := [
+                    leaf
+                    for leaf in leaves
+                    if not to_oud.disjoint(leaf, bind.include)
+                    and not any(to_oud.covers(out, leaf) for out in bind.exclude)
+                ]
+            )
+        }
+        if not live:
+            return result.ok([decision])
+        if decision.resolution.right == constants.ACL_RIGHT_ADD:
+            return self._override_on_add(decision, sorted(live))
+        classes: dict[
+            tuple[tuple[str, str], ...], tuple[list[str], list[p.Ldif.AclBindLeaf]]
+        ] = {}
+        for item, leaves in live.items():
+            identity = tuple(sorted({(leaf.kind, leaf.key) for leaf in leaves}))
+            classes.setdefault(identity, ([], leaves))[0].append(item)
+        if len(classes) > constants.ACL_OVERRIDE_FILTER_CLASSES_MAX:
+            return result.fail(
+                f"R5: filters {sorted(live)} grant {decision.resolution.right} to "
+                f"{len(classes)} different privilege group sets over the denial at "
+                f"{rule.dn}; the partition has no rule",
+            )
+        own = decision.form.targetfilter
+        matchers = [
+            (
+                items[0] if len(items) == 1 else f"(|{''.join(sorted(items))})",
+                leaves,
+            )
+            for items, leaves in classes.values()
+        ]
+        splits: list[p.Ldif.AclDecision] = []
+        for mask in range(1 << len(matchers)):
+            terms = [
+                matcher if mask >> index & 1 else f"(!{matcher})"
+                for index, (matcher, _) in enumerate(matchers)
+            ]
+            lifted = self.widen(
+                decision,
+                [
+                    leaf
+                    for index, (_, leaves) in enumerate(matchers)
+                    if mask >> index & 1
+                    for leaf in leaves
+                ],
+            )
+            if lifted is None:
+                continue
+            every = [*([] if own is None else [own]), *terms]
+            targetfilter = every[0] if len(every) == 1 else f"(&{''.join(every)})"
+            splits.append(
+                lifted.model_copy(
+                    update={
+                        "form": lifted.form.model_copy(
+                            update={"targetfilter": targetfilter},
+                        ),
+                    },
+                ),
+            )
+        return result.ok(splits)
 
     def browse_resolved(
         self,
@@ -114,7 +263,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         (placed at that entry, or its subtree for an ACP). A grant to a subject
         covering this one needs nothing more, to a narrower one that subject,
         and to any other subject a session holding both, unless no session can
-        (measured on OUD, algar 27cd4b2d, spec v4.3).
+        (measured on OUD 14.1.2.1).
 
         Returns:
             Whether some level decides browse for the subject, and the
@@ -257,7 +406,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         """Return the OUD rights, attributes, filter, scope and rule of a decision.
 
         Returns:
-            Zero or one form (E7 emits none), or the failure.
+            The forms (one per matching parent under E7), or the failure.
 
         """
         constants = FlextLdifConstantsServersOid
@@ -287,7 +436,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
                 rule.dn,
                 f"{rule.level} {rule.index}.{resolution.clause}: proxy kept with "
                 "the source scope, evaluated on the impersonated identity's entry "
-                "(spec v4.2 §4.4, Q7 adopted reading, [RT] pending phase B); the "
+                "(conversion rules R4, pending runtime measurement); the "
                 "bind user still needs the proxied-auth privilege (E2)",
             )
         return result.ok([self.entry_form(rule, resolution, scope)])
@@ -299,32 +448,17 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
     ) -> p.Result[list[p.Ldif.AclForm]]:
         """R4a/R4d: add is decided on the new entry (OUD-9 §9.2.3.3).
 
-        An OID filter matches the parent while the OUD add ``targetfilter``
-        matches the new entry (E7): a filtered add grant emits nothing and a
-        filtered add denial fails, since dropping it would grant in OUD what
-        OID denies.
+        An OID entry ACI's filter is decided on the parent (E7, measured on
+        OID 12.2.1.4), so a filtered add becomes the forms of
+        :meth:`filtered_add_forms`.
 
         Returns:
-            The add form, none under E7, or the E7 denial failure.
+            The add forms, or the failure.
 
         """
         constants = FlextLdifConstantsServersOid
         result = r[list[p.Ldif.AclForm]]
         deny = resolution.effect == constants.AclEffect.DENY
-        if rule.target_filter is not None:
-            if deny:
-                return result.fail(
-                    f"{rule.dn}: E7: noadd under filter {rule.target_filter} "
-                    "matches the parent in OID and the new entry in OUD; the "
-                    "denial has no OUD form",
-                )
-            self._event(
-                constants.AclRule.E7,
-                rule.dn,
-                f"{rule.level} {rule.index}.{resolution.clause}: add grant under "
-                f"filter {rule.target_filter} emits nothing (stricter)",
-            )
-            return result.ok([])
         constraint = (
             None
             if deny or not resolution.added_object_constraint
@@ -332,6 +466,8 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
                 resolution.added_object_constraint,
             ).value
         )
+        if rule.target_filter is not None:
+            return self.filtered_add_forms(rule, resolution, constraint)
         return result.ok([
             m.Ldif.AclForm.model_validate({
                 "rights": (constants.ACL_RIGHT_ADD,),
@@ -344,6 +480,82 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
                 if constraint
                 else constants.AclRule.R4A,
             }),
+        ])
+
+    def filtered_add_forms(
+        self,
+        rule: p.Ldif.AclLevelRule,
+        resolution: p.Ldif.AclResolution,
+        constraint: str | None,
+    ) -> p.Result[list[p.Ldif.AclForm]]:
+        """E7: a filtered add is decided on the parent of the new entry.
+
+        OID evaluates an entry ACI's ``filter=`` on the entry the operation
+        acts on; for add that is the parent, and in an ACP every parent of
+        the subtree counts (measured on OID 12.2.1.4: a matching parent and
+        its matching descendants admit the add, a non-matching parent does
+        not). OUD's add ``targetfilter`` matches the new entry instead, so the
+        add (grant or denial) is placed ``onelevel`` on each existing parent
+        the filter matches: the ACP entry and its descendants, or the
+        ``orclentrylevelaci`` entry alone. The added-object constraint stays
+        the ``targetfilter`` of the new entry. A parent created after the
+        migration is not covered; the event records it.
+
+        Returns:
+            One form per matching parent, or the filter failure.
+
+        """
+        constants = FlextLdifConstantsServersOid
+        to_oud = FlextLdifServersOidAclToOud
+        result = r[list[p.Ldif.AclForm]]
+        deny = resolution.effect == constants.AclEffect.DENY
+        filter_text = str(rule.target_filter)
+        candidates = (
+            [rule.key]
+            if rule.level == c.Ldif.AclConvertType.ORCLENTRYLEVELACI
+            else sorted(
+                key
+                for key in self._directory.attributes
+                if to_oud.is_ancestor_or_self(rule.key, key)
+            )
+        )
+        parents: list[str] = []
+        for key in candidates:
+            if key not in self._directory.attributes:
+                return result.fail(
+                    f"{rule.dn}: E7: entry {self.dn_of(key)} is not in the "
+                    "migrated directory, so the filter cannot be evaluated",
+                )
+            matched = to_oud.filter_matches(
+                filter_text, self._directory.attributes[key]
+            )
+            if matched.failure:
+                return result.fail(f"{rule.dn}: E7: {matched.error}")
+            if matched.value:
+                parents.append(key)
+        self._event(
+            constants.AclRule.E7,
+            rule.dn,
+            f"{rule.level} {rule.index}.{resolution.clause}: "
+            f"{'denial' if deny else 'grant'} of add under filter {filter_text} "
+            f"placed onelevel on {len(parents)} existing parent(s) the filter "
+            "matches; a matching parent created after the migration is not "
+            "covered",
+        )
+        return result.ok([
+            m.Ldif.AclForm.model_validate({
+                "rights": (constants.ACL_RIGHT_ADD,),
+                "attrs": self.every_attribute(),
+                "targetfilter": constraint,
+                "targetscope": constants.AclScope.ONELEVEL.value,
+                "anchor": key,
+                "rule": constants.AclRule.R5
+                if deny
+                else constants.AclRule.R4D
+                if constraint
+                else constants.AclRule.R4A,
+            })
+            for key in parents
         ])
 
     def entry_form(
@@ -414,7 +626,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         rule: p.Ldif.AclLevelRule,
         resolution: p.Ldif.AclResolution,
     ) -> p.Result[list[p.Ldif.AciStatement]]:
-        """R1-R4 and R9 for one grant; a grant wins in its ACI (R6a).
+        """R1-R4 and R9 for one grant; a ``*`` grant leaves out (R6a) subjects.
 
         Returns:
             The grant's statements, or the failure.
@@ -447,7 +659,10 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
                 )
             if not rights:
                 continue
-            home = (rule.key, form.targetscope)
+            home = (
+                rule.key if form.anchor is None else form.anchor,
+                form.targetscope,
+            )
             placements: list[t.Ldif.AclBrowsePlacement] = (
                 self.browse_coupled(
                     resolution.leaf,
@@ -475,6 +690,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
                             "form": kept,
                             "bind": m.Ldif.AclBindRule.model_validate({
                                 "include": self.granted_leaf(subject),
+                                "exclude": resolution.excluded,
                                 "require": () if also is None else (also,),
                             }),
                         }),
@@ -518,27 +734,102 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
                 "form": form,
                 "bind": m.Ldif.AclBindRule.model_validate({
                     "include": resolution.leaf,
-                    "exclude": resolution.grantors,
+                    "exclude": resolution.excluded,
                 }),
             })
-            override = self.privilege_override(decision)
-            if override.failure:
-                return result.from_failure(override)
-            widened = self.widen(decision, override.value)
-            for split in [] if widened is None else self.filter_precedence(widened):
+            splits = self.overridden(decision)
+            if splits.failure:
+                return result.from_failure(splits)
+            for split in splits.value:
                 placed = self.place(
                     split,
-                    m.Ldif.AclRegion(anchor=rule.key, scope=form.targetscope),
+                    m.Ldif.AclRegion(
+                        anchor=rule.key if form.anchor is None else form.anchor,
+                        scope=form.targetscope,
+                    ),
                 )
                 if placed.failure:
                     return placed
                 statements.extend(placed.value)
         return result.ok(statements)
 
-    def filter_precedence(
+    def overridden(
+        self,
+        decision: p.Ldif.AclDecision,
+    ) -> p.Result[list[p.Ldif.AclDecision]]:
+        """Apply the privilege-group override, then the R6b filter precedence.
+
+        Returns:
+            The denial's decisions ready to place, or the failure.
+
+        """
+        return r.traverse(self.override_parts(decision), self._overridden_part).map(
+            lambda groups: [item for group in groups for item in group]
+        )
+
+    def override_parts(
         self,
         decision: p.Ldif.AclDecision,
     ) -> list[p.Ldif.AclDecision]:
+        """Split a denial's attributes where a farther privilege grant covers part.
+
+        Returns:
+            The denial itself, or one denial per attribute part, each inside
+            or outside every farther privilege-group grant of the right.
+
+        """
+        rule = decision.rule
+        if rule.attrs is None:
+            return [decision]
+        parts = [decision.form.attrs]
+        for higher in self.farther_rules(rule):
+            granted = self.effective_attrs(higher)
+            if granted.failure or not any(
+                self.is_privilege(leaf)
+                for leaf in self.grants(higher, decision.resolution.right)
+            ):
+                continue
+            rest = m.Ldif.AclAttrSet(
+                names=granted.value.names, negated=not granted.value.negated
+            )
+            parts = [
+                piece
+                for part in parts
+                for piece in (
+                    self.intersect(part, granted.value),
+                    self.intersect(part, rest),
+                )
+                if piece.negated or piece.names
+            ]
+        return [
+            decision.model_copy(
+                update={"form": decision.form.model_copy(update={"attrs": part})},
+            )
+            for part in parts
+        ]
+
+    def _overridden_part(
+        self,
+        decision: p.Ldif.AclDecision,
+    ) -> p.Result[list[p.Ldif.AclDecision]]:
+        result = r[list[p.Ldif.AclDecision]]
+        override = self.privilege_override(decision)
+        if override.failure:
+            return result.from_failure(override)
+        whole, filtered = override.value
+        widened = self.widen(decision, whole)
+        if widened is None:
+            return result.ok([])
+        return self._override_split(widened, filtered).flat_map(
+            lambda lifted: r.traverse(lifted, self.filter_precedence).map(
+                lambda groups: [item for group in groups for item in group],
+            ),
+        )
+
+    def filter_precedence(
+        self,
+        decision: p.Ldif.AclDecision,
+    ) -> p.Result[list[p.Ldif.AclDecision]]:
         """R6b: a filtered ACI of the level decides before the unfiltered one.
 
         Where a filter matches, the unfiltered denial excludes the subjects
@@ -546,12 +837,14 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         §30.1.6.2.1-2). More than one overlapping filter is reported as E6.
 
         Returns:
-            The denial split by filter, or the denial itself.
+            The denial split by filter, the denial itself, or the failure for a
+            filtered ``*`` grant that leaves specific subjects out (R6a).
 
         """
+        result = r[list[p.Ldif.AclDecision]]
         rule = decision.rule
         if rule.target_filter is not None:
-            return [decision]
+            return result.ok([decision])
         grants: dict[str, list[p.Ldif.AclBindLeaf]] = {}
         for other in self.rules_at(rule.key, rule.level):
             other_attrs = self.effective_attrs(other)
@@ -562,11 +855,16 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
                 or not self.overlaps(other_attrs.value, decision.form.attrs)
             ):
                 continue
+            if self.leaves_out(other, decision.resolution.right):
+                return result.fail(
+                    f"R6b: filtered grant of {decision.resolution.right} to * at "
+                    f"{rule.dn} leaves specific subjects out; no rule covers it",
+                )
             leaves = self.grants(other, decision.resolution.right)
             if leaves:
                 grants.setdefault(other.target_filter, []).extend(leaves)
         if not grants:
-            return [decision]
+            return result.ok([decision])
         if len(grants) > 1:
             self._event(
                 FlextLdifConstantsServersOid.AclRule.E6,
@@ -594,7 +892,7 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
             for item, leaves in sorted(grants.items())
             if (narrowed := self.widen(decision, leaves)) is not None
         ]
-        return [outside, *inside]
+        return result.ok([outside, *inside])
 
     @staticmethod
     def _add_leaf(leaf: p.Ldif.AclBindLeaf) -> p.Result[p.Ldif.AclBindLeaf]:
@@ -603,18 +901,27 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
         OID add on X authorizes children of X while OUD evaluates add on the
         new entry (OUD-9 §9.2.3.3). ``dnattr`` reads X's attribute, which is
         ``userattr="parent[1].<a>#USERDN"`` (OUD-9 §9.4.4.7, §9.4.4.9).
-        ``self`` (the bind DN equals X) has no OUD parent form.
+        ``self`` (the bind DN equals X) is X's ``entryDN``:
+        ``userattr="parent[1].entryDN#USERDN"`` (measured on OID 12.2.1.4 and
+        OUD 14.1.2.1: grant, denial and exclusion admit and refuse the same
+        adds).
 
         Returns:
-            The parent-bound leaf, or the failure for ``self``.
+            The parent-bound leaf.
 
         """
         constants = FlextLdifConstantsServersOid
         kinds = constants.AclLeafKind
         if leaf.kind == kinds.SELF:
-            return r[p.Ldif.AclBindLeaf].fail(
-                "R4a: OID 'self' on add names the parent entry, while OUD "
-                "ldap:///self names the entry being added; no OUD form",
+            value = f"{constants.OUD_USERATTR_PARENT}{constants.OUD_ADD_SELF_ATTR}"
+            return r[p.Ldif.AclBindLeaf].ok(
+                leaf.model_copy(
+                    update={
+                        "kind": kinds.USERATTR,
+                        "value": value,
+                        "key": value.lower(),
+                    },
+                ),
             )
         if leaf.kind != kinds.USERATTR:
             return r[p.Ldif.AclBindLeaf].ok(leaf)
@@ -712,6 +1019,9 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
             case kinds.USER_SUBTREE:
                 url = f"{prefix}{leaf.value}{constants.OUD_USERDN_SUBTREE_URL_SUFFIX}"
                 return f'({userdn}="{url}" and {userdn}!="{prefix}{leaf.value}")'
+            case kinds.USER_TREE:
+                url = f"{prefix}{leaf.value}{constants.OUD_USERDN_SUBTREE_URL_SUFFIX}"
+                return f'{userdn}="{url}"'
             case _:
                 return f'{userdn}="{prefix}{leaf.value}"'
 

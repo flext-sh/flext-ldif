@@ -16,7 +16,7 @@ from collections.abc import Mapping, Sequence
 from tests import c, m, p, tm, u
 
 SOURCE = "dc=example,dc=invalid"
-TARGET = "dc=r123,dc=algar,dc=local"
+TARGET = "dc=r123,dc=example,dc=local"
 
 
 def _entry(
@@ -47,7 +47,7 @@ class TestsFlextLdifDnRebase:
         """The root's dc attribute carries only the new RDN value."""
         entry = _entry("dc=example,dc=invalid", {"dc": ["example"]})
         result = u.Ldif.transform_entry_base_dn(entry, SOURCE, TARGET)
-        tm.that(tm.not_none(result.dn).value, eq="dc=r123,dc=algar,dc=local")
+        tm.that(tm.not_none(result.dn).value, eq="dc=r123,dc=example,dc=local")
         tm.that(tm.not_none(result.attributes).attributes.get("dc", []), eq=["r123"])
 
     @staticmethod
@@ -138,7 +138,7 @@ class TestsFlextLdifDnRebase:
         entry = _entry("dc=example,dc=invalid", {"dc": ["example"]})
         result = u.Ldif.transform_entry_base_dn(entry, SOURCE, TARGET)
         revalidated = m.Ldif.DN(value=tm.not_none(result.dn).value)
-        tm.that(tm.not_none(revalidated).value, eq="dc=r123,dc=algar,dc=local")
+        tm.that(tm.not_none(revalidated).value, eq="dc=r123,dc=example,dc=local")
 
     @staticmethod
     def test_unparseable_new_rdn_fails_loud() -> None:

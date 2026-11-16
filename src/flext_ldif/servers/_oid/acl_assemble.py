@@ -2,14 +2,14 @@
 
 Reads every OID ACL value with its origin attribute (``orclaci`` or
 ``orclentrylevelaci``) and carrier DN and builds what the OID evaluation
-model needs (OID-30 §30.1.6; Algar conversion spec v4.1 section 2):
+model needs (OID-30 §30.1.6; ``docs/specs/oid-oud-acl-conversion.md`` §2):
 
 - R8: each by-clause subject becomes one OUD bind-rule leaf, or matches no
   session (a group without a security class, ``SuperUser`` E8,
   ``guidattr`` E4); anything else without a rule fails.
 - R7: an ``AppendToAll`` clause joins every other ACI of its ACP.
-- R6a: inside one ACI a grant from any matching clause wins over a matching
-  denial (OID-30 §30.1.6.2; examples §30.3.6 and §30.3.9).
+- R6a: in one level the specific subjects that match a session decide before
+  ``*``, and among them a denial beats a grant (measured on OID 12.2.1.4).
 - R6b: ACIs of one level with an identical object string are one ACI.
 
 Emission of the OUD ACIs lives in ``acl_render.py``.
@@ -197,7 +197,7 @@ class FlextLdifServersOidAclAssemble:
 
         Rights that do not exist for the host object kind are dropped from
         the appended clause; the ``AppendToAll`` ACI itself stays as written
-        (OID-30 §30.1.4.1). Under R6a the append position decides nothing.
+        (OID-30 §30.1.4.1). Under R6a the clause position decides nothing.
 
         Returns:
             The level's rules with the appended clauses.
@@ -284,39 +284,47 @@ class FlextLdifServersOidAclAssemble:
     @staticmethod
     def resolve(
         rule: p.Ldif.AclLevelRule,
-    ) -> tuple[tuple[p.Ldif.AclResolution, ...], tuple[tuple[int, str], ...]]:
-        """R6a: a grant from any matching clause wins over a matching denial.
+    ) -> tuple[p.Ldif.AclResolution, ...]:
+        """R6a: specific subjects decide before ``*``; a denial beats a grant.
 
-        Within one ACI the effective access is the union of the granted
-        rights of every matching clause (OID-30 §30.1.6.2; examples §30.3.6,
-        §30.3.9; spec Q1 ``GRANT_WINS``). Clause order decides nothing, so a
-        clause after ``by * (none)`` stays live. A denial keeps the subjects
-        the ACI grants the right to as exclusions; a denial whose subject one
-        of them covers is dead.
+        Measured on OID 12.2.1.4: when a specific subject matches the session,
+        the level's ``*`` clauses are not consulted for any right; among the
+        clauses that apply a denial wins in any order; a right they leave
+        undecided falls to the next level. So a specific denial excludes
+        nobody, a ``*`` denial excludes the specific subjects that do not deny
+        the right, and a ``*`` grant excludes the specific subjects that leave
+        the right undecided.
 
         Returns:
-            The resolutions and the dead ``(clause, right)`` pairs.
+            The resolutions of the rule's clauses.
 
         """
         constants = FlextLdifConstantsServersOid
-        to_oud = FlextLdifServersOidAclToOud
-        grantors: dict[str, list[p.Ldif.AclBindLeaf]] = {}
-        for clause in rule.clauses:
-            if clause.leaf is not None:
-                for right in clause.allow:
-                    grantors.setdefault(right, []).append(clause.leaf)
+        anyone = {constants.AclLeafKind.ANYONE, constants.AclLeafKind.ALL}
+        specific = [
+            clause
+            for clause in rule.clauses
+            if clause.leaf is not None and clause.leaf.kind not in anyone
+        ]
         resolutions: list[p.Ldif.AclResolution] = []
-        dead: list[tuple[int, str]] = []
         for clause in rule.clauses:
             leaf = clause.leaf
             if leaf is None:
                 continue
+            star = leaf.kind in anyone
             for right in sorted(clause.allow | clause.deny):
                 denied = right not in clause.allow
-                others = [item for item in grantors.get(right, []) if item is not leaf]
-                if denied and any(to_oud.covers(item, leaf) for item in others):
-                    dead.append((clause.index, right))
-                    continue
+                excluded = (
+                    tuple(
+                        item.leaf
+                        for item in specific
+                        if item.leaf is not None
+                        and right
+                        not in (item.deny if denied else item.allow | item.deny)
+                    )
+                    if star
+                    else ()
+                )
                 resolutions.append(
                     m.Ldif.AclResolution.model_validate({
                         "clause": clause.index,
@@ -325,13 +333,13 @@ class FlextLdifServersOidAclAssemble:
                         if denied
                         else constants.AclEffect.ALLOW,
                         "leaf": leaf,
-                        "grantors": tuple(others) if denied else (),
+                        "excluded": excluded,
                         "added_object_constraint": (
                             clause.subject.added_object_constraint
                         ),
                     }),
                 )
-        return tuple(resolutions), tuple(dead)
+        return tuple(resolutions)
 
 
 __all__: list[str] = ["FlextLdifServersOidAclAssemble"]

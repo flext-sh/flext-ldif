@@ -1,4 +1,4 @@
-# provenance: flext-ldif FlextLdif().migration_pipeline oid->oud base_dn=dc=ctbc output of acl_synth_input.ldif (sha256=72871129f755f6e3f7f854b5f707e60d4a39d838dc1cbfd9f99e2ff4a0c0cb8f); flext-ws7iv semantics: union of grants minus denials per ACI (OID-30 30.1.6.2), denials rendered as OUD deny (OUD 9.1.4); regenerate on any intended conversion change
+# provenance: flext-ldif FlextLdif().migration_pipeline oid->oud base_dn=dc=ctbc output of acl_synth_input.ldif (sha256=72871129f755f6e3f7f854b5f707e60d4a39d838dc1cbfd9f99e2ff4a0c0cb8f) at the OID-measured rules of 2026-11-15 (docs/specs/oid-oud-acl-conversion.md); a regression pin, not evidence of OID equivalence
 version: 1
 
 dn: cn=admins,dc=ctbc
@@ -8,38 +8,32 @@ aci: (targetattr="*")(targetscope="subordinate")(version 3.0; acl "orclaci 1.1 R
 aci: (targetattr="*")(version 3.0; acl "orclaci 1.1 R4b"; allow (delete) groupdn="ldap:///cn=SecurityAdmins,dc=ctbc";)
 aci: (targetattr="objectclass")(version 3.0; acl "orclaci 1.1 R4e"; allow (read,search) groupdn="ldap:///cn=SecurityAdmins,dc=ctbc";)
 aci: (targetattr="objectclass")(version 3.0; acl "orclaci 1.2 R4e"; allow (read,search) userdn="ldap:///self";)
-aci: (targetattr="*")(targetscope="subordinate")(version 3.0; acl "orclaci 1.3 R5"; deny (add) (userdn="ldap:///anyone" and not groupdn="ldap:///cn=SecurityAdmins,dc=ctbc");)
-aci: (targetattr="*")(version 3.0; acl "orclaci 1.3 R5"; deny (delete) (userdn="ldap:///anyone" and not groupdn="ldap:///cn=SecurityAdmins,dc=ctbc");)
-aci: (targetattr="*")(version 3.0; acl "orclaci 1.3 R5"; deny (proxy) userdn="ldap:///anyone";)
-aci: (targetattr="*")(version 3.0; acl "orclaci 1.3 R5"; deny (read,compare) (userdn="ldap:///anyone" and not (groupdn="ldap:///cn=SecurityAdmins,dc=ctbc" or userdn="ldap:///self"));)
+aci: (targetattr="*")(targetscope="subordinate")(version 3.0; acl "orclaci 1.3 R5"; deny (add) (userdn="ldap:///anyone" and not (groupdn="ldap:///cn=SecurityAdmins,dc=ctbc" or userattr="parent[1].entryDN#USERDN"));)
+aci: (targetattr="*")(version 3.0; acl "orclaci 1.3 R5"; deny (read,compare,delete,proxy) (userdn="ldap:///anyone" and not (groupdn="ldap:///cn=SecurityAdmins,dc=ctbc" or userdn="ldap:///self"));)
 -
 
 dn: cn=groupattr-case,dc=ctbc
 changetype: modify
 replace: aci
 aci: (targetattr="member")(version 3.0; acl "orclaci 1.1 R1"; allow (search) userattr="uniquemember#GROUPDN";)
-aci: (targetattr="member")(version 3.0; acl "orclaci 1.2 R5"; deny (write,selfwrite,compare) userdn="ldap:///anyone";)
-aci: (targetattr="member")(version 3.0; acl "orclaci 1.2 R5"; deny (read,search) (userdn="ldap:///anyone" and not userattr="uniquemember#GROUPDN");)
+aci: (targetattr="member")(version 3.0; acl "orclaci 1.2 R5"; deny (read,search,write,selfwrite,compare) (userdn="ldap:///anyone" and not userattr="uniquemember#GROUPDN");)
 -
 
 dn: cn=negated-wildcard,dc=ctbc
 changetype: modify
 replace: aci
 aci: (targetattr="orclpasswordhint")(version 3.0; acl "orclaci 1.1 R1"; allow (search) groupdn="ldap:///cn=CommonUsers,dc=ctbc";)
-aci: (targetattr="orclpasswordhint")(version 3.0; acl "orclaci 1.2 R5"; deny (read,compare) (userdn="ldap:///anyone" and not groupdn="ldap:///cn=CommonUsers,dc=ctbc");)
-aci: (targetattr="orclpasswordhint")(version 3.0; acl "orclaci 1.2 R5"; deny (write) userdn="ldap:///anyone";)
+aci: (targetattr="orclpasswordhint")(version 3.0; acl "orclaci 1.2 R5"; deny (read,write,compare) (userdn="ldap:///anyone" and not groupdn="ldap:///cn=CommonUsers,dc=ctbc");)
 -
 
 dn: cn=owner-groups,dc=ctbc
 changetype: modify
 replace: aci
 aci: (targetattr="objectclass")(targetscope="base")(version 3.0; acl "orclentrylevelaci 1.1 R4e"; allow (read,search) userattr="owner#USERDN";)
-aci: (targetattr="*")(targetscope="onelevel")(version 3.0; acl "orclentrylevelaci 1.2 R5"; deny (add) userdn="ldap:///anyone";)
-aci: (targetattr="*")(targetscope="base")(version 3.0; acl "orclentrylevelaci 1.2 R5"; deny (delete,proxy) userdn="ldap:///anyone";)
-aci: (targetattr="*")(targetscope="base")(version 3.0; acl "orclentrylevelaci 1.2 R5"; deny (read,compare) (userdn="ldap:///anyone" and not userattr="owner#USERDN");)
+aci: (targetattr="*")(targetscope="onelevel")(version 3.0; acl "orclentrylevelaci 1.2 R5"; deny (add) (userdn="ldap:///anyone" and not userattr="parent[1].owner#USERDN");)
+aci: (targetattr="*")(targetscope="base")(version 3.0; acl "orclentrylevelaci 1.2 R5"; deny (read,compare,delete,proxy) (userdn="ldap:///anyone" and not userattr="owner#USERDN");)
 aci: (targetattr="uniquemember")(targetscope="base")(version 3.0; acl "orclentrylevelaci 2.1 R2"; allow (read,search,write) userattr="owner#USERDN";)
-aci: (targetattr="uniquemember")(targetscope="base")(version 3.0; acl "orclentrylevelaci 2.2 R5"; deny (selfwrite,compare) userdn="ldap:///anyone";)
-aci: (targetattr="uniquemember")(targetscope="base")(version 3.0; acl "orclentrylevelaci 2.2 R5"; deny (read,search,write) (userdn="ldap:///anyone" and not userattr="owner#USERDN");)
+aci: (targetattr="uniquemember")(targetscope="base")(version 3.0; acl "orclentrylevelaci 2.2 R5"; deny (read,search,write,selfwrite,compare) (userdn="ldap:///anyone" and not userattr="owner#USERDN");)
 -
 
 dn: cn=public-read,dc=ctbc
@@ -59,7 +53,6 @@ changetype: modify
 replace: aci
 aci: (targetattr="userpassword")(targetfilter="(objectclass=inetorgperson)")(version 3.0; acl "orclaci 1.1 R1"; allow (search,write) groupdn="ldap:///cn=SecurityAdmins,dc=ctbc";)
 aci: (targetattr="userpassword")(targetfilter="(objectclass=inetorgperson)")(version 3.0; acl "orclaci 1.2 R1"; allow (search,write,selfwrite) userdn="ldap:///self";)
-aci: (targetattr="userpassword")(targetfilter="(objectclass=inetorgperson)")(version 3.0; acl "orclaci 1.3 R5"; deny (read,search,write,compare) (userdn="ldap:///anyone" and not (groupdn="ldap:///cn=SecurityAdmins,dc=ctbc" or userdn="ldap:///self"));)
-aci: (targetattr="userpassword")(targetfilter="(objectclass=inetorgperson)")(version 3.0; acl "orclaci 1.3 R5"; deny (selfwrite) (userdn="ldap:///anyone" and not userdn="ldap:///self");)
+aci: (targetattr="userpassword")(targetfilter="(objectclass=inetorgperson)")(version 3.0; acl "orclaci 1.3 R5"; deny (read,search,write,selfwrite,compare) (userdn="ldap:///anyone" and not (groupdn="ldap:///cn=SecurityAdmins,dc=ctbc" or userdn="ldap:///self"));)
 -
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import install_lazy_exports
+from flext_core.lazy import defer_lazy_bases, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_ldif._models.acl_convert import FlextLdifModelsAclConvert
@@ -97,4 +97,149 @@ install_lazy_exports(
         "FlextLdifModelsSettings": ".settings",
     },
     public_exports=__all__,
+    deferred_members={
+        "FlextLdifModelsAclConvert": (
+            "OidAclSubject",
+            "OidAclRule",
+            "AclPermissionResolution",
+            "AclSecurityGroup",
+            "AclDirectory",
+            "AclBindLeaf",
+            "AclBindRule",
+            "AclAttrSet",
+            "AclClause",
+            "AclLevelRule",
+            "AclResolution",
+            "AclForm",
+            "AclDecision",
+            "AclRegion",
+            "AclNearerGrant",
+            "AciStatement",
+            "AclConversionEvent",
+            "AclDirectoryConversion",
+            "AclEntryConversion",
+            "AclSubjectMatcher",
+            "AclSubjectMatcherCatalog",
+            "OidAclSubjectModifiers",
+        ),
+        "FlextLdifModelsBases": ("RegistryPortOptions",),
+        "FlextLdifModelsBasesParts": (
+            "SchemaElement",
+            "AclElement",
+        ),
+        "FlextLdifModelsCollections": (
+            "DynamicCounts",
+            "SchemaContent",
+            "FlexibleCategories",
+        ),
+        "FlextLdifModelsComposite": (
+            "Stats",
+            "OidAclMetadataConfig",
+        ),
+        "FlextLdifModelsConfig": ("ConfigNamespace",),
+        "FlextLdifModelsDomainAcl": (
+            "AclPermissions",
+            "AclTarget",
+            "AclSubject",
+            "Acl",
+            "AclWriteMetadata",
+            "PermissionMappingConfig",
+        ),
+        "FlextLdifModelsDomainAttributes": (
+            "Attributes",
+            "AttributeTransformation",
+        ),
+        "FlextLdifModelsDomainDN": (
+            "DNStatistics",
+            "DN",
+            "DnRegistry",
+        ),
+        "FlextLdifModelsDomainEntry": ("Entry",),
+        "FlextLdifModelsDomainEntryChangeOperation": ("ChangeOperation",),
+        "FlextLdifModelsDomainEntryChangeOperationValue": ("ChangeOperationValue",),
+        "FlextLdifModelsDomainEntryControl": ("Control",),
+        "FlextLdifModelsDomainEntryStatistics": (
+            "EntryStatisticsLifecycle",
+            "EntryStatisticsChanges",
+            "EntryStatisticsOutcome",
+            "EntryStatistics",
+        ),
+        "FlextLdifModelsDomainMetadata": (
+            "CommentedAttributeValues",
+            "ValidationMetadata",
+            "WriteOptions",
+            "FormatDetails",
+            "SchemaFormatDetails",
+            "ServerMetadata",
+        ),
+        "FlextLdifModelsDomainSchema": (
+            "SchemaAttribute",
+            "Syntax",
+            "SchemaObjectClass",
+        ),
+        "FlextLdifModelsDomainsEntries": (),
+        "FlextLdifModelsEvents": (
+            "DnEventConfig",
+            "ConversionEventConfig",
+            "DnEvent",
+            "ConversionEvent",
+        ),
+        "FlextLdifModelsProcessing": (
+            "ProcessingPipelineOptions",
+            "ProcessingResult",
+            "ProcessEntriesOptions",
+        ),
+        "FlextLdifModelsResults": (
+            "WriteRequest",
+            "MigrationPipelineOptions",
+            "MigrationSummary",
+            "MigrationPipelineResult",
+            "ValidationResult",
+            "ServerDetectionResult",
+            "EntriesStatistics",
+            "Response",
+            "ParseResponse",
+            "AclResponse",
+            "AclEvaluationResult",
+            "WriteResponse",
+        ),
+        "FlextLdifModelsResultsStatistics": (
+            "StatisticsSummary",
+            "StatisticsEntryCounts",
+            "StatisticsSchemaAcl",
+            "StatisticsRun",
+            "Statistics",
+        ),
+        "FlextLdifModelsSettings": (),
+    },
+)
+
+defer_lazy_bases(
+    __name__,
+    {
+        "FlextLdifModelsBases": ((".", "FlextLdifModelsBasesParts"),),
+        "FlextLdifModelsDomainEntry": (
+            (".", "FlextLdifModelsDomainEntryChangeOperation"),
+        ),
+        "FlextLdifModelsDomainsEntries": (
+            (".", "FlextLdifModelsDomainEntry"),
+            (".", "FlextLdifModelsDomainMetadata"),
+            (".", "FlextLdifModelsAclConvert"),
+            (".", "FlextLdifModelsDomainAcl"),
+            (".", "FlextLdifModelsDomainAttributes"),
+            (".", "FlextLdifModelsDomainSchema"),
+            (".", "FlextLdifModelsDomainDN"),
+        ),
+        "FlextLdifModelsResults": ((".", "FlextLdifModelsResultsStatistics"),),
+        "FlextLdifModelsSettings": (
+            ("flext_ldif._models._settings", "FlextLdifModelsSettingsAcl"),
+            ("flext_ldif._models._settings", "FlextLdifModelsSettingsCriteria"),
+            ("flext_ldif._models._settings", "FlextLdifModelsSettingsMigrate"),
+            ("flext_ldif._models._settings", "FlextLdifModelsSettingsMisc"),
+            ("flext_ldif._models._settings", "FlextLdifModelsSettingsNormalization"),
+            ("flext_ldif._models._settings", "FlextLdifModelsSettingsProcessing"),
+            ("flext_ldif._models._settings", "FlextLdifModelsSettingsRules"),
+            ("flext_ldif._models._settings", "FlextLdifModelsSettingsValidation"),
+        ),
+    },
 )

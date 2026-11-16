@@ -7,16 +7,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif._utilities._lazy import (
-    FlextLdifUtilitiesLazyMeta,
-    FlextLdifUtilitiesLazyTree,
-)
+from flext_ldif._utilities._lazy import FlextLdifUtilitiesLazyTree
 
 
-class FlextLdifUtilitiesLazy(
-    FlextLdifUtilitiesLazyTree,
-    FlextLdifUtilitiesLazyMeta,
-):
+class FlextLdifUtilitiesLazy(FlextLdifUtilitiesLazyTree):
     """Facade for lazy."""
 
 

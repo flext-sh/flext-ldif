@@ -26,6 +26,7 @@ if TYPE_CHECKING:
         __version_info__,
     )
     from flext_ldif._config import FlextLdifConfig, config
+    from flext_ldif._namespace import FlextLdifLazyNamespace
     from flext_ldif._settings import FlextLdifSettings, settings
     from flext_ldif.api import FlextLdif, ldif
     from flext_ldif.base import FlextLdifServiceBase, s
@@ -42,6 +43,7 @@ __all__: tuple[str, ...] = (
     "FlextLdif",
     "FlextLdifConfig",
     "FlextLdifConstants",
+    "FlextLdifLazyNamespace",
     "FlextLdifModels",
     "FlextLdifProtocols",
     "FlextLdifServiceBase",
@@ -82,6 +84,7 @@ install_lazy_exports(
         "FlextLdif": ".api",
         "FlextLdifConfig": "._config",
         "FlextLdifConstants": ".constants",
+        "FlextLdifLazyNamespace": "._namespace",
         "FlextLdifModels": ".models",
         "FlextLdifProtocols": ".protocols",
         "FlextLdifServiceBase": ".base",

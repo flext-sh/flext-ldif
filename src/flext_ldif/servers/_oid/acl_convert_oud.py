@@ -1,7 +1,7 @@
 """OID→OUD ACL primitives — rights, subjects, attribute sets and the directory.
 
-The building blocks of the conversion rules R1-R9 (Algar conversion spec
-v4.1, ``acl-conversion-guide.md``): OID access lists resolve to granted and
+The building blocks of the conversion rules R1-R9
+(``docs/specs/oid-oud-acl-conversion.md``): OID access lists resolve to granted and
 denied OID rights (OID-30 §30.1.4.3), each OID subject becomes one OUD
 bind-rule leaf or matches no session (R8), attribute targets become OUD
 ``targetattr`` sets (R1) and the injected source directory gives the group
@@ -14,7 +14,21 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+from functools import lru_cache
+
+from ldap3.core.exceptions import LDAPInvalidFilterError
+from ldap3.operation.search import (
+    AND,
+    MATCH_EQUAL,
+    MATCH_PRESENT,
+    MATCH_SUBSTRING,
+    NOT,
+    OR,
+    ROOT,
+    FilterNode,
+    parse_filter,
+)
 
 from flext_ldif import c, m, p, r, u
 from flext_ldif.servers._oid import FlextLdifConstantsServersOid
@@ -29,10 +43,14 @@ class FlextLdifServersOidAclToOud:
         compact: str = c.Ldif.DN_NORMALIZE_COMMA_RE.sub(",", dn)
         return c.Ldif.DN_NORMALIZE_EQUALS_RE.sub("=", compact).strip()
 
-    @classmethod
-    def dn_key(cls, dn: str) -> str:
-        """Return the comparison key of a DN: separators compacted, case folded."""
-        return cls.normalize_dn(dn).lower()
+    @staticmethod
+    @lru_cache(maxsize=1 << 17)
+    def dn_key(dn: str) -> str:
+        """Return the comparison key of a DN: separators compacted, case folded.
+
+        Cached: the policy compares the same DNs for every entry it converts.
+        """
+        return FlextLdifServersOidAclToOud.normalize_dn(dn).lower()
 
     @staticmethod
     def in_scope(dn: str, base_dn: str) -> bool:
@@ -184,6 +202,119 @@ class FlextLdifServersOidAclToOud:
             )
         return r[str].ok(text)
 
+    @classmethod
+    def filter_matches(
+        cls,
+        value: str,
+        attributes: Mapping[str, tuple[str, ...]],
+    ) -> p.Result[bool]:
+        """Evaluate one RFC 4515 filter against one entry's attributes (E7).
+
+        OID decides an entry ACI's ``filter=`` on the entry the operation acts
+        on; for add that is the parent (measured on OID 12.2.1.4). Equality,
+        presence, substrings, ``&``, ``|`` and ``!`` are evaluated with
+        case-insensitive string matching, the OID default for the directory
+        string and object class syntaxes the policy filters name. Any other
+        assertion (ordering, approximate, extensible) fails: its matching rule
+        is not known here.
+
+        Returns:
+            Whether the entry matches, or the typed failure.
+
+        """
+        result = r[bool]
+        try:
+            root = parse_filter(
+                search_filter=value,
+                schema=None,
+                auto_escape=False,
+                auto_encode=False,
+                validator=None,
+                check_names=False,
+            )
+        except LDAPInvalidFilterError as error:
+            return result.fail(f"OID ACL filter {value!r} does not parse: {error}")
+
+        def evaluate(node: FilterNode) -> bool:
+            if node.tag in {ROOT, AND}:
+                return all(evaluate(item) for item in node.elements)
+            if node.tag == OR:
+                return any(evaluate(item) for item in node.elements)
+            if node.tag == NOT:
+                return not evaluate(node.elements[0])
+            return cls._assertion_matches(value, node, attributes)
+
+        try:
+            return result.ok(evaluate(root))
+        except ValueError as error:
+            return result.fail(str(error))
+
+    @classmethod
+    def _assertion_matches(
+        cls,
+        value: str,
+        node: FilterNode,
+        attributes: Mapping[str, tuple[str, ...]],
+    ) -> bool:
+        """Return whether one filter assertion holds for the entry's values.
+
+        Raises:
+            ValueError: For an assertion with no known matching rule.
+
+        """
+        assertion = node.assertion
+        held = [
+            item.casefold()
+            for item in attributes.get(str(assertion["attr"]).lower(), ())
+        ]
+        if node.tag == MATCH_PRESENT:
+            return bool(held)
+        if node.tag == MATCH_EQUAL:
+            return cls._filter_text(assertion["value"]) in held
+        if node.tag == MATCH_SUBSTRING:
+            initial = cls._filter_text(assertion.get("initial") or b"")
+            final = cls._filter_text(assertion.get("final") or b"")
+            middles = [cls._filter_text(item) for item in assertion.get("any") or ()]
+            return any(
+                cls._substring_matches(item, initial, middles, final) for item in held
+            )
+        msg = f"OID ACL filter {value!r} uses an assertion with no known matching rule"
+        raise ValueError(msg)
+
+    @staticmethod
+    def _filter_text(raw: bytes) -> str:
+        """Decode an RFC 4515 assertion value and fold its case.
+
+        Returns:
+            The unescaped, case-folded value.
+
+        """
+        parts = FlextLdifConstantsServersOid.LDAP_FILTER_ESCAPE_RE.split(raw)
+        decoded = b"".join(
+            bytes.fromhex(part.decode()) if index % 2 else part
+            for index, part in enumerate(parts)
+        )
+        return decoded.decode("utf-8", errors="strict").casefold()
+
+    @staticmethod
+    def _substring_matches(
+        held: str,
+        initial: str,
+        middles: Sequence[str],
+        final: str,
+    ) -> bool:
+        """Return whether one value matches an RFC 4515 substring assertion."""
+        if not held.startswith(initial) or len(held) < len(initial) + len(final):
+            return False
+        position = len(initial)
+        end = len(held) - len(final)
+        for middle in middles:
+            found = held.find(middle, position, end)
+            if found < 0:
+                return False
+            position = found + len(middle)
+        return held.endswith(final)
+
     @staticmethod
     def attr_set(rule: p.Ldif.OidAclRule) -> p.Ldif.AclAttrSet | None:
         """R1: return the attribute target as a case-folded attribute set.
@@ -261,6 +392,7 @@ class FlextLdifServersOidAclToOud:
         """
         constants = FlextLdifConstantsServersOid
         names: dict[str, str] = {}
+        values_by_entry: dict[str, dict[str, tuple[str, ...]]] = {}
         found: dict[str, tuple[frozenset[str], frozenset[str], bool]] = {}
         for entry in entries:
             key = cls.dn_key(entry.dn_str)
@@ -268,6 +400,10 @@ class FlextLdifServersOidAclToOud:
             attributes = {
                 name.lower(): values for name, values in entry.attributes_dict.items()
             }
+            merged = values_by_entry.setdefault(key, {})
+            for name, values in attributes.items():
+                base = name.partition(";")[0]
+                merged[base] = (*merged.get(base, ()), *values)
             classes = frozenset(
                 value.lower()
                 for value in attributes.get(c.Ldif.DictKeys.OBJECTCLASS.lower(), ())
@@ -288,6 +424,7 @@ class FlextLdifServersOidAclToOud:
                 )
         return m.Ldif.AclDirectory(
             entries=names,
+            attributes=values_by_entry,
             groups={
                 key: m.Ldif.AclSecurityGroup(
                     classes=classes,
@@ -336,23 +473,22 @@ class FlextLdifServersOidAclToOud:
     ) -> p.Result[tuple[p.Ldif.AclBindLeaf | None, str]]:
         """R8: a group grants only when it is an exact source security group.
 
+        ``group="G"`` names a literal DN, never a group search (OID-A7 §A.7.1):
+        a group absent from the source has no members in this generation, also
+        when its literal value carries ``*``, so it matches no session and the
+        non-match is recorded. A present group whose DN carries ``*`` fails.
+
         Returns:
-            The group leaf; None (matches no session) for a group without a
-            security class; or the failure for an inexact group.
+            The group leaf; None (matches no session) for an absent group or a
+            group without a security class; or the failure for an inexact group.
 
         """
         constants = FlextLdifConstantsServersOid
         result = r[tuple[p.Ldif.AclBindLeaf | None, str]]
         dn = cls.normalize_dn(value)
         key = dn.lower()
-        first_rdn, _, _rest = dn.partition(",")
-        wildcard_rdn = f"={c.Ldif.ACL_WILDCARD}"
         group = directory.groups.get(key)
         if group is None or not group.classes:
-            if c.Ldif.ACL_WILDCARD in dn and not first_rdn.endswith(wildcard_rdn):
-                return result.fail(
-                    f"R8: OID group DN with a wildcard has no OUD groupdn: {value!r}",
-                )
             return result.ok((None, constants.AclRule.R8))
         if c.Ldif.ACL_WILDCARD in dn:
             return result.fail(
@@ -369,6 +505,8 @@ class FlextLdifServersOidAclToOud:
     @classmethod
     def _user_leaf(cls, value: str) -> p.Result[tuple[p.Ldif.AclBindLeaf | None, str]]:
         """R8: a subject DN is literal; ``*,<dn>`` is the strict subtree of dn.
+
+        ``.*<dn>`` (no comma) matches the DN itself and its subtree.
 
         The OID BNF admits a DN or ``*,<dn_of_any_subtree_root>`` and nothing
         else (OID-A7 §A.7.1 note); ``.*,`` is how OID-30 text writes the
@@ -396,9 +534,25 @@ class FlextLdifServersOidAclToOud:
                 ),
                 constants.AclRule.R8,
             ))
+        if match := constants.OID_REGEX_TREE_RE.match(dn):
+            base = cls.normalize_dn(match.group("base"))
+            if constants.OID_DN_EXPRESSION_RE.search(base):
+                return result.fail(
+                    f"R8: OID DN expression {value!r} is not '.*<dn>' over a "
+                    "literal DN",
+                )
+            return result.ok((
+                m.Ldif.AclBindLeaf(
+                    kind=constants.AclLeafKind.USER_TREE,
+                    value=base,
+                    key=base.lower(),
+                ),
+                constants.AclRule.R8,
+            ))
         if constants.OID_DN_EXPRESSION_RE.search(dn):
             return result.fail(
-                f"R8: OID DN expression {value!r} is not a literal DN or the "
+                f"R8: OID DN expression {value!r} is not a literal DN, the "
+                "subtree '.*<dn>' or the "
                 "prefix wildcard '*,<dn>'; the OID grammar admits no other form "
                 "(OID-A7 §A.7.1)",
             )
@@ -421,7 +575,7 @@ class FlextLdifServersOidAclToOud:
         ``self``, ``dnattr=(a)`` is ``userattr="a#USERDN"``, a DN is literal
         and a group is checked against the directory. ``SuperUser`` (E8) and
         ``guidattr`` (E4) match no OUD session; ``groupattr=(a)`` is
-        ``userattr="a#GROUPDN"`` (spec v4.2 §4.8 R8). ``bindmode`` and
+        ``userattr="a#GROUPDN"`` (conversion rules R8). ``bindmode`` and
         ``bindipfilter`` fail unless the exact supported form is ``*`` with
         ``bindmode=Proxy``: OID's authentication threshold excludes anonymous,
         represented by the existing OUD ``all`` leaf for grants and denials.
@@ -510,11 +664,11 @@ class FlextLdifServersOidAclToOud:
             inner.key,
         ):
             return True
-        if outer.kind == kinds.USER_SUBTREE and inner.kind in {
-            kinds.USER,
-            kinds.USER_SUBTREE,
-        }:
+        trees = {kinds.USER, kinds.USER_SUBTREE, kinds.USER_TREE}
+        if outer.kind == kinds.USER_SUBTREE and inner.kind in trees:
             return inner.key.endswith(f",{outer.key}")
+        if outer.kind == kinds.USER_TREE and inner.kind in trees:
+            return inner.key == outer.key or inner.key.endswith(f",{outer.key}")
         return False
 
     @classmethod
@@ -525,7 +679,7 @@ class FlextLdifServersOidAclToOud:
         conversion time, so they overlap every subject.
         """
         kinds = FlextLdifConstantsServersOid.AclLeafKind
-        users = {kinds.USER, kinds.USER_SUBTREE}
+        users = {kinds.USER, kinds.USER_SUBTREE, kinds.USER_TREE}
         if left.kind not in users or right.kind not in users:
             return False
         return not (cls.covers(left, right) or cls.covers(right, left))

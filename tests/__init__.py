@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import install_lazy_exports
+from flext_core.lazy import defer_lazy_bases, install_lazy_exports
 
 if TYPE_CHECKING:
     from examples import (
@@ -49,6 +49,7 @@ if TYPE_CHECKING:
         FlextLdif,
         FlextLdifConfig,
         FlextLdifConstants,
+        FlextLdifLazyNamespace,
         FlextLdifModels,
         FlextLdifProtocols,
         FlextLdifServiceBase,
@@ -106,6 +107,7 @@ __all__: tuple[str, ...] = (
     "FlextLdif",
     "FlextLdifConfig",
     "FlextLdifConstants",
+    "FlextLdifLazyNamespace",
     "FlextLdifModels",
     "FlextLdifProtocols",
     "FlextLdifServiceBase",
@@ -197,6 +199,7 @@ install_lazy_exports(
         "FlextLdif": "flext_ldif",
         "FlextLdifConfig": "flext_ldif",
         "FlextLdifConstants": "flext_ldif",
+        "FlextLdifLazyNamespace": "flext_ldif",
         "FlextLdifModels": "flext_ldif",
         "FlextLdifProtocols": "flext_ldif",
         "FlextLdifServiceBase": "flext_ldif",
@@ -269,4 +272,24 @@ install_lazy_exports(
         "x": "flext_tests",
     },
     public_exports=__all__,
+    deferred_members={
+        "TestsFlextLdifConstantsLdap": (
+            "Ldap3SearchScope",
+            "Ldap3GetInfo",
+        ),
+        "TestsFlextLdifProtocolsLdap": (
+            "Ldap3Server",
+            "Ldap3Attribute",
+            "Ldap3Entry",
+            "Ldap3Connection",
+            "Ldap3EntryAdapter",
+        ),
+    },
+)
+
+defer_lazy_bases(
+    __name__,
+    {
+        "TestsFlextLdifProtocolsLdap": (("flext_ldif", "p"),),
+    },
 )

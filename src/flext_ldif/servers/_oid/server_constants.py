@@ -50,7 +50,14 @@ class FlextLdifConstantsServersOid(
     OID_PREFIX_WILDCARD_RE: ClassVar[t.RegexPattern] = re.compile(
         r"^(?:\.\*|\*)\s*,\s*(?P<base>[^*]+)$",
     )
-    "The only OID DN expression: ``*,<dn>`` (OID-A7 §A.7.1; ``.*,`` in OID-30 text)."
+    "OID strict-subtree expression ``*,<dn>`` (OID-A7 §A.7.1; ``.*,`` in OID-30)."
+    OID_REGEX_TREE_RE: ClassVar[t.RegexPattern] = re.compile(
+        r"^\.\*(?P<base>[^*,\s][^*]*)$",
+    )
+    (
+        "``.*<dn>`` without a comma: the DN itself and its subtree, as Oracle's own "
+        'seeded ACLs write it (``by dn=".*cn=Reports,cn=Products,cn=OracleContext"``).'
+    )
     OID_DN_EXPRESSION_RE: ClassVar[t.RegexPattern] = re.compile(
         r'[\[\]{}|^$?()*]|(?<!\\)\+|\\(?![,+"\\<>;=# ]|[0-9A-Fa-f]{2})',
     )
@@ -197,6 +204,7 @@ class FlextLdifConstantsServersOid(
         SELF = "self"
         USER = "user"
         USER_SUBTREE = "user_subtree"
+        USER_TREE = "user_tree"
         GROUP = "group"
         USERATTR = "userattr"
         GROUPATTR = "groupattr"
@@ -214,7 +222,6 @@ class FlextLdifConstantsServersOid(
         R4D = "R4d"
         R4E = "R4e"
         R5 = "R5"
-        R6A = "R6a"
         R6B = "R6b"
         R7 = "R7"
         R8 = "R8"
@@ -271,6 +278,10 @@ class FlextLdifConstantsServersOid(
     "R4a: entry-level add creates direct children only (OUD-9 §9.2.3.3)."
     ACL_ACP_ADD_SCOPE: ClassVar[str] = "subordinate"
     "R4a: an ACP's add creates entries anywhere below it."
+    LDAP_FILTER_ESCAPE_RE: ClassVar[re.Pattern[bytes]] = re.compile(
+        rb"\\([0-9A-Fa-f]{2})",
+    )
+    "RFC 4515 ``\\XX`` escape inside a filter assertion value (E7 evaluation)."
 
     OUD_ACI_QUOTE: ClassVar[str] = '"'
     "Delimiter of every quoted OUD ACI value; a quoted value cannot carry it."
@@ -284,6 +295,10 @@ class FlextLdifConstantsServersOid(
     "R8: LDAP URL suffix of a subtree ``userdn`` (OUD-9 §9.4.2; measured, phase D)."
     OUD_USERATTR_PARENT: ClassVar[str] = "parent[1]."
     "R4a: ``userattr`` read on the parent of the added entry (OUD-9 §9.4.4.9)."
+    ACL_OVERRIDE_FILTER_CLASSES_MAX: ClassVar[int] = 3
+    "R5: filtered privilege-override group sets one denial is partitioned by."
+    OUD_ADD_SELF_ATTR: ClassVar[str] = "entryDN"
+    "R4a: OID ``self`` on add is the parent's ``entryDN`` equal to the bind DN."
     OUD_TARGET_SUBTREE_EXCLUSION_PREFIX: ClassVar[str] = "*,"
     "R5: target prefix matching every descendant of a DN (measured, phase D)."
     OUD_TARGET_DEPTH_TWO_PREFIX: ClassVar[str] = "*,*,"

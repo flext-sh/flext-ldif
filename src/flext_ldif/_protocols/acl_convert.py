@@ -146,6 +146,15 @@ class FlextLdifProtocolsAclConvert:
             ...
 
         @property
+        def attributes(self) -> Mapping[str, Mapping[str, tuple[str, ...]]]:
+            """Structural member projected from the owning model.
+
+            DN key to the entry's attribute values by lowercase base attribute name,
+            for ACI filter evaluation (E7).
+            """
+            ...
+
+        @property
         def groups(self) -> Mapping[str, FlextLdifProtocolsAclConvert.AclSecurityGroup]:
             """Group entries keyed by DN key."""
             ...
@@ -305,8 +314,8 @@ class FlextLdifProtocolsAclConvert:
             ...
 
         @property
-        def grantors(self) -> tuple[FlextLdifProtocolsAclConvert.AclBindLeaf, ...]:
-            """Subjects the same ACI grants the right to."""
+        def excluded(self) -> tuple[FlextLdifProtocolsAclConvert.AclBindLeaf, ...]:
+            """Specific subjects a ``*`` decision leaves out."""
             ...
 
         @property
@@ -336,6 +345,15 @@ class FlextLdifProtocolsAclConvert:
         @property
         def targetscope(self) -> str | None:
             """OUD targetscope; None is the subtree default."""
+            ...
+
+        @property
+        def anchor(self) -> str | None:
+            """Structural member projected from the owning model.
+
+            DN key of the entry the form is placed at; None is the source ACI's own
+            entry.
+            """
             ...
 
         @property

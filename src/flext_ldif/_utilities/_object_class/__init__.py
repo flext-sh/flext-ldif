@@ -22,4 +22,12 @@ install_lazy_exports(
     globals(),
     {"FlextLdifUtilitiesObjectClassFix": ".fix"},
     public_exports=__all__,
+    deferred_members={
+        "FlextLdifUtilitiesObjectClassFix": (
+            "AUXILIARY",
+            "STRUCTURAL",
+            "fix_kind_mismatch",
+            "fix_missing_sup",
+        ),
+    },
 )

@@ -3,7 +3,7 @@
 Indexes the typed OID policy by evaluation level (OID-30 §30.1.6: the
 entry's ``orclEntryLevelACI``, then each ACP up to the root DSE) and places
 each OUD ``deny`` so that the levels OID evaluates first still decide inside
-their region (Algar conversion spec v4.1, R5 "Região"):
+their region (``docs/specs/oid-oud-acl-conversion.md``, R5 region):
 
 - a nearer grant whose subject no farther ACP grants is excluded from the
   whole denial (global exclusion);
@@ -47,7 +47,6 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):  # ruff: ignore
         directory: p.Ldif.AclDirectory,
     ) -> None:
         """Index the policy by level and resolve every ACI once (R6a)."""
-        constants = FlextLdifConstantsServersOid
         self._suffix = suffix
         self._directory = directory
         self._levels: dict[tuple[str, str], tuple[p.Ldif.AclLevelRule, ...]] = {}
@@ -61,18 +60,8 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):  # ruff: ignore
             index = (rule.key, rule.level)
             self._levels[index] = (*self._levels.get(index, ()), rule)
             self._dns.setdefault(rule.key, rule.dn)
-            resolutions, dead = FlextLdifServersOidAclAssemble.resolve(rule)
-            self._resolutions[rule.key, rule.level, rule.index] = resolutions
-            self.events.extend(
-                m.Ldif.AclConversionEvent(
-                    rule=constants.AclRule.R6A,
-                    dn=rule.dn,
-                    detail=(
-                        f"{rule.level} {rule.index}.{clause}: denial of {right} "
-                        "is covered by a grant of the same ACI"
-                    ),
-                )
-                for clause, right in dead
+            self._resolutions[rule.key, rule.level, rule.index] = (
+                FlextLdifServersOidAclAssemble.resolve(rule)
             )
         self._keys = sorted(
             {rule.key for rule in rules},
@@ -131,6 +120,18 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):  # ruff: ignore
             for item in self.resolutions(rule)
             if item.right == right and item.effect == allow
         ]
+
+    def leaves_out(self, rule: p.Ldif.AclLevelRule, right: str) -> bool:
+        """Return whether a ``*`` grant of the rule leaves specific subjects out.
+
+        Those subjects fall to the next level for the right (R6a), which no
+        single grant leaf states.
+        """
+        allow = FlextLdifConstantsServersOid.AclEffect.ALLOW
+        return any(
+            item.right == right and item.effect == allow and item.excluded
+            for item in self.resolutions(rule)
+        )
 
     def effective_attrs(self, rule: p.Ldif.AclLevelRule) -> p.Result[p.Ldif.AclAttrSet]:
         """R6b: ``attr=(*)`` loses the attributes another ACI of the level names.
@@ -355,6 +356,58 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):  # ruff: ignore
                 )
         return result.ok(found)
 
+    def attribute_parts(
+        self,
+        decision: p.Ldif.AclDecision,
+        region: p.Ldif.AclRegion,
+    ) -> list[p.Ldif.AclDecision]:
+        """Split a denial's attributes where a nearer grant covers only part.
+
+        Each part is then either inside or outside every nearer grant of the
+        right, so the nearer level decides its own attributes and the denial
+        stays whole on the others (R6b decides per attribute).
+
+        Returns:
+            The denial itself, or one denial per attribute part.
+
+        """
+        to_oud = FlextLdifServersOidAclToOud
+        rule, bind = decision.rule, decision.bind
+        if rule.attrs is None or rule.level == c.Ldif.AclConvertType.ORCLENTRYLEVELACI:
+            return [decision]
+        parts = [decision.form.attrs]
+        for key, level in self.nearer_levels(decision, region):
+            for nearer in self.rules_at(key, level):
+                granted = self.effective_attrs(nearer)
+                if (
+                    nearer.attrs is None
+                    or granted.failure
+                    or not any(
+                        not to_oud.disjoint(leaf, bind.include)
+                        and not any(to_oud.covers(out, leaf) for out in bind.exclude)
+                        for leaf in self.grants(nearer, decision.resolution.right)
+                    )
+                ):
+                    continue
+                rest = m.Ldif.AclAttrSet(
+                    names=granted.value.names, negated=not granted.value.negated
+                )
+                parts = [
+                    piece
+                    for part in parts
+                    for piece in (
+                        self.intersect(part, granted.value),
+                        self.intersect(part, rest),
+                    )
+                    if piece.negated or piece.names
+                ]
+        return [
+            decision.model_copy(
+                update={"form": decision.form.model_copy(update={"attrs": part})},
+            )
+            for part in parts
+        ]
+
     def nearer_levels(
         self,
         decision: p.Ldif.AclDecision,
@@ -387,6 +440,12 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):  # ruff: ignore
     ) -> p.Result[list[p.Ldif.AclBindLeaf]]:
         """Return the grant leaves of one nearer rule the denial would override.
 
+        A filtered grant grants only where its filter matches, so its subjects
+        leave the whole denial when no farther ACP grants them the right
+        (``safe_globally``): elsewhere they hold no OUD grant, and the OID
+        decides by the denial or the default. Otherwise it fails. A grant on
+        part of the denied attributes is split off before (``attribute_parts``).
+
         Returns:
             The leaves, or the failure for a filtered or partial grant.
 
@@ -415,10 +474,19 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):  # ruff: ignore
                 f"R5: {nearer.dn} grants {decision.resolution.right} on part of "
                 f"the attributes {rule.dn} denies; the attribute split has no rule",
             )
-        if nearer.target_filter is not None:
+        if nearer.target_filter is not None and not all(
+            self.safe_globally(decision, leaf) for leaf in leaves
+        ):
             return result.fail(
                 f"R5: filtered grant of {decision.resolution.right} at "
-                f"{nearer.dn} inside the denial of {rule.dn}; no rule covers it",
+                f"{nearer.dn} inside the denial of {rule.dn}, and a farther ACP "
+                "grants the right to its subjects; no rule covers it",
+            )
+        if self.leaves_out(nearer, decision.resolution.right):
+            return result.fail(
+                f"R5: grant of {decision.resolution.right} to * at {nearer.dn} "
+                f"leaves specific subjects to the denial of {rule.dn}; no rule "
+                "covers it",
             )
         return result.ok(leaves)
 
@@ -462,6 +530,22 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):  # ruff: ignore
             The placed statements, or the region failure naming the levels.
 
         """
+        return r.traverse(
+            self.attribute_parts(decision, region),
+            lambda part: self.place_part(part, region),
+        ).map(lambda placed: [item for group in placed for item in group])
+
+    def place_part(
+        self,
+        decision: p.Ldif.AclDecision,
+        region: p.Ldif.AclRegion,
+    ) -> p.Result[list[p.Ldif.AciStatement]]:
+        """Place a denial whose attributes no nearer grant covers in part.
+
+        Returns:
+            The placed statements, or the region failure naming the levels.
+
+        """
         result = r[list[p.Ldif.AciStatement]]
         conflicts = self.nearer_grants(decision, region)
         if conflicts.failure:
@@ -483,7 +567,19 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):  # ruff: ignore
             return result.from_failure(remaining)
         if not remaining.value:
             return result.ok([self.statement(widened, region)])
-        return self.split_region(widened, region, remaining.value)
+        constants = FlextLdifConstantsServersOid
+        deep_add = (
+            widened.resolution.right == constants.ACL_RIGHT_ADD
+            and not region.target
+            and region.scope == constants.AclScope.DEPTH_TWO
+        )
+        return (
+            self.split_by_child(
+                widened, region, sorted({grant.key for grant in remaining.value})
+            )
+            if deep_add
+            else self.split_region(widened, region, remaining.value)
+        )
 
     def split_region(
         self,
@@ -567,8 +663,12 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):  # ruff: ignore
     ) -> p.Result[list[p.Ldif.AciStatement]]:
         """E11 (operator decision "Split by child"): one denial per current child.
 
-        Two or more sibling ACP subtrees have no single OUD exclusion form.
-        The denial lands on the anchor itself (``base``) and on each current
+        Two or more sibling ACP subtrees have no single OUD exclusion form,
+        and neither has a nearer level inside an add denial already narrowed
+        to two or more levels below the anchor: an add that deep lands under
+        a current child, so that denial becomes one ``subordinate`` add denial
+        per child. Otherwise
+        the denial lands on the anchor itself (``base``) and on each current
         child of the anchor read from the injected directory; a child on a
         path to a nearer level is placed again, so the split descends only
         along those paths. Identical to OID for the directory as converted;
@@ -606,10 +706,15 @@ class FlextLdifServersOidAclRegion(FlextLdifServersOidAclScope):  # ruff: ignore
                     region.model_copy(update={"scope": constants.AclScope.BASE}),
                 ),
             )
+        child_scope = (
+            constants.AclScope.SUBORDINATE
+            if region.scope == constants.AclScope.DEPTH_TWO
+            else None
+        )
         placed: list[str] = []
         for child in children:
             on_path = any(to_oud.is_ancestor_or_self(child, key) for key in keys)
-            child_region = m.Ldif.AclRegion(anchor=child)
+            child_region = m.Ldif.AclRegion(anchor=child, scope=child_scope)
             if not on_path:
                 statements.append(self.statement(split, child_region))
                 placed.append(child)
