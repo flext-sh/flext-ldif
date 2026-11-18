@@ -22,12 +22,5 @@ install_lazy_exports(
     globals(),
     {"FlextLdifUtilitiesLazyTree": ".tree"},
     public_exports=__all__,
-    deferred_members={
-        "FlextLdifUtilitiesLazyTree": (
-            "_LAZY_UTILITIES",
-            "build_ldif_tree",
-            "lazy_utilities_table",
-            "Ldif",
-        ),
-    },
+    deferred_members=("FlextLdifUtilitiesLazyTree",),
 )

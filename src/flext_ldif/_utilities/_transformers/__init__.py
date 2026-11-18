@@ -31,14 +31,8 @@ install_lazy_exports(
         "FlextLdifUtilitiesTransformersDn": ".dn",
     },
     public_exports=__all__,
-    deferred_members={
-        "FlextLdifUtilitiesTransformersAttrs": (
-            "entry_with_attributes",
-            "normalize_entry_attrs",
-        ),
-        "FlextLdifUtilitiesTransformersDn": (
-            "validate_dn_components",
-            "normalize_entry_dn",
-        ),
-    },
+    deferred_members=(
+        "FlextLdifUtilitiesTransformersAttrs",
+        "FlextLdifUtilitiesTransformersDn",
+    ),
 )
