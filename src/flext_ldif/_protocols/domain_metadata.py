@@ -29,10 +29,7 @@ class FlextLdifProtocolsDomainMetadata:
     class CommentedAttributeValues(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def root(self) -> t.StrSequenceMapping:
-            """Structural member projected from the owning model."""
-            ...
+        root: t.StrSequenceMapping
 
     @runtime_checkable
     class ValidationMetadata(FlextCliProtocols.BaseModel, Protocol):

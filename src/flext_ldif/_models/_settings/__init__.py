@@ -53,38 +53,14 @@ install_lazy_exports(
         "FlextLdifModelsSettingsValidation": ".validation",
     },
     public_exports=__all__,
-    deferred_members={
-        "FlextLdifModelsSettingsAcl": (
-            "AciLineFormatConfig",
-            "AciParserConfig",
-            "AclMetadataConfig",
-        ),
-        "FlextLdifModelsSettingsCriteria": (
-            "ServerPatternsConfig",
-            "EntryDetectionMarkers",
-            "EntryCriteriaConfig",
-            "EntryParseMetadataConfig",
-        ),
-        "FlextLdifModelsSettingsMigrate": (
-            "WriteFormatLayout",
-            "WriteFormatAnnotations",
-            "WriteFormatAclOrdering",
-            "WriteFormatOptions",
-            "MigrateOptions",
-        ),
-        "FlextLdifModelsSettingsMisc": ("LogContextExtras",),
-        "FlextLdifModelsSettingsNormalization": (
-            "DnNormalizationConfig",
-            "AttrNormalizationConfig",
-        ),
-        "FlextLdifModelsSettingsProcessing": (
-            "ProcessConfig",
-            "TransformConfig",
-        ),
-        "FlextLdifModelsSettingsRules": (
-            "CategoryRules",
-            "WhitelistRules",
-        ),
-        "FlextLdifModelsSettingsValidation": ("ServerValidationRules",),
-    },
+    deferred_members=(
+        "FlextLdifModelsSettingsAcl",
+        "FlextLdifModelsSettingsCriteria",
+        "FlextLdifModelsSettingsMigrate",
+        "FlextLdifModelsSettingsMisc",
+        "FlextLdifModelsSettingsNormalization",
+        "FlextLdifModelsSettingsProcessing",
+        "FlextLdifModelsSettingsRules",
+        "FlextLdifModelsSettingsValidation",
+    ),
 )

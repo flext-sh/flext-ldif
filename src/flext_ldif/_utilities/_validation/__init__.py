@@ -31,8 +31,8 @@ install_lazy_exports(
         "FlextLdifUtilitiesValidationRfc": ".rfc",
     },
     public_exports=__all__,
-    deferred_members={
-        "FlextLdifUtilitiesValidationLdifValue": ("validate_ldif_value",),
-        "FlextLdifUtilitiesValidationRfc": ("Rfc",),
-    },
+    deferred_members=(
+        "FlextLdifUtilitiesValidationLdifValue",
+        "FlextLdifUtilitiesValidationRfc",
+    ),
 )

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import defer_lazy_bases, install_lazy_exports
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from examples import (
@@ -58,14 +58,6 @@ if TYPE_CHECKING:
         FlextLdifTypes,
         FlextLdifUtilities,
         FlextLdifVersion,
-        __author__,
-        __author_email__,
-        __description__,
-        __license__,
-        __title__,
-        __url__,
-        __version__,
-        __version_info__,
         config,
         ldif,
         main,
@@ -130,14 +122,6 @@ __all__: tuple[str, ...] = (
     "TestsFlextLdifTypingsUnit",
     "TestsFlextLdifUtilities",
     "TestsSchemaAclAssertionsMixin",
-    "__author__",
-    "__author_email__",
-    "__description__",
-    "__license__",
-    "__title__",
-    "__url__",
-    "__version__",
-    "__version_info__",
     "access_all_utilities",
     "api",
     "assert_field_eq",
@@ -222,14 +206,6 @@ install_lazy_exports(
         "TestsFlextLdifTypingsUnit": ".unit",
         "TestsFlextLdifUtilities": ".utilities",
         "TestsSchemaAclAssertionsMixin": "._utilities",
-        "__author__": "flext_ldif",
-        "__author_email__": "flext_ldif",
-        "__description__": "flext_ldif",
-        "__license__": "flext_ldif",
-        "__title__": "flext_ldif",
-        "__url__": "flext_ldif",
-        "__version__": "flext_ldif",
-        "__version_info__": "flext_ldif",
         "access_all_utilities": "examples",
         "api": "flext_tests",
         "assert_field_eq": "._utilities",
@@ -272,24 +248,8 @@ install_lazy_exports(
         "x": "flext_tests",
     },
     public_exports=__all__,
-    deferred_members={
-        "TestsFlextLdifConstantsLdap": (
-            "Ldap3SearchScope",
-            "Ldap3GetInfo",
-        ),
-        "TestsFlextLdifProtocolsLdap": (
-            "Ldap3Server",
-            "Ldap3Attribute",
-            "Ldap3Entry",
-            "Ldap3Connection",
-            "Ldap3EntryAdapter",
-        ),
-    },
-)
-
-defer_lazy_bases(
-    __name__,
-    {
-        "TestsFlextLdifProtocolsLdap": (("flext_ldif", "p"),),
-    },
+    deferred_members=(
+        "TestsFlextLdifConstantsLdap",
+        "TestsFlextLdifProtocolsLdap",
+    ),
 )

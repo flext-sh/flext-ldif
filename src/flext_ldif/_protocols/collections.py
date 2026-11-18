@@ -36,10 +36,7 @@ class FlextLdifProtocolsCollections:
     class DynamicCounts(FlextCliProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def root(self) -> t.IntMapping:
-            """Structural member projected from the owning model."""
-            ...
+        root: t.IntMapping
 
         def __getitem__(self, key: str) -> int:
             """Structural member projected from the owning model."""
