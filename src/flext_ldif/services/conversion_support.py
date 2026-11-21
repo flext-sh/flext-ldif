@@ -10,7 +10,7 @@ from collections.abc import Callable
 from typing import Annotated
 
 from flext_ldif import c, m, p, r, t
-from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif.servers import FlextLdifServersBase
 from flext_ldif.services import FlextLdifServer
 
 
