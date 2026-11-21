@@ -10,7 +10,7 @@ from __future__ import annotations
 from flext_cli import m
 
 from flext_ldif import p, t
-from flext_ldif._models.elements import FlextLdifModelsBasesParts
+from flext_ldif._models import FlextLdifModelsBasesParts
 
 
 class FlextLdifModelsBases(FlextLdifModelsBasesParts):

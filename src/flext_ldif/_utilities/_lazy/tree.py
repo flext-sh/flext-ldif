@@ -10,10 +10,10 @@ from functools import lru_cache
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_ldif import _utilities
-from flext_ldif._namespace import FlextLdifLazyNamespace
 from flext_ldif._utilities import FlextLdifUtilitiesCollectionLdif
 
 if TYPE_CHECKING:
+    from flext_ldif import FlextLdifLazyNamespace
     from flext_ldif._utilities import (
         FlextLdifUtilitiesACL,
         FlextLdifUtilitiesAttribute,
