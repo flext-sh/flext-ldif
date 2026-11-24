@@ -106,36 +106,13 @@ $(error Resolution and member propagation are forbidden in CI)
 endif
 endif
 
-# One GitHub credential from declared sources, each selected once before any
-# effect (config make.github_credential_command): the caller's exported token,
-# else, outside CI, the declared command when its executable is installed, else
-# anonymous. A selected command that fails or prints nothing stops the network
-# verbs (_builtin_require_github_credential), never degrading to anonymous.
-# The value stays in the environment and is never printed. The command is a
-# Mise-managed executable, refused in a checkout whose .mise.toml is not trusted
-# yet, so a bare `make setup` resolves it only after trusting the checkout.
-GITHUB_TOKEN := $(firstword $(GITHUB_TOKEN) $(GH_TOKEN) $(MISE_GITHUB_TOKEN))
-GITHUB_CREDENTIAL_SOURCE := $(if $(GITHUB_TOKEN),environment,anonymous)
-ifeq ($(GITHUB_TOKEN),)
-ifneq ($(strip $(CI)),Y)
-ifneq ($(MAKECMDGOALS),setup)
-GITHUB_CREDENTIAL_EXECUTABLE := $(shell command -v gh)
-ifneq ($(GITHUB_CREDENTIAL_EXECUTABLE),)
-GITHUB_CREDENTIAL_SOURCE := command
-GITHUB_TOKEN := $(shell "$(GITHUB_CREDENTIAL_EXECUTABLE)" auth token)
-GITHUB_CREDENTIAL_STATUS := $(.SHELLSTATUS)
-endif
-endif
-endif
-endif
-ifneq ($(GITHUB_TOKEN),)
-GH_TOKEN := $(GITHUB_TOKEN)
-MISE_GITHUB_TOKEN := $(GITHUB_TOKEN)
-export GITHUB_TOKEN GH_TOKEN MISE_GITHUB_TOKEN
+# The acquisition Mise is the official installer's default executable, shared by
+# every checkout; the committed min_version makes Mise refuse an older one.
+ifeq ($(OS),Windows_NT)
+override BOOTSTRAP_MISE := $(HOME)/.local/bin/mise.exe
 else
-unexport GITHUB_TOKEN GH_TOKEN MISE_GITHUB_TOKEN
+override BOOTSTRAP_MISE := $(HOME)/.local/bin/mise
 endif
-unexport GITHUB_API_TOKEN
 
 # Git 2.38+ refuses the local file protocol uv uses to materialize its cached
 # git checkouts (`git clone --no-hardlinks <uv cache db> <checkout>`). Admit it
@@ -282,7 +259,14 @@ endif
 # When attached to a workspace (BOOTSTRAP_ROOT != PROJECT_ROOT), all verbs use
 # the workspace root so they share the workspace's .venv. Standalone checkouts
 # use the native uv workspace reader for non-setup/upg/help verbs.
-ifneq ($(strip $(VERB_CONTRACT) $(filter setup _setup_provision upg,$(MAKECMDGOALS))),)
+override BOOTSTRAP_VERBS := setup _setup_provision upg
+
+ifeq ($(PROJECT_ROOT),$(GIT_DISCOVERY_ROOT))
+# A member at its own Git root has no containing UV workspace to query.
+override BOOTSTRAP_VERBS += lock
+endif
+
+ifneq ($(strip $(VERB_CONTRACT) $(filter $(BOOTSTRAP_VERBS),$(MAKECMDGOALS))),)
 override REPOSITORY_ROOT := $(BOOTSTRAP_ROOT)
 else ifeq ($(strip $(filter-out help _builtin-help _setup_native_prepare pre-upg post-upg,$(MAKECMDGOALS))),)
 override REPOSITORY_ROOT := $(BOOTSTRAP_ROOT)
@@ -328,13 +312,6 @@ ifneq ($(.SHELLSTATUS),0)
 $(error Cannot resolve the physical workspace for $(MAKEFILE_ROOT))
 endif
 endif
-# The acquisition Mise is the official installer's default executable, shared by
-# every checkout; the committed min_version makes Mise refuse an older one.
-ifeq ($(OS),Windows_NT)
-override BOOTSTRAP_MISE := $(HOME)/.local/bin/mise.exe
-else
-override BOOTSTRAP_MISE := $(HOME)/.local/bin/mise
-endif
 # End SECTION: REPOSITORY_ROOT isolation
 # === SECTION: verb dispatch (managed) ===
 # Source: config:make.verbs and the canonical gate vocabulary. A verb exists
@@ -353,7 +330,7 @@ ifneq ($(.SHELLSTATUS),0)
 $(error Failed to inspect custom Make targets in $(CUSTOM_MAKEFILE))
 endif
 ifeq ($(APPROVAL_CONTEXT),Y)
-ifneq ($(filter setup check,$(CUSTOM_DECLARED_TARGETS)),)
+ifneq ($(filter setup check tests,$(CUSTOM_DECLARED_TARGETS)),)
 $(error Approval stages cannot be replaced by custom targets)
 endif
 
@@ -374,6 +351,16 @@ $(error Failed to inspect custom approval reference in $(CUSTOM_MAKEFILE))
 endif
 ifeq ($(CUSTOM_WRAPPER_REFERENCE_COUNT),0)
 $(error Approval stage _custom-check must chain _builtin-check (wrapper parity; replacements are forbidden))
+endif
+endif
+
+ifneq ($(filter _custom-tests,$(CUSTOM_DECLARED_TARGETS)),)
+override CUSTOM_WRAPPER_REFERENCE_COUNT := $(shell awk -v reference="_builtin-tests" 'index($$0, reference) { count++ } END { print count + 0 }' "$(CUSTOM_MAKEFILE)")
+ifneq ($(.SHELLSTATUS),0)
+$(error Failed to inspect custom approval reference in $(CUSTOM_MAKEFILE))
+endif
+ifeq ($(CUSTOM_WRAPPER_REFERENCE_COUNT),0)
+$(error Approval stage _custom-tests must chain _builtin-tests (wrapper parity; replacements are forbidden))
 endif
 endif
 
@@ -406,6 +393,46 @@ CALLER_VIRTUAL_ENV := $(patsubst %/,%,$(VIRTUAL_ENV))
 ifneq ($(origin RUNTIME_ROOT),command line)
 override RUNTIME_ROOT := $(REPOSITORY_ROOT)
 endif
+
+override MEMBER_PROVISIONING_VERB := $(firstword $(filter setup upg lock,$(MAKECMDGOALS)))
+ifeq ($(VERB_CONTRACT),)
+ifeq ($(PROJECT_ROOT),$(RUNTIME_ROOT))
+ifneq ($(MEMBER_PROVISIONING_VERB),)
+$(error ERROR[$(MEMBER_PROVISIONING_VERB)]: flext-ldif is a workspace member; its own runtime has no flext-infra supplier: $(PROJECT_ROOT). Run make $(MEMBER_PROVISIONING_VERB) from a workspace-shaped lane that attaches flext-ldif as a member.)
+endif
+endif
+endif
+
+
+# Resolve the approved invocation's GitHub credential before network effects.
+# Outside CI, an absent caller token selects the configured command when
+# installed. A failing command is surfaced by _builtin_require_github_credential.
+# Bare setup trusts the checkout before its provisioning rerun selects a token.
+# Use the acquisition Mise in host scope to avoid runtime-scoped config and shims.
+override HOST_MISE_SCOPE := env -u MISE_CONFIG_DIR -u MISE_OVERRIDE_CONFIG_FILENAMES -u MISE_GLOBAL_CONFIG_FILE -u MISE_SYSTEM_CONFIG_DIR -u MISE_CEILING_PATHS -u MISE_AUTO_INSTALL
+GITHUB_TOKEN := $(firstword $(GITHUB_TOKEN) $(GH_TOKEN) $(MISE_GITHUB_TOKEN))
+GITHUB_CREDENTIAL_SOURCE := $(if $(GITHUB_TOKEN),environment,anonymous)
+ifeq ($(GITHUB_TOKEN),)
+ifneq ($(strip $(CI)),Y)
+ifneq ($(MAKECMDGOALS),setup)
+GITHUB_CREDENTIAL_EXECUTABLE := $(shell command -v gh)
+ifneq ($(GITHUB_CREDENTIAL_EXECUTABLE),)
+GITHUB_CREDENTIAL_SOURCE := command
+GITHUB_TOKEN := $(shell $(HOST_MISE_SCOPE) "$(BOOTSTRAP_MISE)" exec -- gh auth token)
+GITHUB_CREDENTIAL_STATUS := $(.SHELLSTATUS)
+endif
+endif
+endif
+endif
+ifneq ($(GITHUB_TOKEN),)
+GH_TOKEN := $(GITHUB_TOKEN)
+MISE_GITHUB_TOKEN := $(GITHUB_TOKEN)
+export GITHUB_TOKEN GH_TOKEN MISE_GITHUB_TOKEN
+else
+unexport GITHUB_TOKEN GH_TOKEN MISE_GITHUB_TOKEN
+endif
+unexport GITHUB_API_TOKEN
+
 # Git and Mise discovery share the runtime boundary: an attached member's
 # verbs read workspace paths through the workspace runtime.
 override export GIT_CEILING_DIRECTORIES := $(shell cd "$(RUNTIME_ROOT)/.." && pwd -P)
@@ -417,6 +444,10 @@ override export MISE_CEILING_PATHS := $(GIT_CEILING_DIRECTORIES)
 # override (mise.local.toml and siblings) never selects a tool outside the lock.
 override export MISE_OVERRIDE_CONFIG_FILENAMES := .mise.toml
 override export MISE_CONFIG_DIR := $(RUNTIME_ROOT)/.mise
+# Every Mise run here reshims the checkout's own farm: a reshim binds shims to
+# the first non-shim `mise` on PATH (this checkout's pinned release), which must
+# never rebind the shared host farm other checkouts resolve through.
+override export MISE_SHIMS_DIR := $(PROJECT_ROOT)/.bin/shims
 # The project manifest remains in native project scope. An optional global
 # configuration has its own explicit runtime-scoped path; when absent, Mise
 # reads no global file. Reusing .mise.toml here classifies every project tool
@@ -545,8 +576,8 @@ _bootstrap_setup_tools:
 	bootstrap_stage=acquisition; \
 	mise_acquired=; \
 	if [ -x "$(BOOTSTRAP_MISE)" ]; then mise_acquired="$$("$(BOOTSTRAP_MISE)" --version)"; mise_acquired="$${mise_acquired%% *}"; fi; \
-	if [ -z "$${mise_acquired}" ] || [ "$$(printf '%s\n%s\n' "2026.10.3" "$${mise_acquired}" | sort -V | head -n 1)" != "2026.10.3" ]; then \
-	export MISE_VERSION="2026.10.3"; \
+	if [ -z "$${mise_acquired}" ] || [ "$$(printf '%s\n%s\n' "2026.11.11" "$${mise_acquired}" | sort -V | head -n 1)" != "2026.11.11" ]; then \
+	export MISE_VERSION="2026.11.11"; \
 	export MISE_INSTALL_FROM_GITHUB=1 MISE_INSTALL_HELP=0; \
 	case "$${OS:-}" in \
 		(Windows_NT) \
@@ -583,10 +614,9 @@ _bootstrap_setup_tools:
 				*) printf 'ERROR: installed Mise %s still does not report the locked %s after the locked reinstall\n' "$$mise_reader" "$$mise_pin" >&2; exit 2 ;; \
 			esac ;; \
 	esac; \
-	export MISE_SHIMS_DIR="$(PROJECT_ROOT)/.bin/shims"; \
 	export MISE_LOCKED=1; \
 	bootstrap_stage=tool-install; \
-	"$$mise_reader" -C "$(PROJECT_ROOT)" install --yes "python" "github:jdx/mise" "uv" "github:direnv/direnv" "taplo" "aqua:ast-grep/ast-grep" "gitleaks" "aqua:boyter/scc" "github:qltysh/qlty" "github:kucherenko/jscpd" "github:microsoft/waza" "aqua:j178/prek"; \
+	"$$mise_reader" -C "$(PROJECT_ROOT)" install --yes "python" "github:jdx/mise" "uv" "github:direnv/direnv" "taplo" "aqua:ast-grep/ast-grep" "gitleaks" "aqua:boyter/scc" "github:qltysh/qlty" "github:kucherenko/jscpd" "github:microsoft/waza" "aqua:j178/prek" "gh"; \
 	mise_active="$$(MISE_LOCKED=1 "$${mise_reader}" -C "$(PROJECT_ROOT)" tool "github:jdx/mise" --active)"; \
 	mise_binary="$${mise_reader}"; \
 	bootstrap_stage=tool-paths; \
@@ -940,18 +970,9 @@ endif
 # to build), but it still runs the pre-/post-setup lifecycle hooks so a project
 # declaring them in the custom handler surface is actually honoured.
 # A fresh checkout is trusted first; the provisioning half then reruns Make so
-# the credential command resolves inside the trusted checkout, in the caller's
+# the credential command resolves inside the trusted checkout, in the host
 # Mise scope (the rerun re-exports the runtime-scoped Mise variables itself).
-
-# A workspace member's own dev group never declares flext-infra (the
-# workspace supplies it), so a checkout of this member that is its own runtime
-# has no supplier: setup, upg and lock refuse there before any effect.
-REFUSE_MEMBER_RUNTIME = printf 'ERROR[%s]: %s is a workspace member; its own runtime has no flext-infra supplier: %s\nRun make %s from a workspace-shaped lane that attaches flext-ldif as a member.\n' '$@' 'flext-ldif' "$(PROJECT_ROOT)" '$@' >&2; exit 2
-
 ifeq ($(PROJECT_ROOT),$(RUNTIME_ROOT))
-
-setup:
-	@$(REFUSE_MEMBER_RUNTIME)
 
 else
 setup: _builtin_require_workspace
@@ -965,9 +986,6 @@ endif
 # operation to their physical workspace owner before resolving anything.
 ifeq ($(PROJECT_ROOT),$(RUNTIME_ROOT))
 
-upg:
-	@$(REFUSE_MEMBER_RUNTIME)
-
 else
 upg: _builtin_require_workspace
 	+@"$(SELF_MAKE_EXECUTABLE)" --no-print-directory -C "$(RUNTIME_ROOT)" -f "$(RUNTIME_ROOT)/Makefile" upg
@@ -976,9 +994,6 @@ endif
 # Attached members delegate the same operation to their physical workspace owner
 # before resolving anything.
 ifeq ($(PROJECT_ROOT),$(RUNTIME_ROOT))
-
-lock:
-	@$(REFUSE_MEMBER_RUNTIME)
 
 else
 lock: _builtin_require_workspace
@@ -1241,8 +1256,8 @@ _upg_toolchain: _builtin_require_workspace _builtin_require_github_credential
 	bootstrap_stage=acquisition; \
 	mise_acquired=; \
 	if [ -x "$(BOOTSTRAP_MISE)" ]; then mise_acquired="$$("$(BOOTSTRAP_MISE)" --version)"; mise_acquired="$${mise_acquired%% *}"; fi; \
-	if [ -z "$${mise_acquired}" ] || [ "$$(printf '%s\n%s\n' "2026.10.3" "$${mise_acquired}" | sort -V | head -n 1)" != "2026.10.3" ]; then \
-	export MISE_VERSION="2026.10.3"; \
+	if [ -z "$${mise_acquired}" ] || [ "$$(printf '%s\n%s\n' "2026.11.11" "$${mise_acquired}" | sort -V | head -n 1)" != "2026.11.11" ]; then \
+	export MISE_VERSION="2026.11.11"; \
 	export MISE_INSTALL_FROM_GITHUB=1 MISE_INSTALL_HELP=0; \
 	case "$${OS:-}" in \
 		(Windows_NT) \
@@ -1259,8 +1274,8 @@ _upg_toolchain: _builtin_require_workspace _builtin_require_github_credential
 	mise_reader="$$(MISE_LOCKFILE=0 "$(BOOTSTRAP_MISE)" -C "$(PROJECT_ROOT)" which mise)"; \
 	if [ "$${OS:-}" = Windows_NT ]; then mise_reader="$$(cygpath --unix "$$mise_reader")"; fi; \
 	case "$$(MISE_LOCKFILE=0 "$$mise_reader" --version)" in \
-		"2026.10.3 "*) : ;; \
-		*) printf 'ERROR: the resolved Mise reader %s does not report the declared 2026.10.3; run make upg\n' "$$mise_reader" >&2; exit 2 ;; \
+		"2026.11.11 "*) : ;; \
+		*) printf 'ERROR: the resolved Mise reader %s does not report the declared 2026.11.11; run make upg\n' "$$mise_reader" >&2; exit 2 ;; \
 	esac; \
 	uv_lock="$(RUNTIME_ROOT)/uv.lock"; \
 	if [ -f "$$uv_lock" ]; then \
@@ -1290,7 +1305,7 @@ _upg_toolchain: _builtin_require_workspace _builtin_require_github_credential
 		printf 'upg: %s: no locked version changes\n' "$$lock_root"; \
 	else \
 		changed_tools=""; \
-		for tool in "python" "github:jdx/mise" "uv" "github:direnv/direnv" "taplo" "aqua:ast-grep/ast-grep" "gitleaks" "aqua:boyter/scc" "github:qltysh/qlty" "github:kucherenko/jscpd" "github:microsoft/waza" "aqua:j178/prek"; do \
+		for tool in "python" "github:jdx/mise" "uv" "github:direnv/direnv" "taplo" "aqua:ast-grep/ast-grep" "gitleaks" "aqua:boyter/scc" "github:qltysh/qlty" "github:kucherenko/jscpd" "github:microsoft/waza" "aqua:j178/prek" "gh"; do \
 			if [ "$$("$$mise_reader" -C "$$lock_root" lock --bump --dry-run --json "$$tool")" != "[]" ]; then changed_tools="$$changed_tools $$tool"; fi; \
 		done; \
 		if [ -z "$$changed_tools" ]; then \
@@ -1307,10 +1322,9 @@ _upg_toolchain: _builtin_require_workspace _builtin_require_github_credential
 	fi; \
 	done; \
 	set +f; \
-	export MISE_SHIMS_DIR="$(PROJECT_ROOT)/.bin/shims"; \
 	export MISE_LOCKED=1; \
 	bootstrap_stage=tool-install; \
-	"$$mise_reader" -C "$(PROJECT_ROOT)" install --yes "python" "github:jdx/mise" "uv" "github:direnv/direnv" "taplo" "aqua:ast-grep/ast-grep" "gitleaks" "aqua:boyter/scc" "github:qltysh/qlty" "github:kucherenko/jscpd" "github:microsoft/waza" "aqua:j178/prek"; \
+	"$$mise_reader" -C "$(PROJECT_ROOT)" install --yes "python" "github:jdx/mise" "uv" "github:direnv/direnv" "taplo" "aqua:ast-grep/ast-grep" "gitleaks" "aqua:boyter/scc" "github:qltysh/qlty" "github:kucherenko/jscpd" "github:microsoft/waza" "aqua:j178/prek" "gh"; \
 	printf 'upg: locks classified, Mise locks current, locked toolchain provisioned\n'
 
 _upg_lifecycle:
