@@ -11,7 +11,7 @@ from collections.abc import Callable, MutableSequence, Sequence
 from typing import Annotated, ClassVar, override
 
 from flext_ldif import c, m, p, r, s, t, u
-from flext_ldif._protocols.domain import FlextLdifProtocolsDomain
+from flext_ldif._protocols import FlextLdifProtocolsDomain
 from flext_ldif.servers._base import FlextLdifServerMethods
 
 

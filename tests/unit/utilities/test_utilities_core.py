@@ -92,7 +92,6 @@ class TestsFlextLdifUtilitiesCore:
     @c.Tests.MARK.parametrize(
         "dn",
         [
-            "",
             "no_equals_sign",
             "cn=",
             "=value",

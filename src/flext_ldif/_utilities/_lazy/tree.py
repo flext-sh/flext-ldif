@@ -7,10 +7,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Protocol
 
 from flext_ldif import _utilities
-from flext_ldif._namespace import FlextLdifLazyNamespace
 from flext_ldif._utilities import FlextLdifUtilitiesCollectionLdif
 
 if TYPE_CHECKING:
@@ -36,6 +35,36 @@ if TYPE_CHECKING:
 
 class FlextLdifUtilitiesLazyTree:
     """Own the lazy ``Ldif`` mixin tree of the LDIF utilities facade."""
+
+    class LazyNamespace:
+        """Assemble the ``Ldif`` tree on first access through the owning class.
+
+        A nested class, not a facade part (root ADR-018 stand-in composition
+        law, rule 5): the part holds one instance as a class attribute, so no
+        part defines a dunder and the facade needs no metaclass. It lives in
+        the ``u`` layer that reads it at runtime, so no reverse import exists.
+        """
+
+        class Builder(Protocol):
+            """The owner contract: it builds the ``Ldif`` namespace class."""
+
+            @staticmethod
+            def build_ldif_tree() -> type:
+                """Return the assembled ``Ldif`` namespace class."""
+                ...
+
+        def __get__(
+            self,
+            instance: object,
+            owner: type[FlextLdifUtilitiesLazyTree.LazyNamespace.Builder],
+        ) -> type:
+            """Return the ``Ldif`` namespace class of the owning facade.
+
+            Returns:
+                The assembled, cached ``Ldif`` utility namespace class.
+
+            """
+            return owner.build_ldif_tree()
 
     # NOTE (import discipline): models.py binds the ``u`` namespace while
     # flext_ldif.models is still mid-init (``m.Field`` runs at class-definition
@@ -129,7 +158,7 @@ class FlextLdifUtilitiesLazyTree:
             """Static view of the LDIF-specific utility namespace."""
 
     else:
-        Ldif: ClassVar[FlextLdifLazyNamespace] = FlextLdifLazyNamespace()
+        Ldif: ClassVar[LazyNamespace] = LazyNamespace()
 
 
 __all__: list[str] = ["FlextLdifUtilitiesLazyTree"]

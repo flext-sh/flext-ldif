@@ -156,11 +156,16 @@ class FlextLdifUtilitiesDNValidate:
         - All components have attr=value format
         - Valid hex escape sequences (\\XX where X is hex digit)
 
+        The empty string is the empty ``RDNSequence`` (RFC 4514 section 3), the
+        DN of the root DSE (RFC 4512 section 5.1), and is valid.
+
         Returns:
             The resulting ``bool``.
 
         """
         dn_str = FlextLdifUtilitiesDNParse.resolve_dn_value(dn)
+        if not dn_str:
+            return True
         if not FlextLdifUtilitiesDNValidate._validate_basic_format(dn_str):
             return False
         if not FlextLdifUtilitiesDNValidate._validate_dn_structure(dn_str):

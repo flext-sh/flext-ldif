@@ -40,9 +40,6 @@ if TYPE_CHECKING:
     from flext_ldif._protocols.domain_schema import FlextLdifProtocolsDomainSchema
     from flext_ldif._protocols.elements import FlextLdifProtocolsElements
     from flext_ldif._protocols.events import FlextLdifProtocolsEvents
-    from flext_ldif._protocols.generated_models_basemodel import (
-        FlextLdifProtocolsGeneratedModelsBaseModel,
-    )
     from flext_ldif._protocols.generated_models_ldif_aclentryconversion import (
         FlextLdifLdifProtocolsGeneratedModelsAclEntryConversion,
     )
@@ -96,7 +93,6 @@ __all__: tuple[str, ...] = (
     "FlextLdifProtocolsDomainSchema",
     "FlextLdifProtocolsElements",
     "FlextLdifProtocolsEvents",
-    "FlextLdifProtocolsGeneratedModelsBaseModel",
     "FlextLdifProtocolsLdap3",
     "FlextLdifProtocolsProcessing",
     "FlextLdifProtocolsResults",
@@ -145,7 +141,6 @@ install_lazy_exports(
         "FlextLdifProtocolsDomainSchema": ".domain_schema",
         "FlextLdifProtocolsElements": ".elements",
         "FlextLdifProtocolsEvents": ".events",
-        "FlextLdifProtocolsGeneratedModelsBaseModel": ".generated_models_basemodel",
         "FlextLdifProtocolsLdap3": ".ldap3",
         "FlextLdifProtocolsProcessing": ".processing",
         "FlextLdifProtocolsResults": ".results",
@@ -173,7 +168,6 @@ install_lazy_exports(
         "FlextLdifProtocolsDomainSchema",
         "FlextLdifProtocolsElements",
         "FlextLdifProtocolsEvents",
-        "FlextLdifProtocolsGeneratedModelsBaseModel",
         "FlextLdifProtocolsLdap3",
         "FlextLdifProtocolsProcessing",
         "FlextLdifProtocolsResults",
