@@ -331,10 +331,17 @@ class FlextLdifServersOidAclToOud:
             return None
         negated = rule.target_attrs.startswith(c.Ldif.OUD_ATTR_NEGATION)
         body = rule.target_attrs.removeprefix(c.Ldif.OUD_ATTR_NEGATION).strip()
-        names = frozenset(
+        # The OID ACL attributes become the single OUD ACL attribute: who reads
+        # or writes orclaci/orclentrylevelaci reads or writes aci (operator
+        # decision 2026-11-26).
+        acl_kinds = {str(kind) for kind in c.Ldif.AclConvertType}
+        listed = (
             name.strip().lower()
             for name in body.split(",")
             if name.strip() and name.strip() != c.Ldif.ACL_WILDCARD
+        )
+        names = frozenset(
+            c.Ldif.ACI_ATTR_NAME if name in acl_kinds else name for name in listed
         )
         return m.Ldif.AclAttrSet(
             names=names,
@@ -345,9 +352,9 @@ class FlextLdifServersOidAclToOud:
     def check_attr_target(rule: p.Ldif.OidAclRule) -> p.Result[bool]:
         """Accept ``*`` or a list of attribute descriptions, optionally negated.
 
-        An empty element, ``*`` inside a list, an attribute outside the
-        description grammar, or a name of an OID ACL attribute (it does not
-        exist after conversion) has no exact OUD ``targetattr``.
+        An empty element, ``*`` inside a list or an attribute outside the
+        description grammar has no exact OUD ``targetattr``. A name of an OID
+        ACL attribute converts to ``aci`` (see ``attr_set``).
 
         Returns:
             Success, or the typed failure.
@@ -364,15 +371,6 @@ class FlextLdifServersOidAclToOud:
             return r[bool].fail(
                 f"OID attribute target {rule.target_attrs!r} is not '*' or a "
                 "list of attribute descriptions (manual review required)",
-            )
-        acl_attrs = {name.lower() for name in names} & {
-            str(kind) for kind in c.Ldif.AclConvertType
-        }
-        if acl_attrs:
-            return r[bool].fail(
-                f"OID ACL target names the ACL attributes {sorted(acl_attrs)!r}, "
-                "which do not exist after conversion to OUD aci (manual review "
-                "required)",
             )
         return r[bool].ok(value=True)
 
