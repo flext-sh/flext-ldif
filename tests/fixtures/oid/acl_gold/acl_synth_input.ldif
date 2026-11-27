@@ -1,4 +1,4 @@
-# provenance: devops-oud-iac@2225708e3ac8 tests/benchmark/gold/acl_synth_input.ldif sha256=e6e56c5311f7129970d5f0f7e8d8df47adbb5f505ced996ca8bae284c90cf80d amended=flext-ws7iv(entries cn=guidattr-case and cn=combined-deny removed: guidattr and the non-grammar 'all' token fail loud and are covered by unit tests; entries cn=SecurityAdmins and cn=CommonUsers added: OID ACP security groups the group subjects require)
+# provenance: devops-oud-iac@2225708e3ac8 tests/benchmark/gold/acl_synth_input.ldif sha256=e6e56c5311f7129970d5f0f7e8d8df47adbb5f505ced996ca8bae284c90cf80d amended=flext-ws7iv(entries cn=guidattr-case and cn=combined-deny removed: guidattr and the non-grammar 'all' token fail loud and are covered by unit tests; entries cn=SecurityAdmins and cn=CommonUsers added: OID ACP security groups the group subjects require; entries cn=DirAdmins, cn=ata-root, cn=ata-context and cn=ata-extended added: an AppendToAll ACP above a denial and a filtered grant, operator decision 2026-11-27)
 dn: cn=admins,dc=ctbc
 objectClass: top
 objectClass: container
@@ -54,3 +54,28 @@ objectClass: top
 objectClass: groupOfUniqueNames
 objectClass: orclACPgroup
 cn: CommonUsers
+
+dn: cn=DirAdmins,dc=ctbc
+objectClass: top
+objectClass: groupOfUniqueNames
+objectClass: orclACPgroup
+cn: DirAdmins
+
+dn: cn=ata-root,dc=ctbc
+objectClass: top
+objectClass: container
+cn: ata-root
+orclaci: access to attr=(*) AppendToAll by group="cn=DirAdmins,dc=ctbc" (search,read,write,compare)
+orclaci: access to entry AppendToAll by group="cn=DirAdmins,dc=ctbc" (browse,add,delete,proxy)
+
+dn: cn=ata-context,cn=ata-root,dc=ctbc
+objectClass: top
+objectClass: container
+cn: ata-context
+orclaci: access to attr=(*) by group="cn=SecurityAdmins,dc=ctbc" (read,search,write,compare) by * (none)
+
+dn: cn=ata-extended,cn=ata-context,cn=ata-root,dc=ctbc
+objectClass: top
+objectClass: container
+cn: ata-extended
+orclaci: access to attr=(*) filter=(objectclass=container) by group="cn=DirAdmins,dc=ctbc" (read,search,write,compare)

@@ -1,4 +1,4 @@
-# provenance: flext-ldif FlextLdif().migration_pipeline oid->oud base_dn=dc=ctbc output of acl_synth_input.ldif (sha256=72871129f755f6e3f7f854b5f707e60d4a39d838dc1cbfd9f99e2ff4a0c0cb8f) at the OID-measured rules of 2026-11-15 (docs/specs/oid-oud-acl-conversion.md); a regression pin, not evidence of OID equivalence
+# provenance: flext-ldif FlextLdif().migration_pipeline oid->oud base_dn=dc=ctbc output of acl_synth_input.ldif (sha256=a1068b681cb8c07aced99af087bdf2b5dec4d48a3b3db10b4070508c19f98c75) at the OID-measured rules of 2026-11-15 (docs/specs/oid-oud-acl-conversion.md); a regression pin, not evidence of OID equivalence
 version: 1
 
 dn: cn=admins,dc=ctbc
@@ -10,6 +10,17 @@ aci: (targetattr="objectclass")(version 3.0; acl "orclaci 1.1 R4e"; allow (read,
 aci: (targetattr="objectclass")(version 3.0; acl "orclaci 1.2 R4e"; allow (read,search) userdn="ldap:///self";)
 aci: (targetattr="*")(targetscope="subordinate")(version 3.0; acl "orclaci 1.3 R5"; deny (add) (userdn="ldap:///anyone" and not (groupdn="ldap:///cn=SecurityAdmins,dc=ctbc" or userattr="parent[1].entryDN#USERDN"));)
 aci: (targetattr="*")(version 3.0; acl "orclaci 1.3 R5"; deny (read,compare,delete,proxy) (userdn="ldap:///anyone" and not (groupdn="ldap:///cn=SecurityAdmins,dc=ctbc" or userdn="ldap:///self"));)
+-
+
+dn: cn=ata-root,dc=ctbc
+changetype: modify
+replace: aci
+aci: (targetattr="*")(version 3.0; acl "orclaci 1.1 R1"; allow (read,search,write,compare) groupdn="ldap:///cn=DirAdmins,dc=ctbc";)
+aci: (targetattr="*")(version 3.0; acl "orclaci 1.2 R1"; allow (read,search) groupdn="ldap:///cn=DirAdmins,dc=ctbc";)
+aci: (targetattr="*")(targetscope="subordinate")(version 3.0; acl "orclaci 2.1 R4a"; allow (add) groupdn="ldap:///cn=DirAdmins,dc=ctbc";)
+aci: (targetattr="*")(version 3.0; acl "orclaci 2.1 R4b"; allow (delete) groupdn="ldap:///cn=DirAdmins,dc=ctbc";)
+aci: (targetattr="*")(version 3.0; acl "orclaci 2.1 R4c"; allow (proxy) groupdn="ldap:///cn=DirAdmins,dc=ctbc";)
+aci: (targetattr="objectclass")(version 3.0; acl "orclaci 2.1 R4e"; allow (read,search) groupdn="ldap:///cn=DirAdmins,dc=ctbc";)
 -
 
 dn: cn=groupattr-case,dc=ctbc
@@ -55,5 +66,19 @@ replace: aci
 aci: (targetattr="userpassword")(targetfilter="(objectclass=inetorgperson)")(version 3.0; acl "orclaci 1.1 R1"; allow (search,write) groupdn="ldap:///cn=SecurityAdmins,dc=ctbc";)
 aci: (targetattr="userpassword")(targetfilter="(objectclass=inetorgperson)")(version 3.0; acl "orclaci 1.2 R1"; allow (search,write,selfwrite) userdn="ldap:///self";)
 aci: (targetattr="userpassword")(targetfilter="(objectclass=inetorgperson)")(version 3.0; acl "orclaci 1.3 R5"; deny (read,search,write,selfwrite,compare) (userdn="ldap:///anyone" and not (groupdn="ldap:///cn=SecurityAdmins,dc=ctbc" or userdn="ldap:///self"));)
+-
+
+dn: cn=ata-context,cn=ata-root,dc=ctbc
+changetype: modify
+replace: aci
+aci: (targetattr="*")(version 3.0; acl "orclaci 1.1 R1"; allow (search,write) groupdn="ldap:///cn=SecurityAdmins,dc=ctbc";)
+aci: (targetattr="*")(version 3.0; acl "orclaci 1.2 R5"; deny (read,search,write,compare) (userdn="ldap:///anyone" and not (groupdn="ldap:///cn=SecurityAdmins,dc=ctbc" or groupdn="ldap:///cn=DirAdmins,dc=ctbc"));)
+aci: (targetattr="*")(version 3.0; acl "orclaci 1.2 R5"; deny (selfwrite) (userdn="ldap:///anyone" and not groupdn="ldap:///cn=SecurityAdmins,dc=ctbc");)
+-
+
+dn: cn=ata-extended,cn=ata-context,cn=ata-root,dc=ctbc
+changetype: modify
+replace: aci
+aci: (targetattr="*")(targetfilter="(objectclass=container)")(version 3.0; acl "orclaci 1.1 R1"; allow (read,search,write,compare) groupdn="ldap:///cn=DirAdmins,dc=ctbc";)
 -
 
