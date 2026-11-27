@@ -9,7 +9,7 @@ from __future__ import annotations
 import time
 
 from flext_ldif import c, m, p, r, t, u
-from flext_ldif.servers.base import FlextLdifServersBase
+from flext_ldif.servers import FlextLdifServersBase
 from flext_ldif.services import FlextLdifConversionAcl, FlextLdifConversionEntry
 
 

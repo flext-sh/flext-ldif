@@ -34,6 +34,21 @@ class TestsFlextLdifDnIdentity:
         tm.that(tm.ok(u.Ldif.dn_key("")), eq="")
 
     @staticmethod
+    @c.Tests.MARK.parametrize(
+        ("dn", "valid"),
+        [
+            ("", True),
+            ("dc=example", True),
+            ("   ", False),
+            ("cn=alpha,,dc=example", False),
+            (",dc=example", False),
+        ],
+    )
+    def test_root_dse_is_the_only_empty_valid_dn(dn: str, *, valid: bool) -> None:
+        """The empty RDNSequence (RFC 4514 section 3) is the valid root DSE DN."""
+        tm.that(u.Ldif.validate_dn(dn), eq=valid)
+
+    @staticmethod
     def test_identity_does_not_rewrite_the_presentation_normalizer() -> None:
         """Presentation normalization still preserves value case."""
         tm.that(tm.ok(u.Ldif.norm("CN=Mixed,DC=Example")), eq="cn=Mixed,dc=Example")

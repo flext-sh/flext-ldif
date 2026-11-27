@@ -10,11 +10,11 @@ from collections.abc import Mapping, MutableSequence
 from typing import TYPE_CHECKING
 
 from flext_ldif import c
-from flext_ldif._utilities._parser.schema_fields import (
-    FlextLdifUtilitiesParserSchemaFields,
+from flext_ldif._utilities._parser import FlextLdifUtilitiesParserSchemaFields
+from flext_ldif._utilities._schema import (
+    FlextLdifUtilitiesSchemaExtract,
+    FlextLdifUtilitiesSchemaParse,
 )
-from flext_ldif._utilities._schema.extract import FlextLdifUtilitiesSchemaExtract
-from flext_ldif._utilities._schema.parse import FlextLdifUtilitiesSchemaParse
 
 if TYPE_CHECKING:
     from flext_ldif import p, t
