@@ -212,6 +212,18 @@ class FlextLdifServersOidAclConvert:
                 f"OID attribute target {match.group(0)!r} negates every attribute "
                 "and names no target (OID-A7 §A.7.1; manual review required)",
             )
+        if attrs != c.Ldif.ACL_WILDCARD:
+            # The OID ACL attributes become the OUD ``aci`` after conversion,
+            # so a target naming them protects ``aci`` on OUD.
+            acl_kinds = {str(kind) for kind in c.Ldif.AclConvertType}
+            attrs = ",".join(
+                dict.fromkeys(
+                    c.Ldif.ACI_ATTR_NAME
+                    if name.strip().lower() in acl_kinds
+                    else name.strip()
+                    for name in attrs.split(",")
+                ),
+            )
         target_attrs = f"!={attrs}" if operator == c.Ldif.OUD_ATTR_NEGATION else attrs
         return result.ok((
             c.Ldif.AclTargetType.ATTR.value,

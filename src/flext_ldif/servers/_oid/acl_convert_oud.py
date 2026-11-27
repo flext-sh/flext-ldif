@@ -345,9 +345,9 @@ class FlextLdifServersOidAclToOud:
     def check_attr_target(rule: p.Ldif.OidAclRule) -> p.Result[bool]:
         """Accept ``*`` or a list of attribute descriptions, optionally negated.
 
-        An empty element, ``*`` inside a list, an attribute outside the
-        description grammar, or a name of an OID ACL attribute (it does not
-        exist after conversion) has no exact OUD ``targetattr``.
+        An empty element, ``*`` inside a list or an attribute outside the
+        description grammar has no exact OUD ``targetattr``. OID ACL attribute
+        names already arrive as ``aci`` from the target parser.
 
         Returns:
             Success, or the typed failure.
@@ -364,15 +364,6 @@ class FlextLdifServersOidAclToOud:
             return r[bool].fail(
                 f"OID attribute target {rule.target_attrs!r} is not '*' or a "
                 "list of attribute descriptions (manual review required)",
-            )
-        acl_attrs = {name.lower() for name in names} & {
-            str(kind) for kind in c.Ldif.AclConvertType
-        }
-        if acl_attrs:
-            return r[bool].fail(
-                f"OID ACL target names the ACL attributes {sorted(acl_attrs)!r}, "
-                "which do not exist after conversion to OUD aci (manual review "
-                "required)",
             )
         return r[bool].ok(value=True)
 
