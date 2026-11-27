@@ -34,6 +34,7 @@ aci: (targetattr="*")(targetscope="onelevel")(version 3.0; acl "orclentrylevelac
 aci: (targetattr="*")(targetscope="base")(version 3.0; acl "orclentrylevelaci 1.2 R5"; deny (read,compare,delete,proxy) (userdn="ldap:///anyone" and not userattr="owner#USERDN");)
 aci: (targetattr="uniquemember")(targetscope="base")(version 3.0; acl "orclentrylevelaci 2.1 R2"; allow (read,search,write) userattr="owner#USERDN";)
 aci: (targetattr="uniquemember")(targetscope="base")(version 3.0; acl "orclentrylevelaci 2.2 R5"; deny (read,search,write,selfwrite,compare) (userdn="ldap:///anyone" and not userattr="owner#USERDN");)
+aci: (targetattr="aci||cn")(targetscope="base")(version 3.0; acl "orclentrylevelaci 3.1 R5"; deny (read,search,write,selfwrite,compare) userdn="ldap:///anyone";)
 -
 
 dn: cn=public-read,dc=ctbc

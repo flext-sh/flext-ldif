@@ -17,6 +17,7 @@ objectClass: container
 cn: owner-groups
 orclentrylevelaci: access to entry by dnattr=(owner) (browse) by * (none)
 orclentrylevelaci: access to attr=(uniquemember) by dnattr=(owner) (read,search,write) by * (none)
+orclentrylevelaci: access to attr=(orclaci,cn) by * (none)
 
 dn: cn=groupattr-case,dc=ctbc
 objectClass: top
