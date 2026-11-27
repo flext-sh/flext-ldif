@@ -127,13 +127,10 @@ class TestsFlextLdifUtilitiesComprehensive:
         tm.that(result.value, eq="cn=Admin,dc=Example")
 
     @staticmethod
-    def test_norm_fails_on_empty_dn() -> None:
-        """An empty DN yields a failure result with an explanatory message."""
-        result = u.Ldif.norm("")
-
-        tm.ok(result.failure)
-        error = tm.not_none(result.error)
-        tm.that(error.lower(), has="empty")
+    def test_norm_keeps_the_root_dse_dn() -> None:
+        """The empty DN (root DSE) normalizes to itself; blank text still fails."""
+        tm.that(tm.ok(u.Ldif.norm("")), eq="")
+        tm.fail(u.Ldif.norm("   "))
 
     # --- DN parsing (r[T]) ---------------------------------------------
 
