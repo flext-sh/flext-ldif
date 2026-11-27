@@ -32,6 +32,9 @@ class FlextLdifUtilitiesDNNormalize:
     def norm(dn: str | p.Ldif.DN | None) -> p.Result[str]:
         """Normalize DN per RFC 4514 (lowercase attrs, preserve values).
 
+        The empty string is the empty ``RDNSequence`` (RFC 4514 section 3), the
+        root DSE DN; its normalized form is itself.
+
         Returns:
             The resulting ``p.Result[str]``.
 
@@ -39,16 +42,13 @@ class FlextLdifUtilitiesDNNormalize:
         result: p.Result[str] = r[str].fail("DN cannot be None")
         if dn is not None:
             dn_str = FlextLdifUtilitiesDNParse.resolve_dn_value(dn)
-            if not dn_str or "=" not in dn_str:
-                error_msg = (
-                    "Failed to normalize DN: DN string is empty"
-                    if not dn_str
-                    else (
-                        f"Failed to normalize DN: Invalid DN format: "
-                        f"missing '=' separator in '{dn_str}'"
-                    )
+            if not dn_str:
+                result = r[str].ok(dn_str)
+            elif "=" not in dn_str:
+                result = r[str].fail(
+                    f"Failed to normalize DN: Invalid DN format: "
+                    f"missing '=' separator in '{dn_str}'"
                 )
-                result = r[str].fail(error_msg)
             else:
                 try:
                     result = FlextLdifUtilitiesDNNormalize._normalize_components(dn_str)
