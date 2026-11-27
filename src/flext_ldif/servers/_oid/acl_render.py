@@ -16,6 +16,8 @@ emits OUD ACI statements per ``docs/specs/oid-oud-acl-conversion.md`` §4:
 - R5: every denial below the root DSE becomes a ``deny`` that excludes the
   subjects its ACI grants (R6a) and the privilege groups a farther ACP
   grants by group subject, placed by region (``acl_region.py``).
+- R7: every denial at or below an ``AppendToAll`` ACP excludes the
+  subjects it grants (operator decision 2026-11-27).
 - R6b: a named attribute leaves the ACP's ``*`` ACI; a filtered ACI decides
   before the unfiltered one where its filter matches.
 - R8: a grant to OID ``*`` goes to ``ldap:///all`` and a denial to
@@ -103,6 +105,57 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
             else:
                 filtered.setdefault(higher.target_filter, []).extend(leaves)
         return result.ok((excluded, filtered))
+
+    def _append_grants(
+        self,
+        decision: p.Ldif.AclDecision,
+    ) -> p.Result[list[p.Ldif.AclBindLeaf]]:
+        """R7: the subjects an ``AppendToAll`` ACP above the denial grants the right.
+
+        OID appends the clause to every ACP below its point and no lower ACP
+        overrides it (OID-30 §30.1.4.1), so every denial at or below excludes
+        its subjects; they take no part in the R5 distance precedence
+        (operator decision 2026-11-27 "Allow + exclude from denials"). A
+        filtered clause, or one on part of the denied attributes, has no
+        exact form.
+
+        Returns:
+            The leaves to exclude from the whole denial, or the failure.
+
+        """
+        to_oud = FlextLdifServersOidAclToOud
+        rule, right = decision.rule, decision.resolution.right
+        result = r[list[p.Ldif.AclBindLeaf]]
+        acp = c.Ldif.AclConvertType.ORCLACI.value
+        leaves: list[p.Ldif.AclBindLeaf] = []
+        for key in self._keys:
+            if not to_oud.is_ancestor_or_self(key, rule.key):
+                continue
+            for higher in self.rules_at(key, acp):
+                granted = self.grants(higher, right)
+                if (
+                    not higher.rule.append_to_all
+                    or not granted
+                    or (higher.attrs is None) != (rule.attrs is None)
+                ):
+                    continue
+                attrs = decision.form.attrs
+                if higher.attrs is not None and not self.contains(higher.attrs, attrs):
+                    if not self.overlaps(higher.attrs, attrs):
+                        continue
+                    return result.fail(
+                        f"R7: AppendToAll grant of {right} at "
+                        f"{higher.dn or '<root DSE>'} covers only part of the "
+                        f"attributes denied at {rule.dn}; no rule covers it",
+                    )
+                if higher.target_filter is not None:
+                    return result.fail(
+                        f"R7: filtered AppendToAll grant of {right} at "
+                        f"{higher.dn or '<root DSE>'} above the denial of "
+                        f"{rule.dn}; no rule covers it",
+                    )
+                leaves.extend(granted)
+        return result.ok(leaves)
 
     def _override_on_add(
         self,
@@ -737,7 +790,13 @@ class FlextLdifServersOidAclRender(FlextLdifServersOidAclRegion):
                     "exclude": resolution.excluded,
                 }),
             })
-            splits = self.overridden(decision)
+            appended = self._append_grants(decision)
+            if appended.failure:
+                return result.from_failure(appended)
+            widened = self.widen(decision, appended.value)
+            if widened is None:
+                continue
+            splits = self.overridden(widened)
             if splits.failure:
                 return result.from_failure(splits)
             for split in splits.value:

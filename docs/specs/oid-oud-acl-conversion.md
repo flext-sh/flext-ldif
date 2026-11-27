@@ -44,7 +44,12 @@ Implemented in `acl_assemble.py`, following the OID evaluation model (OID-30 §3
 
 - **R8**: a by-clause subject without a rule fails.
 - **R7**: an `AppendToAll` clause joins every other ACI of its access control point
-  (ACP).
+  (ACP). OID also appends it to every ACP below its point and no lower ACP overrides
+  it (OID-30 §30.1.4.1), so its subjects are allowed at the ACP's own DN (the suffix
+  root for the root DSE, R9) and every `deny` at or below that point excludes them for
+  the rights they are granted (operator decision 2026-11-27, "Allow + exclude from
+  denials"). An `AppendToAll` clause under a filter, or on part of the denied
+  attributes, has no exact form and fails.
 - **R6a**: in one level, the clauses of the specific subjects that match a session
   decide and the level's `*` clauses are not consulted for any right; only when no
   specific subject matches does `*` decide. Among the clauses that decide, a denial
@@ -124,6 +129,8 @@ Implemented in `acl_render.py`.
   while no existing parent matches (a later matching parent is not overridden,
   reported as an event) and fails when one does. Filters that lift the denial for
   different group sets partition it by filter combination (up to three sets).
+  `AppendToAll` subjects (R7) are excluded before this precedence and take no part in
+  it: a farther `AppendToAll` grant never makes a nearer filtered grant fail.
 - **R6a** (grant side): a `*` grant excludes the specific subjects of the ACI that leave
   the right undecided, `allow (r) (userdn="ldap:///all" and not …)`. Such a grant beside
   a farther denial, or under a filter, has no exact placement and fails.
@@ -131,3 +138,4 @@ Implemented in `acl_render.py`.
   unfiltered one where its filter matches.
 - **R8**: a grant to OID `*` goes to `ldap:///all` and a denial to `ldap:///anyone`.
 - **R9**: root DSE `orclaci` grants land on the suffix root; its denials emit nothing.
+  A root DSE `AppendToAll` grant also excludes its subjects from every denial (R7).
